@@ -1,7 +1,7 @@
 import axios  from "axios";
 
 export const request = axios.create({
-    baseURL:"http://localhost:5000"
+    baseURL:`${import.meta.env.VITE_APP_API_URL}`
 })
 
 

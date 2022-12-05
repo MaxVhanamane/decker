@@ -14,7 +14,7 @@ import { request } from "../utils/axios-utils";
 
 const  deleteDeck = async (id:string)=> {
   try{
-    const response = await request.delete(`${import.meta.env.VITE_APP_API_URL }/deck/${id}`);
+    const response = await request.delete(`/deck/${id}`);
     return response.data
   }
   

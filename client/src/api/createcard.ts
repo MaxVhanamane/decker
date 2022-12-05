@@ -19,7 +19,7 @@ import { request } from './../utils/axios-utils';
 
 
  const createCard=async(content:PayloadData)=>{
-     const data =await  request.post(`${import.meta.env.VITE_APP_API_URL}/deck/${content.deck_id}/card`,{content:content.content})
+     const data =await  request.post(`/deck/${content.deck_id}/card`,{content:content.content})
       return data.data
 }
 

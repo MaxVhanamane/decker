@@ -17,8 +17,7 @@ import { request } from "../utils/axios-utils";
 const createDeck = async (title:string)=> {
   // you don't need to add try catch block as axios will automatically throw an error. 
   // If you want to throw an error then do it manually  using throw keyword because usequery or usemutation need that
-    const response = await request.post(`${import.meta.env.VITE_APP_API_URL
-    }/deck`, {title});
+    const response = await request.post(`/deck`, {title});
     return response.data
 
 }

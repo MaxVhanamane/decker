@@ -20,6 +20,6 @@ export type DeckTypes = {
 
 
  export const deleteCard= async (payLoad:PayloadType) :Promise<DeckTypes>=>{
-  const res= await request.delete(`${import.meta.env.VITE_APP_API_URL}/card/${payLoad.deck_id}/${payLoad.index}}`)
+  const res= await request.delete(`/card/${payLoad.deck_id}/${payLoad.index}}`)
   return res.data
  }
