@@ -11,15 +11,29 @@ app.use(express.json())
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors())
-
-let PORT=5000
+const PORT = process.env.PORT || 5000
 
 mongoose.connect(process.env.MONGO_URI)
 .then(()=>{console.log("Connected to mongodb successfully");
 // We will start to listen for request once the DB is connected
-app.listen(process.env.PORT || PORT,()=>{
-  console.log("server is running on port "+PORT)
+
+const connectDB = async () => {
+    try {
+      const conn = await mongoose.connect(process.env.MONGO_URI);
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+      console.log(error);
+      process.exit(1);
+    }
+  }
+
+//Connect to the database before listening
+connectDB().then(() => {
+    app.listen(PORT, () => {
+        console.log("listening for requests");
+    })
 })
+
 })
 .catch(err=>{console.log(err)});
 
