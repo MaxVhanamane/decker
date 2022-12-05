@@ -1,7 +1,7 @@
 import { config } from "dotenv"
 import express,{Request,Response} from "express"
 import mongoose from "mongoose"
-import DeckModal from './../models/deck';
+import DeckModal from './models/deck';
 import cors from "cors"
 config()
 const app = express()
