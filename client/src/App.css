@@ -6,5 +6,9 @@ body,html {
   margin: 0 ;
   padding: 0;
   text-align: center;
+  /* overflow-x: hidden; */
 }
 
+textarea {
+  resize: none; /* user can resize vertically, but width is fixed */
+}
