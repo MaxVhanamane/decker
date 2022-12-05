@@ -13,9 +13,7 @@ app.use(express.json())
 app.use(cors())
 const PORT = process.env.PORT || 5000
 
-mongoose.connect(process.env.MONGO_URI)
-.then(()=>{console.log("Connected to mongodb successfully");
-// We will start to listen for request once the DB is connected
+
 
 const connectDB = async () => {
     try {
@@ -34,7 +32,7 @@ connectDB().then(() => {
     })
 })
 
-})
+
 .catch(err=>{console.log(err)});
 
 app.get('/deck', async function (req, res) {
