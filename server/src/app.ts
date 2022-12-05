@@ -36,11 +36,69 @@ app.post('/deck', async function (req:Request, res:Response) {
   res.json(createdDeck)
 })
 
-
-
-app.delete('/deck/:id', async function (req:Request, res:Response) {
-  const deletedDeck=await DeckModal.findByIdAndDelete(req.params.id)
-  res.json(deletedDeck)
+app.put('/deck', async function (req:Request, res:Response) {
+  console.log(req.body)
+  const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
+  res.json(updatedDeck)
 })
 
 
+
+app.delete('/deck/:id', async function (req:Request, res:Response) {
+  try{
+
+    const deletedDeck=await DeckModal.findByIdAndDelete(req.params.id)
+    res.json({deletedDeck,success:true})
+  }
+  catch(error){
+    res.json({error:"some error occurred",success:false})
+  }
+})
+
+
+
+app.get('/cards/:_id', async function (req:Request, res:Response) {
+  const cards=await DeckModal.findById({_id:req.params._id})
+  if(cards){
+
+    res.json({cards:cards.cards,title:cards.title})
+  }
+  else{
+    res.json({error:"No cards found!"})
+  }
+})
+
+app.post('/deck/:deck_id/card', async function (req:Request, res:Response) {
+  console.log(req.params.deck_id)
+  console.log("body",req.body)
+  try{
+    const getDeck= await DeckModal.findById(req.params.deck_id)
+    if(!getDeck){
+     return res.status(400).json({message:"No deck found! Please check deck id"})
+    }
+    getDeck.cards.push(req.body.content)
+    const createdDeck=await getDeck.save()
+    res.json(createdDeck)
+  }
+  catch(err){
+ res.status(500).json({error:"Invalid id"})
+  }
+
+})
+
+
+app.delete('/card/:id/:index', async function (req:Request, res:Response) {
+  try{
+
+    const deck=await DeckModal.findById(req.params.id)
+    if(deck){
+
+      deck.cards.splice(parseInt(req.params.index), 1);
+      let newArray=await deck.save()
+      res.json({cards:newArray,success:true})
+    }
+  }
+  catch(error){
+    res.json({error:"some error occurred",success:false})
+  }
+})
