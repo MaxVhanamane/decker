@@ -27,7 +27,10 @@ app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 let PORT = 5000;
 console.log(process.env.MONGO_URI);
-mongoose_1.default.connect(process.env.MONGO_URI)
+mongoose_1.default.connect(process.env.MONGO_URI, {
+    useUnifiedTopology: true,
+    useNewUrlParser: true
+})
     .then(() => {
     console.log("Connected to mongodb successfully");
     // We will start to listen for request once the DB is connected

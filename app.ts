@@ -1,6 +1,6 @@
 import { config } from "dotenv"
 import express,{Request,Response} from "express"
-import mongoose from "mongoose"
+import mongoose, {ConnectOptions} from "mongoose";
 import DeckModal from './models/deck';
 import cors from "cors"
 config()
@@ -14,7 +14,10 @@ app.use(cors())
 
 let PORT:number=5000
 console.log(process.env.MONGO_URI)
-mongoose.connect(process.env.MONGO_URI!)
+mongoose.connect(process.env.MONGO_URI!,{
+  useUnifiedTopology: true,
+  useNewUrlParser: true
+} as ConnectOptions )
 .then(()=>{console.log("Connected to mongodb successfully");
 // We will start to listen for request once the DB is connected
 app.listen(process.env.PORT || PORT,()=>{
