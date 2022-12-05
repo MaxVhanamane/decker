@@ -25,7 +25,7 @@ app.listen(process.env.PORT || PORT,()=>{
 
 app.get('/deck', async function (req:Request, res:Response) {
   const decks=await DeckModal.find({})
-  res.json(decks)
+  // res.json(decks)
 })
 
 app.post('/deck', async function (req:Request, res:Response) {
@@ -100,11 +100,11 @@ app.delete('/card/:id/:index', async function (req:Request, res:Response) {
   }
 })
 
-if(process.env.NODE_ENV==="production"){
-  const path=require("path")
-  app.get("/",(req,res)=>{
-    app.use(express.static(path.resolve(__dirname,"client","build")))
-    res.sendFile(path.resolve(__dirname,"client","build","index.html"))
-  })
-}
+// if(process.env.NODE_ENV==="production"){
+//   const path=require("path")
+//   app.get("/",(req,res)=>{
+//     app.use(express.static(path.resolve(__dirname,"client","build")))
+//     res.sendFile(path.resolve(__dirname,"client","build","index.html"))
+//   })
+// }
 
