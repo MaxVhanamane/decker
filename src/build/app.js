@@ -26,6 +26,7 @@ app.use(express_1.default.json());
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use((0, cors_1.default)());
 let PORT = 5000;
+console.log(process.env.MONGO_URI);
 mongoose_1.default.connect(process.env.MONGO_URI)
     .then(() => {
     console.log("Connected to mongodb successfully");
@@ -38,7 +39,7 @@ mongoose_1.default.connect(process.env.MONGO_URI)
 app.get('/deck', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const decks = yield deck_1.default.find({});
-        // res.json(decks)
+        res.json(decks);
     });
 });
 app.post('/deck', function (req, res) {

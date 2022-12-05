@@ -13,7 +13,7 @@ app.use(express.json())
 app.use(cors())
 
 let PORT:number=5000
-
+console.log(process.env.MONGO_URI)
 mongoose.connect(process.env.MONGO_URI!)
 .then(()=>{console.log("Connected to mongodb successfully");
 // We will start to listen for request once the DB is connected
@@ -25,7 +25,7 @@ app.listen(process.env.PORT || PORT,()=>{
 
 app.get('/deck', async function (req:Request, res:Response) {
   const decks=await DeckModal.find({})
-  // res.json(decks)
+  res.json(decks)
 })
 
 app.post('/deck', async function (req:Request, res:Response) {
