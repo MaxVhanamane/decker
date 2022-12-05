@@ -12,12 +12,12 @@ app.use(express.json())
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors())
 
-let PORT:string=process.env.PORT!
+let PORT:number=5000
 
 mongoose.connect(process.env.MONGO_URI!)
 .then(()=>{console.log("Connected to mongodb successfully");
 // We will start to listen for request once the DB is connected
-app.listen(PORT,()=>{
+app.listen(process.env.PORT || PORT,()=>{
   console.log("server is running on port "+PORT)
 })
 })
