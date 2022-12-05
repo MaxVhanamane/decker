@@ -7,6 +7,6 @@ export type DeckTypes = {
     pinned:boolean;
   };
 export const getDecks = async ():Promise<DeckTypes[]>=>{
-    const decks = await request.get("http://localhost:5000/deck");
+    const decks = await request.get(`${import.meta.env.VITE_APP_API_URL}/deck`);
     return decks.data ;
 }

@@ -12,7 +12,7 @@ app.use(express.json())
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors())
 
-let PORT:number=5000
+let PORT:string=process.env.PORT!
 
 mongoose.connect(process.env.MONGO_URI!)
 .then(()=>{console.log("Connected to mongodb successfully");
@@ -37,7 +37,6 @@ app.post('/deck', async function (req:Request, res:Response) {
 })
 
 app.put('/deck', async function (req:Request, res:Response) {
-  console.log(req.body)
   const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
   res.json(updatedDeck)
 })
@@ -69,8 +68,6 @@ app.get('/cards/:_id', async function (req:Request, res:Response) {
 })
 
 app.post('/deck/:deck_id/card', async function (req:Request, res:Response) {
-  console.log(req.params.deck_id)
-  console.log("body",req.body)
   try{
     const getDeck= await DeckModal.findById(req.params.deck_id)
     if(!getDeck){
@@ -102,3 +99,12 @@ app.delete('/card/:id/:index', async function (req:Request, res:Response) {
     res.json({error:"some error occurred",success:false})
   }
 })
+
+if(process.env.NODE_ENV==="production"){
+  const path=require("path")
+  app.get("/",(req,res)=>{
+    app.use(express.static(path.resolve(__dirname,"client","build")))
+    res.sendFile(path.resolve(__dirname,"client","build","index.html"))
+  })
+}
+

@@ -5,7 +5,6 @@ import Navbar from "./componenets/Navbar";
 import { BrowserRouter } from "react-router-dom";
 import {QueryClientProvider,QueryClient} from "react-query"
 import {ReactQueryDevtools} from "react-query/devtools"
-import { DragDropContext } from 'react-beautiful-dnd';
 
 
 

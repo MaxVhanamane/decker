@@ -10,7 +10,7 @@ type Data={
 }
 
  export const getCards=async (_id:string):Promise<Data>=>{
-   const data= await request.get(`http://localhost:5000/cards/${_id}`)
+   const data= await request.get(`${import.meta.env.VITE_APP_API_URL}/cards/${_id}`)
    return data.data
 }
 
