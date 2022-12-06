@@ -1,37 +1,17 @@
-import { FormEvent, useState, useEffect } from "react";
-import { DeckTypes, getDecks } from "./../api/getdecks";
-import {Link ,useParams} from "react-router-dom";
-import createCard from './../api/createcard';
-import {  getCards } from './../api/getcards';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { deleteCard } from './../api/deletecard';
+import { FormEvent, useState } from "react";
+import {useParams} from "react-router-dom";
+import useGetCards from "../hooks/useGetCards";
+import useCreateCard from "../hooks/useCreateCard";
+import useDeleteCard from './../hooks/useDeleteCard';
 
 function Cards() {
   const [content, setContent] = useState<string>("");
-  const [cards, setCards] = useState<string[]>([]);
   const { deck_id } = useParams();
-  const queryClient=  useQueryClient()
-  const {data,isError,error,isLoading}=useQuery("cards",()=>{return getCards(deck_id!)})
+  const {data,isError,error,isLoading}=useGetCards( deck_id!)
 
-   const {mutate:addCard,error:mutationError,isError:isMutationError}=useMutation(createCard,{
-    // Not doing any optimistic updates we will only show the data once it is added in the db.
-    onSuccess:()=>{
-      queryClient.invalidateQueries("cards") 
-    },
-    onError:(error)=>{
-      console.log("Error please try again!")
-    }
-   })
+   const {mutate:addCard,error:mutationError,isError:isMutationError}=useCreateCard()
 
-   const {mutate:deleteCardItem,error:DeletemutationError,isError:isDeleteMutationError}=useMutation(deleteCard,{
-    // Not doing any optimistic updates we will only show the data once it is added in the db.
-    onSuccess:()=>{
-      queryClient.invalidateQueries("cards") 
-    },
-    onError:(error)=>{
-      console.log("Error please try again!")
-    }
-   })
+   const {mutate:deleteCardItem,error:DeletemutationError,isError:isDeleteMutationError}=useDeleteCard()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,21 +21,9 @@ function Cards() {
   };
 
   
-  const handleDelete = async (id:string,index:number) => {
+  const handleDelete = async (index:number) => {
     const payload={deck_id:deck_id!,index}
     deleteCardItem(payload)
-    
-
-
-    // const response = await deleteCard(id,index);
-    // console.log(response)
-    // if(response.success){
-    // setCards([...response.cards.cards])
-    // }
-    // else{
-    //   alert("Some error occured please try again later!")
-    // }
-  
   };
 
 
@@ -103,7 +71,7 @@ console.log(data)
                 rounded-md w-fit p-4 py-6 h-fit text-center my-auto justify-center items-center break-all max-w-full"
                            key={index}
               >
-               <button onClick={()=>{handleDelete(deck_id!,index)}} className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br outline-none  font-medium rounded-tr text-xs px-1  text-center  absolute top-0 right-0">X</button> {card}
+               <button onClick={()=>{handleDelete(index)}} className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br outline-none  font-medium rounded-tr text-xs px-1  text-center  absolute top-0 right-0">X</button> {card}
               </li>
             );
           })}

@@ -4,7 +4,7 @@ import { Routes, Route } from "react-router-dom"
 import Cards  from './componenets/Cards';
 import { DragDropContext, DropResult, ResponderProvided } from "react-beautiful-dnd";
 import { useMutation, useQueryClient } from 'react-query';
-import updateDeck from "./api/updatedeck";
+import { updateDeck } from './hooks/useUpdateDeck';
 
 type QueryType={
   title:string;

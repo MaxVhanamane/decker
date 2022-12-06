@@ -1,104 +1,29 @@
-import { FormEvent, useState, useEffect } from "react";
-import createDeck from '../api/createdeck';
-import { DeckTypes, getDecks } from "../api/getdecks";
-import  deleteDeck  from "../api/deletedeck";
+import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import updateDeck from './../api/updatedeck';
 import { Draggable, Droppable } from "react-beautiful-dnd";
-
 import {BsPin} from "react-icons/bs"
 import {BsFillPinFill} from "react-icons/bs"
 import {MdOutlineDeleteOutline} from "react-icons/md"
+import useGetDecks from "../hooks/useGetDecks";
+import useCreateDeck from "../hooks/useCreateDeck";
+import useDeleteDeck from './../hooks/useDeleteDeck';
+import useUpdateDeck from './../hooks/useUpdateDeck';
 
   function Home() {
     const [title, setTitle] = useState<string>("");
-    const queryClient=useQueryClient()
+    
+    const {data:alldecks,error,isError,isLoading}=useGetDecks()
   
-    const {mutate : addDeck} = useMutation(createDeck,{
-  
-      onMutate:async(title:string)=>{
-        setTitle("")
-     await queryClient.cancelQueries("decks")
-     // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
-         // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-          const previousQueryData=queryClient.getQueryData("decks")
-                queryClient.setQueryData("decks",(oldQueryData)=>{
-                  {/* @ts-ignore*/}
-          return [...oldQueryData,{title,_id:Math.random().toString()}]
-             
-          
-          })
-          // Return previous data so that if something goes wrong we can use this in onError method
-          return previousQueryData
-  
-      },
+    const {mutate : addDeck} = useCreateDeck()
 
-      onError:(_error,_title,context)=>{
-        // I have returned the previous query data in onMutate function I can receive that data in context. I can use that data to 
-        // reverse what I have done in onMutate because onMutate runs before request goes to server there I have assumed that 
-        // Everthing will be fine on the server and I did optimistic updates in onMutate function. If some error occures I will 
-        // reverse that here using previousQuery data 
-      
-        queryClient.setQueryData("decks",context)
-      },
+    const {mutate:deleteOneDeck}=useDeleteDeck()
 
-      // onSettled is called in the end it doesnt matter if the mutation is successful or failed it will be called everytime. After doing above operations we will refetch the data. so that our data and the data in the db will be in sync.
-      onSettled:()=>{
-        queryClient.invalidateQueries("decks") 
-      }
-  
-    })
-
-    const {mutate:deleteOneDeck}=useMutation(deleteDeck,{
-        onMutate:async(_id:string)=>{
-            await queryClient.cancelQueries("decks")
-            // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
-                // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-                 const previousQueryData=queryClient.getQueryData("decks")
-                       queryClient.setQueryData("decks",(oldQueryData)=>{
-                         {/* @ts-ignore*/}
-                         const newData= oldQueryData.filter((d)=>{
-                                return d._id != _id
-                         })
-                 return newData
-                    
-                 
-                 })
-                 // Return previous data so that if something goes wrong we can use this in onError method
-                 // you can pass it in object or you can pass it directly like I did above in create deck
-                 return {previousQueryData}
-         
-             },
-       
-             onError:(error,_title,context)=>{
-                     // I have returned the previous query data in onMutate function I can receive that data in context. I can use that data to 
-        // reverse what I have done in onMutate because onMutate runs before request goes to server there I have assumed that 
-        // Everthing will be fine on the server and I did optimistic updates in onMutate function. If some error occures I will 
-        // reverse that here using previousQuery data 
-               queryClient.setQueryData("decks",context?.previousQueryData)
-               alert(error)
-             },
-       
-             // onSettled is called in the end it doesnt matter if the mutation is successful or failed it will be called everytime. After doing above operations we will refetch the data. so that our data and the data in the db will be in sync.
-             onSettled:()=>{
-               queryClient.invalidateQueries("decks") 
-             }
-    })
-
-
-
-    const {mutate:pinDeck}=useMutation(updateDeck,{
-    onSuccess:()=>{
-      queryClient.invalidateQueries("decks")
-    }
-    }
-      )
+    const {mutate:pinDeck}=useUpdateDeck()
    
 
 
-
     const handleSubmit = async (e: FormEvent) => {
+      setTitle("")
       e.preventDefault();
       if(title.length>0){
 
@@ -126,7 +51,8 @@ import {MdOutlineDeleteOutline} from "react-icons/md"
   
   
   
-    const {data:alldecks,error,isError,isLoading}=useQuery("decks",getDecks)
+
+
     if(isError){
       return <p>Error {(error as Error).message}</p>
     }

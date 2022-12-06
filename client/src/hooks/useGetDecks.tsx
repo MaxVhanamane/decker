@@ -1,3 +1,5 @@
+import {useQuery} from "react-query"
+
 import { request } from "../utils/axios-utils";
 
 export type DeckTypes = {
@@ -6,7 +8,14 @@ export type DeckTypes = {
     cards:string[];
     pinned:boolean;
   };
-export const getDecks = async ():Promise<DeckTypes[]>=>{
+  
+ const getDecks = async ():Promise<DeckTypes[]>=>{
     const decks = await request.get(`/deck`);
     return decks.data ;
+}
+
+export default function useGetDecks(){
+
+  return useQuery("decks",getDecks)
+
 }
