@@ -4,8 +4,8 @@
   "main": "app.js",
   "license": "MIT",
   "scripts": {
-    "dev-start": "nodemon --watch \"src/**\" --ext \"ts,json\" --exec \"ts-node app.ts",
-    "start": "node ./src/build/app.js",
+    "dev": "nodemon --watch \"src/**\" --ext \"ts,json\" --exec \"ts-node app.ts",
+    "start": "node ./build/app.js",
     "tsc": "tsc"
   },
   "dependencies": {

@@ -12,7 +12,6 @@ type QueryType={
   _v:number
 }
 function App() {
-  console.log(import.meta.env)
 const queryClient=useQueryClient()
   const {mutate:pinDeck}=useMutation(updateDeck,{
     onSuccess:()=>{

@@ -24,9 +24,9 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({ origin: ["http://127.0.0.1:5173", "https://decker.vercel.app"] }));
 let PORT = 5000;
-console.log(process.env.MONGO_URI);
+// This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 mongoose_1.default.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true,
     useNewUrlParser: true

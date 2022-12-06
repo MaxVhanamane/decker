@@ -1,0 +1,15 @@
+For backend :
+
+1) In the server folder run tsc in package.json it is set to { "scripts":{"tsc": "tsc"} } which will convert your typescript code into 
+the javascript code in the build folder. as we know we cant run typescript files on the server. If you have typescript installed globally then
+you don't need to add the above command in your script.
+
+2) set the start command like this (search where is your build folder and app.js) { "scripts":{"start": "node ./build/app.js",} }. It points to the app.js file which we get after running the tsc. as I am using cyclic for backend deployment it uses that command to run your app on their server.
+
+3)Cyclic currently supports node repos with a valid package.json at the root level. so I can't make a server folder and put all my 
+    express code in it. I have to put it in the root level.
+
+Frontend :
+  
+  If your are deploying your Frontend on the vercel then you don't need to change anything in the package.json file. vercel will run the build command and will do everything for you. but you might face one issue and the issue is after deploying app will work fine but if go to nested 
+  routes and refresh the page then you will get 404 page not found error to avoid that add vercel.json file.
