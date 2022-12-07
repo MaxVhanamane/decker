@@ -108,7 +108,7 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none  font-bold rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
  </div>
 
-<Link to={`cards/${deck._id}`} > {deck.title} </Link>
+<Link to={`cards/${deck._id}`} > <p>{deck.title}</p> </Link>
 </div>
   )}
 

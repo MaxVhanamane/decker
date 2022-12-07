@@ -98,13 +98,13 @@ function Cards() {
 
       </div>
 
-      <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-10">
+      <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-10 mb-16">
         
           {data?.cards?.map((card,index) => {
             return (
               <div
                 className="relative bg-gray-200  flex text-gray-800
-                rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full "
+                rounded-md w-fit px-10 py-8 h-fit text-justify my-auto max-w-full "
                            key={index}
               >
                    <div className="absolute bottom-0 right-0">

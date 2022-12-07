@@ -17,7 +17,7 @@ type Data={
 
 
 const useGetCards =(deck_id:string)=>{
-    return useQuery("cards",()=>{return getCards(deck_id)})
+    return useQuery(["cards",deck_id],()=>{return getCards(deck_id)})
 }
 
 export default useGetCards
