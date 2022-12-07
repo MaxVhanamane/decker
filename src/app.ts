@@ -48,8 +48,6 @@ app.put('/deck', async function (req:Request, res:Response) {
   res.json(updatedDeck)
 })
 
-
-
 app.delete('/deck/:id', async function (req:Request, res:Response) {
   try{
 
@@ -74,7 +72,7 @@ app.get('/cards/:_id', async function (req:Request, res:Response) {
   }
 })
 
-app.post('/deck/:deck_id/card', async function (req:Request, res:Response) {
+app.post('/card/:deck_id', async function (req:Request, res:Response) {
   try{
     const getDeck= await DeckModal.findById(req.params.deck_id)
     if(!getDeck){
@@ -88,6 +86,21 @@ app.post('/deck/:deck_id/card', async function (req:Request, res:Response) {
  res.status(500).json({error:"Invalid id"})
   }
 
+})
+
+app.put('/card/:deck_id', async function (req:Request, res:Response) {
+  
+  const Deck=await DeckModal.findById(req.params.deck_id)
+  const cards=Deck?.cards
+  if(cards){
+    const index =req.body.index
+
+    cards?.splice(index, 1, req.body.newContent);
+    Deck.cards.splice(0, Deck.cards.length, ...cards)
+    const newCard=await Deck.save()
+    res.json(newCard)
+  }
+ 
 })
 
 
@@ -107,11 +120,4 @@ app.delete('/card/:id/:index', async function (req:Request, res:Response) {
   }
 })
 
-// if(process.env.NODE_ENV==="production"){
-//   const path=require("path")
-//   app.get("/",(req,res)=>{
-//     app.use(express.static(path.resolve(__dirname,"client","build")))
-//     res.sendFile(path.resolve(__dirname,"client","build","index.html"))
-//   })
-// }
 

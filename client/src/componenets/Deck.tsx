@@ -85,7 +85,7 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
         </div>
 
     {alldecks!.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 mb-10  p-4 mx-4  " >
-  <h1 className="text-left text-left text-lg font-semibold text-gray-800  m-4">Pinned </h1>
+  <h1 className="text-left  text-lg font-semibold text-gray-800  m-4">Pinned </h1>
 
   <Droppable droppableId="pinnedArea">
     {(provided)=>{

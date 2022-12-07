@@ -21,7 +21,7 @@ type PayloadData={
   
   
    const createCard=async(content:PayloadData)=>{
-       const data =await  request.post(`/deck/${content.deck_id}/card`,{content:content.content})
+       const data =await  request.post(`/card/${content.deck_id}`,{content:content.content})
         return data.data
   }
   
