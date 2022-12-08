@@ -25,7 +25,7 @@ theme="light"/>
     <App />
    
   </BrowserRouter>
-     <ReactQueryDevtools initialIsOpen={false} position="bottom-right"/>
+     <ReactQueryDevtools initialIsOpen={false} position="bottom-left"/>
      </QueryClientProvider>
     
 

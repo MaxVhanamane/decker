@@ -45,13 +45,7 @@ type PayloadData={
 
         onError:(error,data:PayloadData,context)=>{
        
-          toast.error(((error as Error).message), {
-            position: "top-left",
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-            });
+          toast.error(((error as Error).message));
        
           queryClient.setQueryData(["cards",data.deck_id],context)
         },

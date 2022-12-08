@@ -6,6 +6,7 @@ import useDeleteCard from './../hooks/useDeleteCard';
 import { MdOutlineDeleteOutline, MdOutlineModeEdit } from 'react-icons/md';
 import { BiEdit } from 'react-icons/bi';
 import useEditCard from './../hooks/useEditCard';
+import { toast } from 'react-toastify';
 // let oldContent:string //this  works
 type OldContent={
   oldContent:string,
@@ -26,9 +27,16 @@ function Cards() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const payload={deck_id:deck_id! ,content}
-    addCard(payload)
-    setContent("")
+    if(content.length>0){
+
+      const payload={deck_id:deck_id! ,content}
+      addCard(payload)
+      setContent("")
+    }
+    else{
+      toast.info("Card details must contain one or more characters.");
+    }
+ 
   };
 
 
@@ -79,13 +87,12 @@ function Cards() {
     <div className="flex flex-col gap-2 mt-6 w-full  relative ">
       <div className="w-full px-4 mx-auto">
         <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
-          <label htmlFor="title" className=" flex justify-center items-center">
+          <label htmlFor="title" className=" font-bold text-gray-700">
             Card details
           </label>
           <textarea
-            className=" lg:w-[35rem] md:w-96 w-80 border-2 border-gray-500 text-gray-900 px-3 py-2 rounded-md"
-            id="title"
-            rows={4}
+            className=" resize-y lg:w-[35rem] md:w-96 w-80 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-800 px-3 py-2 rounded-md"
+            rows={2}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
               setContent(e.target.value);
             }}
@@ -102,7 +109,7 @@ function Cards() {
           {data?.cards?.map((card,index) => {
             return (
               <div
-                className="relative bg-gray-200  flex text-gray-800
+                className="relative shadow-lg  flex text-gray-800
                 rounded-md w-fit px-10 py-8 h-fit text-justify my-auto max-w-full "
                            key={index}
               >

@@ -48,13 +48,7 @@ export type DeckTypes = {
         onSettled:(serverData,error,data,context)=>{
           if(error){
             queryClient.setQueryData(["cards",data.deck_id],context) 
-            toast.error(((error as Error).message), {
-              position: "top-left",
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-              });
+            toast.error(((error as Error).message));
           }
          queryClient.invalidateQueries(["cards",data.deck_id])
         }

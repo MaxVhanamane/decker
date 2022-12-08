@@ -9,6 +9,7 @@ import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import useDeleteDeck from './../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
+import { toast } from 'react-toastify';
 
   function Home() {
     const [title, setTitle] = useState<string>("");
@@ -30,7 +31,7 @@ import usePinDeck from '../hooks/usePinDeck';
         addDeck(title)
       }
       else{
-        alert("The title of the deck should be at least 1 character long.")
+        toast.info("The title of the deck should be at least 1 character long.");
       }
     };
   
@@ -55,7 +56,7 @@ import usePinDeck from '../hooks/usePinDeck';
 
 
     if(isError){
-      return <p>Error {(error as Error).message}</p>
+      return  <div className="flex justify-center items-center h-screen w-full"><p>Error {(error as Error).message}</p></div>
     }
    
     if(isLoading){
@@ -67,9 +68,9 @@ import usePinDeck from '../hooks/usePinDeck';
       <div className="flex flex-col gap-2 mt-20 ">
         <Droppable droppableId="deleteArea">
           {
-            (provided)=>{
-              return    <div className="absolute top-34 right-24 " ref={provided.innerRef} {...provided.droppableProps}>
-              <p  className=" text-3xl text-red-500   "><BsTrash/></p>
+            (provided,snapshot)=>{
+              return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
+              <p  className={`text-3xl text-[#459C98] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash/></p>
              </div>
             }
           }
@@ -77,11 +78,11 @@ import usePinDeck from '../hooks/usePinDeck';
        </Droppable>
         <div className="w-full px-4 mx-auto">
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
-            <label htmlFor="title" className=" flex justify-center items-center">
+            <label htmlFor="title" className="font-bold text-gray-700">
               Deck title
             </label>
             <input
-              className=" lg:w-96 w-80 py-1 border-2 border-gray-500 text-gray-900 px-2 mx-4 rounded-md"
+              className=" lg:w-96 w-80 py-1 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-800 px-2 mx-4 rounded-md"
               type="text"
               id="title"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,8 +106,8 @@ import usePinDeck from '../hooks/usePinDeck';
   
   {(provided,snapshot)=>(
   <div 
-  className={`relative    ${snapshot.isDragging ? "  border-2 border-gray-600": "bg-gray-200"} flex text-gray-800
-               rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full border-2 shadow-lg `}
+  className={`relative    ${snapshot.isDragging ? " bg-gray-200": "shadow-lg"} flex text-gray-800
+               rounded-md w-fit px-16 py-8 h-fit  my-auto justify-center items-center text-justify max-w-full  `}
          ref={provided.innerRef}    
          {...provided.dragHandleProps}
          {...provided.draggableProps}
@@ -117,7 +118,7 @@ import usePinDeck from '../hooks/usePinDeck';
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none  font-bold rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
  </div>
 
-<Link to={`cards/${deck._id}`} > <p className="px-4">{deck.title}</p> </Link>
+<Link to={`cards/${deck._id}`} > <p >{deck.title}</p> </Link>
 </div>
   )}
 
@@ -134,7 +135,7 @@ import usePinDeck from '../hooks/usePinDeck';
         </Droppable>
         </div>:null}
   
-       {alldecks!.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-10  p-4 mx-4" >
+       {alldecks!.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  p-4 mx-4" >
         <h1 className="text-left text-lg font-semibold text-gray-800 m-4"> {alldecks!.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
         <Droppable droppableId="deckArea" >
@@ -150,8 +151,8 @@ import usePinDeck from '../hooks/usePinDeck';
 
                     {(provided,snapshot)=>{
       return <div 
-      className={`relative ${snapshot.isDragging? "border-2 border-gray-600" :"bg-gray-200" } flex text-gray-800
-                   rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full  border-2`}
+      className={`relative ${snapshot.isDragging ? " bg-gray-200": "shadow-lg"} flex text-gray-800
+                   rounded-md w-fit px-16 py-8 h-fit  my-auto justify-center items-center text-justify max-w-full  `}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
@@ -164,7 +165,7 @@ import usePinDeck from '../hooks/usePinDeck';
  </div>
 
 
-  <Link to={`cards/${deck._id}`} > {deck.title} </Link>
+  <Link to={`cards/${deck._id}`} ><p className="w-fit"> {deck.title}</p> </Link>
  
     </div>
    
