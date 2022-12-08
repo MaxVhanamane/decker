@@ -65,12 +65,12 @@ import { toast } from 'react-toastify';
   
     return (
  
-      <div className="flex flex-col gap-2 mt-20 ">
+      <div className="flex flex-col gap-2 mt-8 ">
         <Droppable droppableId="deleteArea">
           {
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
-              <p  className={`text-3xl text-[#459C98] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash/></p>
+              <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash/></p>
              </div>
             }
           }
@@ -107,15 +107,15 @@ import { toast } from 'react-toastify';
   {(provided,snapshot)=>(
   <div 
   className={`relative    ${snapshot.isDragging ? " bg-gray-200": "shadow-lg"} flex text-gray-800
-               rounded-md w-fit px-16 py-8 h-fit  my-auto justify-center items-center text-justify max-w-full  `}
+               rounded-md w-fit px-[4.5rem] py-8 h-fit  my-auto justify-center items-center text-justify max-w-full  `}
          ref={provided.innerRef}    
          {...provided.dragHandleProps}
          {...provided.draggableProps}
 >
   <div className="absolute bottom-0 right-0">
- <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none  font-bold rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-xl outline-none   rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none  font-bold rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-md px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
  </div>
 
 <Link to={`cards/${deck._id}`} > <p >{deck.title}</p> </Link>
@@ -152,16 +152,16 @@ import { toast } from 'react-toastify';
                     {(provided,snapshot)=>{
       return <div 
       className={`relative ${snapshot.isDragging ? " bg-gray-200": "shadow-lg"} flex text-gray-800
-                   rounded-md w-fit px-16 py-8 h-fit  my-auto justify-center items-center text-justify max-w-full  `}
+                   rounded-md w-fit px-[4.5rem] py-8 h-fit  my-auto justify-center items-center text-justify max-w-full  `}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
     >
       
       <div className="absolute bottom-0 right-0">
- <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none  font-bold rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-xl outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none  font-bold rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsPin/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none  rounded-tr text-md px-1  text-center text-blue-700 hover:scale-105"><BsPin/></button>
  </div>
 
 

@@ -110,14 +110,14 @@ function Cards() {
             return (
               <div
                 className="relative shadow-lg  flex text-gray-800
-                rounded-md w-fit px-10 py-8 h-fit text-justify my-auto max-w-full "
+                rounded-md w-fit px-[4.5rem] py-8 h-fit text-justify my-auto max-w-full "
                            key={index}
               >
                    <div className="absolute bottom-0 right-0">
 
- <button onClick={()=>{handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  font-bold rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ <button onClick={()=>{handleDelete(index)}} type="button" className="text-red-500 text-xl outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handleEdit(card,index)}} type="button" className="text-blue-500 text-lg outline-none  font-bold rounded-tr px-1  text-center hover:scale-105"><BiEdit/></button>
+ <button onClick={()=>{handleEdit(card,index)}} type="button" className="text-blue-500 text-xl outline-none  rounded-tr px-1  text-center hover:scale-105"><BiEdit/></button>
 
 
  </div> {card}
