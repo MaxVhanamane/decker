@@ -44,8 +44,21 @@ app.post('/deck', async function (req:Request, res:Response) {
 })
 
 app.put('/deck', async function (req:Request, res:Response) {
-  const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
-  res.json(updatedDeck)
+  try{
+    const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
+    res.json(updatedDeck)
+  }
+ catch(error){
+  if(error instanceof Error){
+
+    res.status(400).send({error:error.message,isError:true});
+  }
+  else {
+    res.status(400).json({error:"Unexpected error",isError:true})
+   }
+ }
+
+
 })
 
 app.delete('/deck/:id', async function (req:Request, res:Response) {

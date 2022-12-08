@@ -1,23 +1,17 @@
 import { request } from './../utils/axios-utils';
 import { useMutation } from 'react-query';
 import { useQueryClient } from 'react-query';
+import { toast } from 'react-toastify';
 
 type PayloadData={
     deck_id:string,
     content:string
   }
-  // const createCard = async (id:string,content:string)=> {const response = await fetch(`http://localhost:5000/deck/${id}/card`, {
-  //     method: "POST",
-  //     body: JSON.stringify({ content }),
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
-    
-  // return response.json()
-  // }
-  
-  // export default createCard
+
+  type OldData={
+    cards:string[];
+    title:string;
+  }
   
   
    const createCard=async(content:PayloadData)=>{
@@ -29,14 +23,47 @@ type PayloadData={
   const useCreateCard = ()=>{
     const queryClient =useQueryClient()
     return useMutation(createCard,{
-        // Not doing any optimistic updates we will only show the data once it is added in the db.
-        onSuccess:()=>{
-          queryClient.invalidateQueries("cards") 
-        },
-        onError:(error)=>{
-          console.log("Error please try again!")
+
+      onMutate:async (data:PayloadData)=>{
+        await queryClient.cancelQueries(["cards",data.deck_id]);
+       const previousCardData=queryClient.getQueryData(["cards",data.deck_id])
+      queryClient.setQueryData<OldData | undefined>(["cards",data.deck_id],(oldCardData)=>{
+     
+        if(oldCardData){
+          const newArray=[...oldCardData.cards] // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will refere the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
+          
+          newArray.push(data.content)
+          return {...oldCardData,cards:newArray}
         }
        })
+    
+       return {previousCardData}
+
+      },
+
+
+
+        onError:(error,data:PayloadData,context)=>{
+       
+          toast.error(((error as Error).message), {
+            position: "top-left",
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+       
+          queryClient.setQueryData(["cards",data.deck_id],context)
+        },
+        onSettled:(dataReturnedByTheAxiosRequest, error, dataThatWePassed, context)=>{
+          queryClient.invalidateQueries(["cards",dataThatWePassed.deck_id])
+        }
+        
+        
+       })
+
+
+      
   }
 
   export default useCreateCard

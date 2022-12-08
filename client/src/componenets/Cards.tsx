@@ -71,7 +71,6 @@ function Cards() {
   if (isError) {
     return <span>Error: {(error as Error).message}</span>
   }
-
   // if(isMutationError){
   //   return <p>Error{(mutationError as Error)?.message}</p>
   // }

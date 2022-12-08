@@ -1,13 +1,14 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import {BsPin} from "react-icons/bs"
+import {BsPin, BsTrash} from "react-icons/bs"
 import {BsFillPinFill} from "react-icons/bs"
-import {MdOutlineDeleteOutline} from "react-icons/md"
+import {RiDeleteBin6Line} from "react-icons/ri"
+import {MdDelete, MdDeleteForever, MdOutlineDeleteOutline} from "react-icons/md"
 import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import useDeleteDeck from './../hooks/useDeleteDeck';
-import useUpdateDeck from './../hooks/useUpdateDeck';
+import usePinDeck from '../hooks/usePinDeck';
 
   function Home() {
     const [title, setTitle] = useState<string>("");
@@ -18,8 +19,7 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
 
     const {mutate:deleteOneDeck}=useDeleteDeck()
 
-    const {mutate:pinDeck}=useUpdateDeck()
-   
+    const {mutate:pinDeck,error:pinError,isError:isPinError}=usePinDeck()
 
 
     const handleSubmit = async (e: FormEvent) => {
@@ -33,6 +33,7 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
         alert("The title of the deck should be at least 1 character long.")
       }
     };
+  
   
     
     const handleDelete = async (id:string) => {
@@ -64,8 +65,16 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
     return (
  
       <div className="flex flex-col gap-2 mt-20 ">
-  
-
+        <Droppable droppableId="deleteArea">
+          {
+            (provided)=>{
+              return    <div className="absolute top-34 right-24 " ref={provided.innerRef} {...provided.droppableProps}>
+              <p  className=" text-3xl text-red-500   "><BsTrash/></p>
+             </div>
+            }
+          }
+    
+       </Droppable>
         <div className="w-full px-4 mx-auto">
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
             <label htmlFor="title" className=" flex justify-center items-center">
@@ -83,7 +92,7 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
             <button className="bg-[#459C98] hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md ">Add Deck</button>
           </form>
         </div>
-
+ 
     {alldecks!.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 mb-10  p-4 mx-4  " >
   <h1 className="text-left  text-lg font-semibold text-gray-800  m-4">Pinned </h1>
 
@@ -94,10 +103,10 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
           return (
             <Draggable draggableId={deck._id} index={index} key={deck._id}>
   
-  {(provided)=>(
+  {(provided,snapshot)=>(
   <div 
-  className="relative bg-gray-200  flex text-gray-800
-               rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full "
+  className={`relative    ${snapshot.isDragging ? "  border-2 border-gray-600": "bg-gray-200"} flex text-gray-800
+               rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full border-2 shadow-lg `}
          ref={provided.innerRef}    
          {...provided.dragHandleProps}
          {...provided.draggableProps}
@@ -108,7 +117,7 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none  font-bold rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
  </div>
 
-<Link to={`cards/${deck._id}`} > <p>{deck.title}</p> </Link>
+<Link to={`cards/${deck._id}`} > <p className="px-4">{deck.title}</p> </Link>
 </div>
   )}
 
@@ -139,10 +148,10 @@ import useUpdateDeck from './../hooks/useUpdateDeck';
                  return (
                   <Draggable draggableId={deck._id} index={index} key={deck._id}>
 
-                    {(provided)=>{
+                    {(provided,snapshot)=>{
       return <div 
-      className="relative bg-gray-200  flex text-gray-800
-                   rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full "
+      className={`relative ${snapshot.isDragging? "border-2 border-gray-600" :"bg-gray-200" } flex text-gray-800
+                   rounded-md w-fit px-16 py-8 h-fit text-center my-auto justify-center items-center break-all max-w-full  border-2`}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 

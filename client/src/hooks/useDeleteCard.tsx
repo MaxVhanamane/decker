@@ -1,6 +1,7 @@
 import { request } from './../utils/axios-utils';
 import { useMutation } from 'react-query';
 import { useQueryClient } from 'react-query';
+import { toast } from 'react-toastify';
 export type DeckTypes = {
     success:boolean,
     cards:{_id: string;
@@ -11,15 +12,13 @@ export type DeckTypes = {
     deck_id:string;
     index:number
   }
-// export const deleteCard = async (id:string,index:number):Promise<DeckTypes>=>{
-//     const response = await fetch(`http://localhost:5000/card/${id}/${index}}`, {
-//         method: "DELETE",
-       
-//       });
-      
-//       return response.json()
-// }
 
+
+  type OldData={
+    cards:string[];
+    title:string;
+  }
+  
 
  const deleteCard= async (payLoad:PayloadType) :Promise<DeckTypes>=>{
   const res= await request.delete(`/card/${payLoad.deck_id}/${payLoad.index}}`)
@@ -30,12 +29,34 @@ export type DeckTypes = {
  const useDeleteCard = () =>{
     const queryClient = useQueryClient()
      return useMutation(deleteCard,{
-        // Not doing any optimistic updates we will only show the data once it is added in the db.
-        onSuccess:()=>{
-          queryClient.invalidateQueries("cards") 
-        },
-        onError:(error)=>{
-          console.log("Error please try again!")
+
+      onMutate:async(data:PayloadType)=>{
+        await queryClient.cancelQueries(["cards",data.deck_id])
+        const previousQueryData=queryClient.getQueryData(["cards",data.deck_id])
+        queryClient.setQueryData<OldData | undefined>(["cards",data.deck_id],(oldQueryData)=>{
+          if(oldQueryData){
+            const newArray=[...oldQueryData?.cards]
+            newArray.splice(data.index,1)
+            console.log("newarra",newArray)
+            return {...oldQueryData,cards:newArray}
+          }
+        })
+        return previousQueryData
+      },
+    
+      // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
+        onSettled:(serverData,error,data,context)=>{
+          if(error){
+            queryClient.setQueryData(["cards",data.deck_id],context) 
+            toast.error(((error as Error).message), {
+              position: "top-left",
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "light",
+              });
+          }
+         queryClient.invalidateQueries(["cards",data.deck_id])
         }
        })
  }

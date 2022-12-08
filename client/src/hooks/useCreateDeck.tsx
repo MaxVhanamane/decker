@@ -1,5 +1,6 @@
 import { request } from "../utils/axios-utils";
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { DeckTypes } from "./useGetDecks";
 
  const createDeck = async (title:string)=> {
   // you don't need to add try catch block as axios will automatically throw an error. 
@@ -20,9 +21,11 @@ const useCreateDeck= ()=>{
    // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
         const previousQueryData=queryClient.getQueryData("decks")
-              queryClient.setQueryData("decks",(oldQueryData)=>{
-                {/* @ts-ignore*/}
-        return [...oldQueryData,{title,_id:Math.random().toString()}]
+              queryClient.setQueryData<DeckTypes[] | undefined>("decks",(oldQueryData)=>{
+                if(oldQueryData){
+
+                  return [...oldQueryData,{title,_id:Math.random().toString(),cards:[],pinned:false}]
+                }
            
         
         })
