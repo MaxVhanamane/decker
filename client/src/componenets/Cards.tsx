@@ -104,20 +104,20 @@ function Cards() {
 
       </div>
 
-      <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-10 mb-16">
+      <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-2 mb-16">
         
           {data?.cards?.map((card,index) => {
             return (
               <div
-                className="relative shadow-lg  flex text-gray-800
-                rounded-md w-fit px-[4.5rem] py-8 h-fit text-justify my-auto max-w-full "
+                className="relative   border border-gray-500  flex text-gray-800
+                rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full "
                            key={index}
               >
                    <div className="absolute bottom-0 right-0">
 
- <button onClick={()=>{handleDelete(index)}} type="button" className="text-red-500 text-xl outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ <button onClick={()=>{handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handleEdit(card,index)}} type="button" className="text-blue-500 text-xl outline-none  rounded-tr px-1  text-center hover:scale-105"><BiEdit/></button>
+ <button onClick={()=>{handleEdit(card,index)}} type="button" className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-105"><BiEdit/></button>
 
 
  </div> {card}
