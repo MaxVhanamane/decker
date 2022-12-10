@@ -39,7 +39,7 @@ resave:false,
 saveUninitialized:true,
 store:store,
 cookie: {
-  secure:false,
+  secure:true,
   sameSite:"none",
 },
 }))
