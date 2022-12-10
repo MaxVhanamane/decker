@@ -29,7 +29,7 @@ export default function Login() {
     
       const data = {  email, password };
        console.log(data)
-      request.post("/login",data, { withCredentials: true })
+      request.post("/login",data)
 //       const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/login`, {
 //         method: 'POST', // or 'PUT'
 //         headers: {
@@ -115,7 +115,7 @@ export default function Login() {
                       >
                         Log in
                       </button>
-                     <Link to="/forgotpassword" ><a className="text-gray-600 hover:text-gray-700">Forgot password?</a></Link>
+                     <Link to="/forgotpassword" className="text-gray-600 hover:text-gray-700" >Forgot password?</Link>
                     </div>
                     <div className="flex items-center justify-between pb-6">
                       <p className="mb-0 mr-2">Don&apos;t have an account?</p>
