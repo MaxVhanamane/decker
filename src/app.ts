@@ -34,7 +34,7 @@ store.on('error', function(error:Error) {
 });
 // session
 app.use(session({
-secret:"maxvhanamana",
+secret:"maxvhanamane",
 resave:false,
 saveUninitialized:true,
 store:store,
