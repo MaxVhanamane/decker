@@ -68,10 +68,10 @@ store.on('error', function (error) {
 app.use((0, express_session_1.default)({
     secret: "maxvhanamane",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: store,
     cookie: {
-        secure: false,
+        secure: true,
         sameSite: "none",
     },
 }));

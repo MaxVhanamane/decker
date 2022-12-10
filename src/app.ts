@@ -36,10 +36,10 @@ store.on('error', function(error:Error) {
 app.use(session({
 secret:"maxvhanamane",
 resave:false,
-saveUninitialized:true,
+saveUninitialized:false,
 store:store,
 cookie: {
-  secure:false,
+  secure:true,
   sameSite:"none",
 },
 }))
