@@ -5,6 +5,9 @@ import Cards  from './componenets/Cards';
 import { DragDropContext, DropResult, ResponderProvided } from "react-beautiful-dnd";
 import usePinDeck from './hooks/usePinDeck';
 import useDeleteDeck from './hooks/useDeleteDeck';
+import NotFound from './componenets/NotFound';
+import SignUp from './pages/Signup';
+import Login from './pages/Login';
 
 
 function App() {
@@ -28,6 +31,9 @@ const {mutate:deleteOneDeck}=useDeleteDeck()
      <Routes>
         <Route path="/" element={ <Home /> } />
         <Route path="/cards/:deck_id" element={ <Cards/> } />
+        <Route path="/signup" element={ <SignUp /> } />
+        <Route path="/login" element={ <Login /> } />
+        <Route path='*' element={<NotFound/>} />
       </Routes>
       </DragDropContext>
     </>
