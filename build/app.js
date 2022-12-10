@@ -135,6 +135,7 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 //Deck routes 
 app.get('/deck', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log("deck get request", req.headers.cookie);
         const decks = yield deck_1.default.find({});
         res.json(decks);
     });

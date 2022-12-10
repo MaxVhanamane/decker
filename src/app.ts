@@ -115,6 +115,7 @@ app.listen(process.env.PORT || PORT,()=>{
 //Deck routes 
 
 app.get('/deck', async function (req:Request, res:Response) {
+  console.log("deck get request",req.headers.cookie)
   const decks=await DeckModal.find({})
   res.json(decks)
 })
