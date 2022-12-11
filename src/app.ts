@@ -7,6 +7,8 @@ import session from "express-session";
 import passport from "passport";
 import User from "./models/user";
 import { UserDetails } from "./types/UserDetails";
+const MongoDBStore = require('connect-mongodb-session')(session);
+
 const GoogleStrategy = require('passport-google-oauth20');
 config()
 const app = express()
@@ -25,6 +27,16 @@ app.use((err: any, req: Request, res: Response, next: any) => {
   console.error("loggin errors",err.stack);
   next(err);
 });
+
+const  store = new MongoDBStore({
+  uri: process.env.MONGO_URI!,
+  collection: 'mysessions'
+});
+
+// Catch errors
+store.on('error', function(error:Error) {
+  console.log(error);
+});
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173","http://localhost:3000","https://query-silk.vercel.app"] ,credentials:true}))
@@ -34,10 +46,11 @@ app.use(session({
   secret:"secrete",
   resave:true,
   saveUninitialized:true,
+  store:store,
   cookie:{
     httpOnly:true,
     sameSite:"none",
-    secure:true,
+    secure:false,
     maxAge: 1000 * 60 * 60 * 24 * 7
   }
  
@@ -260,7 +273,7 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
    console.log("after google success auth................",req.user)
-    res.redirect("https://decker.vercel.app");
+    res.redirect("http://localhost:5173");
   });
 
  app.get("/getuser",(req,res)=>{

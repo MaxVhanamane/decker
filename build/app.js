@@ -43,6 +43,7 @@ const cors_1 = __importDefault(require("cors"));
 const express_session_1 = __importDefault(require("express-session"));
 const passport_1 = __importDefault(require("passport"));
 const user_1 = __importDefault(require("./models/user"));
+const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require('passport-google-oauth20');
 (0, dotenv_1.config)();
 const app = (0, express_1.default)();
@@ -59,6 +60,14 @@ app.use((err, req, res, next) => {
     console.error("loggin errors", err.stack);
     next(err);
 });
+const store = new MongoDBStore({
+    uri: process.env.MONGO_URI,
+    collection: 'mysessions'
+});
+// Catch errors
+store.on('error', function (error) {
+    console.log(error);
+});
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173", "http://localhost:3000", "https://query-silk.vercel.app"], credentials: true }));
@@ -68,10 +77,11 @@ app.use((0, express_session_1.default)({
     secret: "secrete",
     resave: true,
     saveUninitialized: true,
+    store: store,
     cookie: {
         httpOnly: true,
         sameSite: "none",
-        secure: true,
+        secure: false,
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
 }));
@@ -255,7 +265,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
     console.log("after google success auth................", req.user);
-    res.redirect("https://decker.vercel.app");
+    res.redirect("http://localhost:5173");
 });
 app.get("/getuser", (req, res) => {
     res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
