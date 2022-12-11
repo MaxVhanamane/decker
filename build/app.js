@@ -69,6 +69,7 @@ app.use((0, express_session_1.default)({
     resave: true,
     saveUninitialized: true,
     cookie: {
+        httpOnly: true,
         sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24 * 7
@@ -134,6 +135,8 @@ app.get('/deck', function (req, res) {
         // console.log("deck get userrrrrrrrrr",req.user) 
         //get the user
         const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
+        console.log("req.user", req.user);
+        console.log("req.cookie", req.headers.cookie);
         const user = yield user_1.default.findOne({ email: email });
         if (user) {
             const decks = yield deck_1.default.find({ email: user.id });

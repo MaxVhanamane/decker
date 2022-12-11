@@ -35,6 +35,7 @@ app.use(session({
   resave:true,
   saveUninitialized:true,
   cookie:{
+    httpOnly:true,
     sameSite:"none",
     secure:true,
     maxAge: 1000 * 60 * 60 * 24 * 7
@@ -122,6 +123,8 @@ app.get('/deck', async function (req:any, res:Response) {
   // console.log("deck get userrrrrrrrrr",req.user) 
   //get the user
   const email=req?.user?.email
+  console.log("req.user",req.user)
+  console.log("req.cookie",req.headers.cookie)
   const user=await User.findOne({email:email})
   if(user){
     const decks=await DeckModal.find({email:user.id}) 
