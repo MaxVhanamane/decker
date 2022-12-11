@@ -81,7 +81,7 @@ app.use((0, express_session_1.default)({
     cookie: {
         httpOnly: true,
         sameSite: "none",
-        secure: false,
+        secure: true,
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
 }));
