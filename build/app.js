@@ -51,8 +51,10 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
-// app.set('trust proxy', 1)
+app.use((0, cors_1.default)({ origin: "https://decker.vercel.app", credentials: true, optionsSuccessStatus: 200,
+    allowedHeaders: "Content-Type,Authorization",
+    methods: "GET,PUT,POST,DELETE" }));
+app.set('trust proxy', 1);
 // Middleware
 app.use((0, express_session_1.default)({
     secret: "secrete",
