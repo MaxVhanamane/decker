@@ -41,12 +41,10 @@ const mongoose_1 = __importStar(require("mongoose"));
 const deck_1 = __importDefault(require("./models/deck"));
 const cors_1 = __importDefault(require("cors"));
 const express_session_1 = __importDefault(require("express-session"));
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const user_1 = __importDefault(require("./models/user"));
 const passport_1 = __importDefault(require("passport"));
-const passport_local_1 = __importDefault(require("passport-local"));
-const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
-const LocalStrategy = passport_local_1.default.Strategy;
+const user_1 = __importDefault(require("./models/user"));
+const GoogleStrategy = require('passport-google-oauth20');
+const proxy = require('express-http-proxy');
 (0, dotenv_1.config)();
 const app = (0, express_1.default)();
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
@@ -54,78 +52,48 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: ["http://127.0.0.1:5173", "https://decker.vercel.app"], credentials: true }));
-const store = new MongoDBStore({
-    uri: process.env.MONGO_URI,
-    collection: 'mysessions'
-});
-// Catch errors
-store.on('error', function (error) {
-    console.log(error);
-});
-// session
+app.use((0, cors_1.default)({ origin: ["http://localhost:3000", "http://127.0.0.1:5173", "https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
+// Middleware
 app.use((0, express_session_1.default)({
-    secret: "maxvhanamane",
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-    cookie: {
-        secure: true,
-        sameSite: "none",
-        domain: "https://decker.vercel.app"
-    }
+    secret: "secrete",
+    resave: true,
+    saveUninitialized: true,
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
-//passport 
-passport_1.default.use(new LocalStrategy({ usernameField: "email" }, 
-// here in function username and password are equal to req.body.username and req.body.password. passport automatically does that for you.
-function (username, password, done) {
-    user_1.default.findOne({ email: username }, function (err, user) {
-        if (err) {
-            return done(err);
-        } // If there is error we will return an error to done function.
+passport_1.default.serializeUser((user, done) => {
+    return done(null, user);
+});
+passport_1.default.deserializeUser((user, done) => {
+    return done(null, user);
+});
+//gooogle strategy
+passport_1.default.use(new GoogleStrategy({
+    callbackURL: "/auth/google/callback",
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+}, (accessToken, refreshToken, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
+    // This function run on successfull authentication 
+    //extracting required user information from the profile that is given by goolge
+    const userInfo = {
+        email: profile.emails[0].value,
+        username: profile.displayName
+    };
+    try {
+        // now we will check if the user exist in the database. if not we will create new user.
+        const user = yield user_1.default.findOne({ email: profile.emails[0].value });
         if (!user) {
-            return done(null, false);
-        } // If we don't find any user then we will return null and as there is no error we will send false
-        // If we reach this line it means we found the user now let's compare the passoword.
-        bcryptjs_1.default.compare(password, user.password, (err, result) => {
-            if (err)
-                throw err; // If some error occures while decrypting we will throw an error. very less likely but still...
-            if (result === true) {
-                return done(null, user); // If password matches we will send the user
-            }
-            else {
-                return done(null, false); // If password doesn't match then we will send error as null and user as false
-            }
-        });
-    });
-}));
-// used to serialize the user for the session
-passport_1.default.serializeUser(function (user, done) {
-    if (user) {
-        return done(null, user._id);
+            const newUser = new user_1.default(userInfo);
+            yield newUser.save();
+        }
+        //  console.log("user profile is this: ", profile) 
+        done(null, profile);
+        //If some error occures while connecting to db of something else we will catch it here
     }
-    return done(null, false);
-    // here we are passing user._id and only this part is stored in the session. and by using this id
-    // we can access the whole object from mongodb database in passport.deserilizeUser. and we can access it using req.user on any request.
-    // where is this user.id going? Are we supposed to access this anywhere?
-});
-// used to deserialize the user
-passport_1.default.deserializeUser(function (id, done) {
-    if (id) {
-        user_1.default.findById(id, function (err, user) {
-            if (err)
-                return done(err, false);
-            const userInfo = {
-                username: user.username,
-                email: user.email
-            };
-            console.log("userInfor", userInfo);
-            return done(err, userInfo);
-        });
+    catch (err) {
+        done(null, false, err);
     }
-});
+})));
 let PORT = 5000;
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 mongoose_1.default.connect(process.env.MONGO_URI, {
@@ -142,19 +110,38 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
     .catch((err) => { console.log(err); });
 //Deck routes 
 app.get('/deck', function (req, res) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("deck get request", req.headers.cookie);
-        const decks = yield deck_1.default.find({});
-        res.json(decks);
+        // console.log("deck get request",req.headers.cookie) 
+        // console.log("deck get userrrrrrrrrr",req.user) 
+        //get the user
+        const email = (_b = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.emails[0]) === null || _b === void 0 ? void 0 : _b.value;
+        const user = yield user_1.default.findOne({ email: email });
+        if (user) {
+            const decks = yield deck_1.default.find({ email: user.id });
+            res.json(decks);
+        }
+        else {
+            res.json(["No User found"]);
+        }
     });
 });
 app.post('/deck', function (req, res) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
-        const newDeck = new deck_1.default({
-            title: req.body.title
-        });
-        const createdDeck = yield newDeck.save();
-        res.json(createdDeck);
+        const email = (_b = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.emails[0]) === null || _b === void 0 ? void 0 : _b.value;
+        const user = yield user_1.default.findOne({ email: email });
+        if (user) {
+            const newDeck = new deck_1.default({
+                email: user === null || user === void 0 ? void 0 : user.id,
+                title: req.body.title
+            });
+            const createdDeck = yield newDeck.save();
+            res.json(createdDeck);
+        }
+        else {
+            res.send("No user found");
+        }
     });
 });
 app.put('/deck', function (req, res) {
@@ -240,47 +227,16 @@ app.delete('/card/:id/:index', function (req, res) {
         }
     });
 });
-// Auth routes 
-app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { username, email, password } = req === null || req === void 0 ? void 0 : req.body;
-    console.log("aaya", username, email, password);
-    if (!username && !password && !email) {
-        res.send("Please provide name, email and password");
-        return;
-    }
-    try {
-        const user = yield user_1.default.findOne({ username });
-        if (!user) {
-            const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
-            const newUser = new user_1.default({
-                username,
-                email,
-                password: hashedPassword
-            });
-            yield newUser.save();
-            res.send("success");
-        }
-        else {
-            res.send("User already exist");
-        }
-    }
-    catch (error) {
-        console.log(error);
-    }
+app.get('/auth/google', passport_1.default.authenticate('google', {
+    scope: ['profile', 'email']
+    // scope:['openid','profile', 'email'] 
 }));
-app.post('/login', passport_1.default.authenticate('local'), (req, res) => {
-    // console.log("session",req.session) 
-    // console.log("user",req.user) 
-    // res.redirect('/');
-    console.log("logged in Successfully");
-    console.log(req.user);
-    console.log("eeeeee", req.session);
-    res.json(req.user);
+app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
+    res.redirect('http://localhost:5173');
 });
-// app.post('/logout', function(req:Request, res:Response) {
-//   req.logout(); // PassportJS method to destroy the session and log out the user
-//   res.sendStatus(200);
-// });
+app.get("/getuser", (req, res) => {
+    res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
+});
 //   import { config } from "dotenv"
 // import express,{Request,Response} from "express"
 // import mongoose, {ConnectOptions, Error} from "mongoose";

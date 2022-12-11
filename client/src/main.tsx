@@ -7,11 +7,15 @@ import {ReactQueryDevtools} from "react-query/devtools"
 
 import {  ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import UserContext from './context/context';
 
 
 const queryClient= new QueryClient()
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <>
     <QueryClientProvider client={queryClient}>
+    <UserContext>
+  
     <BrowserRouter>
     <Navbar/>
     <ToastContainer position="top-left"
@@ -25,8 +29,10 @@ theme="light"/>
     <App />
    
   </BrowserRouter>
+
      <ReactQueryDevtools initialIsOpen={false} position="bottom-left"/>
+     </UserContext>
      </QueryClientProvider>
-    
+     </>
 
 )

@@ -1,4 +1,4 @@
-import React, { useState,useEffect ,ChangeEvent} from 'react'
+import React, { useState,useEffect ,ChangeEvent,MouseEvent} from 'react'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FormEvent } from 'react';
@@ -26,46 +26,15 @@ export default function Login() {
 
   const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
-      const data = {  email, password };
-       console.log(data)
-      request.post("/login",data)
-//       const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/login`, {
-//         method: 'POST', // or 'PUT'
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(data),
-//       })
-//       const response = await res.json()
-//       if(response.success){
-//      localStorage.setItem("token",response.jwtToken)
-//      localStorage.setItem("user",response.email)
-//      localStorage.setItem("role",response.role)
-//       toast.success('Logged in successfully!', {
-//         autoClose: 2000,
-//         hideProgressBar: false,
-//         closeOnClick: true,
-//         pauseOnHover: true,
-//         draggable: true,
-//         progress: undefined,
-//       });
-     
-        
-    
-//     }
-// else{
-//   toast.error(response.error, {
-//     autoClose: 2000,
-//     hideProgressBar: false,
-//     closeOnClick: true,
-//     pauseOnHover: true,
-//     draggable: true,
-//     progress: undefined,
-//   });
-// }
-   
-    
+    // window.open("http://localhost:5000/auth/google","_self")
+
+  }
+  const handleGoogleLogin =  () => {
+    window.open("http://localhost:5000/auth/google","_self")
+
+  }
+  const handleGithubLogin =  () => {
+    window.open("http://localhost:5000/auth/google","_self")
 
   }
   return (
@@ -105,16 +74,27 @@ export default function Login() {
                       />
                     </div>
                     <div className="text-center pt-1 mb-12 pb-1">
-                      <button
+                      <button onClick={()=>handleGoogleLogin()}
                         className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-[#459C98] hover:bg-[#23847f]"
       
                         data-mdb-ripple="true"
                         data-mdb-ripple-color="light"
-                        type="submit"
+                        type="button"
                       
                       >
-                        Log in
+                        Log in Google
                       </button>
+                      <button onClick={()=>handleGithubLogin()}
+                        className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-[#459C98] hover:bg-[#23847f]"
+      
+                        data-mdb-ripple="true"
+                        data-mdb-ripple-color="light"
+                        type="button"
+                      
+                      >
+                        Log in With Github
+                      </button>
+                      
                      <Link to="/forgotpassword" className="text-gray-600 hover:text-gray-700" >Forgot password?</Link>
                     </div>
                     <div className="flex items-center justify-between pb-6">
