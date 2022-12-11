@@ -147,12 +147,7 @@ app.listen(process.env.PORT || PORT,()=>{
 //Deck routes 
 
 app.get('/deck', useDetails,async function (req:any, res:Response) {
-  //get the user
-  const email=req?.user?.email
-  console.log("req.user",req.user)
-  console.log("req.cookie",req.headers.cookie)
-  console.log("userDetailssssssssssssssssssssssssss",req.userDetails)
-  const user=await User.findOne({email:email})
+  const user=req.useDetails
   if(user){
     const decks=await DeckModal.find({email:user.id}) 
     res.json(decks)
@@ -165,9 +160,7 @@ app.get('/deck', useDetails,async function (req:any, res:Response) {
 
 
 app.post('/deck', async function (req:any, res:Response) {
-  const email=req?.user?.email
-  console.log("email",email)
- const user=await User.findOne({email:email})
+  const user=req.useDetails
  if(user){
   const newDeck=new DeckModal({
     email:user?.id,
