@@ -27,9 +27,7 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 });
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173","http://localhost:3000","https://query-silk.vercel.app"] ,credentials:true,  optionsSuccessStatus: 200,
-allowedHeaders: "Content-Type,Authorization",
-methods: "GET,PUT,POST,DELETE"}))
+app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173","http://localhost:3000","https://query-silk.vercel.app"] ,credentials:true}))
 app.set('trust proxy', 1)
 // Middleware
 app.use(session({
@@ -38,7 +36,8 @@ app.use(session({
   saveUninitialized:true,
   cookie:{
     sameSite:"none",
-    secure:true
+    secure:true,
+    maxAge: 1000 * 60 * 60 * 24 * 7
   }
  
 }))
@@ -256,7 +255,7 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
    console.log("after google success auth................",req.user)
-    res.redirect("https://query-silk.vercel.app");
+    res.redirect("https://decker.vercel.app");
   });
 
  app.get("/getuser",(req,res)=>{
