@@ -273,7 +273,7 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
    console.log("after google success auth................",req.user)
-    res.redirect("http://localhost:5173");
+    res.redirect("https://decker.vercel.app");
   });
 
  app.get("/getuser",(req,res)=>{

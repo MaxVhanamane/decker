@@ -265,7 +265,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
     console.log("after google success auth................", req.user);
-    res.redirect("http://localhost:5173");
+    res.redirect("https://decker.vercel.app");
 });
 app.get("/getuser", (req, res) => {
     res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
