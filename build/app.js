@@ -56,7 +56,7 @@ app.use((req, res, next) => {
 });
 // Log errors
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error("loggin errors", err.stack);
     next(err);
 });
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
@@ -77,14 +77,6 @@ app.use((0, express_session_1.default)({
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
-passport_1.default.serializeUser((user, done) => {
-    return done(null, user._id);
-});
-passport_1.default.deserializeUser((id, done) => {
-    user_1.default.findById(id, (err, doc) => {
-        return done(null, doc);
-    });
-});
 //gooogle strategy
 passport_1.default.use(new GoogleStrategy({
     callbackURL: "/auth/google/callback",
@@ -113,6 +105,16 @@ passport_1.default.use(new GoogleStrategy({
         return done(null, false, err);
     }
 })));
+passport_1.default.serializeUser((user, done) => {
+    console.log("serialized user", user);
+    return done(null, user._id);
+});
+passport_1.default.deserializeUser((id, done) => {
+    console.log("deserializeUser", id);
+    user_1.default.findById(id, (err, doc) => {
+        return done(null, doc);
+    });
+});
 let PORT = 5000;
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 mongoose_1.default.connect(process.env.MONGO_URI, {
@@ -131,8 +133,6 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 app.get('/deck', function (req, res) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        // console.log("deck get request",req.headers.cookie) 
-        // console.log("deck get userrrrrrrrrr",req.user) 
         //get the user
         const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
         console.log("req.user", req.user);

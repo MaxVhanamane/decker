@@ -22,7 +22,7 @@ app.use((req: Request, res: Response, next: any) => {
 
 // Log errors
 app.use((err: any, req: Request, res: Response, next: any) => {
-  console.error(err.stack);
+  console.error("loggin errors",err.stack);
   next(err);
 });
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
@@ -47,16 +47,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-passport.serializeUser((user:any,done)=>{
- return done(null,user._id)
-})
-passport.deserializeUser((id:string,done)=>{
 
-  User.findById(id,(err:Error,doc:any)=>{
-    return done(null,doc)
-
-  })
-})
 //gooogle strategy
 
 passport.use(
@@ -95,6 +86,19 @@ passport.use(
   )
 );
 
+passport.serializeUser((user:any,done)=>{
+  console.log("serialized user",user)
+  return done(null,user._id)
+ })
+ passport.deserializeUser((id:string,done)=>{
+  console.log("deserializeUser",id)
+
+   User.findById(id,(err:Error,doc:any)=>{
+     return done(null,doc)
+ 
+   })
+ })
+
 
 
 let PORT:number=5000
@@ -119,8 +123,6 @@ app.listen(process.env.PORT || PORT,()=>{
 //Deck routes 
 
 app.get('/deck', async function (req:any, res:Response) {
-  // console.log("deck get request",req.headers.cookie) 
-  // console.log("deck get userrrrrrrrrr",req.user) 
   //get the user
   const email=req?.user?.email
   console.log("req.user",req.user)
