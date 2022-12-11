@@ -8,26 +8,30 @@ import passport from "passport";
 import User from "./models/user";
 import { UserDetails } from "./types/UserDetails";
 const MongoDBStore = require('connect-mongodb-session')(session);
-
-const GoogleStrategy = require('passport-google-oauth20');
+const GoogleStrategy =require("passport-google-oauth20")
 config()
+
+let PORT:number=5000
+
 const app = express()
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express.json())
 
+// next two middlewares are for debugging
 // Log incoming requests
-app.use((req: Request, res: Response, next: any) => {
-  console.log(`Received ${req.method} request for ${req.url}`);
-  next();
-});
+// app.use((req: Request, res: Response, next: any) => {
+//   console.log(`Received ${req.method} request for ${req.url}`);
+//   next();
+// });
 
-// Log errors
-app.use((err: any, req: Request, res: Response, next: any) => {
-  console.error("loggin errors",err.stack);
-  next(err);
-});
+// // Log errors
+// app.use((err: any, req: Request, res: Response, next: any) => {
+//   console.error("loggin errors",err.stack);
+//   next(err);
+// });
 
+// To store sessions in mongodb
 const  store = new MongoDBStore({
   uri: process.env.MONGO_URI!,
   collection: 'mysessions'
@@ -37,31 +41,33 @@ const  store = new MongoDBStore({
 store.on('error', function(error:Error) {
   console.log(error);
 });
+
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173","http://localhost:3000","https://query-silk.vercel.app"] ,credentials:true}))
-app.set('trust proxy', 1)
-// Middleware
+
+app.set('trust proxy', 1) 
+
+// create session
 app.use(session({
-  secret:"secrete",
+  secret:process.env.SESSION_SECRET!,
   resave:true,
   saveUninitialized:true,
   store:store,
   cookie:{
-    httpOnly:true,
-    sameSite:"none",
-    secure:true,
+    httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    secure:true,      // it allows only https requests
     maxAge: 1000 * 60 * 60 * 24 * 7
   }
  
 }))
 
-
+// using passport to handle login
 app.use(passport.initialize())
 app.use(passport.session())
 
-
-//gooogle strategy
+//gooogle strategy 
 
 passport.use(
   new GoogleStrategy(
@@ -99,10 +105,13 @@ passport.use(
   )
 );
 
+// serializeUser to store only id in session
 passport.serializeUser((user:any,done)=>{
   console.log("serialized user",user)
   return done(null,user._id)
  })
+
+ // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
  passport.deserializeUser((id:string,done)=>{
   console.log("deserializeUser",id)
 
@@ -112,9 +121,14 @@ passport.serializeUser((user:any,done)=>{
    })
  })
 
+// middleware to get user details
+const useDetails = async function (req:any, res:Response, next:Function) {
+  const email=req?.user?.email
+ const user=await User.findOne({email:email})
+req.userDetails=user
+  next()
+}
 
-
-let PORT:number=5000
 
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 
@@ -122,10 +136,7 @@ mongoose.connect(process.env.MONGO_URI!,{
   useUnifiedTopology: true,
   useNewUrlParser: true
 } as ConnectOptions )
-.then(()=>{
-   
-  console.log("Connected to mongodb successfully"
-);
+.then(()=>{console.log("Connected to mongodb successfully");
 // We will start to listen for request once the DB is connected
 app.listen(process.env.PORT || PORT,()=>{
   console.log("server is running on port "+PORT)
@@ -135,11 +146,12 @@ app.listen(process.env.PORT || PORT,()=>{
 
 //Deck routes 
 
-app.get('/deck', async function (req:any, res:Response) {
+app.get('/deck', useDetails,async function (req:any, res:Response) {
   //get the user
   const email=req?.user?.email
   console.log("req.user",req.user)
   console.log("req.cookie",req.headers.cookie)
+  console.log("userDetailssssssssssssssssssssssssss",req.userDetails)
   const user=await User.findOne({email:email})
   if(user){
     const decks=await DeckModal.find({email:user.id}) 
@@ -150,6 +162,7 @@ app.get('/deck', async function (req:any, res:Response) {
   }
 
 })
+
 
 app.post('/deck', async function (req:any, res:Response) {
   const email=req?.user?.email
@@ -164,11 +177,12 @@ app.post('/deck', async function (req:any, res:Response) {
   res.json(createdDeck)
  }
  else{
-  res.send("No user found")
+  res.json(["No user found"])
  }
 })
 
 app.put('/deck', async function (req:Request, res:Response) {
+
   try{
     const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
     res.json(updatedDeck)
@@ -182,7 +196,6 @@ app.put('/deck', async function (req:Request, res:Response) {
     res.status(400).json({error:"Unexpected error",isError:true})
    }
  }
-
 
 })
 
@@ -272,8 +285,7 @@ app.get('/auth/google', passport.authenticate('google', {
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
-   console.log("after google success auth................",req.user)
-    res.redirect("https://decker.vercel.app");
+    res.redirect(process.env.REDIRECT_URL!);
   });
 
  app.get("/getuser",(req,res)=>{

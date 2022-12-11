@@ -44,22 +44,25 @@ const express_session_1 = __importDefault(require("express-session"));
 const passport_1 = __importDefault(require("passport"));
 const user_1 = __importDefault(require("./models/user"));
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
-const GoogleStrategy = require('passport-google-oauth20');
+const GoogleStrategy = require("passport-google-oauth20");
 (0, dotenv_1.config)();
+let PORT = 5000;
 const app = (0, express_1.default)();
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express_1.default.json());
+// next two middlewares are for debugging
 // Log incoming requests
-app.use((req, res, next) => {
-    console.log(`Received ${req.method} request for ${req.url}`);
-    next();
-});
-// Log errors
-app.use((err, req, res, next) => {
-    console.error("loggin errors", err.stack);
-    next(err);
-});
+// app.use((req: Request, res: Response, next: any) => {
+//   console.log(`Received ${req.method} request for ${req.url}`);
+//   next();
+// });
+// // Log errors
+// app.use((err: any, req: Request, res: Response, next: any) => {
+//   console.error("loggin errors",err.stack);
+//   next(err);
+// });
+// To store sessions in mongodb
 const store = new MongoDBStore({
     uri: process.env.MONGO_URI,
     collection: 'mysessions'
@@ -72,9 +75,9 @@ store.on('error', function (error) {
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173", "http://localhost:3000", "https://query-silk.vercel.app"], credentials: true }));
 app.set('trust proxy', 1);
-// Middleware
+// create session
 app.use((0, express_session_1.default)({
-    secret: "secrete",
+    secret: process.env.SESSION_SECRET,
     resave: true,
     saveUninitialized: true,
     store: store,
@@ -85,9 +88,10 @@ app.use((0, express_session_1.default)({
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
 }));
+// using passport to handle login
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
-//gooogle strategy
+//gooogle strategy 
 passport_1.default.use(new GoogleStrategy({
     callbackURL: "/auth/google/callback",
     clientID: process.env.CLIENT_ID,
@@ -115,17 +119,28 @@ passport_1.default.use(new GoogleStrategy({
         return done(null, false, err);
     }
 })));
+// serializeUser to store only id in session
 passport_1.default.serializeUser((user, done) => {
     console.log("serialized user", user);
     return done(null, user._id);
 });
+// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
 passport_1.default.deserializeUser((id, done) => {
     console.log("deserializeUser", id);
     user_1.default.findById(id, (err, doc) => {
         return done(null, doc);
     });
 });
-let PORT = 5000;
+// middleware to get user details
+const useDetails = function (req, res, next) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
+        const user = yield user_1.default.findOne({ email: email });
+        req.userDetails = user;
+        next();
+    });
+};
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 mongoose_1.default.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true,
@@ -140,13 +155,14 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 })
     .catch((err) => { console.log(err); });
 //Deck routes 
-app.get('/deck', function (req, res) {
+app.get('/deck', useDetails, function (req, res) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         //get the user
         const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
         console.log("req.user", req.user);
         console.log("req.cookie", req.headers.cookie);
+        console.log("userDetailssssssssssssssssssssssssss", req.userDetails);
         const user = yield user_1.default.findOne({ email: email });
         if (user) {
             const decks = yield deck_1.default.find({ email: user.id });
@@ -172,7 +188,7 @@ app.post('/deck', function (req, res) {
             res.json(createdDeck);
         }
         else {
-            res.send("No user found");
+            res.json(["No user found"]);
         }
     });
 });
@@ -264,8 +280,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     // scope:['openid','profile', 'email'] 
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
-    console.log("after google success auth................", req.user);
-    res.redirect("https://decker.vercel.app");
+    res.redirect(process.env.REDIRECT_URL);
 });
 app.get("/getuser", (req, res) => {
     res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
