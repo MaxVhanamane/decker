@@ -241,6 +241,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     // scope:['openid','profile', 'email'] 
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
+    console.log("after google success auth", req.user);
     res.redirect('https://decker.vercel.app');
 });
 app.get("/getuser", (req, res) => {

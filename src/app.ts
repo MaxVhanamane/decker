@@ -243,7 +243,7 @@ app.get('/auth/google', passport.authenticate('google', {
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
-   
+   console.log("after google success auth",req.user)
     res.redirect('https://decker.vercel.app');
   });
 
