@@ -14,9 +14,20 @@ const app = express()
 // express.json() is used to get the content in the body.
 app.use(express.json())
 
+// Log incoming requests
+app.use((req: Request, res: Response, next: any) => {
+  console.log(`Received ${req.method} request for ${req.url}`);
+  next();
+});
+
+// Log errors
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error(err.stack);
+  next(err);
+});
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin:["https://decker.vercel.app"] ,credentials:true,  optionsSuccessStatus: 200,
+app.use(cors({ origin:"https://decker.vercel.app" ,credentials:true,  optionsSuccessStatus: 200,
 allowedHeaders: "Content-Type,Authorization",
 methods: "GET,PUT,POST,DELETE"}))
 app.set('trust proxy', 1)
@@ -25,7 +36,10 @@ app.use(session({
   secret:"secrete",
   resave:true,
   saveUninitialized:true,
-  
+  cookie:{
+    sameSite:"none",
+    secure:true
+  }
  
 }))
 
@@ -242,7 +256,7 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
    console.log("after google success auth................",req.user)
-    res.redirect('https://decker.vercel.app');
+    res.redirect("https://decker.vercel.app");
   });
 
  app.get("/getuser",(req,res)=>{

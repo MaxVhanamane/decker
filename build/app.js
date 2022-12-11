@@ -49,9 +49,19 @@ const app = (0, express_1.default)();
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express_1.default.json());
+// Log incoming requests
+app.use((req, res, next) => {
+    console.log(`Received ${req.method} request for ${req.url}`);
+    next();
+});
+// Log errors
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    next(err);
+});
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app"], credentials: true, optionsSuccessStatus: 200,
+app.use((0, cors_1.default)({ origin: "https://decker.vercel.app", credentials: true, optionsSuccessStatus: 200,
     allowedHeaders: "Content-Type,Authorization",
     methods: "GET,PUT,POST,DELETE" }));
 app.set('trust proxy', 1);
@@ -60,6 +70,10 @@ app.use((0, express_session_1.default)({
     secret: "secrete",
     resave: true,
     saveUninitialized: true,
+    cookie: {
+        sameSite: "none",
+        secure: true
+    }
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
@@ -239,7 +253,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
     console.log("after google success auth................", req.user);
-    res.redirect('https://decker.vercel.app');
+    res.redirect("https://decker.vercel.app");
 });
 app.get("/getuser", (req, res) => {
     res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
