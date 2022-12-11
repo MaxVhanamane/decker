@@ -18,12 +18,17 @@ app.use(express.json())
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors({ origin:["http://localhost:3000","http://127.0.0.1:5173","https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
-
+app.set("trust proxy",1)
 // Middleware
 app.use(session({
   secret:"secrete",
   resave:true,
   saveUninitialized:true,
+  cookie:{
+    sameSite:"none",
+    secure:true,
+    maxAge:1000 * 60 * 60 * 24 * 7 // one week
+  }
  
 }))
 
@@ -31,11 +36,15 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-passport.serializeUser((user,done)=>{
- return done(null,user)
+passport.serializeUser((user:any,done)=>{
+ return done(null,user._id)
 })
-passport.deserializeUser((user:any,done)=>{
-  return done(null,user)
+passport.deserializeUser((id:string,done)=>{
+
+  User.findById(id,(err:Error,doc:any)=>{
+    return done(null,doc)
+
+  })
 })
 //gooogle strategy
 
@@ -61,13 +70,14 @@ passport.use(
         if(!user){
            const newUser= new User(userInfo)
            await newUser.save()
+           //  console.log("user profile is this: ", profile) 
+    return done(null,newUser)
        }
-   //  console.log("user profile is this: ", profile) 
-    done(null,profile)
+      return  done(null,user)
     //If some error occures while connecting to db of something else we will catch it here
       }
       catch(err){
-          done(null,false,err)
+         return  done(null,false,err)
       }
         
     }
@@ -101,10 +111,10 @@ app.get('/deck', async function (req:any, res:Response) {
   // console.log("deck get request",req.headers.cookie) 
   // console.log("deck get userrrrrrrrrr",req.user) 
   //get the user
-  const email=req?.user?.emails[0]?.value
+  const email=req?.user?.email
   const user=await User.findOne({email:email})
   if(user){
-    const decks=await DeckModal.find({email:user.id})
+    const decks=await DeckModal.find({email:user.id}) 
     res.json(decks)
   }
   else{
@@ -114,7 +124,7 @@ app.get('/deck', async function (req:any, res:Response) {
 })
 
 app.post('/deck', async function (req:any, res:Response) {
-  const email=req?.user?.emails[0]?.value
+  const email=req?.user?.email
  const user=await User.findOne({email:email})
  if(user){
   const newDeck=new DeckModal({
@@ -234,7 +244,7 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
    
-    res.redirect('https://decker.vercel.app');
+    res.redirect('http://localhost:5173');
   });
 
  app.get("/getuser",(req,res)=>{

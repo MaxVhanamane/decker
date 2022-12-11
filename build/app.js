@@ -53,19 +53,27 @@ app.use(express_1.default.json());
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use((0, cors_1.default)({ origin: ["http://localhost:3000", "http://127.0.0.1:5173", "https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
+app.set("trust proxy", 1);
 // Middleware
 app.use((0, express_session_1.default)({
     secret: "secrete",
     resave: true,
     saveUninitialized: true,
+    cookie: {
+        sameSite: "none",
+        secure: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7 // one week
+    }
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 passport_1.default.serializeUser((user, done) => {
-    return done(null, user);
+    return done(null, user._id);
 });
-passport_1.default.deserializeUser((user, done) => {
-    return done(null, user);
+passport_1.default.deserializeUser((id, done) => {
+    user_1.default.findById(id, (err, doc) => {
+        return done(null, doc);
+    });
 });
 //gooogle strategy
 passport_1.default.use(new GoogleStrategy({
@@ -85,13 +93,14 @@ passport_1.default.use(new GoogleStrategy({
         if (!user) {
             const newUser = new user_1.default(userInfo);
             yield newUser.save();
+            //  console.log("user profile is this: ", profile) 
+            return done(null, newUser);
         }
-        //  console.log("user profile is this: ", profile) 
-        done(null, profile);
+        return done(null, user);
         //If some error occures while connecting to db of something else we will catch it here
     }
     catch (err) {
-        done(null, false, err);
+        return done(null, false, err);
     }
 })));
 let PORT = 5000;
@@ -110,12 +119,12 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
     .catch((err) => { console.log(err); });
 //Deck routes 
 app.get('/deck', function (req, res) {
-    var _a, _b;
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         // console.log("deck get request",req.headers.cookie) 
         // console.log("deck get userrrrrrrrrr",req.user) 
         //get the user
-        const email = (_b = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.emails[0]) === null || _b === void 0 ? void 0 : _b.value;
+        const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
         const user = yield user_1.default.findOne({ email: email });
         if (user) {
             const decks = yield deck_1.default.find({ email: user.id });
@@ -127,9 +136,9 @@ app.get('/deck', function (req, res) {
     });
 });
 app.post('/deck', function (req, res) {
-    var _a, _b;
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const email = (_b = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.emails[0]) === null || _b === void 0 ? void 0 : _b.value;
+        const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
         const user = yield user_1.default.findOne({ email: email });
         if (user) {
             const newDeck = new deck_1.default({
@@ -232,7 +241,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     // scope:['openid','profile', 'email'] 
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
-    res.redirect('https://decker.vercel.app');
+    res.redirect('http://localhost:5173');
 });
 app.get("/getuser", (req, res) => {
     res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
