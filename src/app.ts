@@ -16,7 +16,7 @@ app.use(express.json())
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin:"https://decker.vercel.app" ,credentials:true,  optionsSuccessStatus: 200,
+app.use(cors({ origin:["https://decker.vercel.app"] ,credentials:true,  optionsSuccessStatus: 200,
 allowedHeaders: "Content-Type,Authorization",
 methods: "GET,PUT,POST,DELETE"}))
 app.set('trust proxy', 1)
