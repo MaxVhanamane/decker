@@ -30,7 +30,7 @@ export default function Login() {
 
   }
   const handleGoogleLogin =  () => {
-    window.open("http://localhost:5000/auth/google","_self")
+    window.open(`${import.meta.env.VITE_APP_GOOGLE_AUTH_URL}`,"_self")
 
   }
   const handleGithubLogin =  () => {

@@ -8,7 +8,7 @@ const Navbar:FC = () => {
       <ul className='flex gap-8 cursor-pointer'>
         <Link to="/"><li className='text-gray-50 font-bold'>Home</li></Link>
         <li className='text-gray-50 font-bold'>About</li>
-        <li className='text-gray-50 font-bold'>Login</li>
+        <Link to="/login"><li className='text-gray-50 font-bold'>Login</li></Link>
       </ul>
     </nav>
   )
