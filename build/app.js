@@ -44,7 +44,6 @@ const express_session_1 = __importDefault(require("express-session"));
 const passport_1 = __importDefault(require("passport"));
 const user_1 = __importDefault(require("./models/user"));
 const GoogleStrategy = require('passport-google-oauth20');
-const proxy = require('express-http-proxy');
 (0, dotenv_1.config)();
 const app = (0, express_1.default)();
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
@@ -52,8 +51,8 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: ["http://localhost:3000", "http://127.0.0.1:5173", "https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
-app.set("trust proxy", 1);
+app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
+app.set('trust proxy', 1);
 // Middleware
 app.use((0, express_session_1.default)({
     secret: "secrete",
@@ -139,6 +138,7 @@ app.post('/deck', function (req, res) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
+        console.log("email", email);
         const user = yield user_1.default.findOne({ email: email });
         if (user) {
             const newDeck = new deck_1.default({
@@ -241,7 +241,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     // scope:['openid','profile', 'email'] 
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
-    console.log("after google success auth", req.user);
+    console.log("after google success auth................", req.user);
     res.redirect('https://decker.vercel.app');
 });
 app.get("/getuser", (req, res) => {

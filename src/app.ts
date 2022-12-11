@@ -8,7 +8,6 @@ import passport from "passport";
 import User from "./models/user";
 import { UserDetails } from "./types/UserDetails";
 const GoogleStrategy = require('passport-google-oauth20');
-const proxy = require('express-http-proxy');
 config()
 const app = express()
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
@@ -17,8 +16,8 @@ app.use(express.json())
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin:["http://localhost:3000","http://127.0.0.1:5173","https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
-app.set("trust proxy",1)
+app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
+app.set('trust proxy', 1)
 // Middleware
 app.use(session({
   secret:"secrete",
@@ -125,6 +124,7 @@ app.get('/deck', async function (req:any, res:Response) {
 
 app.post('/deck', async function (req:any, res:Response) {
   const email=req?.user?.email
+  console.log("email",email)
  const user=await User.findOne({email:email})
  if(user){
   const newDeck=new DeckModal({
@@ -243,7 +243,7 @@ app.get('/auth/google', passport.authenticate('google', {
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
   function(req, res) {
-   console.log("after google success auth",req.user)
+   console.log("after google success auth................",req.user)
     res.redirect('https://decker.vercel.app');
   });
 
