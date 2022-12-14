@@ -73,7 +73,7 @@ store.on('error', function (error) {
 });
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173", "http://localhost:3000", "https://query-silk.vercel.app"], credentials: true }));
+app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
 app.set('trust proxy', 1);
 // create session
 app.use((0, express_session_1.default)({
@@ -132,13 +132,18 @@ passport_1.default.deserializeUser((id, done) => {
     });
 });
 // middleware to get user details
-const useDetails = function (req, res, next) {
+const fetchUserDetails = function (req, res, next) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
-        const user = yield user_1.default.findOne({ email: email });
-        req.userDetails = user;
-        next();
+        if (req.user) {
+            const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
+            const user = yield user_1.default.findOne({ email: email });
+            req.userDetails = user;
+            next();
+        }
+        else {
+            return res.status(401).send("You are unauthorized. Please Log in");
+        }
     });
 };
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
@@ -155,45 +160,29 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 })
     .catch((err) => { console.log(err); });
 //Deck routes 
-app.get('/deck', useDetails, function (req, res) {
-    var _a;
+app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        //get the user
-        const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
-        console.log("req.user", req.user);
-        console.log("req.cookie", req.headers.cookie);
-        console.log("userDetailssssssssssssssssssssssssss", req.userDetails);
-        const user = yield user_1.default.findOne({ email: email });
-        if (user) {
-            const decks = yield deck_1.default.find({ email: user.id });
-            res.json(decks);
-        }
-        else {
-            res.json(["No User found"]);
-        }
+        const user = req.userDetails;
+        const decks = yield deck_1.default.find({ email: user.id });
+        res.json(decks);
     });
 });
-app.post('/deck', function (req, res) {
-    var _a;
+app.post('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
-        console.log("email", email);
-        const user = yield user_1.default.findOne({ email: email });
-        if (user) {
-            const newDeck = new deck_1.default({
-                email: user === null || user === void 0 ? void 0 : user.id,
-                title: req.body.title
-            });
-            const createdDeck = yield newDeck.save();
-            res.json(createdDeck);
-        }
-        else {
-            res.json(["No user found"]);
-        }
+        const user = req.userDetails;
+        const newDeck = new deck_1.default({
+            email: user === null || user === void 0 ? void 0 : user.id,
+            title: req.body.title
+        });
+        const createdDeck = yield newDeck.save();
+        res.json(createdDeck);
     });
 });
-app.put('/deck', function (req, res) {
+app.put('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        const user = req.userDetails;
+        console.log(req.body.id);
+        console.log(user);
         try {
             const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned });
             res.json(updatedDeck);
@@ -208,8 +197,9 @@ app.put('/deck', function (req, res) {
         }
     });
 });
-app.delete('/deck/:id', function (req, res) {
+app.delete('/deck/:id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        const user = req.userDetails;
         try {
             const deletedDeck = yield deck_1.default.findByIdAndDelete(req.params.id);
             res.json({ deletedDeck, success: true });
@@ -220,8 +210,9 @@ app.delete('/deck/:id', function (req, res) {
     });
 });
 // Card routes
-app.get('/cards/:_id', function (req, res) {
+app.get('/cards/:_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        const user = req.userDetails;
         const cards = yield deck_1.default.findById({ _id: req.params._id });
         if (cards) {
             res.json({ cards: cards.cards, title: cards.title });
@@ -231,7 +222,7 @@ app.get('/cards/:_id', function (req, res) {
         }
     });
 });
-app.post('/card/:deck_id', function (req, res) {
+app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
@@ -247,7 +238,7 @@ app.post('/card/:deck_id', function (req, res) {
         }
     });
 });
-app.put('/card/:deck_id', function (req, res) {
+app.put('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const Deck = yield deck_1.default.findById(req.params.deck_id);
         const cards = Deck === null || Deck === void 0 ? void 0 : Deck.cards;
@@ -260,7 +251,7 @@ app.put('/card/:deck_id', function (req, res) {
         }
     });
 });
-app.delete('/card/:id/:index', function (req, res) {
+app.delete('/card/:id/:index', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const deck = yield deck_1.default.findById(req.params.id);
@@ -279,12 +270,36 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     scope: ['profile', 'email']
     // scope:['openid','profile', 'email'] 
 }));
-app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: '/login', failureMessage: true }), function (req, res) {
-    res.redirect(process.env.REDIRECT_URL);
-});
+app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/login`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL}/auth/success` }));
 app.get("/getuser", (req, res) => {
-    res.send(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
+    if (req.user) {
+        res.json(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
+    }
+    else {
+        res.json(null);
+    }
 });
+app.post('/auth/logout', function (req, res, next) {
+    req.logout(function (err) {
+        if (err) {
+            return next(err);
+        }
+        res.send('done');
+    });
+});
+// app.post('/auth/logout', function(req, res, next){
+//   console.log("aaya logout me")
+//   req.logout(function(err) {
+//     if (err) { console.log("error in logout")
+//      return next(err); }
+//     return res.redirect("http://localhost:5173");
+//   });
+// });
+// app.post('/auth/logout', function (req, res){
+//   req.session.destroy(function (err) {
+//     res.redirect(process.env.REDIRECT_URL!); //Inside a callback… bulletproof!
+//   });
+// });
 //   import { config } from "dotenv"
 // import express,{Request,Response} from "express"
 // import mongoose, {ConnectOptions, Error} from "mongoose";

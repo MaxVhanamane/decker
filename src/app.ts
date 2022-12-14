@@ -44,7 +44,7 @@ store.on('error', function(error:Error) {
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173","http://localhost:3000","https://query-silk.vercel.app"] ,credentials:true}))
+app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
 
 app.set('trust proxy', 1) 
 
@@ -122,11 +122,17 @@ passport.serializeUser((user:any,done)=>{
  })
 
 // middleware to get user details
-const useDetails = async function (req:any, res:Response, next:Function) {
-  const email=req?.user?.email
- const user=await User.findOne({email:email})
-req.userDetails=user
-  next()
+const fetchUserDetails = async function (req:any, res:Response, next:Function) {
+  if(req.user){
+    const email=req?.user?.email
+    const user=await User.findOne({email:email})
+   req.userDetails=user
+     next()
+  }
+  else{
+
+    return res.status(401).send("You are unauthorized. Please Log in")
+  }
 }
 
 
@@ -146,77 +152,79 @@ app.listen(process.env.PORT || PORT,()=>{
 
 //Deck routes 
 
-app.get('/deck', useDetails,async function (req:any, res:Response) {
-  const user=req.useDetails
-  if(user){
+app.get('/deck', fetchUserDetails,async function (req:any, res:Response) {
+  const user=req.userDetails
     const decks=await DeckModal.find({email:user.id}) 
     res.json(decks)
-  }
-  else{
-    res.json(["No User found"])
-  }
+ 
 
 })
 
 
-app.post('/deck', async function (req:any, res:Response) {
-  const user=req.useDetails
- if(user){
+app.post('/deck',fetchUserDetails, async function (req:any, res:Response) {
+  const user=req.userDetails
   const newDeck=new DeckModal({
     email:user?.id,
     title:req.body.title
   })
   const createdDeck=await newDeck.save()
   res.json(createdDeck)
- }
- else{
-  res.json(["No user found"])
- }
+
 })
 
-app.put('/deck', async function (req:Request, res:Response) {
-
-  try{
-    const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
-    res.json(updatedDeck)
-  }
- catch(error){
-  if(error instanceof Error){
-
-    res.status(400).send({error:error.message,isError:true});
-  }
-  else {
-    res.status(400).json({error:"Unexpected error",isError:true})
+app.put('/deck',fetchUserDetails, async function (req:any, res:Response) {
+  const user=req.userDetails
+  console.log(req.body.id)
+  console.log(user)
+    try{
+      const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
+      res.json(updatedDeck)
+    }
+  
+   catch(error){
+    if(error instanceof Error){
+  
+      res.status(400).send({error:error.message,isError:true});
+    }
+    else {
+      res.status(400).json({error:"Unexpected error",isError:true})
+     }
    }
- }
+  
+
 
 })
 
-app.delete('/deck/:id', async function (req:Request, res:Response) {
-  try{
+app.delete('/deck/:id',fetchUserDetails, async function (req:any, res:Response) {
+  const user=req.userDetails
+    try{
 
-    const deletedDeck=await DeckModal.findByIdAndDelete(req.params.id)
-    res.json({deletedDeck,success:true})
-  }
-  catch(error){
-    res.json({error:"some error occurred",success:false})
-  }
+      const deletedDeck=await DeckModal.findByIdAndDelete(req.params.id)
+      res.json({deletedDeck,success:true})
+    }
+    catch(error){
+      res.json({error:"some error occurred",success:false})
+    }
+ 
 })
 
 // Card routes
 
-app.get('/cards/:_id', async function (req:Request, res:Response) {
-  const cards=await DeckModal.findById({_id:req.params._id})
-  if(cards){
+app.get('/cards/:_id',fetchUserDetails, async function (req:any, res:Response) {
+  const user=req.userDetails
 
-    res.json({cards:cards.cards,title:cards.title})
-  }
-  else{
-    res.json({error:"No cards found!"})
-  }
+    const cards=await DeckModal.findById({_id:req.params._id})
+    if(cards){
+  
+      res.json({cards:cards.cards,title:cards.title})
+    }
+    else{
+      res.json({error:"No cards found!"})
+    }
+ 
 })
 
-app.post('/card/:deck_id', async function (req:Request, res:Response) {
+app.post('/card/:deck_id',fetchUserDetails, async function (req:any, res:Response) {
   try{
     const getDeck= await DeckModal.findById(req.params.deck_id)
     if(!getDeck){
@@ -230,9 +238,11 @@ app.post('/card/:deck_id', async function (req:Request, res:Response) {
  res.status(500).json({error:"Invalid id"})
   }
 
+
+
 })
 
-app.put('/card/:deck_id', async function (req:Request, res:Response) {
+app.put('/card/:deck_id',fetchUserDetails, async function (req:any, res:Response) {
   
   const Deck=await DeckModal.findById(req.params.deck_id)
   const cards=Deck?.cards
@@ -248,7 +258,7 @@ app.put('/card/:deck_id', async function (req:Request, res:Response) {
 })
 
 
-app.delete('/card/:id/:index', async function (req:Request, res:Response) {
+app.delete('/card/:id/:index',fetchUserDetails, async function (req:Request, res:Response) {
   try{
 
     const deck=await DeckModal.findById(req.params.id)
@@ -276,16 +286,39 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login', failureMessage: true }),
-  function(req, res) {
-    res.redirect(process.env.REDIRECT_URL!);
-  });
+  passport.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/login`, failureMessage: true,successRedirect:`${process.env.REDIRECT_URL!}/auth/success` }));
 
  app.get("/getuser",(req,res)=>{
-  res.send(req.user) // here we get user in req.user because passports deserialize function attaches it automatically
+  if(req.user){
+
+    res.json(req.user) // here we get user in req.user because passports deserialize function attaches it automatically
+  }
+  else{
+    res.json(null)
+  }
  })
 
+ app.post('/auth/logout', function(req, res, next) {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.send('done');
+  });
+});
 
+// app.post('/auth/logout', function(req, res, next){
+//   console.log("aaya logout me")
+//   req.logout(function(err) {
+//     if (err) { console.log("error in logout")
+//      return next(err); }
+
+//     return res.redirect("http://localhost:5173");
+//   });
+// });
+// app.post('/auth/logout', function (req, res){
+//   req.session.destroy(function (err) {
+//     res.redirect(process.env.REDIRECT_URL!); //Inside a callback… bulletproof!
+//   });
+// });
 
 //   import { config } from "dotenv"
 // import express,{Request,Response} from "express"
