@@ -27,7 +27,7 @@ const usePinDeck = ()=>{
     const queryClient=useQueryClient()
     return useMutation(updateDeck,{
          onMutate:async(data:DataType)=>{
-         await queryClient.cancelQueries("deck")
+         await queryClient.cancelQueries("decks")
          const previousQueryData=queryClient.getQueryData<DeckTypes[]>("decks")
         const newQueryData= previousQueryData?.map(item=>{
           if (item._id===data.id){

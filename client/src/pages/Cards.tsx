@@ -2,10 +2,10 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import {useParams} from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
-import useDeleteCard from './../hooks/useDeleteCard';
+import useDeleteCard from '../hooks/useDeleteCard';
 import { MdOutlineDeleteOutline, MdOutlineModeEdit } from 'react-icons/md';
 import { BiEdit } from 'react-icons/bi';
-import useEditCard from './../hooks/useEditCard';
+import useEditCard from '../hooks/useEditCard';
 import { toast } from 'react-toastify';
 // let oldContent:string //this  works
 type OldContent={
@@ -110,7 +110,7 @@ function Cards() {
             return (
               <div
                 className="relative   border border-gray-500  flex text-gray-800
-                rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full "
+                rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full break-all "
                            key={index}
               >
                    <div className="absolute bottom-0 right-0">

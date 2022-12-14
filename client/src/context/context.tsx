@@ -1,20 +1,64 @@
-import {useContext,createContext, ReactNode} from "react"
-import { request } from './../utils/axios-utils';
-import { useQuery } from 'react-query';
 
-export const Context=createContext<null | any>(null)
+import { useEffect, createContext, ReactNode, useState } from "react";
+import { request } from "./../utils/axios-utils";
+import { userData } from "../types/types";
+type UserContextProvider = {
+  children: ReactNode;
+};
+export const UserContext = createContext<any>({
+  _id: "",
+  username: "",
+  email: "",
+  __v: 0,
+});
 
-function UserContext(props:any){
-    const getUser=async():Promise<any>=>{
-       const data= await request.get("/getuser")
-       console.log(data)
-        return data.data
-    }
+function UserContextProvider({ children }: UserContextProvider) {
+  const [userInfo,setUserInfo]=useState<userData | null>()
+  const getUser = async (): Promise<any> => {
+    const data = await request.get("/getuser");
+    localStorage.setItem("userInfo",JSON.stringify(data.data))
+    const newD=localStorage.getItem("userInfo")
+    setUserInfo({...JSON.parse(newD!)})
 
-    const {data,isError,error}=useQuery("user",getUser)
- console.log("context",data)
+    return data.data;
+  };
+  useEffect(()=>{
+    getUser()
+  },[])
 
-   return (<Context.Provider value={data}>{props.children}</Context.Provider>)
+  // const { data, isError, error } = useQuery<userData>("user", getUser); 
+console.log("context",userInfo?.email)
+  return <UserContext.Provider value={{userInfo,setUserInfo:setUserInfo}}>{children}</UserContext.Provider>;
 }
 
-export default UserContext
+export default UserContextProvider;
+
+// import { useContext, createContext, ReactNode, useState } from "react";
+// import { request } from "./../utils/axios-utils";
+// import { useQuery } from "react-query";
+// import { userData } from "../types/types";
+// import { Navigate } from "react-router-dom";
+// type UserContextProvider = {
+//   children: ReactNode;
+// };
+// export const UserContext = createContext<any>({
+//   _id: "",
+//   username: "",
+//   email: "",
+//   __v: 0,
+// });
+
+// function UserContextProvider({ children }: UserContextProvider) {
+//     const [userInfo,setUserInfo]=useState<userData | null>()
+//   const getUser = async (): Promise<any> => {
+//     const data = await request.get("/getuser");
+//     setUserInfo(data.data)
+//     return data.data;
+//   };
+
+//   const { data, isError, error } = useQuery<userData>("user", getUser); 
+
+//   return <UserContext.Provider value={{userInfo,setUserInfo:setUserInfo}}>{children}</UserContext.Provider>;
+// }
+
+// export default UserContextProvider;

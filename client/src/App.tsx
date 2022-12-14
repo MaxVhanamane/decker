@@ -1,14 +1,17 @@
 import "./App.css";
-import Home from "./componenets/Deck";
+import Home from "./pages/Deck";
 import { Routes, Route } from "react-router-dom"
-import Cards  from './componenets/Cards';
+import Cards  from './pages/Cards';
 import { DragDropContext, DropResult, ResponderProvided } from "react-beautiful-dnd";
 import usePinDeck from './hooks/usePinDeck';
 import useDeleteDeck from './hooks/useDeleteDeck';
 import NotFound from './componenets/NotFound';
 import SignUp from './pages/Signup';
 import Login from './pages/Login';
-
+import PrivateRoutes from "./componenets/PrivateRoutes";
+import Layout from "./componenets/Layout";
+import AuthSuccess from './pages/AuthSuccess';
+import AuthFailure from './pages/AuthFailure';
 
 function App() {
 const {mutate:deleteOneDeck}=useDeleteDeck()
@@ -28,13 +31,19 @@ const {mutate:deleteOneDeck}=useDeleteDeck()
       };
   return (<>
    <DragDropContext onDragEnd={(result: DropResult, provided: ResponderProvided)=>{handlePin(result,provided)}}>
+    <Layout>
      <Routes>
+      <Route element={<PrivateRoutes/>}>
         <Route path="/" element={ <Home /> } />
-        <Route path="/cards/:deck_id" element={ <Cards/> } />
+        <Route path="/cards/:deck_id" element={ <Cards/> } /> 
+      </Route> 
         <Route path="/signup" element={ <SignUp /> } />
         <Route path="/login" element={ <Login /> } />
-        <Route path='*' element={<NotFound/>} />
+        <Route path="/auth/success" element={ <AuthSuccess /> } />
+        <Route path="/auth/failed" element={ <AuthFailure /> } />
+        {/* <Route path='*' element={<NotFound/>} /> */}
       </Routes>
+      </Layout>
       </DragDropContext>
     </>
   );

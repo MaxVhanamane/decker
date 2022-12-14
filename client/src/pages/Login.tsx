@@ -1,18 +1,14 @@
-import React, { useState,useEffect ,ChangeEvent,MouseEvent} from 'react'
-import { toast } from 'react-toastify';
+import  { useState ,ChangeEvent,useContext,FormEvent, useEffect} from 'react'
 import 'react-toastify/dist/ReactToastify.css';
-import { FormEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { request } from './../utils/axios-utils';
-
+import { Link, useNavigate } from 'react-router-dom';
+import { UserContext } from '../context/context';
 
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  useEffect(()=>{
- const token=localStorage.getItem("token")
+  const {userInfo}=useContext(UserContext) 
+  const navigate=useNavigate()
 
-  },[])
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
   
     if (e.target.name === "email") {
@@ -23,25 +19,31 @@ export default function Login() {
    
   }
 }
+useEffect(()=>{
+console.log("loginapage",userInfo)
+
+if(userInfo?.email){
+  navigate("/")
+}
+},[userInfo?.email])
+
+
 
   const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     // window.open("http://localhost:5000/auth/google","_self")
 
   }
-  const handleGoogleLogin =  () => {
+  const handleGoogleLogin = async () => {
     window.open(`${import.meta.env.VITE_APP_GOOGLE_AUTH_URL}`,"_self")
 
-  }
-  const handleGithubLogin =  () => {
-    window.open("http://localhost:5000/auth/google","_self")
 
   }
+
   return (
     <>
     <section className="h-screen">
     <div className=" py-12 px-6 h-full">
-   
       <div className="flex justify-center items-center flex-wrap h-full g-6 text-gray-800">
         <div className="xl:w-6/12">
           <div className="block bg-white shadow-lg rounded-lg">
@@ -84,16 +86,7 @@ export default function Login() {
                       >
                         Log in Google
                       </button>
-                      <button onClick={()=>handleGithubLogin()}
-                        className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-[#459C98] hover:bg-[#23847f]"
-      
-                        data-mdb-ripple="true"
-                        data-mdb-ripple-color="light"
-                        type="button"
-                      
-                      >
-                        Log in With Github
-                      </button>
+                 
                       
                      <Link to="/forgotpassword" className="text-gray-600 hover:text-gray-700" >Forgot password?</Link>
                     </div>

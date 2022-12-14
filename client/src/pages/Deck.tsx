@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
 import {BsFillPinFill} from "react-icons/bs"
-import {RiDeleteBin6Line} from "react-icons/ri"
-import {MdDelete, MdDeleteForever, MdOutlineDeleteOutline} from "react-icons/md"
+import { MdOutlineDeleteOutline} from "react-icons/md"
 import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
-import useDeleteDeck from './../hooks/useDeleteDeck';
+import useDeleteDeck from '../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
 import { toast } from 'react-toastify';
 
@@ -60,7 +59,7 @@ import { toast } from 'react-toastify';
     }
    
     if(isLoading){
-      return <div className="flex justify-center items-center h-screen w-full"><p>Loading the decks...</p></div>
+      return <div className="flex justify-center items-center h-screen w-full bg-white"><img src="/loadinggif.gif" alt="loading_image" width={200} height={200}/></div>
     }
   
     return (
@@ -69,7 +68,7 @@ import { toast } from 'react-toastify';
         <Droppable droppableId="deleteArea">
           {
             (provided,snapshot)=>{
-              return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
+              return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200  z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
               <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash/></p>
              </div>
             }
@@ -94,7 +93,7 @@ import { toast } from 'react-toastify';
           </form>
         </div>
  
-    {alldecks!.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 mb-10  p-4 mx-2  " >
+    {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 mb-10  p-4 mx-2  " >
   <h1 className="text-left  text-lg font-semibold text-gray-800  m-4">Pinned </h1>
 
   <Droppable droppableId="pinnedArea">
@@ -118,7 +117,7 @@ import { toast } from 'react-toastify';
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
  </div>
 
-<Link to={`cards/${deck._id}`} > <p >{deck.title}</p> </Link>
+<Link to={`cards/${deck._id}`} > <p className=" break-all">{deck.title}</p> </Link>
 </div>
   )}
 
@@ -135,8 +134,8 @@ import { toast } from 'react-toastify';
         </Droppable>
         </div>:null}
   
-       {alldecks!.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  p-4 mx-2" >
-        <h1 className="text-left text-lg font-semibold text-gray-800 m-4"> {alldecks!.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
+       {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  p-4 mx-2" >
+        <h1 className="text-left text-lg font-semibold text-gray-800 m-4"> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
         <Droppable droppableId="deckArea" >
 
@@ -164,7 +163,7 @@ import { toast } from 'react-toastify';
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsPin/></button>
  </div>
 
-  <Link to={`cards/${deck._id}`} ><p className="w-fit"> {deck.title}</p> </Link>
+  <Link to={`cards/${deck._id}`} ><p className=" break-all"> {deck.title}</p> </Link>
  
     </div>
    
