@@ -81,12 +81,12 @@ app.use((0, express_session_1.default)({
     resave: true,
     saveUninitialized: true,
     store: store,
-    cookie: {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7
-    }
+    // cookie:{
+    //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    //   secure:true,      // it allows only https requests
+    //   maxAge: 1000 * 60 * 60 * 24 * 7
+    // }
 }));
 // using passport to handle login
 app.use(passport_1.default.initialize());
@@ -121,12 +121,10 @@ passport_1.default.use(new GoogleStrategy({
 })));
 // serializeUser to store only id in session
 passport_1.default.serializeUser((user, done) => {
-    console.log("serialized user", user);
     return done(null, user._id);
 });
 // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
 passport_1.default.deserializeUser((id, done) => {
-    console.log("deserializeUser", id);
     user_1.default.findById(id, (err, doc) => {
         return done(null, doc);
     });
@@ -181,8 +179,6 @@ app.post('/deck', fetchUserDetails, function (req, res) {
 app.put('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
-        console.log(req.body.id);
-        console.log(user);
         try {
             const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned });
             res.json(updatedDeck);

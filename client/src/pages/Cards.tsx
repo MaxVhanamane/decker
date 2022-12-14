@@ -72,9 +72,9 @@ function Cards() {
   setEditContent(e.target.value)
  }
 
-  if(isLoading){
-    return <h1>Fetching cards....</h1>
-  }
+ if(isLoading){
+  return <div className="flex justify-center items-center h-screen w-full bg-white"><img src="/loadinggif.gif" alt="loading_image" width={200} height={200}/></div>
+}
 
   if (isError) {
     return <span>Error: {(error as Error).message}</span>

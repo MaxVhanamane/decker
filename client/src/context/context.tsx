@@ -27,7 +27,6 @@ function UserContextProvider({ children }: UserContextProvider) {
   },[])
 
   // const { data, isError, error } = useQuery<userData>("user", getUser); 
-console.log("context",userInfo?.email)
   return <UserContext.Provider value={{userInfo,setUserInfo:setUserInfo}}>{children}</UserContext.Provider>;
 }
 

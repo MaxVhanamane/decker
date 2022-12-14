@@ -69,7 +69,7 @@ import { toast } from 'react-toastify';
           {
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200  z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
-              <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash/></p>
+              <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash title="Drag and drop the deck item here for deletion."/></p>
              </div>
             }
           }
@@ -94,7 +94,7 @@ import { toast } from 'react-toastify';
         </div>
  
     {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 mb-10  p-4 mx-2  " >
-  <h1 className="text-left  text-lg font-semibold text-gray-800  m-4">Pinned </h1>
+  <h1 className="text-left  text-md font-semibold text-gray-800  m-4">Pinned </h1>
 
   <Droppable droppableId="pinnedArea">
     {(provided)=>{
@@ -105,7 +105,7 @@ import { toast } from 'react-toastify';
   
   {(provided,snapshot)=>(
   <div 
-  className={`relative ${snapshot.isDragging ? " border border-[#378783]": "border border-gray-500 "} flex text-gray-800
+  className={`relative ${snapshot.isDragging ? " border border-[#378783]": "shadow-xl bg-gray-50"} flex text-gray-800
   rounded-md min-w-[8rem] px-4  min-h-[5.5rem] py-2 justify-center items-center text-justify max-w-full  `}
          ref={provided.innerRef}    
          {...provided.dragHandleProps}
@@ -135,7 +135,7 @@ import { toast } from 'react-toastify';
         </div>:null}
   
        {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  p-4 mx-2" >
-        <h1 className="text-left text-lg font-semibold text-gray-800 m-4"> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
+        <h1 className="text-left text-md font-semibold text-gray-800 m-4"> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
         <Droppable droppableId="deckArea" >
 
@@ -150,7 +150,7 @@ import { toast } from 'react-toastify';
 
                     {(provided,snapshot)=>{
       return <div 
-      className={`relative ${snapshot.isDragging ? " border border-[#378783]": "border border-gray-500 "} flex text-gray-800
+      className={`relative ${snapshot.isDragging ? " border border-[#378783]": " shadow-xl bg-gray-50"} flex text-gray-800
                    rounded-md min-w-[8rem] px-4  min-h-[5.5rem]  justify-center items-center text-justify max-w-full  `}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  

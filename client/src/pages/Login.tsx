@@ -20,7 +20,6 @@ export default function Login() {
   }
 }
 useEffect(()=>{
-console.log("loginapage",userInfo)
 
 if(userInfo?.email){
   navigate("/")
@@ -84,7 +83,7 @@ if(userInfo?.email){
                         type="button"
                       
                       >
-                        Log in Google
+                        Log in with Google
                       </button>
                  
                       

@@ -54,12 +54,12 @@ app.use(session({
   resave:true,
   saveUninitialized:true,
   store:store,
-  cookie:{
-    httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
-    sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-    secure:true,      // it allows only https requests
-    maxAge: 1000 * 60 * 60 * 24 * 7
-  }
+  // cookie:{
+  //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+  //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+  //   secure:true,      // it allows only https requests
+  //   maxAge: 1000 * 60 * 60 * 24 * 7
+  // }
  
 }))
 
@@ -107,13 +107,11 @@ passport.use(
 
 // serializeUser to store only id in session
 passport.serializeUser((user:any,done)=>{
-  console.log("serialized user",user)
   return done(null,user._id)
  })
 
  // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
  passport.deserializeUser((id:string,done)=>{
-  console.log("deserializeUser",id)
 
    User.findById(id,(err:Error,doc:any)=>{
      return done(null,doc)
@@ -174,8 +172,6 @@ app.post('/deck',fetchUserDetails, async function (req:any, res:Response) {
 
 app.put('/deck',fetchUserDetails, async function (req:any, res:Response) {
   const user=req.userDetails
-  console.log(req.body.id)
-  console.log(user)
     try{
       const updatedDeck=await DeckModal.findByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
       res.json(updatedDeck)
@@ -304,6 +300,46 @@ app.get('/auth/google/callback',
     res.send('done');
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // app.post('/auth/logout', function(req, res, next){
 //   console.log("aaya logout me")

@@ -4,7 +4,6 @@ export default function ProtectedRoutes() {
    const userFromLocalStorage=localStorage.getItem("userInfo")
   const userInfo=userFromLocalStorage?JSON.parse(userFromLocalStorage):null
 
-    console.log("private route user",userInfo)
   return (
   <>
   {/* if user is logged in then we will give access to all the protected routes else will send him to login page  */}

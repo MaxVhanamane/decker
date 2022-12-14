@@ -37,7 +37,6 @@ export type DeckTypes = {
           if(oldQueryData){
             const newArray=[...oldQueryData?.cards]
             newArray.splice(data.index,1)
-            console.log("newarra",newArray)
             return {...oldQueryData,cards:newArray}
           }
         })
