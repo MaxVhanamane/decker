@@ -20,7 +20,7 @@ export type DeckTypes = {
   }
   
 
- const deleteCard= async (payLoad:PayloadType) :Promise<DeckTypes>=>{
+  const deleteCard= async (payLoad:PayloadType) :Promise<DeckTypes>=>{
   const res= await request.delete(`/card/${payLoad.deck_id}/${payLoad.index}}`)
   return res.data
  }

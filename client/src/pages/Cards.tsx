@@ -7,6 +7,8 @@ import { MdOutlineDeleteOutline, MdOutlineModeEdit } from 'react-icons/md';
 import { BiEdit } from 'react-icons/bi';
 import useEditCard from '../hooks/useEditCard';
 import { toast } from 'react-toastify';
+import { Droppable,Draggable } from "react-beautiful-dnd";
+import { BsTrash } from "react-icons/bs";
 // let oldContent:string //this  works
 type OldContent={
   oldContent:string,
@@ -84,6 +86,17 @@ function Cards() {
   // }
   return (
     <>
+       <Droppable droppableId="cardDeleteArea">
+          {
+            (provided,snapshot)=>{
+              return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200  z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
+              <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash title="Drag and drop the deck item here for deletion."/></p>
+             </div>
+            }
+          }
+    
+       </Droppable>
+       
     <div className="flex flex-col gap-2 mt-6 w-full  relative ">
       <div className="w-full px-4 mx-auto">
         <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
@@ -103,13 +116,20 @@ function Cards() {
         <h1 className="font-bold text-xl text-gray-800 mb-6  mt-6">{data?.title} </h1>
 
       </div>
-
-      <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-2 mb-16">
+      <Droppable droppableId="cardDropableArea" >
+          {
+            (provided,snapshot)=>{
+     return <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-2 mb-16" ref={provided.innerRef} {...provided.droppableProps}>
         
           {data?.cards?.map((card,index) => {
             return (
-              <div
-                className="relative   border border-gray-500  flex text-gray-800
+              <Draggable draggableId={`${deck_id!}-${index}`} index={index} key={index} >
+  
+              {(provided,snapshot)=>{
+             return <div  ref={provided.innerRef}  
+              {...provided.dragHandleProps}  
+              {...provided.draggableProps} 
+                className="relative   border border-gray-400  flex text-gray-800
                 rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full break-all "
                            key={index}
               >
@@ -122,11 +142,17 @@ function Cards() {
 
  </div> {card}
               </div>
+               }}
+
+               </Draggable>
             );
           })}
         </div>
     
-  
+  }
+}
+
+</Droppable>
 
 
     </div>

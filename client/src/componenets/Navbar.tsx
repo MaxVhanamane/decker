@@ -25,10 +25,10 @@ const Navbar:FC = () => {
  
       </div>
   <div>
-  <ul className='flex gap-10 cursor-pointer items-center justify-center'>
-        {userInfo?.email?<Link to="/"><li className='text-gray-50 hover:text-gray-100 font-semibold'>Home</li></Link>:null}
-       {!userInfo?.email? <Link to="/login"><li className='text-gray-50 hover:text-gray-100 font-semibold mr-4'>Login</li></Link>
-        :<li onClick={()=>{handleLogout()}}className='text-gray-50 hover:text-gray-100 font-semibold mr-4'>Logout</li>}
+  <ul className='flex gap-10  items-center justify-center'>
+        {userInfo?.email?<Link to="/"><li className='text-gray-50 cursor-pointer hover:text-gray-100 font-semibold '>Home</li></Link>:null}
+       {!userInfo?.email? <Link to="/login"><li className='text-gray-50 cursor-pointer hover:text-gray-100 font-semibold mr-4'>Login</li></Link>
+        :<li onClick={()=>{handleLogout()}}className='text-gray-50 cursor-pointer hover:text-gray-100 font-semibold mr-4'>Logout</li>}
       </ul>
   </div>
 

@@ -101,7 +101,8 @@ import { toast } from 'react-toastify';
       return <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-2 p-2 " ref={provided.innerRef} {...provided.droppableProps}>
         {alldecks?.filter((deck)=>{return deck.pinned===true}).map((deck,index) => {
           return (
-            <Draggable draggableId={deck._id} index={index} key={deck._id}>
+           // here key is for react and draggableId,index are required for Draggable component to work. 
+            <Draggable draggableId={deck._id} index={index} key={deck._id} >
   
   {(provided,snapshot)=>(
   <div 
