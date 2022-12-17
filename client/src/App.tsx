@@ -21,11 +21,9 @@ import  useDeleteCard  from "./hooks/useDeleteCard";
 function App() {
   const { mutate: deleteOneDeck } = useDeleteDeck();
   const { mutate: pinDeck } = usePinDeck();
-  const {mutate:deleteCardItem,error:DeletemutationError,isError:isDeleteMutationError}=useDeleteCard()
+  const {mutate:deleteCardItem}=useDeleteCard()
 
   const handlePin = async (result: DropResult, provided: ResponderProvided) => {
-    console.log(result.draggableId.split("-"));
-    console.log(result.destination?.droppableId);
     if (result.destination?.droppableId === "pinnedArea") {
       pinDeck({ id: result.draggableId, pinned: true });
     } else if (result.destination?.droppableId === "deckArea") {

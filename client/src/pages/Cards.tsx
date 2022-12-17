@@ -90,7 +90,7 @@ function Cards() {
           {
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200  z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
-              <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash title="Drag and drop the deck item here for deletion."/></p>
+              <span  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500":"transform-none"}`}><BsTrash title="Drag and drop the deck item here for deletion."/></span>
              </div>
             }
           }
@@ -129,8 +129,8 @@ function Cards() {
              return <div  ref={provided.innerRef}  
               {...provided.dragHandleProps}  
               {...provided.draggableProps} 
-                className="relative   border border-gray-400  flex text-gray-800
-                rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full break-all "
+                className={`relative   border  ${snapshot.isDragging ? " border border-[#378783]": "border-gray-400"}  flex text-gray-800
+                rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full break-all`}
                            key={index}
               >
                    <div className="absolute bottom-0 right-0">
@@ -147,8 +147,8 @@ function Cards() {
                </Draggable>
             );
           })}
+    {provided.placeholder}
         </div>
-    
   }
 }
 

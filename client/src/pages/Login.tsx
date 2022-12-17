@@ -2,6 +2,7 @@ import  { useState ,ChangeEvent,useContext,FormEvent, useEffect} from 'react'
 import 'react-toastify/dist/ReactToastify.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/context';
+import { request } from '../utils/axios-utils';
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -27,12 +28,30 @@ if(userInfo?.email){
 },[userInfo?.email])
 
 
+const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  
+    const data = {  email, password };
+     
+    const response=await request.post("/login",data)
+    console.log(response.data.success)
+  
+  //  if(response.data.success==true){
+  //   const response=await request.get("/getuser")
+  //   localStorage.setItem("userInfo",JSON.stringify(response.data))
 
-  const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    // window.open("http://localhost:5000/auth/google","_self")
+  //   console.log(response.data)
 
-  }
+  // navigate("/auth/success")
+  //  }
+  // else{
+  //   alert("Login failed")
+  // }
+  
+
+}
+
+
   const handleGoogleLogin = async () => {
     window.open(`${import.meta.env.VITE_APP_GOOGLE_AUTH_URL}`,"_self")
 
@@ -75,6 +94,18 @@ if(userInfo?.email){
                       />
                     </div>
                     <div className="text-center pt-1 mb-12 pb-1">
+                    <button
+                        className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-red-600 hover:bg-red-500"
+      
+                        data-mdb-ripple="true"
+                        data-mdb-ripple-color="light"
+                        type="submit"
+                      
+                      >
+                        Log in
+                      </button>
+
+
                       <button onClick={()=>handleGoogleLogin()}
                         className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-[#459C98] hover:bg-[#23847f]"
       

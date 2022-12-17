@@ -68,8 +68,8 @@ import { toast } from 'react-toastify';
         <Droppable droppableId="deleteArea">
           {
             (provided,snapshot)=>{
-              return    <div className={`fixed lg:bottom-2 lg:right-2 bottom-2 right-2 bg-gray-200  z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
-              <p  className={`text-3xl text-[#378985] ${snapshot.isDraggingOver? "rotate-[30deg]":"transform-none"}`}><BsTrash title="Drag and drop the deck item here for deletion."/></p>
+              return    <div className={`fixed lg:bottom-2 bg-gray-200  lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
+              <p  className={`text-3xl text-[#378985]  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500":"transform-none"} `}><BsTrash title="Drag and drop the deck item here for deletion."/></p>
              </div>
             }
           }

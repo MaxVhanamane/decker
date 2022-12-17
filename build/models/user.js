@@ -8,6 +8,7 @@ const { Schema } = mongoose_1.default;
 const UserSchema = new Schema({
     username: { type: String, required: true },
     email: { type: String, unique: true, required: true },
+    profile_picture: { type: String },
     password: { type: String, required: false },
 });
 const User = mongoose_1.default.model('User', UserSchema);

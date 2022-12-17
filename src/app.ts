@@ -6,7 +6,11 @@ import cors from "cors"
 import session from "express-session";
 import passport from "passport";
 import User from "./models/user";
+import bcrypt from "bcryptjs"
 import { UserDetails } from "./types/UserDetails";
+import passportLocal from "passport-local"
+
+const LocalStrategy=passportLocal.Strategy
 const MongoDBStore = require('connect-mongodb-session')(session);
 const GoogleStrategy =require("passport-google-oauth20")
 config()
@@ -46,7 +50,7 @@ store.on('error', function(error:Error) {
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
 
-app.set('trust proxy', 1) 
+// app.set('trust proxy', 1) 
 
 // create session
 app.use(session({
@@ -54,18 +58,40 @@ app.use(session({
   resave:true,
   saveUninitialized:true,
   store:store,
-  // cookie:{
-  //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
-  //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-  //   secure:true,      // it allows only https requests
-  //   maxAge: 1000 * 60 * 60 * 24 * 7
-  // }
+  cookie:{
+    httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    secure:true,      // it allows only https requests
+    maxAge: 1000 * 60 * 60 * 24 * 7
+  }
  
 }))
 
 // using passport to handle login
 app.use(passport.initialize())
 app.use(passport.session())
+
+// local strategy 
+passport.use(new LocalStrategy(  
+  {usernameField:"email"},
+  // here in function username and password are equal to req.body.username and req.body.password. passport automatically does that for you.
+  function(username, password, done) {
+    User.findOne({ email: username }, function (err:Error, user:UserDetails) {
+      if (err) { return done(err); }  // If there is error we will return an error to done function.
+      if (!user) { return done(null, false); } // If we don't find any user then we will return null and as there is no error we will send false
+      // If we reach this line it means we found the user now let's compare the passoword.
+      bcrypt.compare(password,user.password!,(err,result)=>{
+        if(err) throw err // If some error occures while decrypting we will throw an error. very less likely but still...
+        if(result===true){
+          return done(null,user) // If password matches we will send the user
+        }
+        else{
+          return done(null,false) // If password doesn't match then we will send error as null and user as false
+        }
+      })
+    });
+  }
+));
 
 //gooogle strategy 
 
@@ -81,6 +107,7 @@ passport.use(
       //extracting required user information from the profile that is given by goolge
       const userInfo:UserDetails={
         email:profile.emails[0].value,
+        profile_picture:profile.photos[0].value,
         username:profile.displayName
       }
 
@@ -114,7 +141,12 @@ passport.serializeUser((user:any,done)=>{
  passport.deserializeUser((id:string,done)=>{
 
    User.findById(id,(err:Error,doc:any)=>{
-     return done(null,doc)
+    const userInfo={
+      username:doc.username, 
+  email:doc.email,
+  profile_picture:doc.profile_picture,
+    }
+     return done(null,userInfo)
  
    })
  })
@@ -307,7 +339,52 @@ app.get('/auth/google/callback',
 
 
 
+app.post("/signup",async(req:Request,res:Response)=>{
+ const {username,email,password}=req?.body
+ if(!username && !password && !email){
+  res.send("Please provide name, email and password")
+  return
+ }
+ try{
+  const user:UserDetails | null=await User.findOne({username})
+  if(!user){
+   const hashedPassword=await bcrypt.hash(password,10) 
+   const newUser= new User({
+     username,
+     email,
+     password:hashedPassword
+   })
+   await newUser.save()
+   res.send("success")
+  
+  }
+  else{
+   res.send("User already exist")
+  }
+ }
+ catch(error){
+  console.log(error)
+ }
 
+
+})
+
+
+
+  app.post('/login', 
+  passport.authenticate('local',{successRedirect:`${process.env.REDIRECT_URL!}/auth/success` }),
+  (req, res) => {
+    if(req.user){
+      console.log(req.user)
+// res.redirect("http://localhost:5173")
+      // res.status(200).json({success:true});
+    }
+    else{
+      res.status(200).json({success:false});
+
+    }
+  }
+);
 
 
 

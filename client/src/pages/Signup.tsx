@@ -44,7 +44,7 @@ export default function SignUp() {
 
      
       const data = { username, email, password };
-      request.post("/signup",data, { withCredentials: true })
+      request.post("/signup",data)
 
     //   const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/signup`, {
     //     method: 'POST', // or 'PUT'
