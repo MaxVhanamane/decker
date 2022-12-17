@@ -50,7 +50,7 @@ store.on('error', function(error:Error) {
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
 
-// app.set('trust proxy', 1) 
+app.set('trust proxy', 1) 
 
 // create session
 app.use(session({
