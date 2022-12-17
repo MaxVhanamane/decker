@@ -2,6 +2,7 @@
 import { useEffect, createContext, ReactNode, useState, Dispatch } from "react";
 import { request } from "./../utils/axios-utils";
 import { userData } from "../types/types";
+
 type UserContextProvider = {
   children: ReactNode;
 };
@@ -13,7 +14,7 @@ interface ContexType{
     profile_picture:string,
     email: string,
     __v: number} | null | undefined ,
-    setUserInfo?:Dispatch<React.SetStateAction<userData | null | undefined>>
+    setUserInfo: Dispatch<React.SetStateAction<userData | null>>;
 }
 export const UserContext = createContext<ContexType >({userInfo:{
   _id: "",
@@ -21,10 +22,10 @@ export const UserContext = createContext<ContexType >({userInfo:{
   profile_picture:"",
   email: "",
   __v: 0,
-}});
+},setUserInfo:()=>{}});
 
 function UserContextProvider({ children }: UserContextProvider) {
-  const [userInfo,setUserInfo]=useState<userData | undefined | null>( { _id: "",
+  const [userInfo,setUserInfo]=useState<userData | null>( { _id: "",
     username: "",
     profile_picture:"",
     email: "",
@@ -42,7 +43,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   },[])
 
   // const { data, isError, error } = useQuery<userData>("user", getUser); 
-  return <UserContext.Provider value={{userInfo,setUserInfo:setUserInfo}}>{children}</UserContext.Provider>;
+  return <UserContext.Provider value={{userInfo,setUserInfo}}>{children}</UserContext.Provider>;
 }
 
 export default UserContextProvider;
