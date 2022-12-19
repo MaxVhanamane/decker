@@ -56,8 +56,7 @@ const Navbar:FC = () => {
   </div>
   <div >
     <ul>
-  {!userInfo?.email? <Link to="/login"><li className='text-gray-50 cursor-pointer hover:text-gray-100 font-semibold mr-4'>Login</li></Link>
-        :<li onClick={()=>{handleShowUserInfomation()}}className='text-gray-50 cursor-pointer hover:text-gray-100  mr-1  rounded-full flex gap-2 px-2 items-center'> {userInfo?.profile_picture?<img className='rounded-full w-8 h-8 ' src={userInfo?.profile_picture} alt="profile" referrerPolicy="no-referrer"/>:<FaUserCircle className='w-8 h-8'/>}</li>}
+  {userInfo?.email?<li onClick={()=>{handleShowUserInfomation()}}className='text-gray-50 cursor-pointer hover:text-gray-100  mr-1  rounded-full flex gap-2 px-2 items-center'> {userInfo?.profile_picture?<img className='rounded-full w-8 h-8 ' src={userInfo?.profile_picture} alt="profile" referrerPolicy="no-referrer"/>:<FaUserCircle className='w-8 h-8'/>}</li>:null}
         </ul>
   </div>
 

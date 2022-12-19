@@ -76,7 +76,7 @@ store.on('error', function (error) {
 });
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: "http://localhost:5173", credentials: true }));
+app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
 app.set('trust proxy', 1);
 // create session
 app.use((0, express_session_1.default)({
@@ -84,12 +84,13 @@ app.use((0, express_session_1.default)({
     resave: true,
     saveUninitialized: true,
     store: store,
-    cookie: {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7 //cookie expires in 7 days
-    }
+    // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend.
+    // cookie:{
+    //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    //   secure:true,      // it allows only https requests
+    //   maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
+    // }
 }));
 // using passport to handle login
 app.use(passport_1.default.initialize());

@@ -48,7 +48,7 @@ store.on('error', function(error:Error) {
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin:"http://localhost:5173" ,credentials:true}))
+app.use(cors({ origin:["https://decker.vercel.app","http://localhost:5173"] ,credentials:true}))
 
 app.set('trust proxy', 1) 
 
@@ -58,12 +58,13 @@ app.use(session({
   resave:true,
   saveUninitialized:true,
   store:store,
-  cookie:{
-    httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
-    sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-    secure:true,      // it allows only https requests
-    maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
-  }
+  // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend.
+  // cookie:{
+  //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+  //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+  //   secure:true,      // it allows only https requests
+  //   maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
+  // }
  
 }))
 

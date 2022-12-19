@@ -1,6 +1,6 @@
 import  { useState ,ChangeEvent,useContext,FormEvent, useEffect} from 'react'
 import 'react-toastify/dist/ReactToastify.css';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/context';
 import { request } from '../utils/axios-utils';
 import {FcGoogle} from "react-icons/fc"
@@ -11,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const {userInfo}=useContext(UserContext) 
   const navigate=useNavigate()
-
+  const location = useLocation();
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
   
     if (e.target.name === "email") {
