@@ -117,7 +117,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     <div className="w-full border-b border-gray-300"></div>
   </div>
   <div className="relative flex justify-center">
-    <span className="bg-gray-50 px-4 text-sm text-gray-500">or</span>
+    <span className="bg-white px-4 text-sm text-gray-500">or</span>
   </div>
 </div>
                       <button onClick={()=>handleGoogleLogin()}
