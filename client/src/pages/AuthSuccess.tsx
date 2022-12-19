@@ -1,18 +1,37 @@
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { UserContext } from '../context/context';
 import {TiTick} from"react-icons/ti"
+import { request } from '../utils/axios-utils';
+import { userData } from '../types/types';
 export default function AuthSuccess() {
-    const {userInfo}=useContext(UserContext) 
     const navigate=useNavigate()
-    if(userInfo){
-        setTimeout(()=>{
-            navigate("/")
-        },2000)
+    const getUser=async():Promise<userData> =>{
+      const data = await request.get("/getuser");
+      localStorage.setItem("userInfo",JSON.stringify(data.data))
+      const newD=localStorage.getItem("userInfo")
+      let user
+      if(newD){
+        user= JSON.parse(newD)
+      }
+      return user
     }
-   else{
-    navigate("/login")
-   }
+  useEffect(()=>{
+    (async()=>{
+
+      const userInfo=await  getUser()
+       if(userInfo?.email){
+         setTimeout(()=>{
+             navigate("/")
+         },2000)
+     }
+    else{
+     navigate("/login")
+    }
+    } )()
+   
+   
+  },[])
   return (
     <div className='w-full h-screen flex items-center justify-center flex-col gap-3'>
       <div className='flex items-center justify-center rounded-full bg-green-700 text-white '><p className='text-4xl'><TiTick/></p></div>

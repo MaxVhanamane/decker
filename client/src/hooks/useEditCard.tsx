@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from 'react-query';
+import { toast } from 'react-toastify';
 import { request } from './../utils/axios-utils';
 
 type CardData={
@@ -28,7 +29,15 @@ const useEditCard = ()=>{
        queryClient.invalidateQueries("cards") 
      },
      onError:(error)=>{
-       console.log("Error please try again!")
+       toast.error("Error please try again!", {
+     
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
      }
     })
 }

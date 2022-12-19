@@ -129,7 +129,7 @@ function Cards() {
              return <div  ref={provided.innerRef}  
               {...provided.dragHandleProps}  
               {...provided.draggableProps} 
-                className={`relative   border  ${snapshot.isDragging ? " border border-[#378783]": "border-gray-400"}  flex text-gray-800
+                className={`relative   border  ${snapshot.isDragging ? "border-[#378783]": "border-gray-400"}  flex text-gray-800
                 rounded-md min-w-[8rem] px-4 py-2 min-h-[5.5rem]  justify-center items-center text-justify max-w-full break-all`}
                            key={index}
               >

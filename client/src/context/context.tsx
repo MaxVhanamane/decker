@@ -32,7 +32,6 @@ function UserContextProvider({ children }: UserContextProvider) {
     __v: 0})
   const getUser = async (): Promise<any> => {
     const data = await request.get("/getuser");
-    console.log(data.data)
     localStorage.setItem("userInfo",JSON.stringify(data.data))
     const newD=localStorage.getItem("userInfo")
     setUserInfo({...JSON.parse(newD!)})

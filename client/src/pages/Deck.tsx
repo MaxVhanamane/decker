@@ -81,7 +81,7 @@ import { toast } from 'react-toastify';
               Deck title
             </label>
             <input
-              className=" lg:w-96 w-80 py-1 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-800 px-2 mx-4 rounded-md"
+              className=" lg:w-96 w-80 py-1 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +106,7 @@ import { toast } from 'react-toastify';
   
   {(provided,snapshot)=>(
   <div 
-  className={`relative ${snapshot.isDragging ? " border border-[#378783]": "shadow-xl bg-gray-50"} flex text-gray-800
+  className={`relative  border ${snapshot.isDragging ? "border-[#378783]": "border-gray-400"}  flex text-gray-800
   rounded-md min-w-[8rem] px-4  min-h-[5.5rem] py-2 justify-center items-center text-justify max-w-full  `}
          ref={provided.innerRef}    
          {...provided.dragHandleProps}
@@ -151,7 +151,7 @@ import { toast } from 'react-toastify';
 
                     {(provided,snapshot)=>{
       return <div 
-      className={`relative ${snapshot.isDragging ? " border border-[#378783]": " shadow-xl bg-gray-50"} flex text-gray-800
+      className={`relative border  ${snapshot.isDragging ? "  border-[#378783]": "border-gray-400"}  flex text-gray-800
                    rounded-md min-w-[8rem] px-4  min-h-[5.5rem]  justify-center items-center text-justify max-w-full  `}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  

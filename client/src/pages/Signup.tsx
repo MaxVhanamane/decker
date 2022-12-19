@@ -1,25 +1,27 @@
 import React, { useState,useEffect } from 'react'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Link } from 'react-router-dom';
-import { FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FormEvent, useContext } from 'react';
 import { ChangeEvent } from 'react';
 import { request } from './../utils/axios-utils';
+import { UserContext } from '../context/context';
+import { FaFeatherAlt } from 'react-icons/fa';
 
 export default function SignUp() {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPass, setConfirmPass] = useState("")
- 
+  const {userInfo}=useContext(UserContext) 
+  const navigate=useNavigate()
 
   useEffect(()=>{
-    const token=localStorage.getItem("token")
-    // if(token){
-    //  router.push("/")
-    // }
-     },[])
 
+    if(userInfo?.email){
+      navigate("/")
+    }
+    },[userInfo?.email])
 
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "username") {
@@ -44,41 +46,35 @@ export default function SignUp() {
 
      
       const data = { username, email, password };
-      request.post("/signup",data)
-
-    //   const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/signup`, {
-    //     method: 'POST', // or 'PUT'
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(data),
-    //   })
-    //   const response = await res.json()
-    //   if(response.success){
-    //     toast.success('Your account has been created successfully!', {
-      
-    //       autoClose: 2000,
-    //       hideProgressBar: false,
-    //       closeOnClick: true,
-    //       pauseOnHover: true,
-    //       draggable: true,
-    //       progress: undefined,
-    //     });
-    //   }
+     const res= await request.post("/signup",data)
+     if(res.data.success){
+      toast.success(res.data.message, {
      
-    // else{
-    //   toast.error(response.error, {
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      setConfirmPass("")
+      setPassword("")
+      setEmail("")
+      setUsername("")
+     }
+     else{
+      toast.error(res.data.message, {
      
-    //     autoClose: 2000,
-    //     hideProgressBar: false,
-    //     closeOnClick: true,
-    //     pauseOnHover: true,
-    //     draggable: true,
-    //     progress: undefined,
-    //   });
-    // }
-
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+     }
     }
+
     else{
       toast.error("password must be at least 8 characters long", {
      
@@ -115,28 +111,31 @@ export default function SignUp() {
             <div className="block bg-white shadow-lg rounded-lg">
               <div className="flex justify-center items-center g-0">
                 <div className=" px-4 md:px-0">
-                  <div className="md:p-12 md:mx-6">
-                    <div className="text-center rounded-full">
+                  <div className="md:p-12 p-4 md:mx-6">
+                    <div className="flex items-center justify-center flex-col rounded-full">
+                  <span className='text-2xl text-teal-600'><FaFeatherAlt/></span>
 
-                      <h4 className="text-2xl font-bold mt-1 mb-5 pb-1 text-gray-800">Sign up for an account</h4>
+                    <h2 className='font-bold text-2xl text-[#318682]  '>Decker</h2>
+
+                      <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700">Sign up for an account</h4>
                     </div>
                     <form onSubmit={handleSignup}>
                       {/* <p className="mb-4">Please login to your account</p> */}
                       <div className="mb-4">
                         <input onChange={handleChange}
                           type="text"
-                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none"
                           id="username"
                           name="username"
                           value={username}
-                          placeholder="Name"
+                          placeholder="Username"
                           required
                         />
                       </div>
                       <div className="mb-4">
                         <input onChange={handleChange}
                           type="email"
-                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none"
                           id="email"
                           name="email"
                           value={email}
@@ -149,7 +148,7 @@ export default function SignUp() {
                         <input onChange={handleChange}
                           type="password"
 
-                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none"
                           id="password"
                           name="password"
                           value={password}
@@ -160,7 +159,7 @@ export default function SignUp() {
                       <div className="mb-4">
                         <input onChange={handleChange}
                           type="password"
-                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+                          className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none"
                           id="confirmpassword"
                           name="confirmPass"
                           value={confirmPass}
@@ -170,7 +169,7 @@ export default function SignUp() {
                       </div>
                       <div className="text-center pt-1 mb-10 pb-1">
                         <button
-                          className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-[#459C98] hover:bg-[#23847f] "
+                          className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 "
                           type="submit"
                           data-mdb-ripple="true"
                           data-mdb-ripple-color="light"
