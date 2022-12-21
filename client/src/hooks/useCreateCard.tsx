@@ -5,11 +5,14 @@ import { toast } from 'react-toastify';
 
 type PayloadData={
     deck_id:string,
-    content:string
+    content:{
+      title:string,
+      note:string
+    }
   }
 
   type OldData={
-    cards:string[];
+    cards:{title:string,note:string}[];
     title:string;
   }
   

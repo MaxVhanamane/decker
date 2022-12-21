@@ -259,8 +259,8 @@ app.post('/card/:deck_id',fetchUserDetails, async function (req:any, res:Respons
      return res.status(400).json({message:"No deck found! Please check deck id"})
     }
     getDeck.cards.push(req.body.content)
-    const createdDeck=await getDeck.save()
-    res.json(createdDeck)
+    const createdCard=await getDeck.save()
+    res.json(createdCard)
   }
   catch(err){
  res.status(500).json({error:"Invalid id"})
@@ -269,16 +269,20 @@ app.post('/card/:deck_id',fetchUserDetails, async function (req:any, res:Respons
 
 
 })
-
+//Edit card
 app.put('/card/:deck_id',fetchUserDetails, async function (req:any, res:Response) {
-  
+  //get the deck using _id
   const Deck=await DeckModal.findById(req.params.deck_id)
+  // take out cards from received deck
   const cards=Deck?.cards
   if(cards){
+    // get the index from body
     const index =req.body.index
-
-    cards?.splice(index, 1, req.body.newContent);
+  //remove one item at index (which we received) and add newContent at that index
+    cards?.splice(index, 1, req.body.newContent); // this will modify original array
+  // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
     Deck.cards.splice(0, Deck.cards.length, ...cards)
+  // save it in the db
     const newCard=await Deck.save()
     res.json(newCard)
   }

@@ -7,7 +7,7 @@ import { useQuery } from 'react-query';
 // }
 type Data={
   title:string;
-  cards:string[];
+  cards:{title:string,note:string}[];
 }
 
  const getCards=async (_id:string):Promise<Data>=>{

@@ -1,5 +1,5 @@
 import { request } from "../utils/axios-utils";
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { DeckTypes } from "./useGetDecks";
 
  const createDeck = async (title:string)=> {

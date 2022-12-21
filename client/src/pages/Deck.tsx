@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState,useContext } from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
@@ -8,6 +8,8 @@ import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import useDeleteDeck from '../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
+import { UserContext } from '../context/context'
+
 import { toast } from 'react-toastify';
 
   function Home() {
@@ -20,6 +22,7 @@ import { toast } from 'react-toastify';
     const {mutate:deleteOneDeck}=useDeleteDeck()
 
     const {mutate:pinDeck,error:pinError,isError:isPinError}=usePinDeck()
+    const {theme,setTheme}=useContext(UserContext)
 
 
     const handleSubmit = async (e: FormEvent) => {
@@ -55,33 +58,33 @@ import { toast } from 'react-toastify';
 
 
     if(isError){
-      return  <div className="flex justify-center items-center h-screen w-full"><p>Error {(error as Error).message}</p></div>
+      return  <div className="flex justify-center items-center h-screen w-full dark:bg-slate-900 dark:text-white"><p>Error {(error as Error).message}</p></div>
     }
    
     if(isLoading){
-      return <div className="flex justify-center items-center h-screen w-full bg-white"><img src="/loadinggif.gif" alt="loading_image" width={200} height={200}/></div>
+      return <div className="flex justify-center items-center h-screen w-full bg-white dark:bg-slate-900"><img src={localStorage.getItem("theme")==="dark"?"/loading44.gif":"/loadinggif.gif"} alt="loading_image" width={200} height={200}/></div>
     }
   
     return (
  
-      <div className="flex flex-col gap-2 mt-8 mb-24 ">
+      <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32  ">
         <Droppable droppableId="deleteArea">
           {
             (provided,snapshot)=>{
-              return    <div className={`fixed lg:bottom-2 bg-gray-200  lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
-              <p  className={`text-3xl text-[#378985]  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500":"transform-none"} `}><BsTrash title="Drag and drop the deck item here for deletion."/></p>
+              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
+              <span  className={`text-3xl text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash title="Drag and drop the deck item here for deletion."/></span>
              </div>
             }
           }
     
        </Droppable>
-        <div className="w-full px-4 mx-auto">
+        <div className="w-full px-4 mx-auto ">
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
-            <label htmlFor="title" className="font-bold text-gray-700">
+            <label htmlFor="title" className="font-bold text-teal-700 dark:text-sky-400 ">
               Deck title
             </label>
             <input
-              className=" lg:w-96 w-80 py-1 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-700 px-2 mx-4 rounded-md"
+              className=" dark:bg-slate-900 dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,16 +92,16 @@ import { toast } from 'react-toastify';
               }}
               value={title}
             />
-            <button className="bg-[#459C98] hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md ">Add Deck</button>
+            <button className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md ">Add Deck</button>
           </form>
         </div>
  
-    {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 mb-10  p-4 mx-2  " >
-  <h1 className="text-left  text-md font-semibold text-gray-800  m-4">Pinned </h1>
+    {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 lg:mb-10  mx-1  " >
+  <h1 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  m-4">Pinned </h1>
 
   <Droppable droppableId="pinnedArea">
     {(provided)=>{
-      return <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-2 p-2 " ref={provided.innerRef} {...provided.droppableProps}>
+      return <div className="flex flex-row flex-wrap gap-2 justify-center items-center p-2 lg:mx-20" ref={provided.innerRef} {...provided.droppableProps}>
         {alldecks?.filter((deck)=>{return deck.pinned===true}).map((deck,index) => {
           return (
            // here key is for react and draggableId,index are required for Draggable component to work. 
@@ -106,8 +109,8 @@ import { toast } from 'react-toastify';
   
   {(provided,snapshot)=>(
   <div 
-  className={`relative  border ${snapshot.isDragging ? "border-[#378783]": "border-gray-400"}  flex text-gray-800
-  rounded-md min-w-[8rem] px-4  min-h-[5.5rem] py-2 justify-center items-center text-justify max-w-full  `}
+  className={`relative  border ${snapshot.isDragging ? "  border-cyan-500 animate-pulse shadow-sky-500  shadow-2xl ": "border-gray-400"} ${snapshot.draggingOver==="deleteArea" &&"  border-red-500 shadow-red-500  shadow-2xl "}  flex text-gray-800 
+  rounded-md lg:min-w-[8rem] px-4  min-h-[5.5rem] py-2 justify-center items-center text-justify max-w-full   dark:text-gray-50  `}
          ref={provided.innerRef}    
          {...provided.dragHandleProps}
          {...provided.draggableProps}
@@ -115,10 +118,10 @@ import { toast } from 'react-toastify';
   <div className="absolute bottom-0 right-0">
  <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsFillPinFill/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 dark:text-sky-400  hover:scale-105"><BsFillPinFill/></button>
  </div>
 
-<Link to={`cards/${deck._id}`} > <p className=" break-all">{deck.title}</p> </Link>
+<Link to={`cards/${deck._id}`} > <p className=" break-all font-semibold py-6 ">{deck.title}</p> </Link>
 </div>
   )}
 
@@ -135,15 +138,15 @@ import { toast } from 'react-toastify';
         </Droppable>
         </div>:null}
   
-       {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  p-4 mx-2" >
-        <h1 className="text-left text-md font-semibold text-gray-800 m-4"> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
+       {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  mx-1" >
+        <h1 className="text-left text-md font-semibold text-gray-800 m-4 dark:text-gray-50 "> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
         <Droppable droppableId="deckArea" >
 
           {
 
           (provided)=>{
-           return   <div className="flex flex-row flex-wrap gap-4 justify-center items-center mx-2  " ref={provided.innerRef} {...provided.droppableProps}>
+           return   <div className="flex flex-row flex-wrap gap-2   justify-center items-center p-2 lg:mx-20 " ref={provided.innerRef} {...provided.droppableProps}>
 
                {alldecks?.filter((deck)=>deck.pinned===false).map((deck,index) => {
                  return (
@@ -151,20 +154,19 @@ import { toast } from 'react-toastify';
 
                     {(provided,snapshot)=>{
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "  border-[#378783]": "border-gray-400"}  flex text-gray-800
-                   rounded-md min-w-[8rem] px-4  min-h-[5.5rem]  justify-center items-center text-justify max-w-full  `}
+      className={`relative border  ${snapshot.isDragging ? "  border-cyan-500 animate-pulse shadow-sky-500  shadow-2xl ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" &&"border-red-500 shadow-red-500  shadow-2xl "}   text-gray-800 dark:text-gray-50 
+                   rounded-md min-w-[8rem] px-4  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
     >
-      
       <div className="absolute bottom-0 right-0">
  <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 hover:scale-105"><BsPin/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 dark:text-sky-400 hover:scale-105"><BsPin/></button>
  </div>
 
-  <Link to={`cards/${deck._id}`} ><p className=" break-all"> {deck.title}</p> </Link>
+  <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
  
     </div>
    
@@ -187,7 +189,8 @@ import { toast } from 'react-toastify';
        
         </Droppable>
         </div>:null}
- 
+
+
       </div>
  
 

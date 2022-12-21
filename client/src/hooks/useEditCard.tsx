@@ -5,15 +5,15 @@ import { request } from './../utils/axios-utils';
 
 type CardData={
     deck_id:string,
-    oldContent:{oldContent:string,index:number},
-    newContent:string
+    oldContent:{oldContent:{title:string,note:string},index:number},
+    newContent:{title:string,note:string}
 
   }
 
 type PromiseData={
 title:string;
 _id:string;
-cards:string[];
+cards:{title:string,note:string}[];
 pinned:boolean
 }
 const editCard =async(cardData:CardData):Promise<PromiseData>=>{

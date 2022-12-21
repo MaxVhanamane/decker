@@ -17,8 +17,11 @@ import Layout from "./componenets/Layout";
 import AuthSuccess from "./pages/AuthSuccess";
 import AuthFailure from "./pages/AuthFailure";
 import  useDeleteCard  from "./hooks/useDeleteCard";
+import { useEffect } from 'react';
+import ThemeToggler from './componenets/ThemeToggler';
 
 function App() {
+
   const { mutate: deleteOneDeck } = useDeleteDeck();
   const { mutate: pinDeck } = usePinDeck();
   const {mutate:deleteCardItem}=useDeleteCard()

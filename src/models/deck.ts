@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const DeckSchema = new Schema({
   title:  String, 
-  cards:[String],
+  cards:[{title:String,note:String}],
   pinned: { type: Boolean, default: false },
   email: {type: Schema.Types.ObjectId, ref: 'Users'}
 });

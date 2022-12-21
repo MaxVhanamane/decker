@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 body,html {
   margin: 0 ;
@@ -8,9 +6,18 @@ body,html {
   text-align: center;
   /* overflow-x: hidden; */
   box-sizing: border-box;
-  background-color: #f8fafc; 
+  /* background-color: white; */
 }
 
-textarea {
-  resize: none; /* user can resize vertically, but width is fixed */
+
+
+/* @media (prefers-color-scheme: dark) {
+  body,html {
+    background: #0f172a;
+  }
 }
+@media (prefers-color-scheme: light) {
+  body,html {
+    background: white;
+  }
+} */
