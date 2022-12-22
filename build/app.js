@@ -84,7 +84,8 @@ app.use((0, express_session_1.default)({
     resave: true,
     saveUninitialized: true,
     store: store,
-    // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend.
+    // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
+    // uncomment it while deploaying
     cookie: {
         httpOnly: true,
         sameSite: "none",
@@ -194,8 +195,9 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
-        const decks = yield deck_1.default.find({ email: user.id });
-        res.json(decks);
+        // const decks=await DeckModal.find({email:user.id}) 
+        const deck = yield deck_1.default.find({ email: user.id }).sort({ updatedAt: -1 });
+        res.json(deck);
     });
 });
 app.post('/deck', fetchUserDetails, function (req, res) {
@@ -209,6 +211,39 @@ app.post('/deck', fetchUserDetails, function (req, res) {
         res.json(createdDeck);
     });
 });
+// app.put('/deck',fetchUserDetails, async function (req:any, res:Response) {
+//   const user=req.userDetails
+//     try{
+//       // ByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
+//       let indexValue:number
+//       const allDecks=await DeckModal.find({email:user._id})
+//       const deckToBeChanged:any = allDecks.find((obj,index) => {
+//         if(obj.id ===req.body.id){
+//           indexValue=index
+//         return obj
+//         }
+//       });
+//       console.log(deckToBeChanged)
+//       deckToBeChanged!.pinned=req.body.pinned
+//       console.log("decktobeChangedafter",deckToBeChanged)
+//       allDecks.splice(indexValue!,1)
+//      allDecks.unshift(deckToBeChanged!)
+//      const result1 = await DeckModal.deleteMany({});
+//      const newDeck=await DeckModal.insertMany(allDecks)
+//      console.log(newDeck)
+//       res.json(newDeck)
+//     }
+//    catch(error){
+//     console.log(error)
+//     if(error instanceof Error){
+//   console.log(error)
+//       res.status(400).send({error:error.message,isError:true});
+//     }
+//     else {
+//       res.status(400).json({error:"Unexpected error",isError:true})
+//      }
+//    }
+// })
 app.put('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
@@ -258,7 +293,7 @@ app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
             if (!getDeck) {
                 return res.status(400).json({ message: "No deck found! Please check deck id" });
             }
-            getDeck.cards.push(req.body.content);
+            getDeck.cards.unshift(req.body.content);
             const createdCard = yield getDeck.save();
             res.json(createdCard);
         }

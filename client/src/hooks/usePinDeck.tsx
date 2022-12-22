@@ -29,17 +29,35 @@ const usePinDeck = ()=>{
          onMutate:async(data:DataType)=>{
          await queryClient.cancelQueries("decks")
          const previousQueryData=queryClient.getQueryData<DeckTypes[]>("decks")
-        const newQueryData= previousQueryData?.map(item=>{
-          if (item._id===data.id){
-            return {...item,pinned:data.pinned}
-          }
-          else {
-            return item
-          }
-         })
-       
+        // const newQueryData= previousQueryData?.map(item=>{
+        //   if (item._id===data.id){
+        //     return {...item,pinned:data.pinned}
+        //   }
+        //   else {
+        //     return item
+        //   }
+        //  })
+ 
+        // all this code is to show pinned and unpinned items in the beginning 
+        // To store index of an item that we want to pin or unpin
+         let indexValue:number      
+         // first get the item which we want to pin or unpin
+         const deckToBeChanged = previousQueryData!.find((obj,index) => {
+           if(obj._id ===data.id){
+             indexValue=index
+           return obj
+           }
+         });
+         
+         // once we get the item then we will change the pinned property
+         deckToBeChanged!.pinned=data.pinned 
+         // then we will remove the item that we want pin or unpin
+         previousQueryData!.splice(indexValue!,1)
+         // then we will add the item in the beginning of an array using unshift
+         previousQueryData!.unshift(deckToBeChanged!)
+
          queryClient.setQueryData<DeckTypes[] | undefined>("decks",()=>{
-  return newQueryData
+  return previousQueryData
      
   
   })

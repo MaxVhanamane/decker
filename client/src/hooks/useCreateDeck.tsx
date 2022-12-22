@@ -24,7 +24,7 @@ const useCreateDeck= ()=>{
               queryClient.setQueryData<DeckTypes[] | undefined>("decks",(oldQueryData)=>{
                 if(oldQueryData){
 
-                  return [...oldQueryData,{title,_id:Math.random().toString(),cards:[],pinned:false}]
+                  return [{title,_id:Math.random().toString(),cards:[],pinned:false},...oldQueryData]
                 }
            
         

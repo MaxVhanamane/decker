@@ -126,8 +126,8 @@ else{
        <Droppable droppableId="cardDeleteArea">
           {
             (provided,snapshot)=>{
-              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center`}ref={provided.innerRef} {...provided.droppableProps}>
-              <span  className={`text-3xl text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash title="Drag and drop the card item here for deletion."/></span>
+              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`}ref={provided.innerRef} {...provided.droppableProps}>
+              <span  className={`text-3xl text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"}  `}><BsTrash title="Drag and drop the card item here for deletion."/></span>
              </div>
             }
           }
@@ -159,6 +159,7 @@ else{
         <h1 className="font-bold text-xl text-gray-800 mb-6 dark:text-gray-50 mt-6">{data?.title} </h1>
 
       </div>
+      {/* You can't use Draggable directly you have to use it inside Dropable component  */}
       <Droppable droppableId="cardDropableArea" >
           {
             (provided,snapshot)=>{
@@ -172,7 +173,7 @@ else{
              return <div  ref={provided.innerRef}  
               {...provided.dragHandleProps}  
               {...provided.draggableProps} 
-                className={`relative   border   ${snapshot.isDragging ? "  border-cyan-500 animate-pulse shadow-sky-500  shadow-2xl    ": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea" &&"border-red-500 shadow-red-500  shadow-2xl "}   flex flex-col text-gray-800
+                className={`relative   border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-800 border-violet-800 animate-pulse": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea" &&"border-red-500 shadow-2xl shadow-red-500 "}   flex flex-col text-gray-800
                 rounded-md min-w-[8rem] px-4 py-6 min-h-[5.5rem]   text-justify max-w-full break-all `}
                            key={index}
               >

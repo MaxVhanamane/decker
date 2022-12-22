@@ -12,7 +12,7 @@ import { UserContext } from '../context/context'
 
 import { toast } from 'react-toastify';
 
-  function Home() {
+  function Deck() {
     const [title, setTitle] = useState<string>("");
     
     const {data:alldecks,error,isError,isLoading}=useGetDecks()
@@ -22,7 +22,6 @@ import { toast } from 'react-toastify';
     const {mutate:deleteOneDeck}=useDeleteDeck()
 
     const {mutate:pinDeck,error:pinError,isError:isPinError}=usePinDeck()
-    const {theme,setTheme}=useContext(UserContext)
 
 
     const handleSubmit = async (e: FormEvent) => {
@@ -58,7 +57,7 @@ import { toast } from 'react-toastify';
 
 
     if(isError){
-      return  <div className="flex justify-center items-center h-screen w-full dark:bg-slate-900 dark:text-white"><p>Error {(error as Error).message}</p></div>
+      return  <div className="flex justify-center items-center h-screen w-full dark:bg-slate-900 dark:text-white"><p><span className="font-bold test-grray-800">Error </span>: {(error as Error).message}</p></div>
     }
    
     if(isLoading){
@@ -71,13 +70,19 @@ import { toast } from 'react-toastify';
         <Droppable droppableId="deleteArea">
           {
             (provided,snapshot)=>{
-              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center`} ref={provided.innerRef} {...provided.droppableProps}>
+              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`} ref={provided.innerRef} {...provided.droppableProps}>
+                
               <span  className={`text-3xl text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash title="Drag and drop the deck item here for deletion."/></span>
              </div>
+              
             }
           }
     
        </Droppable>
+
+
+
+       
         <div className="w-full px-4 mx-auto ">
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
             <label htmlFor="title" className="font-bold text-teal-700 dark:text-sky-400 ">
@@ -96,66 +101,83 @@ import { toast } from 'react-toastify';
           </form>
         </div>
  
-    {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 lg:mb-10  mx-1  " >
+  
+
+{alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 lg:mb-10  mx-1  " >
   <h1 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  m-4">Pinned </h1>
 
-  <Droppable droppableId="pinnedArea">
-    {(provided)=>{
-      return <div className="flex flex-row flex-wrap gap-2 justify-center items-center p-2 lg:mx-20" ref={provided.innerRef} {...provided.droppableProps}>
-        {alldecks?.filter((deck)=>{return deck.pinned===true}).map((deck,index) => {
-          return (
-           // here key is for react and draggableId,index are required for Draggable component to work. 
-            <Draggable draggableId={deck._id} index={index} key={deck._id} >
-  
-  {(provided,snapshot)=>(
-  <div 
-  className={`relative  border ${snapshot.isDragging ? "  border-cyan-500 animate-pulse shadow-sky-500  shadow-2xl ": "border-gray-400"} ${snapshot.draggingOver==="deleteArea" &&"  border-red-500 shadow-red-500  shadow-2xl "}  flex text-gray-800 
-  rounded-md lg:min-w-[8rem] px-4  min-h-[5.5rem] py-2 justify-center items-center text-justify max-w-full   dark:text-gray-50  `}
-         ref={provided.innerRef}    
-         {...provided.dragHandleProps}
-         {...provided.draggableProps}
->
-  <div className="absolute bottom-0 right-0">
+        <Droppable droppableId="pinnedArea" isDropDisabled={true} >
+
+          {
+
+          (provided)=>{
+           return   <div className=" flex flex-row flex-wrap gap-2  justify-center items-center p-2 lg:mx-20 " ref={provided.innerRef} {...provided.droppableProps}>
+
+               {alldecks?.filter((deck)=>deck.pinned===true).map((deck,index) => {
+                 return (
+                  <Draggable draggableId={deck._id} index={index} key={deck._id}  shouldRespectForcePress>
+
+                    {(provided,snapshot)=>{
+                      // ${snapshot.draggingOver==="othersDeckArea" &&"border-violet-600 shadow-violet-600 shadow-2xl "} 
+      return <div 
+      className={`relative border  ${snapshot.isDragging ? "  border-sky-500 animate-pulse shadow-sky-500  shadow-2xl ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "border-red-500 shadow-2xl shadow-red-500"}  
+      
+       text-gray-800 dark:text-gray-50 
+                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
+            ref={provided.innerRef}  
+            {...provided.dragHandleProps}  
+            {...provided.draggableProps} 
+    >
+    <div className="absolute bottom-0 right-0">
  <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 dark:text-sky-400  hover:scale-105"><BsFillPinFill/></button>
  </div>
 
-<Link to={`cards/${deck._id}`} > <p className=" break-all font-semibold py-6 ">{deck.title}</p> </Link>
-</div>
-  )}
-
-            </Draggable>
-          
-              
-          );
-        })}
-     {provided.placeholder}
-      </div>
+  <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
+ 
+    </div>
    
-    }}
-        
+                    }
+            
+                    }
+             
+                   </Draggable>
+                 );
+               })}
+               {provided.placeholder} 
+             </div>
+               
+          
+          }
+          
+
+
+          }
+       
         </Droppable>
         </div>:null}
   
-       {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-6 mb-24  mx-1" >
+       {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-4 mb-24  mx-1" >
         <h1 className="text-left text-md font-semibold text-gray-800 m-4 dark:text-gray-50 "> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
-        <Droppable droppableId="deckArea" >
+        <Droppable droppableId="othersDeckArea" isDropDisabled={true} >
 
           {
 
           (provided)=>{
-           return   <div className="flex flex-row flex-wrap gap-2   justify-center items-center p-2 lg:mx-20 " ref={provided.innerRef} {...provided.droppableProps}>
+           return   <div className="  flex flex-row flex-wrap gap-2  justify-center items-center p-2 lg:mx-20 " ref={provided.innerRef} {...provided.droppableProps}>
 
                {alldecks?.filter((deck)=>deck.pinned===false).map((deck,index) => {
                  return (
-                  <Draggable draggableId={deck._id} index={index} key={deck._id}>
+                  <Draggable draggableId={deck._id} index={index+500} key={deck._id}>
 
                     {(provided,snapshot)=>{
+                      //  ${snapshot.draggingOver==="pinnedArea" &&"border-yellow-500 shadow-yellow-500 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "  border-cyan-500 animate-pulse shadow-sky-500  shadow-2xl ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" &&"border-red-500 shadow-red-500  shadow-2xl "}   text-gray-800 dark:text-gray-50 
-                   rounded-md min-w-[8rem] px-4  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
+      className={`relative border  ${snapshot.isDragging ? "  border-sky-500 animate-pulse shadow-sky-500  shadow-2xl ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "border-red-500 shadow-2xl shadow-red-500"} 
+      text-gray-800 dark:text-gray-50 
+                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
@@ -199,4 +221,4 @@ import { toast } from 'react-toastify';
     
   }
   
-  export default Home;
+  export default Deck;

@@ -35,7 +35,7 @@ type PayloadData={
         if(oldCardData){
           const newArray=[...oldCardData.cards] // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will refere the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
           
-          newArray.push(data.content)
+          newArray.unshift(data.content)
           return {...oldCardData,cards:newArray}
         }
        })

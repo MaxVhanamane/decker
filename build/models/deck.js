@@ -10,6 +10,6 @@ const DeckSchema = new Schema({
     cards: [{ title: String, note: String }],
     pinned: { type: Boolean, default: false },
     email: { type: Schema.Types.ObjectId, ref: 'Users' }
-});
+}, { timestamps: true });
 const DeckModal = mongoose_1.default.model('Deck', DeckSchema);
 exports.default = DeckModal;

@@ -1,5 +1,5 @@
 import "./App.css";
-import Home from "./pages/Deck";
+import Deck from "./pages/Deck";
 import { Routes, Route } from "react-router-dom";
 import Cards from "./pages/Cards";
 import {
@@ -17,8 +17,7 @@ import Layout from "./componenets/Layout";
 import AuthSuccess from "./pages/AuthSuccess";
 import AuthFailure from "./pages/AuthFailure";
 import  useDeleteCard  from "./hooks/useDeleteCard";
-import { useEffect } from 'react';
-import ThemeToggler from './componenets/ThemeToggler';
+
 
 function App() {
 
@@ -27,11 +26,12 @@ function App() {
   const {mutate:deleteCardItem}=useDeleteCard()
 
   const handlePin = async (result: DropResult, provided: ResponderProvided) => {
-    if (result.destination?.droppableId === "pinnedArea") {
-      pinDeck({ id: result.draggableId, pinned: true });
-    } else if (result.destination?.droppableId === "deckArea") {
-      pinDeck({ id: result.draggableId, pinned: false });
-    } else if (result.destination?.droppableId == "deleteArea") {
+    // if (result.destination?.droppableId === "pinnedArea") {
+    //   pinDeck({ id: result.draggableId, pinned: true });
+    // } else if (result.destination?.droppableId === "othersDeckArea") {
+    //   pinDeck({ id: result.draggableId, pinned: false });
+    // } else 
+    if (result.destination?.droppableId == "deleteArea") {
       deleteOneDeck(result.draggableId);
     } else if (result.destination?.droppableId == "cardDeleteArea") {
       const receivedData = result.draggableId.split("-");
@@ -48,9 +48,10 @@ function App() {
         }}
       >
         <Layout>
+          
           <Routes>
             <Route element={<PrivateRoutes />}>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Deck />} />
               <Route path="/cards/:deck_id" element={<Cards />} />
             </Route>
             <Route path="/signup" element={<SignUp />} />

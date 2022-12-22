@@ -7,7 +7,7 @@ const UserSchema = new Schema({
   profile_picture:{type:String},
   password:{type:String,required:false},
   
-});
+},{ timestamps: true });
 
 const User = mongoose.model('User', UserSchema);
 

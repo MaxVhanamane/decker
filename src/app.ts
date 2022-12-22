@@ -58,7 +58,8 @@ app.use(session({
   resave:true,
   saveUninitialized:true,
   store:store,
-  // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend.
+  // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
+  // uncomment it while deploaying
   cookie:{
     httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
@@ -184,9 +185,9 @@ app.listen(process.env.PORT || PORT,()=>{
 
 app.get('/deck', fetchUserDetails,async function (req:any, res:Response) {
   const user=req.userDetails
-    const decks=await DeckModal.find({email:user.id}) 
-    res.json(decks)
- 
+    // const decks=await DeckModal.find({email:user.id}) 
+    const deck=await DeckModal.find({ email: user.id }).sort({ updatedAt: -1 });
+    res.json(deck)
 
 })
 
@@ -201,6 +202,51 @@ app.post('/deck',fetchUserDetails, async function (req:any, res:Response) {
   res.json(createdDeck)
 
 })
+
+// app.put('/deck',fetchUserDetails, async function (req:any, res:Response) {
+//   const user=req.userDetails
+  
+  
+//     try{
+//       // ByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
+//       let indexValue:number
+//       const allDecks=await DeckModal.find({email:user._id})
+
+//       const deckToBeChanged:any = allDecks.find((obj,index) => {
+//         if(obj.id ===req.body.id){
+//           indexValue=index
+//         return obj
+//         }
+//       });
+ 
+//       console.log(deckToBeChanged)
+//       deckToBeChanged!.pinned=req.body.pinned
+
+//       console.log("decktobeChangedafter",deckToBeChanged)
+      
+//       allDecks.splice(indexValue!,1)
+//      allDecks.unshift(deckToBeChanged!)
+//      const result1 = await DeckModal.deleteMany({});
+//      const newDeck=await DeckModal.insertMany(allDecks)
+//      console.log(newDeck)
+//       res.json(newDeck)
+//     }
+  
+//    catch(error){
+//     console.log(error)
+//     if(error instanceof Error){
+//   console.log(error)
+//       res.status(400).send({error:error.message,isError:true});
+//     }
+//     else {
+//       res.status(400).json({error:"Unexpected error",isError:true})
+//      }
+//    }
+  
+
+
+// })
+
 
 app.put('/deck',fetchUserDetails, async function (req:any, res:Response) {
   const user=req.userDetails
@@ -241,7 +287,7 @@ app.delete('/deck/:id',fetchUserDetails, async function (req:any, res:Response) 
 app.get('/cards/:_id',fetchUserDetails, async function (req:any, res:Response) {
   const user=req.userDetails
 
-    const cards=await DeckModal.findById({_id:req.params._id})
+    const cards=await DeckModal.findById({_id:req.params._id});
     if(cards){
   
       res.json({cards:cards.cards,title:cards.title})
@@ -258,7 +304,7 @@ app.post('/card/:deck_id',fetchUserDetails, async function (req:any, res:Respons
     if(!getDeck){
      return res.status(400).json({message:"No deck found! Please check deck id"})
     }
-    getDeck.cards.push(req.body.content)
+    getDeck.cards.unshift(req.body.content)
     const createdCard=await getDeck.save()
     res.json(createdCard)
   }
@@ -389,3 +435,8 @@ app.post("/signup",async(req:Request,res:Response)=>{
     return res.status(200).json({success:false,message:error});
   }
 );
+
+
+
+
+

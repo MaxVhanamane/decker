@@ -10,6 +10,6 @@ const UserSchema = new Schema({
     email: { type: String, unique: true, required: true },
     profile_picture: { type: String },
     password: { type: String, required: false },
-});
+}, { timestamps: true });
 const User = mongoose_1.default.model('User', UserSchema);
 exports.default = User;
