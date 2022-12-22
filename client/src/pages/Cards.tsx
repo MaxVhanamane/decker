@@ -173,7 +173,7 @@ else{
              return <div  ref={provided.innerRef}  
               {...provided.dragHandleProps}  
               {...provided.draggableProps} 
-                className={`relative   border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-800 border-violet-800 animate-pulse": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea" &&"border-red-500 shadow-2xl shadow-red-500 "}   flex flex-col text-gray-800
+                className={`relative border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-800 border-violet-800 animate-pulse": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea"?"shadow-2xl !shadow-red-500 border-red-500":null}   flex flex-col text-gray-800
                 rounded-md min-w-[8rem] px-4 py-6 min-h-[5.5rem]   text-justify max-w-full break-all `}
                            key={index}
               >
