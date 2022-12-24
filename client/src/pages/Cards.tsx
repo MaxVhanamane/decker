@@ -218,8 +218,8 @@ else{
 
     </div>
    
-{ openModal?<div className="w-full h-screen bg-white dark:bg-slate-900 absolute inset-0 flex items-center justify-center ">
- <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/3">
+{ openModal?<div className="w-screen h-screen z-50  backdrop-blur-md lg:backdrop-blur-lg absolute inset-0 flex items-center justify-center ">
+ <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] lg:w-1/3 ">
  
   {/* modal head  */}
   <div className="w-full  border-b border-gray-50 dark:border-gray-50/50">
@@ -228,7 +228,7 @@ else{
   {/* modal content  */}
   <div className=" px-4 py-4 w-full border-b border-gray-50 dark:border-gray-50/50">
   <input value={editContent.title} onChange={handleChange} name="title" className="px-4 py-2 w-full outline-none rounded-t-md font-semibold text-gray-800 dark:bg-slate-800 dark:text-gray-50 " placeholder="Title" />
-   <textarea value={editContent.note} onChange={handleChange} name="note" className="px-4 py-2 w-full outline-none text-gray-800 rounded-b-md resize-y dark:bg-slate-800 dark:text-gray-50" rows={8} placeholder="Note"></textarea>
+   <textarea value={editContent.note} onChange={handleChange} name="note" className="px-4 py-2 w-full outline-none text-gray-800 rounded-b-md  dark:bg-slate-800 dark:text-gray-50 h-[65vh] resize-none"  placeholder="Note"></textarea>
   </div>
 
  
