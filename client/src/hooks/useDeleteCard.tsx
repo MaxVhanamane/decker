@@ -6,7 +6,7 @@ export type DeckTypes = {
     success:boolean,
     cards:{_id: string;
     title: string;
-    cards:string[]}
+    cards:string[]},
   };
   type PayloadType={
     deck_id:string;
@@ -14,8 +14,8 @@ export type DeckTypes = {
   }
 
 
-  type OldData={
-    cards:string[];
+  export type OldData={
+    cards:{title:string,note:string,_id:string}[];
     title:string;
   }
   

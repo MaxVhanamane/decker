@@ -6,6 +6,7 @@ declare const DeckModal: mongoose.Model<{
     }[];
     pinned: boolean;
     title?: string | undefined;
+    date?: Date | undefined;
     email?: mongoose.Types.ObjectId | undefined;
 }, {}, {}, {}, mongoose.Schema<any, mongoose.Model<any, any, any, any, any>, {}, {}, {}, {}, "type", {
     cards: {
@@ -14,6 +15,7 @@ declare const DeckModal: mongoose.Model<{
     }[];
     pinned: boolean;
     title?: string | undefined;
+    date?: Date | undefined;
     email?: mongoose.Types.ObjectId | undefined;
 }>>;
 export default DeckModal;

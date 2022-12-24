@@ -1,4 +1,4 @@
-import { FormEvent, useState,useContext } from "react";
+import { FormEvent, useState,useRef, MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
@@ -8,22 +8,29 @@ import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import useDeleteDeck from '../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
-import { UserContext } from '../context/context'
 
 import { toast } from 'react-toastify';
+import { RiCloseFill } from 'react-icons/ri';
+import EditModalForDeck from "../componenets/EditModalForDeck";
+import { BiEdit } from 'react-icons/bi';
+import Loading from './../componenets/Loading';
 
   function Deck() {
     const [title, setTitle] = useState<string>("");
-    
+    const [deleteDeckId,setDeleteDeckId]=useState("")
     const {data:alldecks,error,isError,isLoading}=useGetDecks()
-  
+  const [openEditDeckModal,setOpenEditDeckModal]=useState(false)
     const {mutate : addDeck} = useCreateDeck()
+
+    const [editData,setEditData]=useState({deck_id:"",title:""})
 
     const {mutate:deleteOneDeck}=useDeleteDeck()
 
     const {mutate:pinDeck,error:pinError,isError:isPinError}=usePinDeck()
+ 
+    const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
 
-
+    
     const handleSubmit = async (e: FormEvent) => {
       setTitle("")
       e.preventDefault();
@@ -36,20 +43,37 @@ import { toast } from 'react-toastify';
       }
     };
   
-  
+  const getUserConfirmation=(e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>)=>{
+if((e.target as HTMLButtonElement).id==="yesbutton"){
+  deleteOneDeck(deleteDeckId)
+  deleteConfirmationModal?.current?.classList.add("hidden")
+}
+else{
+  deleteConfirmationModal?.current?.classList.add("hidden")
+}
+  }
     
     const handleDelete = async (id:string) => {
-        deleteOneDeck(id)
-    
-    
+      setDeleteDeckId(id)
+      if(deleteConfirmationModal?.current?.classList.contains("hidden")){
+        deleteConfirmationModal.current.classList.remove("hidden")
+   }
+  
+ 
     };
   
   
     const handlePin = async (id:string,pinned:boolean) => {
+     
       pinDeck({id,pinned:!pinned})
     };
   
     
+    const handleEditDeck=(deck_id:string,title:string)=>{
+      setEditData({...editData,deck_id,title})
+      setOpenEditDeckModal(true)
+
+    }
    
   
   
@@ -57,11 +81,11 @@ import { toast } from 'react-toastify';
 
 
     if(isError){
-      return  <div className="flex justify-center items-center h-screen w-full dark:bg-slate-900 dark:text-white"><p><span className="font-bold test-grray-800">Error </span>: {(error as Error).message}</p></div>
+      return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center"><p><span className="font-bold test-grray-800 dark:text-gray-50">Error </span>: {(error as Error)?.message}</p></div>
     }
    
     if(isLoading){
-      return <div className="flex justify-center items-center h-screen w-full bg-white dark:bg-slate-900"><img src={localStorage.getItem("theme")==="dark"?"/loading44.gif":"/loadinggif.gif"} alt="loading_image" width={200} height={200}/></div>
+      return <Loading/>
     }
   
     return (
@@ -89,7 +113,7 @@ import { toast } from 'react-toastify';
               Deck title
             </label>
             <input
-              className=" dark:bg-slate-900 dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-[#459C98] outline-none focus:border-[#2e807b] text-gray-700 px-2 mx-4 rounded-md"
+              className=" dark:bg-slate-900 dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +121,7 @@ import { toast } from 'react-toastify';
               }}
               value={title}
             />
-            <button className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md ">Add Deck</button>
+            <button  className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md ">Add Deck</button>
           </form>
         </div>
  
@@ -120,7 +144,7 @@ import { toast } from 'react-toastify';
                     {(provided,snapshot)=>{
                       // ${snapshot.draggingOver==="othersDeckArea" &&"border-violet-600 shadow-violet-600 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "  border-sky-500 animate-pulse  shadow-2xl shadow-sky-500  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500"}  
+      className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-slate-900 bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
       
        text-gray-800 dark:text-gray-50 
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
@@ -129,9 +153,10 @@ import { toast } from 'react-toastify';
             {...provided.draggableProps} 
     >
     <div className="absolute bottom-0 right-0">
- <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 dark:text-sky-400  hover:scale-105"><BsFillPinFill/></button>
+ <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-105 text-sky-600 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-105"><BsFillPinFill/></button>
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
@@ -175,7 +200,7 @@ import { toast } from 'react-toastify';
                     {(provided,snapshot)=>{
                       //  ${snapshot.draggingOver==="pinnedArea" &&"border-yellow-500 shadow-yellow-500 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "  border-sky-500 animate-pulse  shadow-2xl shadow-sky-500  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500"} 
+      className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-slate-900 bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
       text-gray-800 dark:text-gray-50 
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify `}
             ref={provided.innerRef}  
@@ -183,9 +208,11 @@ import { toast } from 'react-toastify';
             {...provided.draggableProps} 
     >
       <div className="absolute bottom-0 right-0">
- <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
+ 
+ <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-105 text-sky-600 dark:text-sky-400"><BiEdit/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center text-blue-700 dark:text-sky-400 hover:scale-105"><BsPin/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-105"><BsPin/></button>
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
@@ -211,8 +238,22 @@ import { toast } from 'react-toastify';
        
         </Droppable>
         </div>:null}
-
-
+    
+        <div ref={deleteConfirmationModal} id="popup-modal" tabIndex={-1} className="fixed hidden z-50 p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-sm">
+    <div className="relative w-full h-full flex items-center justify-center  ">
+        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-900 ring-1 ring-sky-500  ">
+            <div className="p-6 text-center">
+                <svg aria-hidden="true" className="mx-auto mb-4 text-gray-400 w-14 h-14 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Are you sure you want to delete this deck?</h3>
+                <button id="yesbutton" onClick={getUserConfirmation} data-modal-toggle="popup-modal" type="button" className="text-white bg-red-600 hover:bg-red-800    font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none">
+                    Yes, I'm sure
+                </button>
+                <button id="nobutton" onClick={getUserConfirmation} data-modal-toggle="popup-modal" type="button" className="text-gray-500 bg-white hover:bg-gray-100  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none">No, cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{openEditDeckModal?<EditModalForDeck openEditDeckModal={openEditDeckModal} setOpenEditDeckModal={setOpenEditDeckModal} editData={editData} setEditData={setEditData} />:null}
       </div>
  
 

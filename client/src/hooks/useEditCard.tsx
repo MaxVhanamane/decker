@@ -2,12 +2,19 @@
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'react-toastify';
 import { request } from './../utils/axios-utils';
+import { OldData } from './useDeleteCard';
 
 type CardData={
     deck_id:string,
-    oldContent:{oldContent:{title:string,note:string},index:number},
-    newContent:{title:string,note:string}
+    newContent:{title:string,note:string,_id:string}
+    index:number
 
+  }
+
+  type QueryData={
+    title:string;
+    note:string;
+    _id:string
   }
 
 type PromiseData={
@@ -17,28 +24,38 @@ cards:{title:string,note:string}[];
 pinned:boolean
 }
 const editCard =async(cardData:CardData):Promise<PromiseData>=>{
-    const data =await  request.put(`/card/${cardData.deck_id}`,{index:cardData.oldContent.index,oldContent:cardData.oldContent.oldContent,newContent:cardData.newContent})
+    const data =await  request.put(`/card/${cardData.deck_id}`,{index:cardData.index,newContent:{title:cardData.newContent.title,note:cardData.newContent.note}})
     return data.data
 }
 
 const useEditCard = ()=>{
     const queryClient =useQueryClient()
  return useMutation(editCard,{
-     // Not doing any optimistic updates we will only show the data once it is added in the db.
-     onSuccess:()=>{
-       queryClient.invalidateQueries("cards") 
+
+  onMutate:async(data)=>{
+    await queryClient.cancelQueries(["cards",data.deck_id])
+        const previousQueryData=queryClient.getQueryData(["cards",data.deck_id])
+
+        queryClient.setQueryData<OldData | undefined>(["cards",data.deck_id],(oldQueryData)=>{
+          if(oldQueryData){
+            const newArray: QueryData[] = [...oldQueryData?.cards];
+            newArray.splice(data.index,1,data.newContent)
+            return {...oldQueryData,cards:newArray}
+          }
+        })
+         // Return previous data so that if something goes wrong we can use this in onError method
+         return previousQueryData
+ 
      },
-     onError:(error)=>{
-       toast.error("Error please try again!", {
-     
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-     }
+   // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
+   onSettled:(serverData,error,data,context)=>{
+    if(error){
+      queryClient.setQueryData(["cards",data.deck_id],context) 
+      toast.error(((error as Error).message));
+    }
+   queryClient.invalidateQueries(["cards",data.deck_id])
+  }
+   
     })
 }
 

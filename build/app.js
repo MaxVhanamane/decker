@@ -195,8 +195,8 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
-        // const decks=await DeckModal.find({email:user.id}) 
-        const deck = yield deck_1.default.find({ email: user.id }).sort({ updatedAt: -1 });
+        // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
+        const deck = yield deck_1.default.find({ email: user.id }).sort({ date: -1 });
         res.json(deck);
     });
 });
@@ -205,50 +205,36 @@ app.post('/deck', fetchUserDetails, function (req, res) {
         const user = req.userDetails;
         const newDeck = new deck_1.default({
             email: user === null || user === void 0 ? void 0 : user.id,
-            title: req.body.title
+            title: req.body.title,
+            date: new Date()
         });
         const createdDeck = yield newDeck.save();
         res.json(createdDeck);
     });
 });
-// app.put('/deck',fetchUserDetails, async function (req:any, res:Response) {
-//   const user=req.userDetails
-//     try{
-//       // ByIdAndUpdate(req.body.id,{pinned:req.body.pinned})
-//       let indexValue:number
-//       const allDecks=await DeckModal.find({email:user._id})
-//       const deckToBeChanged:any = allDecks.find((obj,index) => {
-//         if(obj.id ===req.body.id){
-//           indexValue=index
-//         return obj
-//         }
-//       });
-//       console.log(deckToBeChanged)
-//       deckToBeChanged!.pinned=req.body.pinned
-//       console.log("decktobeChangedafter",deckToBeChanged)
-//       allDecks.splice(indexValue!,1)
-//      allDecks.unshift(deckToBeChanged!)
-//      const result1 = await DeckModal.deleteMany({});
-//      const newDeck=await DeckModal.insertMany(allDecks)
-//      console.log(newDeck)
-//       res.json(newDeck)
-//     }
-//    catch(error){
-//     console.log(error)
-//     if(error instanceof Error){
-//   console.log(error)
-//       res.status(400).send({error:error.message,isError:true});
-//     }
-//     else {
-//       res.status(400).json({error:"Unexpected error",isError:true})
-//      }
-//    }
-// })
 app.put('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
         try {
-            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned });
+            //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
+            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned, date: new Date() });
+            res.json(updatedDeck);
+        }
+        catch (error) {
+            if (error instanceof mongoose_1.Error) {
+                res.status(400).send({ error: error.message, isError: true });
+            }
+            else {
+                res.status(400).json({ error: "Unexpected error", isError: true });
+            }
+        }
+    });
+});
+app.put('/deck/editdeck/:deck_id', fetchUserDetails, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = req.userDetails;
+        try {
+            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { title: req.body.title });
             res.json(updatedDeck);
         }
         catch (error) {

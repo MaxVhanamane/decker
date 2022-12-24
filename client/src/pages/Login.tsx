@@ -65,7 +65,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
 
   return (
     <>
-    <section className="h-screen">
+    <section className="absolute top-0 left-0 w-full h-full">
     <div className=" py-12 px-6 h-full">
       <div className="flex justify-center items-center flex-wrap h-full g-6 ">
         <div className="xl:w-6/12">

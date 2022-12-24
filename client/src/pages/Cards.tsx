@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState,useRef,MouseEvent } from "react";
 import {useParams} from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
@@ -9,16 +9,20 @@ import useEditCard from '../hooks/useEditCard';
 import { toast } from 'react-toastify';
 import { Droppable,Draggable } from "react-beautiful-dnd";
 import { BsTrash } from "react-icons/bs";
-import { type } from "os";
+import { RiCloseFill } from 'react-icons/ri';
+import Loading from './../componenets/Loading';
 // let oldContent:string //this  works
 type ContentType={
   title:string,
-  note:string
+  note:string,
+  _id:string,
+  
 }
-type OldContent={
-  oldContent:ContentType,
-  index:number 
+
+type ContentTypeForEdit= ContentType & {
+  index:number | null
 }
+
 
 type PayloadType={
   deck_id:string,
@@ -28,12 +32,14 @@ type PayloadType={
 function Cards() {
   const [note, setNote] = useState<string>("");
   const [title, setTitle] = useState<string>("");
-  const [oldContentData, setOldContentData] = useState<OldContent>({oldContent:{title:"",note:""},index:0});
   const [openModal,setOpenModal]=useState(false)
+  const [indexOfCardForDeletion,setIndexOfCardForDeletion]=useState<number | null>(null)
+  const deleteConfirmationModalForCard=useRef<HTMLDivElement | null >(null)
   const { deck_id } = useParams();
+  // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
   const {data,isError,error,isLoading}=useGetCards( deck_id!)
-  const [editContent,setEditContent]=useState<ContentType>({title:"",note:""})
+  const [editContent,setEditContent]=useState<ContentTypeForEdit>({title:"",note:"",_id:"",index:null})
    const {mutate:addCard,error:mutationError,isError:isMutationError}=useCreateCard()
    const {mutate:editCard,error:editMutationError,isError:isEditMutationError}=useEditCard()
 
@@ -41,37 +47,34 @@ function Cards() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if(title.length>0){
-    if(note.length>0){
-   const content={title,note}
+    if(title.length>0 || note.length>0){
+    
+   const content={title,note,_id:deck_id!}
       const payload:PayloadType={deck_id:deck_id! ,content}
       addCard(payload)
       setNote("")
       setTitle("")
-    }
-    else{
-      toast.info("Note must contain one or more characters.");
-    }
+    
   }
   else{
-    toast.info("Title must contain one or more characters.");
+    toast.info("Title or note should contain one or more characters!");
 
   }
  
   };
 
 
-  
-  const handleDelete = (index:number) => {
-    const payload={deck_id:deck_id!,index}
-    deleteCardItem(payload)
+  const handleDelete = async (index:number) => {
+    setIndexOfCardForDeletion(index)
+    if(deleteConfirmationModalForCard?.current?.classList.contains("hidden")){
+ }      deleteConfirmationModalForCard?.current?.classList.remove("hidden")
+
   };
 
 
 
- const handleEdit = (cardItem:ContentType,index:number)=>{
+ const handleEdit = (cardItem:ContentTypeForEdit)=>{
 
-  setOldContentData({...oldContentData,oldContent:cardItem,index:index}) // We will send this to backend to know which one we have to change.
   setEditContent(cardItem)
   setOpenModal(true)
  }
@@ -79,25 +82,34 @@ function Cards() {
  const handleSave =()=>{
   let data={
     deck_id:deck_id!,
-    oldContent:oldContentData,
-    newContent:editContent
+    newContent:editContent,
+    index:editContent.index!
   }
-if(editContent.title.length>0){
-  if(editContent.note.length>0){
+if(editContent.title.length>0 || editContent.note.length>0 ){
+  
     editCard(data)
     setOpenModal(false)
-  }
-  else{
-  toast.info("Note must contain one or more characters.");
-
-  }
+  
 }
 else{
-  toast.info("Title must contain one or more characters.");
+  toast.info("Title or note should contain one or more characters!");
 }
  
-
  }
+
+ const getUserConfirmation=(e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>)=>{
+  const payload={deck_id:deck_id!,index:indexOfCardForDeletion!}
+  
+
+  if((e.target as HTMLButtonElement).id==="yesbutton"){
+    deleteCardItem(payload)
+    deleteConfirmationModalForCard?.current?.classList.add("hidden")
+  }
+  else{
+    deleteConfirmationModalForCard?.current?.classList.add("hidden")
+  }
+    }
+      
 
  const handleChange = (e:ChangeEvent<HTMLTextAreaElement | HTMLInputElement>)=>{
   if(e.target.name==="title"){
@@ -112,11 +124,14 @@ else{
 
   
  if(isLoading){
-  return <div className="flex justify-center items-center h-screen w-full bg-white dark:bg-slate-900"><img src={localStorage.getItem("theme")==="dark"?"/loading44.gif":"/loadinggif.gif"} alt="loading_image" width={200} height={200}/></div>
+  return <Loading/>
 }
 
   if (isError) {
-    return <span>Error: {(error as Error).message}</span>
+    return <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center">
+ <p><span className="font-bold dark:text-gray-50 text-gray-800">Error</span>: {(error as Error)?.message}</p>
+
+    </div>
   }
   // if(isMutationError){
   //   return <p>Error{(mutationError as Error)?.message}</p>
@@ -173,7 +188,7 @@ else{
              return <div  ref={provided.innerRef}  
               {...provided.dragHandleProps}  
               {...provided.draggableProps} 
-                className={`relative border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-800 border-violet-800 animate-pulse": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea"?"shadow-2xl !shadow-red-500 border-red-500":null}   flex flex-col text-gray-800
+                className={`relative border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-800 border-violet-800 animate-pulse dark:bg-slate-900 bg-white": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea"?"shadow-2xl !shadow-red-500 border-red-500 !bg-transparent":null}   flex flex-col text-gray-800
                 rounded-md min-w-[8rem] px-4 py-6 min-h-[5.5rem]   text-justify max-w-full break-all `}
                            key={index}
               >
@@ -181,7 +196,7 @@ else{
 
  <button onClick={()=>{handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handleEdit(card,index)}} type="button" className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-105 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={()=>{handleEdit({...card,_id:deck_id!,index})}} type="button" className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-105 dark:text-sky-400"><BiEdit/></button>
 
 
  </div>
@@ -203,7 +218,7 @@ else{
 
     </div>
    
-{ openModal?<div className="w-full h-screen bg-gray-200 dark:bg-slate-900 absolute inset-0 flex items-center justify-center ">
+{ openModal?<div className="w-full h-screen bg-white dark:bg-slate-900 absolute inset-0 flex items-center justify-center ">
  <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/3">
  
   {/* modal head  */}
@@ -225,6 +240,22 @@ else{
 </div>
 
  </div>:null}
+
+ <div ref={deleteConfirmationModalForCard} id="popup-modal" tabIndex={-1} className="fixed hidden z-50 p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-sm">
+    <div className="relative w-full h-full flex items-center justify-center  ">
+        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-900 ring-1 ring-sky-500  ">
+           
+            <div className="p-6 text-center">
+                <svg aria-hidden="true" className="mx-auto mb-4 text-gray-400 w-14 h-14 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Are you sure you want to delete this card?</h3>
+                <button id="yesbutton" onClick={getUserConfirmation} data-modal-toggle="popup-modal" type="button" className="text-white bg-red-600 hover:bg-red-800    font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none">
+                    Yes, I'm sure
+                </button>
+                <button id="nobutton" onClick={getUserConfirmation} data-modal-toggle="popup-modal" type="button" className="text-gray-500 bg-white hover:bg-gray-100  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none">No, cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </>
   );
