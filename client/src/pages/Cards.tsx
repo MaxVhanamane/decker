@@ -257,7 +257,7 @@ else{
   {/* modal content  */}
   <div className=" px-4 py-4 w-full border-b border-gray-50 dark:border-gray-50/50">
   <input value={editContent.title} onChange={handleChange} name="title" className="px-4 py-2 w-full outline-none rounded-t-md font-semibold text-gray-800 dark:bg-slate-800 dark:text-gray-50 " placeholder="Title" />
-   <textarea value={editContent.note} onChange={handleChange} name="note" className="px-4 py-2 w-full outline-none text-gray-800 rounded-b-md  dark:bg-slate-800 dark:text-gray-50 h-[65vh] resize-none"  placeholder="Note"></textarea>
+   <textarea value={editContent.note} onChange={handleChange} name="note" className="px-4 py-2 w-full outline-none text-gray-800 rounded-b-md  dark:bg-slate-800 dark:text-gray-50 h-[60vh] resize-none"  placeholder="Note"></textarea>
   </div>
 
  

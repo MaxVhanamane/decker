@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useEditDeck from './../hooks/useEditDeck';
 
 const EditModalForDeck=({openEditDeckModal,setOpenEditDeckModal,editData,setEditData}:any)=> {
@@ -15,7 +14,7 @@ const EditModalForDeck=({openEditDeckModal,setOpenEditDeckModal,editData,setEdit
     
   return (
     <>
-    { openEditDeckModal?<div className="w-full h-screen bg-white dark:bg-slate-900 absolute inset-0 flex items-center justify-center ">
+    { openEditDeckModal?<div className="w-full h-screen  backdrop-blur-xl  fixed inset-0 flex items-center justify-center z-[990]">
  <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/3">
  
   {/* modal head  */}
