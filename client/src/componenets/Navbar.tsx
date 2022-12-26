@@ -23,22 +23,26 @@ const Navbar:FC = () => {
   const navigate = useNavigate();
   const location=useLocation()
   const handleShowUserInfomation=()=>{
-    if(divRef.current?.classList.contains("hidden")){
-      divRef.current.classList.remove("hidden")
-    }
-    else{
-      divRef.current?.classList.add("hidden")
+
+
+
+    if(divRefForLargeScreen.current?.classList.contains("scale-0")){
+       divRefForLargeScreen.current?.classList.add("!block")
+      divRefForLargeScreen.current?.classList.remove("scale-0")
+      divRefForLargeScreen.current?.classList.add("scale-100")
+      
 
     }
-    if(divRefForLargeScreen.current?.classList.contains("lg:hidden")){
-      divRefForLargeScreen.current.classList.remove("lg:hidden")
-      divRefForLargeScreen.current?.classList.add("lg:block")
-    }
     else{
-      divRefForLargeScreen.current?.classList.remove("lg:block")
-      divRefForLargeScreen.current?.classList.add("lg:hidden")
+      divRefForLargeScreen.current?.classList.remove("scale-100")
+      divRefForLargeScreen.current?.classList.add("scale-0")
+      divRefForLargeScreen.current?.classList.add("hidden")
+
+      // divRefForLargeScreen.current?.classList.add("md:block")
+
 
     }
+
 
   }
 
@@ -83,12 +87,13 @@ const Navbar:FC = () => {
       </div> */}
     </nav>
 
-    <div ref={divRefForLargeScreen}  className='mt-16 fixed top-4 hidden lg:hidden right-6 bg-white dark:bg-slate-900 mx-auto w-fit border dark:border-slate-300/10 z-50  px-5 py-2 pb-4 rounded '>
+    <div ref={divRefForLargeScreen}  className=' absolute transition duration-700 delay-75 ease-in-out scale-0  right-6   z-50  px-5 py-2 pb-4 rounded'>
+      <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded dark:bg-slate-900 mx-auto  '>
 <button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer '><RiCloseFill/></button>
     <h2 className='mb-3 font-bold text-gray-700 dark:text-gray-50'>My account</h2>
-      <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 '>
-        <li><span className='font-semibold '>username:</span> {userInfo?.username}</li>
-        <li><span className='font-semibold '>email:</span> {userInfo?.email}</li>
+      <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 w-fit '>
+        <li className='flex gap-1'><span className='font-semibold  w-fit'>username:</span> {userInfo?.username}</li>
+        <li className='flex gap-1'><span className='font-semibold  w-fit'>email:</span> {userInfo?.email}</li>
         
       </ul>
       <div className='flex items-center justify-center gap-4'>
@@ -97,28 +102,7 @@ const Navbar:FC = () => {
       
    
       </div>
-    </div>
-
-
-
-    <div ref={divRef} className='hidden fixed z-50 inset-0  lg:hidden '>
-<div className='fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-slate-900/80 '>
-<div  className='mt-16 relative bg-white dark:bg-slate-900 mx-auto w-fit border  shadow ring-1 ring-slate-900/5   dark:border-slate-300/10 z-50  px-5 py-2 pb-4 rounded '>
-<button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center dark:text-gray-50  text-gray-800 cursor-pointer '><RiCloseFill/></button>
-    <h2 className='mb-3 font-bold text-gray-700 dark:text-gray-50'>My account</h2>
-      <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 '>
-        <li><span className='font-semibold '>username:</span> {userInfo?.username}</li>
-        <li><span className='font-semibold '>email:</span> {userInfo?.email}</li>
-        
-      </ul>
-      <div className='flex items-center justify-center gap-4'>
-      {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><button onClick={handleShowUserInfomation} className=' md:hidden font-semibold  rounded px-1 text-center text-white cursor-pointer hover:bg-teal-700 mt-4 '>Home</button></Link>:null}
-      <button onClick={()=>{handleLogout()}} className='font-semibold  rounded px-1 text-center text-red-600 cursor-pointer  mt-4'>Logout</button>
-      
-   
       </div>
-    </div>
-</div>
     </div>
     </>
   )

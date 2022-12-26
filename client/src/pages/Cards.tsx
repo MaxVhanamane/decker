@@ -11,6 +11,7 @@ import { Droppable,Draggable } from "react-beautiful-dnd";
 import { BsTrash } from "react-icons/bs";
 import { RiCloseFill } from 'react-icons/ri';
 import Loading from './../componenets/Loading';
+import PopUpMessage from "../componenets/PopUpMessage";
 // let oldContent:string //this  works
 type ContentType={
   title:string,
@@ -35,6 +36,8 @@ function Cards() {
   const [openModal,setOpenModal]=useState(false)
   const [indexOfCardForDeletion,setIndexOfCardForDeletion]=useState<number | null>(null)
   const deleteConfirmationModalForCard=useRef<HTMLDivElement | null >(null)
+  const changeColorWhileDragging=useRef<HTMLDivElement | null >(null)
+  const showPopUp=useRef<HTMLDivElement | null >(null)
   const { deck_id } = useParams();
   // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
@@ -121,6 +124,23 @@ else{
 
   }
  }
+ const handlePopUp=()=>{
+  if(showPopUp.current?.classList.contains("scale-0")){
+    showPopUp.current.classList.remove("scale-0")
+    showPopUp?.current?.classList.add("!block")
+    showPopUp.current.classList.add("!w-fit")
+    showPopUp.current.classList.add("!h-fit")
+    showPopUp.current.classList.add("scale-100")
+
+    setTimeout(()=>{
+      showPopUp?.current?.classList.remove("scale-100")
+    showPopUp?.current?.classList.add("scale-0")
+    showPopUp?.current?.classList.add("hidden")
+    },3000)
+   
+  }
+
+ }
 
   
  if(isLoading){
@@ -138,11 +158,14 @@ else{
   // }
   return (
     <>
+<PopUpMessage message="Drag and drop the card here to delete it." showPopUp={showPopUp}/>
+
+
        <Droppable droppableId="cardDeleteArea">
           {
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`}ref={provided.innerRef} {...provided.droppableProps}>
-              <span  className={`text-3xl text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"}  `}><BsTrash title="Drag and drop the card item here for deletion."/></span>
+              <span  className={`text-3xl cursor-pointer text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"}  `}><BsTrash onClick={handlePopUp} title="Drag and drop the card here to delete it."/></span>
              </div>
             }
           }
@@ -150,6 +173,9 @@ else{
        </Droppable>
        
     <div className="flex flex-col gap-2 mt-6 w-full  relative ">
+    
+
+
       <div className="w-full px-4 mx-auto">
         <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
           <label htmlFor="title" className=" font-bold text-teal-600 dark:text-sky-400">
@@ -185,13 +211,15 @@ else{
               <Draggable draggableId={`${deck_id!}-${index}`} index={index} key={index} >
   
               {(provided,snapshot)=>{
+               
              return <div  ref={provided.innerRef}  
               {...provided.dragHandleProps}  
               {...provided.draggableProps} 
-                className={`relative border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-800 border-violet-800 animate-pulse dark:bg-slate-900 bg-white": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea"?"shadow-2xl !shadow-red-500 border-red-500 !bg-transparent":null}   flex flex-col text-gray-800
-                rounded-md min-w-[8rem] px-4 py-6 min-h-[5.5rem]   text-justify max-w-full break-all `}
+                
                            key={index}
               >
+                <div ref={changeColorWhileDragging} className={`relative border   ${snapshot.isDragging ? "shadow-2xl shadow-violet-600 border-violet-600  animate-pulse dark:bg-slate-900 bg-white": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea"?"shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent":null}   flex flex-col text-gray-800
+                rounded-md min-w-[8rem] px-4 py-6 min-h-[5.5rem]   text-justify max-w-full break-all `}>
                    <div className="absolute bottom-0 right-0">
 
  <button onClick={()=>{handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
@@ -202,6 +230,7 @@ else{
  </div>
   <p className="font-bold text-lg text-gray-800 dark:text-gray-50 mb-1 p-1">{card.title}</p>
  <p className="text-base text-gray-800 dark:text-gray-100 p-1">{card.note}</p>
+ </div>
               </div>
                }}
 
@@ -218,8 +247,8 @@ else{
 
     </div>
    
-{ openModal?<div className="w-screen h-screen z-50  backdrop-blur-md lg:backdrop-blur-lg absolute inset-0 flex items-center justify-center ">
- <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] lg:w-1/3 ">
+{ openModal?<div className="w-screen h-screen z-50  backdrop-blur-md lg:backdrop-blur-lg fixed inset-0 flex items-center justify-center ">
+ <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] lg:w-1/3 dark:shadow-sm dark:shadow-slate-500">
  
   {/* modal head  */}
   <div className="w-full  border-b border-gray-50 dark:border-gray-50/50">

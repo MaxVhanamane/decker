@@ -14,6 +14,7 @@ import { RiCloseFill } from 'react-icons/ri';
 import EditModalForDeck from "../componenets/EditModalForDeck";
 import { BiEdit } from 'react-icons/bi';
 import Loading from './../componenets/Loading';
+import PopUpMessage from "../componenets/PopUpMessage";
 
   function Deck() {
     const [title, setTitle] = useState<string>("");
@@ -29,7 +30,7 @@ import Loading from './../componenets/Loading';
     const {mutate:pinDeck,error:pinError,isError:isPinError}=usePinDeck()
  
     const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
-
+    const showPopUp=useRef<HTMLDivElement | null >(null)
     
     const handleSubmit = async (e: FormEvent) => {
       setTitle("")
@@ -75,7 +76,24 @@ else{
 
     }
    
-  
+    const handlePopUp=()=>{
+      if(showPopUp.current?.classList.contains("scale-0")){
+        showPopUp.current.classList.remove("scale-0")
+        showPopUp?.current?.classList.add("!block")
+        showPopUp.current.classList.add("!w-fit")
+        showPopUp.current.classList.add("!h-fit")
+        showPopUp.current.classList.add("scale-100")
+    
+        setTimeout(()=>{
+          showPopUp?.current?.classList.remove("scale-100")
+        showPopUp?.current?.classList.add("scale-0")
+        showPopUp?.current?.classList.add("hidden")
+        },3000)
+       
+      }
+    
+     }
+   
   
   
 
@@ -90,13 +108,15 @@ else{
   
     return (
  
-      <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32  ">
+      <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32 ">
+
+<PopUpMessage message="Drag and drop the deck here to delete it." showPopUp={showPopUp}/>
         <Droppable droppableId="deleteArea">
           {
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`} ref={provided.innerRef} {...provided.droppableProps}>
                 
-              <span  className={`text-3xl text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash title="Drag and drop the deck item here for deletion."/></span>
+              <span  className={`text-3xl text-teal-600 dark:text-sky-400 cursor-pointer ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash onClick={handlePopUp} title="Drag and drop the deck here to delete it."/></span>
              </div>
               
             }
