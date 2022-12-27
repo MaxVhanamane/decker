@@ -11,7 +11,8 @@ export type userData={
 export type AlertData={
   severity: string,
   show: boolean,
-  message: string
+  message: string,
+  autoHideDuration:number
 };
 export type AlertType={
   alert:AlertData

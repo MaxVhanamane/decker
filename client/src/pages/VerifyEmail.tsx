@@ -46,7 +46,8 @@ export default function VerifyEmail() {
         ...preval,
         severity: "success",
         show: true,
-        message: res.data.message
+        message: res.data.message,
+        autoHideDuration:5000
       }))
       setShowVerifyOTPButton(true)
     setShowWaitMessage(false)
@@ -58,7 +59,8 @@ export default function VerifyEmail() {
         ...preval,
         severity: "error",
         show: true,
-        message: res.data.message
+        message: res.data.message,
+        autoHideDuration:6000
       }))
     setShowWaitMessage(false)
 

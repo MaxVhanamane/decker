@@ -87,6 +87,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                         id="email"
                         placeholder="Email"
                         name="email"
+                        required
                       />
                     </div>
                     <div className="mb-4">
@@ -97,6 +98,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                         id="password"
                         placeholder="Password"
                         name="password"
+                        required
                       />
                     </div>
                     <div className="text-center pt-1  pb-1">

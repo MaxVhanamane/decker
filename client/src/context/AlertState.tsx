@@ -9,7 +9,8 @@ type AlertContextType = {
 export const AlertContext = createContext<AlertType>({alert:{
     severity: "",
     show: false,
-    message: ""
+    message: "",
+    autoHideDuration:3000
 },setAlert:()=>{}});
 
 
@@ -17,7 +18,8 @@ function AlertState(props:AlertContextType) {
     const [alert, setAlert] = useState({
         severity: "success",
         show: false,
-        message: ""
+        message: "",
+        autoHideDuration:3000
     })
 
     return (

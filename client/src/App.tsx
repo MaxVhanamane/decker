@@ -88,7 +88,7 @@ function App() {
             />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/success" element={<AuthSuccess />} />
-            <Route path="/auth/failed" element={<AuthFailure />} />
+            <Route path="/auth/failure" element={<AuthFailure />} />
             <Route path="/verifyemail" element={<VerifyEmail />} />
             {/* <Route path='*' element={<NotFound/>} /> */}
           </Routes>

@@ -1,4 +1,3 @@
-import React from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
@@ -13,9 +12,9 @@ export default function AuthSuccess() {
  
   return (
     <>
-    <div className='w-full h-screen flex items-center justify-center flex-col gap-4'>
-      <div className='rounded-full bg-red-500'><p className='text-2xl p-1 text-gray-50'><RiCloseFill/></p></div>
-        <div className=' rounded-lg'>
+    <div className='absolute top-0 left-0 w-full h-full flex items-center justify-center dark:bg-slate-900 bg-white flex-col gap-4 -z-10 '>
+      <div className='rounded-full bg-red-600'><p className='text-xl p-1 text-gray-50'><RiCloseFill/></p></div>
+        <div className=' rounded-lg '>
       <p className='text-xl text-gray-800 font-bold mb-2 dark:text-gray-50'>Login failed</p>
       <p className='text-sm font-bold text-gray-600 dark:text-gray-400'> Please try again!</p>
         </div>

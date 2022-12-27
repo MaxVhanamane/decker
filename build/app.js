@@ -329,7 +329,7 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     scope: ['profile', 'email']
     // scope:['openid','profile', 'email'] 
 }));
-app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/login`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL}/auth/success` }));
+app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL}/auth/success` }));
 app.get("/getuser", (req, res) => {
     if (req.user) {
         res.json(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
@@ -416,10 +416,11 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
             yield generateUserWithOTP.save();
         }
         else {
-            let user = yield verifyemail_1.default.findOneAndUpdate({ email: req.body.email }, {
-                otp: oneTimePassword,
-                expiresIn: new Date().getTime() + 600 * 1000
-            });
+            // let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
+            //   otp: oneTimePassword,
+            //   expiresIn: new Date().getTime() + 600 * 1000
+            // })
+            return res.status(200).json({ success: false, message: "User with this email already exists! Please Login or use different email address." });
         }
         let email = `
    <p> Dear Customer,</p>
@@ -447,7 +448,7 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
             subject: "OTP for your account on decker.vercel.app",
             html: email, // html body
         });
-        res.status(200).json({ success: true, message: "OTP sent to your email successfully!" });
+        res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." });
     }
     catch (err) {
         res.status(200).json({ success: false, message: "Some error occurred please try again later!" });

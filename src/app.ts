@@ -349,7 +349,7 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/login`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL!}/auth/success` }));
+  passport.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL!}/auth/success` }));
 
 app.get("/getuser", (req, res) => {
   if (req.user) {
@@ -469,10 +469,11 @@ app.post("/generateotp", async (req, res) => {
     }
   
     else {
-      let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
-        otp: oneTimePassword,
-        expiresIn: new Date().getTime() + 600 * 1000
-      })
+      // let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
+      //   otp: oneTimePassword,
+      //   expiresIn: new Date().getTime() + 600 * 1000
+      // })
+      return res.status(200).json({success:false,message:"User with this email already exists! Please Login or use different email address."})
     }
   
   
@@ -504,7 +505,7 @@ app.post("/generateotp", async (req, res) => {
       subject: "OTP for your account on decker.vercel.app", // Subject line
       html: email, // html body
     });
-    res.status(200).json({ success: true, message: "OTP sent to your email successfully!" })
+    res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." })
   }
   catch(err){
     res.status(200).json({ success: false, message: "Some error occurred please try again later!" })
