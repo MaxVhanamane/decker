@@ -1,8 +1,9 @@
 import { request } from "../utils/axios-utils";
 import { useQueryClient } from 'react-query';
 import { useMutation } from 'react-query';
-import { toast } from 'react-toastify';
-
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
+import { useContext } from 'react';
 type DataType = {
   id: string;
   pinned: boolean
@@ -24,6 +25,7 @@ export const updateDeck = async (data: DataType) => {
 }
 
 const usePinDeck = ()=>{
+  const {setAlert}=useContext(AlertContext) 
     const queryClient=useQueryClient()
     return useMutation(updateDeck,{
          onMutate:async(data:DataType)=>{
@@ -65,7 +67,13 @@ const usePinDeck = ()=>{
          },
 
          onError:(error,_title,context)=>{
-          toast.error(((error as Error).message));
+          setAlert((preval:AlertData) => (
+            {
+              ...preval,
+              severity: "error",
+              show: true,
+              message: "Some error occured, please try again!"
+            }))
           queryClient.setQueryData("decks",context)
         }, 
 

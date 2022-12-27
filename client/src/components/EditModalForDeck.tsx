@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import useEditDeck from './../hooks/useEditDeck';
+import useEditDeck from '../hooks/useEditDeck';
 
 const EditModalForDeck=({openEditDeckModal,setOpenEditDeckModal,editData,setEditData}:any)=> {
     const [newTitle,setNewTitle]=useState(editData.title)

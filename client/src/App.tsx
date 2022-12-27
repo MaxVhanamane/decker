@@ -13,15 +13,17 @@ import useDeleteDeck from "./hooks/useDeleteDeck";
 // import NotFound from "./componenets/NotFound";
 // import SignUp from "./pages/Signup";
 import Login from "./pages/Login";
-import PrivateRoutes from "./componenets/PrivateRoutes";
-import Layout from "./componenets/Layout";
+import PrivateRoutes from "./components/PrivateRoutes";
+import Layout from "./components/Layout";
 import AuthSuccess from "./pages/AuthSuccess";
 import AuthFailure from "./pages/AuthFailure";
 import useDeleteCard from "./hooks/useDeleteCard";
 const SignUp = lazy(() => import("./pages/Signup"));
 const Cards = lazy(() => import("./pages/Cards"));
-import Loading from "./componenets/Loading";
-import { UserContext } from "./context/context";
+import Loading from "./components/Loading";
+import { UserContext } from "./context/UserContext";
+import VerifyEmail from './pages/VerifyEmail';
+import ShowAlert from './components/ShowAlert';
 
 function App() {
   const { theme } = useContext(UserContext);
@@ -60,6 +62,8 @@ function App() {
           handlePin(result, provided);
         }}
       >
+          
+   <ShowAlert />
         <Layout>
           <Routes>
             <Route element={<PrivateRoutes />}>
@@ -85,6 +89,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/auth/success" element={<AuthSuccess />} />
             <Route path="/auth/failed" element={<AuthFailure />} />
+            <Route path="/verifyemail" element={<VerifyEmail />} />
             {/* <Route path='*' element={<NotFound/>} /> */}
           </Routes>
         </Layout>

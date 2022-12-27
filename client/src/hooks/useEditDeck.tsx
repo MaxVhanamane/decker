@@ -1,9 +1,10 @@
 
 import { useMutation, useQueryClient } from 'react-query';
-import { toast } from 'react-toastify';
 import { request } from './../utils/axios-utils';
 import { DeckTypes } from './useGetDecks';
-
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
+import { useContext } from 'react';
 type CardData={
     deck_id:string,
     newTitle:string
@@ -23,6 +24,7 @@ const editDeck =async(deckItem:CardData):Promise<PromiseData>=>{
 }
 
 const useEditDeck = ()=>{
+  const {setAlert}=useContext(AlertContext) 
     const queryClient =useQueryClient()
  return useMutation(editDeck,{
      // Not doing any optimistic updates we will only show the data once it is added in the db.
@@ -52,21 +54,20 @@ const useEditDeck = ()=>{
    
        },
 
-     onError:(error)=>{
-       toast.error("Error please try again!", {
      
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-     },
-     onSettled:()=>{
-      queryClient.invalidateQueries("decks") 
-
-     }
+     onSettled:(serverData,error,data,context)=>{
+      if(error){
+        queryClient.setQueryData("decks",context) 
+        setAlert((preval:AlertData) => (
+          {
+            ...preval,
+            severity: "error",
+            show: true,
+            message: "Some error occured, please try again!"
+          }))
+      }
+     queryClient.invalidateQueries("decks")
+    }
     })
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, createContext, ReactNode, useState, Dispatch } from "react";
-import { request } from "./../utils/axios-utils";
+import { request } from "../utils/axios-utils";
 import { userData } from "../types/types";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type UserContextProvider = {
   children: ReactNode;
@@ -41,6 +41,8 @@ export const UserContext = createContext<ContexType>({
 function UserContextProvider({ children }: UserContextProvider) {
   const [theme, setTheme] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathNames=["/signup","/verifyemail"]
   const [userInfo, setUserInfo] = useState<userData | null>({
     _id: "",
     username: "",
@@ -55,8 +57,14 @@ function UserContextProvider({ children }: UserContextProvider) {
       const newD = localStorage.getItem("userInfo");
       setUserInfo({ ...JSON.parse(newD!) });
       return data.data;
-    } else {
-      navigate("/login");
+    } else if(pathNames.includes(location.pathname)) {
+ 
+      navigate(location.pathname);
+    }
+    else{
+      setUserInfo(null)
+      localStorage.removeItem('userInfo')
+      navigate("/login")
     }
   };
   useEffect(() => {

@@ -1,8 +1,10 @@
 
 import { useMutation, useQueryClient } from 'react-query';
-import { toast } from 'react-toastify';
 import { request } from './../utils/axios-utils';
 import { OldData } from './useDeleteCard';
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
+import { useContext } from 'react';
 
 type CardData={
     deck_id:string,
@@ -29,6 +31,7 @@ const editCard =async(cardData:CardData):Promise<PromiseData>=>{
 }
 
 const useEditCard = ()=>{
+  const {setAlert}=useContext(AlertContext) 
     const queryClient =useQueryClient()
  return useMutation(editCard,{
 
@@ -51,7 +54,13 @@ const useEditCard = ()=>{
    onSettled:(serverData,error,data,context)=>{
     if(error){
       queryClient.setQueryData(["cards",data.deck_id],context) 
-      toast.error(((error as Error).message));
+      setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "Some error occured, please try again!"
+        }))
     }
    queryClient.invalidateQueries(["cards",data.deck_id])
   }

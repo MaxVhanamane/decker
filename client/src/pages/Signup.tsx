@@ -1,16 +1,22 @@
 import React, { useState,useEffect } from 'react'
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FormEvent, useContext } from 'react';
 import { ChangeEvent } from 'react';
 import { request } from './../utils/axios-utils';
-import { UserContext } from '../context/context';
+import { UserContext } from '../context/UserContext';
 import { FaFeatherAlt } from 'react-icons/fa';
-
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
 export default function SignUp() {
+  const location = useLocation();
+
+  // Parse the query string using the URLSearchParams API
+  const searchParams = new URLSearchParams(location.search);
+  const {setAlert}=useContext(AlertContext) 
+  // Get the value of a parameter
+  const emailAddress = searchParams.get('email');
+  const otp = searchParams.get('otp');
   const [username, setUsername] = useState("")
-  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPass, setConfirmPass] = useState("")
   const {userInfo}=useContext(UserContext) 
@@ -18,7 +24,7 @@ export default function SignUp() {
 
   useEffect(()=>{
 
-    if(userInfo?.email){
+    if(userInfo?.email || !emailAddress || !otp){
       navigate("/")
     }
     },[userInfo?.email])
@@ -26,9 +32,6 @@ export default function SignUp() {
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "username") {
         setUsername(e.target.value)
-    }
-    else if (e.target.name === "email") {
-      setEmail(e.target.value)
     }
     else if (e.target.name === "password") {
       setPassword(e.target.value)
@@ -45,58 +48,50 @@ export default function SignUp() {
       if(password.length>7 && confirmPass.length>7){
 
      
-      const data = { username, email, password };
+      const data = { username, email:emailAddress,otp:otp, password };
      const res= await request.post("/signup",data)
      if(res.data.success){
-      toast.success(res.data.message, {
-     
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "success",
+          show: true,
+          message: res.data.message
+        }))
       setConfirmPass("")
       setPassword("")
-      setEmail("")
       setUsername("")
+      navigate("/login")
      }
      else{
-      toast.error(res.data.message, {
-     
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "error",
+          show: true,
+          message: res.data.message
+        }))
      }
     }
 
     else{
-      toast.error("password must be at least 8 characters long", {
-     
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "password must be at least 8 characters long"
+        }))
     }
   }
     else{
-      toast.error("Password and confirm password didn't match", {
-     
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "error",
+          show: true,
+          message:"Password and confirm password didn't match"
+        }))
     }
 
   }
@@ -132,7 +127,7 @@ export default function SignUp() {
                           required
                         />
                       </div>
-                      <div className="mb-4">
+                      {/* <div className="mb-4">
                         <input onChange={handleChange}
                           type="email"
                           className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
@@ -142,7 +137,7 @@ export default function SignUp() {
                           placeholder="Email"
                           required
                         />
-                      </div>
+                      </div> */}
 
                       <div className="mb-4">
                         <input onChange={handleChange}

@@ -1,8 +1,8 @@
 import {FC}from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { request } from './../utils/axios-utils';
+import { request } from '../utils/axios-utils';
 import { useContext, useRef } from 'react';
-import { UserContext } from './../context/context';
+import { UserContext } from '../context/UserContext';
 import {FaFeatherAlt} from 'react-icons/fa';
 import { userData } from '../types/types';
 import {FaUserCircle} from "react-icons/fa"
@@ -50,8 +50,8 @@ const Navbar:FC = () => {
   const handleLogout =async()=>{
   const res= await request.post("/auth/logout")
    if(res.data==="done"){
+     handleShowUserInfomation()
    setUserInfo(null)
-   handleShowUserInfomation()
    localStorage.removeItem('userInfo')
     navigate('/login',{ replace: true})
    }
@@ -86,7 +86,7 @@ const Navbar:FC = () => {
    
       </div> */}
     </nav>
-
+   
     <div ref={divRefForLargeScreen}  className=' absolute transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4 rounded'>
       <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded dark:bg-slate-900 mx-auto  '>
 <button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer '><RiCloseFill/></button>

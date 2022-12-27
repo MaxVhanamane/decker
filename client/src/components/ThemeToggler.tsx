@@ -1,7 +1,7 @@
 import React,{useContext,FC} from 'react'
 import {RiMoonClearFill} from "react-icons/ri"
 import {RiSunFill} from "react-icons/ri"
-import { UserContext } from '../context/context'
+import { UserContext } from '../context/UserContext'
 
 
 const ThemeToggler:FC = () => {

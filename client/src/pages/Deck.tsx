@@ -1,22 +1,23 @@
-import { FormEvent, useState,useRef, MouseEvent } from "react";
+import { FormEvent, useState,useRef, MouseEvent,useContext} from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
 import {BsFillPinFill} from "react-icons/bs"
-import { MdOutlineDeleteOutline} from "react-icons/md"
+// import { MdOutlineDeleteOutline} from "react-icons/md"
 import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import useDeleteDeck from '../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
-
-import { toast } from 'react-toastify';
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
 import { RiCloseFill } from 'react-icons/ri';
-import EditModalForDeck from "../componenets/EditModalForDeck";
+import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from 'react-icons/bi';
-import Loading from './../componenets/Loading';
-import PopUpMessage from "../componenets/PopUpMessage";
+import Loading from '../components/Loading';
+import PopUpMessage from "../components/PopUpMessage";
 
   function Deck() {
+    const {setAlert}=useContext(AlertContext) 
     const [title, setTitle] = useState<string>("");
     const [deleteDeckId,setDeleteDeckId]=useState("")
     const {data:alldecks,error,isError,isLoading}=useGetDecks()
@@ -40,7 +41,13 @@ import PopUpMessage from "../componenets/PopUpMessage";
         addDeck(title)
       }
       else{
-        toast.info("The title of the deck should be at least 1 character long.");
+        setAlert((preval:AlertData) => (
+          {
+            ...preval,
+            severity: "warning",
+            show: true,
+            message: "The deck title should be at least one character long."
+          }))
       }
     };
   
@@ -99,7 +106,7 @@ else{
 
 
     if(isError){
-      return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center"><p><span className="font-bold test-grray-800 dark:text-gray-50">Error </span>: {(error as Error)?.message}</p></div>
+      return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 "><p className="font-semibold"><span className="font-bold">Error </span>: {(error as Error)?.message}</p></div>
     }
    
     if(isLoading){
@@ -227,6 +234,7 @@ else{
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
     >
+      <div>
       <div className="absolute bottom-0 right-0">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
  
@@ -236,7 +244,7 @@ else{
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
- 
+  </div>
     </div>
    
                     }

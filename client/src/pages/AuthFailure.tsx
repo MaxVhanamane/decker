@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
-import { UserContext } from '../context/context';
+import { UserContext } from '../context/UserContext';
 import {RiCloseFill} from "react-icons/ri"
 export default function AuthSuccess() {
     const {userInfo}=useContext(UserContext) 

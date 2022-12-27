@@ -4,28 +4,16 @@ import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
-
-import { ToastContainer, Zoom } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import UserContextProvider from "./context/context";
-
+import UserContextProvider from "./context/UserContext";
+import AlertState from "./context/AlertState";
 const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <>
+  <AlertState>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
     <UserContextProvider>
 
-          <ToastContainer
-            position="top-left"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            transition={Zoom}
-            theme="light"
-          />
           <App />
     </UserContextProvider>
 
@@ -33,5 +21,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
         <ReactQueryDevtools initialIsOpen={false} position="bottom-left" />
       </QueryClientProvider>
+      </AlertState>
   </>
 );

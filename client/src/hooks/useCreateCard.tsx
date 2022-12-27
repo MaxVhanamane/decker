@@ -1,8 +1,9 @@
 import { request } from './../utils/axios-utils';
 import { useMutation } from 'react-query';
 import { useQueryClient } from 'react-query';
-import { toast } from 'react-toastify';
-
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
+import { useContext } from 'react';
 type PayloadData={
     deck_id:string,
     content:{
@@ -24,6 +25,7 @@ type PayloadData={
   
   
   const useCreateCard = ()=>{
+    const {setAlert}=useContext(AlertContext) 
     const queryClient =useQueryClient()
     return useMutation(createCard,{
 
@@ -48,7 +50,13 @@ type PayloadData={
 
         onError:(error,data:PayloadData,context)=>{
        
-          toast.error(((error as Error).message));
+           setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "Some error occured, please try again!"
+        }))
        
           queryClient.setQueryData(["cards",data.deck_id],context)
         },

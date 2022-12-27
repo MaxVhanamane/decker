@@ -1,6 +1,8 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from 'react-query';
-
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
+import { useContext } from 'react';
 const  deleteDeck = async (id:string)=> {
   try{
     const response = await request.delete(`/deck/${id}`);
@@ -15,6 +17,7 @@ const  deleteDeck = async (id:string)=> {
 
 
 const useDeleteDeck =()=>{
+  const {setAlert}=useContext(AlertContext) 
     const queryClient=useQueryClient()
     return useMutation(deleteDeck,{
         onMutate:async(_id:string)=>{
@@ -37,13 +40,20 @@ const useDeleteDeck =()=>{
          
              },
        
-             onError:(error,_title,context)=>{
+             onError:(_error,_title,context)=>{
                      // I have returned the previous query data in onMutate function I can receive that data in context. I can use that data to 
         // reverse what I have done in onMutate because onMutate runs before request goes to server there I have assumed that 
         // Everthing will be fine on the server and I did optimistic updates in onMutate function. If some error occures I will 
         // reverse that here using previousQuery data 
+        setAlert((preval:AlertData) => (
+          {
+            ...preval,
+            severity: "error",
+            show: true,
+            message: "Some error occured, please try again!"
+          }))
                queryClient.setQueryData("decks",context?.previousQueryData)
-               alert(error)
+
              },
        
              // onSettled is called in the end it doesnt matter if the mutation is successful or failed it will be called everytime. After doing above operations we will refetch the data. so that our data and the data in the db will be in sync.

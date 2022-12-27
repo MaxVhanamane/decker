@@ -1,17 +1,17 @@
-import { ChangeEvent, FormEvent, useState,useRef,MouseEvent } from "react";
+import { ChangeEvent, FormEvent, useState,useRef,MouseEvent,useContext } from "react";
 import {useParams} from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
 import useDeleteCard from '../hooks/useDeleteCard';
-import { MdOutlineDeleteOutline, MdOutlineModeEdit } from 'react-icons/md';
+import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { BiEdit } from 'react-icons/bi';
 import useEditCard from '../hooks/useEditCard';
-import { toast } from 'react-toastify';
 import { Droppable,Draggable } from "react-beautiful-dnd";
 import { BsTrash } from "react-icons/bs";
-import { RiCloseFill } from 'react-icons/ri';
-import Loading from './../componenets/Loading';
-import PopUpMessage from "../componenets/PopUpMessage";
+import Loading from '../components/Loading';
+import PopUpMessage from "../components/PopUpMessage";
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
 // let oldContent:string //this  works
 type ContentType={
   title:string,
@@ -31,6 +31,7 @@ type PayloadType={
   
 }
 function Cards() {
+  const {setAlert}=useContext(AlertContext) 
   const [note, setNote] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [openModal,setOpenModal]=useState(false)
@@ -60,7 +61,14 @@ function Cards() {
     
   }
   else{
-    toast.info("Title or note should contain one or more characters!");
+    setAlert((preval:AlertData) => (
+      {
+        ...preval,
+        severity: "warning",
+        show: true,
+        message: "Title or note should contain one or more characters!"
+      }))
+
 
   }
  
@@ -95,7 +103,13 @@ if(editContent.title.length>0 || editContent.note.length>0 ){
   
 }
 else{
-  toast.info("Title or note should contain one or more characters!");
+  setAlert((preval:AlertData) => (
+    {
+      ...preval,
+      severity: "warning",
+      show: true,
+      message: "Title or note should contain one or more characters!"
+    }))
 }
  
  }
@@ -147,12 +161,9 @@ else{
   return <Loading/>
 }
 
-  if (isError) {
-    return <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center">
- <p><span className="font-bold dark:text-gray-50 text-gray-800">Error</span>: {(error as Error)?.message}</p>
-
-    </div>
-  }
+if(isError){
+  return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 "><p className="font-semibold"><span className="font-bold">Error </span>: {(error as Error)?.message}</p></div>
+}
   // if(isMutationError){
   //   return <p>Error{(mutationError as Error)?.message}</p>
   // }

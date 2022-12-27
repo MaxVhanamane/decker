@@ -45,6 +45,8 @@ const passport_1 = __importDefault(require("passport"));
 const user_1 = __importDefault(require("./models/user"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const passport_local_1 = __importDefault(require("passport-local"));
+const verifyemail_1 = __importDefault(require("./models/verifyemail"));
+const nodemailer = require("nodemailer");
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require("passport-google-oauth20");
@@ -345,29 +347,37 @@ app.post('/auth/logout', function (req, res, next) {
     });
 });
 app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { username, email, password } = req === null || req === void 0 ? void 0 : req.body;
+    const { username, email, password, otp } = req === null || req === void 0 ? void 0 : req.body;
+    console.log(email, otp);
     if (!username && !password && !email) {
         res.json({ success: false, message: "Please provide name, email and password" });
         return;
     }
-    try {
-        const user = yield user_1.default.findOne({ email });
-        if (!user) {
-            const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
-            const newUser = new user_1.default({
-                username,
-                email,
-                password: hashedPassword
-            });
-            yield newUser.save();
-            res.json({ success: true, message: "Account created successfully." });
+    const verifyUser = yield verifyemail_1.default.findOne({ email });
+    if ((verifyUser === null || verifyUser === void 0 ? void 0 : verifyUser.otp) === parseInt(otp)) {
+        try {
+            const user = yield user_1.default.findOne({ email });
+            if (!user) {
+                const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
+                const newUser = new user_1.default({
+                    username,
+                    email,
+                    password: hashedPassword
+                });
+                yield newUser.save();
+                res.json({ success: true, message: "Account created successfully." });
+            }
+            else {
+                res.json({ success: false, message: "A user with this email address already exists." });
+            }
         }
-        else {
-            res.json({ success: false, message: "A user with this email address already exists." });
+        catch (error) {
+            console.log(error);
+            res.json({ success: false, message: "Some error occured please try again." });
         }
     }
-    catch (error) {
-        console.log(error);
+    else {
+        res.status(200).json({ success: false, message: "Invalid Email or OTP" });
     }
 }));
 app.post('/login', passport_1.default.authenticate('local', { failWithError: true }), (req, res) => {
@@ -380,3 +390,87 @@ app.post('/login', passport_1.default.authenticate('local', { failWithError: tru
 }, function (error, req, res, next) {
     return res.status(200).json({ success: false, message: error });
 });
+function generateOTP() {
+    // Declare a variable to store the OTP
+    let otp = "";
+    // Use a for loop to generate 6 random digits
+    for (let i = 0; i < 6; i++) {
+        // Generate a random number between 1 and 9
+        let digit = Math.floor(Math.random() * 9) + 1;
+        // Concatenate the digit to the OTP
+        otp += digit;
+    }
+    // Return the OTP
+    return parseInt(otp);
+}
+app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let user = yield verifyemail_1.default.findOne({ email: req.body.email });
+        let oneTimePassword = generateOTP();
+        if (!user) {
+            let generateUserWithOTP = new verifyemail_1.default({
+                email: req.body.email,
+                otp: oneTimePassword,
+                expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+            });
+            yield generateUserWithOTP.save();
+        }
+        else {
+            let user = yield verifyemail_1.default.findOneAndUpdate({ email: req.body.email }, {
+                otp: oneTimePassword,
+                expiresIn: new Date().getTime() + 600 * 1000
+            });
+        }
+        let email = `
+   <p> Dear Customer,</p>
+    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
+   <p>This OTP is valid for 10 minutes. After it expires, you will need to request a new OTP.</p>
+    <p>Thank you for your cooperation.</p>
+    <p>Sincerely,</p>
+    <p>Decker</>
+      `;
+        // Sending a mail using nodemailer (read docs)
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_ADDRESS,
+                pass: process.env.EMAIL_PASSWORD,
+            },
+        });
+        // send mail with defined transport object
+        let info = yield transporter.sendMail({
+            from: process.env.EMAIL_ADDRESS,
+            to: req.body.email,
+            subject: "OTP for your account on decker.vercel.app",
+            html: email, // html body
+        });
+        res.status(200).json({ success: true, message: "OTP sent to your email successfully!" });
+    }
+    catch (err) {
+        res.status(200).json({ success: false, message: "Some error occurred please try again later!" });
+    }
+}));
+app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let user = yield verifyemail_1.default.findOne({ email: req.body.email });
+    if (user) {
+        // Check If the otp is expired or not.
+        let difference = user.expiresIn - new Date().getTime();
+        if (user.otp === parseInt(req.body.otp)) {
+            if (difference > 0) {
+                res.status(200).json({ success: true, message: "OTP verification successful!" });
+            }
+            else {
+                res.status(200).json({ success: false, message: "OTP has expired!" });
+            }
+        }
+        else {
+            res.status(200).json({ success: false, message: "OTP verification failed!" });
+        }
+    }
+    else {
+        res.status(200).json({ success: false, message: "No user found!" });
+    }
+}));

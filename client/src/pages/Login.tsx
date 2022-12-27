@@ -1,15 +1,16 @@
 import  { useState ,ChangeEvent,useContext,FormEvent, useEffect} from 'react'
-import 'react-toastify/dist/ReactToastify.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserContext } from '../context/context';
+import { UserContext } from '../context/UserContext';
 import { request } from '../utils/axios-utils';
 import {FcGoogle} from "react-icons/fc"
-import { toast } from 'react-toastify';
 import { FaFeatherAlt } from 'react-icons/fa';
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const {userInfo}=useContext(UserContext) 
+  const {setAlert}=useContext(AlertContext) 
   const navigate=useNavigate()
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
   
@@ -30,7 +31,7 @@ if(userInfo?.email){
 
 
 const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
-  e.preventDefault()
+  e.preventDefault() 
   
     const data = {  email, password };
      
@@ -43,15 +44,13 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
   navigate("/auth/success")
    }
   else{
-    toast.error("Invalid username or password", {
-     
-      autoClose: 2000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+    setAlert((preval:AlertData) => (
+      {
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "Invalid username or password"
+      }))
   }
   
 
@@ -84,7 +83,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                       <input 
                       onChange={handleChange}
                         type="email"
-                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
                         id="email"
                         placeholder="Email"
                         name="email"
@@ -94,7 +93,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                       <input
                       onChange={handleChange}
                         type="password"
-                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
                         id="password"
                         placeholder="Password"
                         name="password"
@@ -136,7 +135,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                     </div>
                     <div className="flex items-center justify-center gap-2 pb-6">
                       <p className=" text-gray-800 dark:text-gray-50">Don&apos;t have an account?</p>
-                      <Link to="/signup"><p
+                      <Link to="/verifyemail"><p
                         className="  text-blue-600 font-medium text-xs uppercase dark:text-sky-500  "
                       
                       >

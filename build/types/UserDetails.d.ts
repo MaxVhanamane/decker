@@ -3,4 +3,5 @@ export type UserDetails = {
     email: string;
     profile_picture: string;
     password?: string;
+    otp?: number;
 };

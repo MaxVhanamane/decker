@@ -1,7 +1,9 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from 'react-query';
 import { DeckTypes } from "./useGetDecks";
-
+import { AlertContext } from '../context/AlertState';
+import { AlertData } from '../types/types';
+import { useContext } from 'react';
  const createDeck = async (title:string)=> {
   // you don't need to add try catch block as axios will automatically throw an error. 
   // If you want to throw an error then do it manually  using throw keyword because usequery or usemutation need that
@@ -12,6 +14,7 @@ import { DeckTypes } from "./useGetDecks";
 
 
 const useCreateDeck= ()=>{
+  const {setAlert}=useContext(AlertContext) 
     const queryClient=useQueryClient()
     // whatever we pass to useMutations mutate function that will be reaceived in the createDeck function and in onMutate and other properities of useMutation.
   return useMutation(createDeck,{
@@ -34,12 +37,18 @@ const useCreateDeck= ()=>{
 
     },
 
-    onError:(_error,_title,context)=>{
+    onError:(error,_title,context)=>{
       // I have returned the previous query data in onMutate function I can receive that data in context. I can use that data to 
       // reverse what I have done in onMutate because onMutate runs before request goes to server there I have assumed that 
       // Everthing will be fine on the server and I did optimistic updates in onMutate function. If some error occures I will 
       // reverse that here using previousQuery data 
-    
+      setAlert((preval:AlertData) => (
+        {
+          ...preval,
+          severity: "error",
+          show: true,
+          message: (error as Error).message
+        }))
       queryClient.setQueryData("decks",context)
     },
 
