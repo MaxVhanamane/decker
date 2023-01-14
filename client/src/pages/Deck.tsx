@@ -136,9 +136,9 @@ type PropType={
         <Droppable droppableId="DeckDeleteArea">
           {
             (provided,snapshot)=>{
-              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`} ref={provided.innerRef} {...provided.droppableProps}>
+              return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`} ref={provided.innerRef} {...provided.droppableProps}>
                 
-              <span  className={`text-3xl text-teal-600 dark:text-sky-400 cursor-pointer ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash onClick={handlePopUp} title="Drag and drop the deck here to delete it."/></span>
+              <span  className={`text-2xl lg:text-3xl text-teal-600 dark:text-sky-400 cursor-pointer ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash onClick={handlePopUp} title="Drag and drop the deck here to delete it."/></span>
              </div>
               
             }

@@ -254,7 +254,7 @@ if(isError){
                            key={index}
               >
                 <div ref={changeColorWhileDragging} onClick={()=>handleShowFullScreen({...card,_id:deck_id!,cardIndex:index})}  className={`relative border   ${snapshot.isDragging ? "shadow-2xl  shadow-violet-600 border-violet-600  animate-pulse dark:bg-slate-900 bg-white": "border-gray-400 "} ${snapshot.draggingOver==="cardDeleteArea"?"shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent":null}   flex flex-col text-gray-800
-                rounded-md px-2 py-4  h-[8.5rem] lg:h-44  text-justify lg:w-[30vw] w-[95vw] `}>
+                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[30vw] w-[95vw] `}>
                    <div className="absolute bottom-0 right-0">
 {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
  <button onClick={(event)=>{ event.stopPropagation(),handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-95"><MdOutlineDeleteOutline/></button>
@@ -263,8 +263,8 @@ if(isError){
 
 
  </div>
-  <p className="font-bold text-sm lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">{card.title}</p>
- <p className="text-xs lg:text-base text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1 " >{card.note}</p>
+  <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">{card.title}</p>
+ <p className="text-sm lg:text-base text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1 " >{card.note}</p>
  </div>
               </div>
                }}

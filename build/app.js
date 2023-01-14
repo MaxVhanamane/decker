@@ -46,6 +46,7 @@ const user_1 = __importDefault(require("./models/user"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const passport_local_1 = __importDefault(require("passport-local"));
 const verifyemail_1 = __importDefault(require("./models/verifyemail"));
+const forgotpasswordotps_1 = __importDefault(require("./models/forgotpasswordotps"));
 const nodemailer = require("nodemailer");
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
@@ -88,12 +89,12 @@ app.use((0, express_session_1.default)({
     store: store,
     // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
     // uncomment it while deploaying
-    cookie: {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7 //cookie expires in 7 days
-    }
+    // cookie:{
+    //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    //   secure:true,      // it allows only https requests
+    //   maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
+    // }
 }));
 // using passport to handle login
 app.use(passport_1.default.initialize());
@@ -152,7 +153,7 @@ passport_1.default.use(new GoogleStrategy({
 })));
 // serializeUser to store only id in session
 passport_1.default.serializeUser((user, done) => {
-    return done(null, user._id);
+    return done(null, user === null || user === void 0 ? void 0 : user._id);
 });
 // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
 passport_1.default.deserializeUser((id, done) => {
@@ -169,7 +170,7 @@ passport_1.default.deserializeUser((id, done) => {
 const fetchUserDetails = function (req, res, next) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        if (req.user) {
+        if (req === null || req === void 0 ? void 0 : req.user) {
             const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
             const user = yield user_1.default.findOne({ email: email });
             req.userDetails = user;
@@ -196,7 +197,7 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 //Deck routes 
 app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = req.userDetails;
+        const user = req === null || req === void 0 ? void 0 : req.userDetails;
         // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
         const deck = yield deck_1.default.find({ email: user.id }).sort({ date: -1 });
         res.json(deck);
@@ -221,6 +222,26 @@ app.put('/deck', fetchUserDetails, function (req, res) {
             //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
             const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned, date: new Date() });
             res.json(updatedDeck);
+        }
+        catch (error) {
+            if (error instanceof mongoose_1.Error) {
+                res.status(400).send({ error: error.message, isError: true });
+            }
+            else {
+                res.status(400).json({ error: "Unexpected error", isError: true });
+            }
+        }
+    });
+});
+app.put('/undodeck', fetchUserDetails, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        delete req.body.index;
+        const deck = req.body;
+        try {
+            //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
+            const newDeck = new deck_1.default(Object.assign({}, deck));
+            const createdDeck = yield newDeck.save();
+            res.json({ createdDeck, success: true });
         }
         catch (error) {
             if (error instanceof mongoose_1.Error) {
@@ -325,6 +346,25 @@ app.delete('/card/:id/:index', fetchUserDetails, function (req, res) {
         }
     });
 });
+app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const deck = yield deck_1.default.findById(req.params.id);
+            if (deck) {
+                // deck.cards.splice(parseInt(req.params.index), 1);
+                // let newArray = await deck.save()
+                // res.json({ cards: newArray, success: true })
+                let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
+                deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move);
+                yield deck.save();
+                res.json({ success: true });
+            }
+        }
+        catch (error) {
+            res.json({ error: "some error occurred", success: false });
+        }
+    });
+});
 app.get('/auth/google', passport_1.default.authenticate('google', {
     scope: ['profile', 'email']
     // scope:['openid','profile', 'email'] 
@@ -404,21 +444,31 @@ function generateOTP() {
 }
 app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let user = yield verifyemail_1.default.findOne({ email: req.body.email });
+        let user = yield verifyemail_1.default.findOne({ email: req.body.email }); // This is where user with otp stored while creating account
+        let mainUser = yield user_1.default.findOne({ email: req.body.email }); // This is where the final user is stored
         let oneTimePassword = generateOTP();
-        if (!user) {
-            let generateUserWithOTP = new verifyemail_1.default({
-                email: req.body.email,
-                otp: oneTimePassword,
-                expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
-            });
-            yield generateUserWithOTP.save();
+        // If the user has already completed signup process then user exist in mainUser variable.
+        // so If we find user then we won't allow him to create new one
+        if (!mainUser) {
+            // if there is no user in mainUser variable then we will check if his email exists in user variable 
+            // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
+            // if there is no user then we will create new one else we will update his previous
+            if (!user) {
+                let generateUserWithOTP = new verifyemail_1.default({
+                    email: req.body.email,
+                    otp: oneTimePassword,
+                    expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+                });
+                yield generateUserWithOTP.save();
+            }
+            else {
+                let user = yield verifyemail_1.default.findOneAndUpdate({ email: req.body.email }, {
+                    otp: oneTimePassword,
+                    expiresIn: new Date().getTime() + 600 * 1000
+                });
+            }
         }
         else {
-            // let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
-            //   otp: oneTimePassword,
-            //   expiresIn: new Date().getTime() + 600 * 1000
-            // })
             return res.status(200).json({ success: false, message: "User with this email already exists! Please Login or use different email address." });
         }
         let email = `
@@ -472,5 +522,108 @@ app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     else {
         res.status(200).json({ success: false, message: "No user found!" });
+    }
+}));
+// forgot password
+app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email }); // This is where user with otp stored while creating account
+        let mainUser = yield user_1.default.findOne({ email: req.body.email }); // This is where the final user is stored
+        let oneTimePassword = generateOTP();
+        // If the user has already completed signup process then user exist in mainUser variable.
+        // so If we find user then we won't allow him to create new one
+        if (mainUser) {
+            // if there is no user in mainUser variable then we will check if his email exists in user variable 
+            // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
+            // if there is no user then we will create new one else we will update his previous
+            if (!user) {
+                let generateUserWithOTP = new forgotpasswordotps_1.default({
+                    email: req.body.email,
+                    otp: oneTimePassword,
+                    expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+                });
+                yield generateUserWithOTP.save();
+            }
+            else {
+                let user = yield forgotpasswordotps_1.default.findOneAndUpdate({ email: req.body.email }, {
+                    otp: oneTimePassword,
+                    expiresIn: new Date().getTime() + 600 * 1000
+                });
+            }
+        }
+        else {
+            return res.status(200).json({ success: false, message: "User with this email doesn't exists! Please create an account first." });
+        }
+        let email = `
+   <p> Dear Customer,</p>
+    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
+    <p>Once you enter the OTP into the designated field you will be redirected to the page where you can change your password.</p>
+   <p>This OTP is valid for 10 minutes. After it expires, you will need to request a new OTP.</p>
+    <p>Thank you for your cooperation.</p>
+    <p>Sincerely,</p>
+    <p>Decker</>
+      `;
+        // Sending a mail using nodemailer (read docs)
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_ADDRESS,
+                pass: process.env.EMAIL_PASSWORD,
+            },
+        });
+        // send mail with defined transport object
+        let info = yield transporter.sendMail({
+            from: process.env.EMAIL_ADDRESS,
+            to: req.body.email,
+            subject: "OTP for your account on decker.vercel.app to reset the password",
+            html: email, // html body
+        });
+        res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." });
+    }
+    catch (err) {
+        res.status(200).json({ success: false, message: "Some error occurred please try again later!" });
+    }
+}));
+app.post("/verifyforgotpasswordotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email });
+    if (user) {
+        // Check If the otp is expired or not.
+        let difference = user.expiresIn - new Date().getTime();
+        if (user.otp === parseInt(req.body.otp)) {
+            if (difference > 0) {
+                res.status(200).json({ success: true, message: "OTP verification successful!" });
+            }
+            else {
+                res.status(200).json({ success: false, message: "OTP has expired!" });
+            }
+        }
+        else {
+            res.status(200).json({ success: false, message: "OTP verification failed!" });
+        }
+    }
+    else {
+        res.status(200).json({ success: false, message: "No user found!" });
+    }
+}));
+app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email });
+    // Here we will check if the OTP in our db and the otp that we get in our req are the same ones.
+    if (((user === null || user === void 0 ? void 0 : user.otp) === parseInt((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.otp))) {
+        const newPassword = req.body.newPassword;
+        const hashedPassword = yield bcryptjs_1.default.hash(newPassword, 10);
+        try {
+            let user = yield user_1.default.findOneAndUpdate({ email: req.body.email }, { password: hashedPassword });
+            res.status(200).json({ success: true, message: "Password changed successfully!" });
+        }
+        catch (err) {
+            res.status(200).json({ success: false, message: "Some error occured, please try again later!" });
+        }
+    }
+    else {
+        res.status(200).json({ success: false, message: "You are unauthorized!" });
     }
 }));
