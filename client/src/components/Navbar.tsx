@@ -7,8 +7,6 @@ import {FaFeatherAlt} from 'react-icons/fa';
 import { userData } from '../types/types';
 import {FaUserCircle} from "react-icons/fa"
 import {RiCloseFill} from "react-icons/ri"
-import { useState } from 'react';
-import { useEffect } from 'react';
 import ThemeToggler from './ThemeToggler';
 const Navbar:FC = () => {
   const {setUserInfo}=useContext(UserContext)
@@ -62,10 +60,10 @@ const Navbar:FC = () => {
    
 
       <div className='flex items-center justify-center flex-row gap-8'>
-      <div className='flex items-center justify-center rounded px-2 gap-2'>
+      <Link to={"/"}><div className='flex items-center justify-center rounded px-2 gap-2'>
       <span className='text-xl text-teal-600 dark:text-sky-400'><FaFeatherAlt/></span> <span className=' h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl   '>Decker</span>
  
-      </div>
+      </div></Link>
   <div className='hidden md:block'>
   <ul className='flex gap-10  items-center justify-center'>
         {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><li className='dark:text-gray-50 text-gray-800 cursor-pointer dark:hover:text-sky-500 hover:text-gray-600 font-semibold '>Home</li></Link>:null}
@@ -87,8 +85,8 @@ const Navbar:FC = () => {
       </div> */}
     </nav>
    
-    <div ref={divRefForLargeScreen}  className=' absolute transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4 rounded'>
-      <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded dark:bg-slate-900 mx-auto  '>
+    <div ref={divRefForLargeScreen}  className=' absolute transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-50 '>
+      <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded-md dark:bg-slate-900 mx-auto  '>
 <button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer '><RiCloseFill/></button>
     <h2 className='mb-3 font-bold text-gray-700 dark:text-gray-50'>My account</h2>
       <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 w-fit '>
@@ -96,7 +94,7 @@ const Navbar:FC = () => {
         <li className='flex gap-1'><span className='font-semibold  w-fit'>email:</span> {userInfo?.email}</li>
         
       </ul>
-      <div className='flex items-center justify-center gap-4'>
+      <div className='flex items-center justify-center gap-4 '>
       {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><button onClick={handleShowUserInfomation} className=' md:hidden font-semibold  rounded px-1 text-center text-white cursor-pointer hover:bg-teal-700 mt-4 '>Home</button></Link>:null}
       <button onClick={()=>{handleLogout()}} className='font-semibold  rounded px-1 text-center text-red-600 cursor-pointer  mt-4'>Logout</button>
       

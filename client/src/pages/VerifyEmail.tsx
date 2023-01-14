@@ -97,7 +97,7 @@ export default function VerifyEmail() {
       <div className=" py-12 px-6 h-full">
         <div className="flex justify-center items-center flex-wrap h-full g-6 text-gray-800">
           <div className="xl:w-6/12">
-            <div className="block bg-white shadow-lg rounded-lg dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
+            <div className="block   rounded-lg shadow-2xl bg-white dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
               <div className="flex justify-center items-center g-0">
                 <div className=" px-4 md:px-0">
                   <div className="md:p-12 p-4 md:mx-6">
@@ -120,6 +120,7 @@ export default function VerifyEmail() {
                           value={email}
                           placeholder="Email"
                           required
+                          
                         />
                       </div>:null}
                 
@@ -127,7 +128,7 @@ export default function VerifyEmail() {
                     {!showVerifyOTPButton?  <div className="text-center pt-1 mb-5 pb-1 relative">
                         
                         <button
-                          className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                          className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
                           type="submit"
                           data-mdb-ripple="true"
                           data-mdb-ripple-color="light"
@@ -147,13 +148,14 @@ export default function VerifyEmail() {
                           name="otp"
                           value={otp}
                           placeholder="Enter OTP"
+                          maxLength={6}
                         />
                       </div>:null}
                  
                     </form>
                {  showVerifyOTPButton?  <div className="text-center pt-1 mb-10 pb-1">
                         <button onClick={handleOTPVerification}
-                          className="  inline-block px-6 py-2.5 text-white font-medium text-xs leading-tight uppercase rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                          className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
                           type="button"
                           data-mdb-ripple="true"
                           data-mdb-ripple-color="light"
@@ -167,11 +169,11 @@ export default function VerifyEmail() {
                         <p className="text-gray-800 dark:text-gray-50 mr-2">Have an account?</p>
                         <Link to="/login"><button
                           type="button"
-                          className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-700 dark:border-sky-500 dark:text-sky-500 font-medium text-xs leading-tight uppercase rounded hover:border-teal-500 hover:text-teal-600 dark:hover:text-sky-600 dark:hover:border-sky-400 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
+                          className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-700 dark:border-sky-500 dark:text-sky-500 font-medium text-sm leading-tight  rounded hover:border-teal-500 hover:text-teal-600 dark:hover:text-sky-600 dark:hover:border-sky-400 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
                           data-mdb-ripple="true"
                           data-mdb-ripple-color="light"
                         >
-                          LOGIN
+                          Login
                         </button></Link>
                       </div>
                 

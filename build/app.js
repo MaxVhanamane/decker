@@ -348,7 +348,6 @@ app.post('/auth/logout', function (req, res, next) {
 });
 app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, email, password, otp } = req === null || req === void 0 ? void 0 : req.body;
-    console.log(email, otp);
     if (!username && !password && !email) {
         res.json({ success: false, message: "Please provide name, email and password" });
         return;

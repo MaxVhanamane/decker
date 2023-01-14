@@ -1,4 +1,4 @@
-import { useEffect, createContext, ReactNode, useState, Dispatch } from "react";
+import { useEffect, createContext, ReactNode, useState, Dispatch,useRef,RefObject } from "react";
 import { request } from "../utils/axios-utils";
 import { userData } from "../types/types";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -24,6 +24,7 @@ interface ContexType {
   theme: string | null;
 
   setTheme: Dispatch<React.SetStateAction<string | null>>;
+  deleteConfirmationModalForCard:RefObject<HTMLDivElement>
 }
 export const UserContext = createContext<ContexType>({
   userInfo: {
@@ -36,13 +37,15 @@ export const UserContext = createContext<ContexType>({
   setUserInfo: () => {},
   theme: null,
   setTheme: () => {},
+  deleteConfirmationModalForCard:{ current: null } as RefObject<HTMLDivElement>
 });
 
 function UserContextProvider({ children }: UserContextProvider) {
   const [theme, setTheme] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const pathNames=["/signup","/verifyemail"]
+  const deleteConfirmationModalForCard=useRef<HTMLDivElement >(null)
+  const pathNames=["/signup","/verifyemail","/forgotpassword","/changepassword"]
   const [userInfo, setUserInfo] = useState<userData | null>({
     _id: "",
     username: "",
@@ -50,6 +53,7 @@ function UserContextProvider({ children }: UserContextProvider) {
     email: "",
     __v: 0,
   });
+ 
   const getUser = async (): Promise<any> => {
     const data = await request.get("/getuser");
     if (data.data) {
@@ -132,7 +136,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ userInfo, setUserInfo, theme, setTheme }}>
+    <UserContext.Provider value={{ userInfo, setUserInfo, theme, setTheme,deleteConfirmationModalForCard}}>
       {children}
     </UserContext.Provider>
   );

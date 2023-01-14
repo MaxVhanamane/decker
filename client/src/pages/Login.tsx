@@ -83,7 +83,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                       <input 
                       onChange={handleChange}
                         type="email"
-                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
                         id="email"
                         placeholder="Email"
                         name="email"
@@ -94,16 +94,17 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                       <input
                       onChange={handleChange}
                         type="password"
-                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
                         id="password"
                         placeholder="Password"
                         name="password"
                         required
                       />
                     </div>
+                 
                     <div className="text-center pt-1  pb-1">
                     <button
-                        className="  inline-block px-6 py-2.5 text-gray-800  font-medium text-xs leading-tight uppercase rounded  active:shadow-lg transition duration-150 ease-in-out w-full dark:text-gray-50 border border-gray-500 hover:border hover:border-teal-500 dark:hover:border-sky-500 dark:border-gray-100/80 "
+                        className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full  animate-changeBgLight dark:animate-changeBgDark   "
       
                         data-mdb-ripple="true"
                         data-mdb-ripple-color="light"
@@ -121,24 +122,24 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
   </div>
 </div>
                       <button onClick={()=>handleGoogleLogin()}
-                        className="  px-6 py-[0.35rem] text-gray-800 font-medium text-xs leading-tight uppercase rounded   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 flex items-center justify-center dark:text-gray-50 gap-4 border border-gray-500 dark:border-gray-100/80 hover:border hover:border-teal-500 dark:hover:border-sky-500"
+                        className="  px-6 py-[0.35rem] text-gray-800 font-medium text-sm leading-tight  rounded   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 flex items-center justify-center dark:text-gray-50 gap-4 border border-gray-500 dark:border-gray-100/80 hover:border hover:border-teal-500 dark:hover:border-sky-500"
       
                     
                         type="button"
                       
                       >
-                       <span><FcGoogle className='text-2xl'/></span> <span> Log in with Google</span>
+                       <span><FcGoogle className='text-2xl'/></span> <span> Continue with Google</span>
                       </button>
    
 
 
                       
-                     {/* <Link to="/forgotpassword" className="text-gray-600 hover:text-gray-700" >Forgot password?</Link> */}
+                     <Link to="/forgotpassword" className="text-gray-600 hover:text-gray-700 dark:text-gray-50 dark:hover:text-gray-200" >Forgot password?</Link>
                     </div>
                     <div className="flex items-center justify-center gap-2 pb-6">
                       <p className=" text-gray-800 dark:text-gray-50">Don&apos;t have an account?</p>
                       <Link to="/verifyemail"><p
-                        className="  text-blue-600 font-medium text-xs uppercase dark:text-sky-500  "
+                        className="  text-blue-600 hover:text-blue-700 font-medium text-sm  dark:text-sky-500 dark:hover:text-sky-600 "
                       
                       >
                         Sign Up

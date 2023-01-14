@@ -18,3 +18,13 @@ export type AlertType={
   alert:AlertData
   setAlert:Dispatch<React.SetStateAction<AlertData >>
 }
+
+export type DeckType={
+  _id:string,
+  title:string,
+  cards:{title:string,note:string}[],
+  pinned: boolean,
+  email: string,
+  date:Date,
+  index:number
+}

@@ -1,4 +1,4 @@
-import { FormEvent, useState,useRef, MouseEvent,useContext} from "react";
+import { FormEvent, useState,useRef, MouseEvent,useContext,RefObject} from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
@@ -15,22 +15,30 @@ import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from 'react-icons/bi';
 import Loading from '../components/Loading';
 import PopUpMessage from "../components/PopUpMessage";
-
-  function Deck() {
+import { DeckType } from ".././types/types";
+import useUndoDeck from './../hooks/useUndoDeck';
+type PropType={
+  undoDeck:DeckType | null,
+  handleUndoDeck:(deck:DeckType | null)=>void,
+  undoButtonRef:RefObject<HTMLDivElement>,
+  handlePopupForUndoButton:()=>void
+}
+  function Deck({undoDeck,handleUndoDeck,undoButtonRef,handlePopupForUndoButton}:PropType) {
     const {setAlert}=useContext(AlertContext) 
     const [title, setTitle] = useState<string>("");
-    const [deleteDeckId,setDeleteDeckId]=useState("")
+    // const [deleteDeckId,setDeleteDeckId]=useState("")
     const {data:alldecks,error,isError,isLoading}=useGetDecks()
   const [openEditDeckModal,setOpenEditDeckModal]=useState(false)
     const {mutate : addDeck} = useCreateDeck()
 
     const [editData,setEditData]=useState({deck_id:"",title:""})
 
-    const {mutate:deleteOneDeck}=useDeleteDeck()
+    // const {mutate:deleteOneDeck}=useDeleteDeck()
 
     const {mutate:pinDeck,error:pinError,isError:isPinError}=usePinDeck()
+    const {mutate:undoDeckItem,error:undoError,isError:isUndoError}=useUndoDeck()
  
-    const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
+    // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
     const showPopUp=useRef<HTMLDivElement | null >(null)
     
     const handleSubmit = async (e: FormEvent) => {
@@ -51,24 +59,24 @@ import PopUpMessage from "../components/PopUpMessage";
       }
     };
   
-  const getUserConfirmation=(e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>)=>{
-if((e.target as HTMLButtonElement).id==="yesbutton"){
-  deleteOneDeck(deleteDeckId)
-  deleteConfirmationModal?.current?.classList.add("hidden")
-}
-else{
-  deleteConfirmationModal?.current?.classList.add("hidden")
-}
-  }
+//   const getUserConfirmation=(e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>)=>{
+// if((e.target as HTMLButtonElement).id==="yesbutton"){
+//   deleteOneDeck(deleteDeckId)
+//   deleteConfirmationModal?.current?.classList.add("hidden")
+// }
+// else{
+//   deleteConfirmationModal?.current?.classList.add("hidden")
+// }
+//   }
     
-    const handleDelete = async (id:string) => {
-      setDeleteDeckId(id)
-      if(deleteConfirmationModal?.current?.classList.contains("hidden")){
-        deleteConfirmationModal.current.classList.remove("hidden")
-   }
+  //   const handleDelete = async (id:string) => {
+  //     setDeleteDeckId(id)
+  //     if(deleteConfirmationModal?.current?.classList.contains("hidden")){
+  //       deleteConfirmationModal.current.classList.remove("hidden")
+  //  }
   
  
-    };
+  //   };
   
   
     const handlePin = async (id:string,pinned:boolean) => {
@@ -100,9 +108,16 @@ else{
       }
     
      }
+  
+  
    
   
-  
+  const handleUndo=()=>{
+    // request.put("/undodeck",undoDeck) 
+    undoDeckItem(undoDeck!)
+    handleUndoDeck(null)
+    handlePopupForUndoButton()
+  }
 
 
     if(isError){
@@ -116,9 +131,9 @@ else{
     return (
  
       <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32 ">
-
+{<div ref={undoButtonRef}  className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"><span className="mr-4">Deck deleted successfully!</span><span className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400" onClick={(event)=>{handleUndo()}}>Undo</span></div>}
 <PopUpMessage message="Drag and drop the deck here to delete it." showPopUp={showPopUp}/>
-        <Droppable droppableId="deleteArea">
+        <Droppable droppableId="DeckDeleteArea">
           {
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-12 h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`} ref={provided.innerRef} {...provided.droppableProps}>
@@ -182,8 +197,8 @@ else{
     <div className="absolute bottom-0 right-0">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
 
- <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-105 text-sky-600 dark:text-sky-400"><BiEdit/></button>
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-105"><BsFillPinFill/></button>
+ <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95"><BsFillPinFill/></button>
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
@@ -238,9 +253,9 @@ else{
       <div className="absolute bottom-0 right-0">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
  
- <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-105 text-sky-600 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"><BiEdit/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-105"><BsPin/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"><BsPin/></button>
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
@@ -266,7 +281,7 @@ else{
        
         </Droppable>
         </div>:null}
-    
+{/*     
         <div ref={deleteConfirmationModal} id="popup-modal" tabIndex={-1} className="fixed hidden z-50 p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-sm">
     <div className="relative w-full h-full flex items-center justify-center  ">
         <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-900 ring-1 ring-sky-500  ">
@@ -280,7 +295,7 @@ else{
             </div>
         </div>
     </div>
-</div>
+</div> */}
 {openEditDeckModal?<EditModalForDeck openEditDeckModal={openEditDeckModal} setOpenEditDeckModal={setOpenEditDeckModal} editData={editData} setEditData={setEditData} />:null}
       </div>
  

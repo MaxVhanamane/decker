@@ -4,12 +4,13 @@ import mongoose, { ConnectOptions, Error } from "mongoose";
 import DeckModal from './models/deck';
 import cors from "cors"
 import session from "express-session";
-import passport from "passport";
+import passport, { use } from "passport";
 import User from "./models/user";
 import bcrypt from "bcryptjs"
 import { UserDetails } from "./types/UserDetails";
 import passportLocal from "passport-local"
 import verifyEmail from './models/verifyemail';
+import ForgotPasswordOTP from './models/forgotpasswordotps';
 const nodemailer = require("nodemailer");
 
 const LocalStrategy = passportLocal.Strategy
@@ -137,7 +138,7 @@ passport.use(
 
 // serializeUser to store only id in session
 passport.serializeUser((user: any, done) => {
-  return done(null, user._id)
+  return done(null, user?._id)
 })
 
 // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
@@ -156,7 +157,7 @@ passport.deserializeUser((id: string, done) => {
 
 // middleware to get user details
 const fetchUserDetails = async function (req: any, res: Response, next: NextFunction) {
-  if (req.user) {
+  if (req?.user) {
     const email = req?.user?.email
     const user = await User.findOne({ email: email })
     req.userDetails = user
@@ -189,7 +190,7 @@ mongoose.connect(process.env.MONGO_URI!, {
 //Deck routes 
 
 app.get('/deck', fetchUserDetails, async function (req: any, res: Response) {
-  const user = req.userDetails
+  const user = req?.userDetails
   // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
   const deck = await DeckModal.find({ email: user.id }).sort({ date: -1 });
   res.json(deck)
@@ -232,6 +233,37 @@ app.put('/deck', fetchUserDetails, async function (req: any, res: Response) {
 
 
 })
+
+app.put('/undodeck', fetchUserDetails, async function (req: any, res: Response) {
+  delete req.body.index
+  const deck=req.body
+  try {
+    //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
+    const newDeck = new DeckModal({
+      ...deck
+    })
+    const createdDeck = await newDeck.save()
+  
+    res.json({createdDeck,success:true})
+  }
+
+  catch (error) {
+    if (error instanceof Error) {
+
+      res.status(400).send({ error: error.message, isError: true });
+    }
+    else {
+      res.status(400).json({ error: "Unexpected error", isError: true })
+    }
+  }
+
+
+
+})
+
+
+
+
 
 app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: any, res: Response) {
   const user = req.userDetails
@@ -339,6 +371,30 @@ app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, r
 
 
 
+app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, async function (req: Request, res: Response) {
+  try {
+
+    const deck = await DeckModal.findById(req.params.id)
+    
+    if (deck) {
+
+      // deck.cards.splice(parseInt(req.params.index), 1);
+      // let newArray = await deck.save()
+      // res.json({ cards: newArray, success: true })
+      let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
+deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move)
+ await deck.save()
+      res.json({  success: true })
+
+    }
+  }
+  catch (error) {
+    res.json({ error: "some error occurred", success: false })
+  }
+})
+
+
+
 
 
 
@@ -376,7 +432,6 @@ app.post('/auth/logout', function (req, res, next) {
 
 app.post("/signup", async (req: Request, res: Response) => {
   const { username, email, password, otp } = req?.body
-  console.log(email, otp)
   if (!username && !password && !email) {
     res.json({ success: false, message: "Please provide name, email and password" })
     return
@@ -450,29 +505,37 @@ function generateOTP(): number {
 
 
 
-
-
-
 app.post("/generateotp", async (req, res) => {
 
   try{
-    let user = await verifyEmail.findOne({ email: req.body.email })
+    let user = await verifyEmail.findOne({ email: req.body.email }) // This is where user with otp stored while creating account
+    let mainUser = await User.findOne({ email: req.body.email })  // This is where the final user is stored
     let oneTimePassword = generateOTP();
-    if (!user) {
-  
-      let generateUserWithOTP = new verifyEmail({
-        email: req.body.email,
+    // If the user has already completed signup process then user exist in mainUser variable.
+    // so If we find user then we won't allow him to create new one
+    if (!mainUser) {
+      // if there is no user in mainUser variable then we will check if his email exists in user variable 
+      // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
+      // if there is no user then we will create new one else we will update his previous
+  if(!user){
+    let generateUserWithOTP = new verifyEmail({
+      email: req.body.email,
+      otp: oneTimePassword,
+      expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+    })
+    await generateUserWithOTP.save()
+  }
+  else{
+  let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
         otp: oneTimePassword,
-        expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+        expiresIn: new Date().getTime() + 600 * 1000
       })
-      await generateUserWithOTP.save()
+  }
+    
     }
   
     else {
-      // let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
-      //   otp: oneTimePassword,
-      //   expiresIn: new Date().getTime() + 600 * 1000
-      // })
+    
       return res.status(200).json({success:false,message:"User with this email already exists! Please Login or use different email address."})
     }
   
@@ -515,7 +578,7 @@ app.post("/generateotp", async (req, res) => {
 })
 
 
-app.post("/verifyotp", async (req, res) => {
+app.post("/verifyotp", async (req:Request,res:Response) => {
 
   let user = await verifyEmail.findOne({ email: req.body.email })
   if (user) {
@@ -539,6 +602,132 @@ app.post("/verifyotp", async (req, res) => {
   }
   else {
     res.status(200).json({ success: false, message: "No user found!" })
+  }
+
+})
+
+
+// forgot password
+
+app.post("/generateforgetpasswordotp", async (req:Request,res:Response) => {
+
+  try{
+    let user = await ForgotPasswordOTP.findOne({ email: req.body.email }) // This is where user with otp stored while creating account
+    let mainUser = await User.findOne({ email: req.body.email })  // This is where the final user is stored
+    let oneTimePassword = generateOTP();
+    // If the user has already completed signup process then user exist in mainUser variable.
+    // so If we find user then we won't allow him to create new one
+    if (mainUser) {
+      // if there is no user in mainUser variable then we will check if his email exists in user variable 
+      // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
+      // if there is no user then we will create new one else we will update his previous
+  if(!user){
+    let generateUserWithOTP = new ForgotPasswordOTP({
+      email: req.body.email,
+      otp: oneTimePassword,
+      expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+    })
+    await generateUserWithOTP.save()
+  }
+  else{
+  let user = await ForgotPasswordOTP.findOneAndUpdate({ email: req.body.email }, {
+        otp: oneTimePassword,
+        expiresIn: new Date().getTime() + 600 * 1000
+      })
+  }
+    
+    }
+  
+    else {
+    
+      return res.status(200).json({success:false,message:"User with this email doesn't exists! Please create an account first."})
+    }
+  
+  
+  
+    let email = `
+   <p> Dear Customer,</p>
+    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
+    <p>Once you enter the OTP into the designated field you will be redirected to the page where you can change your password.</p>
+   <p>This OTP is valid for 10 minutes. After it expires, you will need to request a new OTP.</p>
+    <p>Thank you for your cooperation.</p>
+    <p>Sincerely,</p>
+    <p>Decker</>
+      `
+    // Sending a mail using nodemailer (read docs)
+    // create reusable transporter object using the default SMTP transport
+    let transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+  
+    // send mail with defined transport object
+    let info = await transporter.sendMail({
+      from: process.env.EMAIL_ADDRESS, // sender address
+      to: req.body.email, // list of receivers
+      subject: "OTP for your account on decker.vercel.app to reset the password", // Subject line
+      html: email, // html body
+    });
+    res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." })
+  }
+  catch(err){
+    res.status(200).json({ success: false, message: "Some error occurred please try again later!" })
+
+  }
+  
+})
+
+
+app.post("/verifyforgotpasswordotp", async (req:Request,res:Response) => {
+
+  let user = await ForgotPasswordOTP.findOne({ email: req.body.email })
+  if (user) {
+    // Check If the otp is expired or not.
+    let difference = user.expiresIn - new Date().getTime()
+
+    if (user.otp === parseInt(req.body.otp)) {
+      if (difference > 0) {
+        res.status(200).json({ success: true, message: "OTP verification successful!" })
+      }
+      else {
+        res.status(200).json({ success: false, message: "OTP has expired!" })
+      }
+    }
+    else {
+      res.status(200).json({ success: false, message: "OTP verification failed!" })
+
+    }
+
+
+  }
+  else {
+    res.status(200).json({ success: false, message: "No user found!" })
+  }
+
+})
+
+app.post("/changepassword",async(req:Request,res:Response)=>{
+  let user = await ForgotPasswordOTP.findOne({ email: req.body.email })
+  // Here we will check if the OTP in our db and the otp that we get in our req are the same ones.
+  if((user?.otp === parseInt(req?.body?.otp))){
+    const newPassword=req.body.newPassword
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    try{
+      let user= await User.findOneAndUpdate({email:req.body.email},{password:hashedPassword})
+      res.status(200).json({success:true,message:"Password changed successfully!"})
+    }
+  
+  catch(err){
+    res.status(200).json({success:false,message:"Some error occured, please try again later!"})
+  }
+  }
+  else{
+    res.status(200).json({success:false,message:"You are unauthorized!"})
   }
 
 })

@@ -3,9 +3,9 @@ import { useMutation, useQueryClient } from 'react-query';
 import { AlertContext } from '../context/AlertState';
 import { AlertData } from '../types/types';
 import { useContext } from 'react';
-const  deleteDeck = async (id:string)=> {
+const  deleteDeck = async ({_id,handleUndoDeck}:any)=> {
   try{
-    const response = await request.delete(`/deck/${id}`);
+    const response = await request.delete(`/deck/${_id}`);
     return response.data
   }
   
@@ -20,14 +20,18 @@ const useDeleteDeck =()=>{
   const {setAlert}=useContext(AlertContext) 
     const queryClient=useQueryClient()
     return useMutation(deleteDeck,{
-        onMutate:async(_id:string)=>{
+        onMutate:async({_id,handleUndoDeck})=>{
             await queryClient.cancelQueries("decks")
             // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
                 // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
                  const previousQueryData=queryClient.getQueryData("decks")
-                       queryClient.setQueryData("decks",(oldQueryData)=>{
+                       queryClient.setQueryData("decks",(oldQueryData:any)=>{
                          {/* @ts-ignore*/}
-                         const newData= oldQueryData.filter((d)=>{
+                         const newData= oldQueryData.filter((d,index)=>{
+                                 if(d._id===_id){
+                                  let data={...d,index}
+                                  handleUndoDeck(data)
+                                 }
                                 return d._id != _id
                          })
                  return newData
