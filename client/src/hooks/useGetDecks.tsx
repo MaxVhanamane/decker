@@ -1,15 +1,10 @@
 import {useQuery} from "react-query"
+import { DeckType } from "../types/types";
 
 import { request } from "../utils/axios-utils";
 
-export type DeckTypes = {
-    _id: string;
-    title: string;
-    cards:string[];
-    pinned:boolean;
-  };
   
- const getDecks = async ():Promise<DeckTypes[]>=>{
+ const getDecks = async ():Promise<DeckType[]>=>{
     const decks = await request.get(`/deck`);
     return decks.data ;
 }

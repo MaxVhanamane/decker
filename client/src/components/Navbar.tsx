@@ -87,7 +87,7 @@ const Navbar:FC = () => {
    
     <div ref={divRefForLargeScreen}  className=' fixed transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-50 '>
       <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded-md dark:bg-slate-900 mx-auto  '>
-<button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer '><RiCloseFill/></button>
+<button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer ' aria-label="Close"><RiCloseFill/></button>
     <h2 className='mb-3 font-bold text-gray-700 dark:text-gray-50'>My account</h2>
       <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 w-fit '>
         <li className='flex gap-1'><span className='font-semibold  w-fit'>username:</span> {userInfo?.username}</li>
@@ -95,8 +95,8 @@ const Navbar:FC = () => {
         
       </ul>
       <div className='flex items-center justify-center gap-4 '>
-      {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><button onClick={handleShowUserInfomation} className=' md:hidden font-semibold  rounded px-1 text-center text-white cursor-pointer hover:bg-teal-700 mt-4 '>Home</button></Link>:null}
-      <button onClick={()=>{handleLogout()}} className='font-semibold  rounded px-1 text-center text-red-600 cursor-pointer  mt-4'>Logout</button>
+      {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><button onClick={handleShowUserInfomation} className=' md:hidden font-semibold  rounded px-1 text-center text-white cursor-pointer hover:bg-teal-700 mt-4 ' aria-label="Home" >Home</button></Link>:null}
+      <button onClick={()=>{handleLogout()}} className='font-semibold  rounded px-1 text-center text-red-600 cursor-pointer  mt-4' aria-label="Logout">Logout</button>
       
    
       </div>

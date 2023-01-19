@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext,FC } from 'react';
 import { UserContext } from '../context/UserContext';
 import {RiCloseFill} from "react-icons/ri"
-export default function AuthSuccess() {
+ const AuthSuccess: FC=()=> {
     const {userInfo}=useContext(UserContext) 
     const navigate=useNavigate()
     if(!userInfo){
@@ -18,8 +18,9 @@ export default function AuthSuccess() {
       <p className='text-xl text-gray-800 font-bold mb-2 dark:text-gray-50'>Login failed</p>
       <p className='text-sm font-bold text-gray-600 dark:text-gray-400'> Please try again!</p>
         </div>
-      <button onClick={()=>{navigate("/login")}} className="font-bold border-2 border-teal-600 mt-4 text-teal-800 px-2 py-1 rounded-lg hover:border-teal-500 dark:bg-transparent dark:hover:border-sky-400  dark:border-sky-500 dark:text-gray-50">Go to Login Page</button>
+      <button onClick={()=>{navigate("/login")}} className="font-bold border-2 border-teal-600 mt-4 text-teal-800 px-2 py-1 rounded-lg hover:border-teal-500 dark:bg-transparent dark:hover:border-sky-400  dark:border-sky-500 dark:text-gray-50" aria-label="Go to Login Page">Go to Login Page</button>
     </div>
       </>
   )
 }
+export default AuthSuccess

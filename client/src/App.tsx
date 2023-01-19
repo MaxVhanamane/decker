@@ -28,13 +28,13 @@ import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
 import useMoveCard from './hooks/useMoveCard';
 import {useState} from "react"
-import { DeckType } from "./types/types";
+import { DeckType, DeckTypeWithIndex } from "./types/types";
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout
 
 function App() {
-  const [undoDeck,setUndoDeck]=useState<DeckType | null>(null)
+  const [undoDeck,setUndoDeck]=useState<DeckTypeWithIndex | null>(null)
   const { theme } = useContext(UserContext);
   const { mutate: deleteOneDeck } = useDeleteDeck();
   // const { mutate: pinDeck } = usePinDeck();
@@ -65,7 +65,7 @@ function App() {
       undoButtonRef.current.classList.remove("scale-100")
     }
    }
-  const handleUndoDeck=(deck:DeckType | null):void=>{
+  const handleUndoDeck=(deck:DeckTypeWithIndex | null):void=>{
     if(deck===null){
       setUndoDeck(null)
     }

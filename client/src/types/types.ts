@@ -1,30 +1,48 @@
 
 import { Dispatch } from 'react';
-export type userData={
-    _id: string,
-  username:string,
-  profile_picture:string,
+export type userData = {
+  _id: string,
+  username: string,
+  profile_picture: string,
   email: string,
-  __v:number
+  __v: number
 }
 
-export type AlertData={
+export type AlertData = {
   severity: string,
   show: boolean,
   message: string,
-  autoHideDuration:number
+  autoHideDuration: number
 };
-export type AlertType={
-  alert:AlertData
-  setAlert:Dispatch<React.SetStateAction<AlertData >>
+export type AlertType = {
+  alert: AlertData
+  setAlert: Dispatch<React.SetStateAction<AlertData>>
 }
 
-export type DeckType={
-  _id:string,
-  title:string,
-  cards:{title:string,note:string}[],
+export type DeckType = {
+  _id: string,
+  title: string,
+  cards: { title: string, note: string }[],
   pinned: boolean,
   email: string,
-  date:Date,
-  index:number
+  date: Date,
+}
+
+export type DeckTypeWithIndex = {
+  _id: string,
+  title: string,
+  cards: { title: string, note: string }[],
+  pinned: boolean,
+  email: string,
+  date: Date,
+  index: number
+}
+
+export type CardDataType = {
+  title: string,
+  cards: {
+    title: string,
+    note: string,
+    _id: string
+  }[]
 }

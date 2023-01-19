@@ -9,17 +9,16 @@ import useCreateDeck from "../hooks/useCreateDeck";
 import useDeleteDeck from '../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
 import { AlertContext } from '../context/AlertState';
-import { AlertData } from '../types/types';
 import { RiCloseFill } from 'react-icons/ri';
 import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from 'react-icons/bi';
 import Loading from '../components/Loading';
 import PopUpMessage from "../components/PopUpMessage";
-import { DeckType } from ".././types/types";
+import { DeckType,AlertData, DeckTypeWithIndex  } from ".././types/types";
 import useUndoDeck from './../hooks/useUndoDeck';
 type PropType={
-  undoDeck:DeckType | null,
-  handleUndoDeck:(deck:DeckType | null)=>void,
+  undoDeck:DeckTypeWithIndex | null,
+  handleUndoDeck:(deck:DeckTypeWithIndex | null)=>void,
   undoButtonRef:RefObject<HTMLDivElement>,
   handlePopupForUndoButton:()=>void
 }
@@ -163,7 +162,7 @@ type PropType={
               }}
               value={title}
             />
-            <button  className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md ">Add Deck</button>
+            <button  className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md " aria-label="Add Deck">Add Deck</button>
           </form>
         </div>
  
@@ -197,8 +196,8 @@ type PropType={
     <div className="absolute bottom-0 right-0">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
 
- <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"><BiEdit/></button>
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95"><BsFillPinFill/></button>
+ <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400" aria-label="Edit Deck"><BiEdit/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95" aria-label="Pin Deck"><BsFillPinFill/></button>
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
@@ -253,9 +252,9 @@ type PropType={
       <div className="absolute bottom-0 right-0">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
  
- <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400" aria-label="Edit Deck"><BiEdit/></button>
 
- <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"><BsPin/></button>
+ <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95" aria-label="Pin Deck"><BsPin/></button>
  </div>
 
   <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>

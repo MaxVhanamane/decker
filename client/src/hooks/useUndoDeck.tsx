@@ -1,9 +1,9 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from 'react-query';
 import { AlertContext } from '../context/AlertState';
-import { AlertData, DeckType } from '../types/types';
+import { AlertData, DeckType, DeckTypeWithIndex } from '../types/types';
 import { useContext } from 'react';
-const  deleteDeck = async (undoDeck:DeckType)=> {
+const  deleteDeck = async (undoDeck:DeckTypeWithIndex)=> {
   try{
     const response = await request.put("/undodeck",undoDeck)
     return response.data
@@ -21,13 +21,13 @@ const useUndoDeck =()=>{
     const queryClient=useQueryClient()
     return useMutation(deleteDeck,{
         onMutate:async(data)=>{
-            console.log(data)
             await queryClient.cancelQueries("decks")
             // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
                 // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-                 const previousQueryData=queryClient.getQueryData("decks")
+                 const previousQueryData:DeckType[]=queryClient.getQueryData("decks")!
+
                        queryClient.setQueryData("decks",()=>{
-                         {/* @ts-ignore*/}
+                         
                          const newArray=[...previousQueryData]
                          newArray.splice(data.index,0,data)
                  return newArray

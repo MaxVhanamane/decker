@@ -89,12 +89,12 @@ app.use((0, express_session_1.default)({
     store: store,
     // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
     // uncomment it while deploaying
-    // cookie:{
-    //   httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
-    //   sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-    //   secure:true,      // it allows only https requests
-    //   maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
-    // }
+    cookie: {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7 //cookie expires in 7 days
+    }
 }));
 // using passport to handle login
 app.use(passport_1.default.initialize());

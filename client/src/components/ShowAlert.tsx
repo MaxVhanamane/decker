@@ -21,7 +21,7 @@ export default function SimpleSnackbar() {
       return
     }
     // If I don't add this snackbar will not hide automatically
-    setAlert((preval:any) => (
+    setAlert((preval) => (
       {
         ...preval,
         show: false
@@ -30,7 +30,7 @@ export default function SimpleSnackbar() {
   };
  
   const handleClick=()=>{
-    setAlert((preval:any) => (
+    setAlert((preval) => (
       {
         ...preval,
         show: false

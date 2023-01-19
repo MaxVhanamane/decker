@@ -74,8 +74,8 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                 <div className="md:p-12 p-4 md:mx-6">
                   <div className="flex items-center justify-center flex-col rounded-full">
                   <span className='text-2xl text-teal-600 dark:text-sky-500'><FaFeatherAlt/></span>
-                    <h2 className='font-bold text-2xl text-teal-600 dark:text-sky-500 '>Decker</h2>
-                    <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">Log in to your account</h4>
+                    <h1 className='font-bold text-2xl text-teal-600 dark:text-sky-500 '>Decker</h1>
+                    <h2 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">Log in to your account</h2>
                   </div>
                   <form onSubmit={handleLogin}>
                     {/* <p className="mb-4">Please login to your account</p> */}
@@ -109,7 +109,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                         data-mdb-ripple="true"
                         data-mdb-ripple-color="light"
                         type="submit"
-                      
+                        aria-label="Log in"
                       >
                         Log in
                       </button>
@@ -126,7 +126,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
       
                     
                         type="button"
-                      
+                        aria-label="Continue with Google"
                       >
                        <span><FcGoogle className='text-2xl'/></span> <span> Continue with Google</span>
                       </button>

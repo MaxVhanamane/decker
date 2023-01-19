@@ -1,14 +1,31 @@
-import { useState } from 'react';
+import { useState,Dispatch } from 'react';
 import useEditDeck from '../hooks/useEditDeck';
 
-const EditModalForDeck=({openEditDeckModal,setOpenEditDeckModal,editData,setEditData}:any)=> {
+interface IProp{
+  openEditDeckModal:boolean;
+  setOpenEditDeckModal:Dispatch<React.SetStateAction<boolean>>;
+  editData: {
+    deck_id: string;
+    title: string;
+} ;
+  setEditData: Dispatch<React.SetStateAction<{
+    deck_id: string;
+    title: string;
+}>> ;
+}
+
+
+
+const EditModalForDeck=({openEditDeckModal,setOpenEditDeckModal,editData,setEditData}:IProp)=> {
     const [newTitle,setNewTitle]=useState(editData.title)
     const{mutate:editDeck,isError:isEditError}=useEditDeck()
     const handleSave=()=>{
         const data={deck_id:editData.deck_id,newTitle}
         editDeck(data)
         setOpenEditDeckModal(false);
-        setEditData({});  
+        setEditData(prev=>({...prev,deck_id:"",title:""}))
+
+
     }
    
     
@@ -30,8 +47,8 @@ const EditModalForDeck=({openEditDeckModal,setOpenEditDeckModal,editData,setEdit
  
   {/* modal footer  */}
   <div className="flex items-center justify-end  space-x-2 mt-4 mb-4 mr-8 w-full ">
-<button onClick={handleSave} className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4">Save</button>
-<button onClick={()=>{setOpenEditDeckModal(false)}} className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white">Cancel</button>
+<button onClick={handleSave} className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4"  aria-label="Save">Save</button>
+<button onClick={()=>{setOpenEditDeckModal(false)}} className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white"  aria-label="Cancel">Cancel</button>
   </div>
 </div>
 

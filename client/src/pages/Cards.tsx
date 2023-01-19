@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useState,useRef,MouseEvent,useContext,Dispatch } from "react";
+import { ChangeEvent, FormEvent, useState,useRef,MouseEvent,useContext,Dispatch,FC } from "react";
 import {useParams} from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
@@ -42,7 +42,7 @@ type PropType={
   indexOfCardForDeletion:number | null,
   setIndexOfCardForDeletion:Dispatch<React.SetStateAction<number | null>>
 }
-function Cards({indexOfCardForDeletion,setIndexOfCardForDeletion}:PropType) {
+const Cards:FC<PropType>=({indexOfCardForDeletion,setIndexOfCardForDeletion})=> {
   const {setAlert}=useContext(AlertContext) 
   const [note, setNote] = useState<string>("");
   const [title, setTitle] = useState<string>("");
@@ -228,7 +228,7 @@ if(isError){
             placeholder="Note"
           ></textarea>
           </div>
-          <button className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-1 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 outline-none ">Create Card</button>
+          <button className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-1 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 outline-none " aria-label="Create Card">Create Card</button>
         </form>
         <h1 className="font-bold text-xl text-gray-800 mb-6 dark:text-gray-50 mt-6">{data?.title} </h1>
 
@@ -257,9 +257,9 @@ if(isError){
                 rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[30vw] w-[95vw] `}>
                    <div className="absolute bottom-0 right-0">
 {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
- <button onClick={(event)=>{ event.stopPropagation(),handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-95"><MdOutlineDeleteOutline/></button>
+ <button onClick={(event)=>{ event.stopPropagation(),handleDelete(index)}} type="button" className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-95" aria-label="Delete Card"><MdOutlineDeleteOutline/></button>
 
- <button onClick={(event)=>{event.stopPropagation(),handleEdit({...card,_id:deck_id!,cardIndex:index})}} type="button" className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={(event)=>{event.stopPropagation(),handleEdit({...card,_id:deck_id!,cardIndex:index})}} type="button" className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 dark:text-sky-400" aria-label="Edit Card"><BiEdit/></button>
 
 
  </div>
@@ -296,14 +296,14 @@ if(isError){
  
   {/* modal footer  */}
   <div className="flex items-center justify-end  space-x-2 mt-4 mb-4 mr-8 w-full ">
-<button onClick={handleSave} className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4">Save</button>
-<button onClick={()=>{setOpenModal(false)}} className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white">Cancel</button>
+<button onClick={handleSave} className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4" aria-label="Save">Save</button>
+<button onClick={()=>{setOpenModal(false)}} className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white" aria-label="Cancel">Cancel</button>
   </div>
 </div>
 
  </div>:null}
 
-<ConfirmDeleteModalForCard deck_id={deck_id} indexOfCardForDeletion={indexOfCardForDeletion} deleteCardItem={deleteCardItem} reference={deleteConfirmationModalForCard}/>
+<ConfirmDeleteModalForCard deck_id={deck_id!} indexOfCardForDeletion={indexOfCardForDeletion!} deleteCardItem={deleteCardItem} />
 
 {showFullScreen&&<div className="fixed inset-0 overflow-y-auto bg-white text-gray-800 dark:bg-slate-900 dark:text-gray-50 p-4 lg:px-96 flex  flex-col z-50 items-center   ">
   <div className="mt-2 lg:mt-4 relative">
@@ -315,14 +315,14 @@ if(isError){
 </div>
 <div className="fixed top-0 py-4 dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96">
   <div>
-<button onClick={()=>setShowFullScreen(false)} className=' text-xl rounded px-1 text-center text-gray-50 cursor-pointer bg-red-500'><IoIosArrowRoundBack/></button>
+<button onClick={()=>setShowFullScreen(false)} className=' text-xl rounded px-1 text-center text-gray-50 cursor-pointer bg-red-500' aria-label="Back"><IoIosArrowRoundBack/></button>
 </div>
               <div className="flex items-center justify-center gap-2 ">
              <div className=""><ThemeToggler/></div>
 
- <button onClick={()=>{ handleDelete(fullScreenCardData?.cardIndex!)}} type="button" className="text-red-500 text-xl outline-none  rounded-tr  px-1  text-center hover:scale-105"><MdOutlineDeleteOutline/></button>
+ <button onClick={()=>{ handleDelete(fullScreenCardData?.cardIndex!)}} type="button" className="text-red-500 text-xl outline-none  rounded-tr  px-1  text-center hover:scale-105" aria-label="Delete Card"><MdOutlineDeleteOutline/></button>
 
- <button onClick={()=>{handleEdit(fullScreenCardData)}} type="button" className="text-blue-500 text-xl outline-none  rounded-tr px-1  text-center hover:scale-105 dark:text-sky-400"><BiEdit/></button>
+ <button onClick={()=>{handleEdit(fullScreenCardData)}} type="button" className="text-blue-500 text-xl outline-none  rounded-tr px-1  text-center hover:scale-105 dark:text-sky-400" aria-label="Edit Card"><BiEdit/></button>
 
 
  </div>
