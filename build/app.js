@@ -57,17 +57,6 @@ const app = (0, express_1.default)();
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express_1.default.json());
-// next two middlewares are for debugging
-// Log incoming requests
-// app.use((req: Request, res: Response, next: any) => {
-//   (`Received ${req.method} request for ${req.url}`);
-//   next();console.log
-// });
-// // Log errors
-// app.use((err: any, req: Request, res: Response, next: any) => {
-//   console.error("loggin errors",err.stack);
-//   next(err);
-// });
 // To store sessions in mongodb
 const store = new MongoDBStore({
     uri: process.env.MONGO_URI,
@@ -129,16 +118,17 @@ passport_1.default.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
 }, (accessToken, refreshToken, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     // This function run on successfull authentication 
     //extracting required user information from the profile that is given by goolge
     const userInfo = {
-        email: profile.emails[0].value,
-        profile_picture: profile.photos[0].value,
+        email: (profile === null || profile === void 0 ? void 0 : profile.emails) ? (_a = profile === null || profile === void 0 ? void 0 : profile.emails[0]) === null || _a === void 0 ? void 0 : _a.value : "",
+        profile_picture: (profile === null || profile === void 0 ? void 0 : profile.photos) ? (_b = profile === null || profile === void 0 ? void 0 : profile.photos[0]) === null || _b === void 0 ? void 0 : _b.value : "",
         username: profile.displayName
     };
     try {
         // now we will check if the user exist in the database. if not we will create new user.
-        const user = yield user_1.default.findOne({ email: profile.emails[0].value });
+        const user = yield user_1.default.findOne({ email: userInfo.email });
         if (!user) {
             const newUser = new user_1.default(userInfo);
             yield newUser.save();
@@ -148,7 +138,7 @@ passport_1.default.use(new GoogleStrategy({
         //If some error occures while connecting to db of something else we will catch it here
     }
     catch (err) {
-        return done(null, false, err);
+        return done(err);
     }
 })));
 // serializeUser to store only id in session
@@ -199,7 +189,9 @@ app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req === null || req === void 0 ? void 0 : req.userDetails;
         // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
-        const deck = yield deck_1.default.find({ email: user.id }).sort({ date: -1 });
+        // as there is a relation defined between two collection DeckModal and User 
+        // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
+        const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }).sort({ date: -1 });
         res.json(deck);
     });
 });
@@ -207,7 +199,7 @@ app.post('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
         const newDeck = new deck_1.default({
-            email: user === null || user === void 0 ? void 0 : user.id,
+            email: user === null || user === void 0 ? void 0 : user._id,
             title: req.body.title,
             date: new Date()
         });
@@ -217,7 +209,6 @@ app.post('/deck', fetchUserDetails, function (req, res) {
 });
 app.put('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = req.userDetails;
         try {
             //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
             const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned, date: new Date() });
@@ -255,7 +246,6 @@ app.put('/undodeck', fetchUserDetails, function (req, res) {
 });
 app.put('/deck/editdeck/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = req.userDetails;
         try {
             const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { title: req.body.title });
             res.json(updatedDeck);
@@ -272,7 +262,6 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, function (req, res) {
 });
 app.delete('/deck/:id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = req.userDetails;
         try {
             const deletedDeck = yield deck_1.default.findByIdAndDelete(req.params.id);
             res.json({ deletedDeck, success: true });
@@ -285,7 +274,6 @@ app.delete('/deck/:id', fetchUserDetails, function (req, res) {
 // Card routes
 app.get('/cards/:_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = req.userDetails;
         const cards = yield deck_1.default.findById({ _id: req.params._id });
         if (cards) {
             res.json({ cards: cards.cards, title: cards.title });
@@ -609,10 +597,10 @@ app.post("/verifyforgotpasswordotp", (req, res) => __awaiter(void 0, void 0, voi
     }
 }));
 app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _c;
     let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email });
     // Here we will check if the OTP in our db and the otp that we get in our req are the same ones.
-    if (((user === null || user === void 0 ? void 0 : user.otp) === parseInt((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.otp))) {
+    if (((user === null || user === void 0 ? void 0 : user.otp) === parseInt((_c = req === null || req === void 0 ? void 0 : req.body) === null || _c === void 0 ? void 0 : _c.otp))) {
         const newPassword = req.body.newPassword;
         const hashedPassword = yield bcryptjs_1.default.hash(newPassword, 10);
         try {

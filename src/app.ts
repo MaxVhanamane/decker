@@ -11,12 +11,14 @@ import { UserDetails } from "./types/UserDetails";
 import passportLocal from "passport-local"
 import verifyEmail from './models/verifyemail';
 import ForgotPasswordOTP from './models/forgotpasswordotps';
+import { Profile, VerifyCallback } from "passport-google-oauth20";
 const nodemailer = require("nodemailer");
 
 const LocalStrategy = passportLocal.Strategy
 const MongoDBStore = require('connect-mongodb-session')(session);
 const GoogleStrategy = require("passport-google-oauth20")
 config()
+
 
 let PORT: number = 5000
 
@@ -37,6 +39,20 @@ app.use(express.json())
 //   console.error("loggin errors",err.stack);
 //   next(err);
 // });
+
+// his is how you add a custom type to the Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      userDetails: UserDetails | null
+    }
+    interface User{
+      email:string;
+      profile_picture?:string | undefined;
+      username:string;
+    }
+  }
+}
 
 // To store sessions in mongodb
 const store = new MongoDBStore({
@@ -107,19 +123,19 @@ passport.use(
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
     },
-    async (accessToken: any, refreshToken: any, profile: any, done: any) => {
+    async (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => {
       // This function run on successfull authentication 
       //extracting required user information from the profile that is given by goolge
       const userInfo: UserDetails = {
-        email: profile.emails[0].value,
-        profile_picture: profile.photos[0].value,
+        email: profile?.emails ? profile?.emails[0]?.value : "",
+        profile_picture: profile?.photos? profile?.photos[0]?.value:"",
         username: profile.displayName
       }
 
       try {
         // now we will check if the user exist in the database. if not we will create new user.
 
-        const user = await User.findOne({ email: profile.emails[0].value })
+        const user:UserDetails | null = await User.findOne({ email: userInfo.email })
         if (!user) {
           const newUser = new User(userInfo)
           await newUser.save()
@@ -129,22 +145,24 @@ passport.use(
         //If some error occures while connecting to db of something else we will catch it here
       }
       catch (err) {
-        return done(null, false, err)
+        return done(err as Error);
       }
+      
 
     }
   )
 );
 
+
 // serializeUser to store only id in session
-passport.serializeUser((user: any, done) => {
+passport.serializeUser((user:any, done) => {
   return done(null, user?._id)
 })
 
 // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
 passport.deserializeUser((id: string, done) => {
 
-  User.findById(id, (err: Error, doc: any) => {
+  User.findById(id, (err: Error, doc: UserDetails) => {
     const userInfo = {
       username: doc.username,
       email: doc.email,
@@ -155,11 +173,13 @@ passport.deserializeUser((id: string, done) => {
   })
 })
 
+
+
 // middleware to get user details
-const fetchUserDetails = async function (req: any, res: Response, next: NextFunction) {
+const fetchUserDetails = async function (req:Request, res: Response, next: NextFunction) {
   if (req?.user) {
     const email = req?.user?.email
-    const user = await User.findOne({ email: email })
+    const user:UserDetails| null = await User.findOne({ email: email })
     req.userDetails = user
     next()
   }
@@ -189,19 +209,22 @@ mongoose.connect(process.env.MONGO_URI!, {
 
 //Deck routes 
 
-app.get('/deck', fetchUserDetails, async function (req: any, res: Response) {
+app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) {
   const user = req?.userDetails
+
   // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
-  const deck = await DeckModal.find({ email: user.id }).sort({ date: -1 });
+  // as there is a relation defined between two collection DeckModal and User 
+  // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
+  const deck = await DeckModal.find({ email: user?._id }).sort({ date: -1 });
   res.json(deck)
 
 })
 
 
-app.post('/deck', fetchUserDetails, async function (req: any, res: Response) {
+app.post('/deck', fetchUserDetails, async function (req: Request, res: Response) {
   const user = req.userDetails
   const newDeck = new DeckModal({
-    email: user?.id,
+    email: user?._id,
     title: req.body.title,
     date: new Date()
   })
@@ -212,8 +235,8 @@ app.post('/deck', fetchUserDetails, async function (req: any, res: Response) {
 
 
 
-app.put('/deck', fetchUserDetails, async function (req: any, res: Response) {
-  const user = req.userDetails
+app.put('/deck', fetchUserDetails, async function (req: Request, res: Response) {
+
   try {
     //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
     const updatedDeck = await DeckModal.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned, date: new Date() })
@@ -234,7 +257,7 @@ app.put('/deck', fetchUserDetails, async function (req: any, res: Response) {
 
 })
 
-app.put('/undodeck', fetchUserDetails, async function (req: any, res: Response) {
+app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Response) {
   delete req.body.index
   const deck=req.body
   try {
@@ -263,10 +286,7 @@ app.put('/undodeck', fetchUserDetails, async function (req: any, res: Response) 
 
 
 
-
-
-app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: any, res: Response) {
-  const user = req.userDetails
+app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req:Request, res: Response) {
   try {
     const updatedDeck = await DeckModal.findByIdAndUpdate(req.params.deck_id, { title: req.body.title })
     res.json(updatedDeck)
@@ -286,8 +306,7 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: any, r
 
 })
 
-app.delete('/deck/:id', fetchUserDetails, async function (req: any, res: Response) {
-  const user = req.userDetails
+app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
 
     const deletedDeck = await DeckModal.findByIdAndDelete(req.params.id)
@@ -301,8 +320,7 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: any, res: Respons
 
 // Card routes
 
-app.get('/cards/:_id', fetchUserDetails, async function (req: any, res: Response) {
-  const user = req.userDetails
+app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Response) {
 
   const cards = await DeckModal.findById({ _id: req.params._id });
   if (cards) {
@@ -315,7 +333,7 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: any, res: Response
 
 })
 
-app.post('/card/:deck_id', fetchUserDetails, async function (req: any, res: Response) {
+app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {
@@ -333,7 +351,7 @@ app.post('/card/:deck_id', fetchUserDetails, async function (req: any, res: Resp
 
 })
 //Edit card
-app.put('/card/:deck_id', fetchUserDetails, async function (req: any, res: Response) {
+app.put('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
   //get the deck using _id
   const Deck = await DeckModal.findById(req.params.deck_id)
   // take out cards from received deck
