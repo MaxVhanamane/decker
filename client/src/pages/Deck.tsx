@@ -16,6 +16,7 @@ import Loading from '../components/Loading';
 import PopUpMessage from "../components/PopUpMessage";
 import { DeckType,AlertData, DeckTypeWithIndex  } from ".././types/types";
 import useUndoDeck from './../hooks/useUndoDeck';
+import {Helmet} from "react-helmet";
 type PropType={
   undoDeck:DeckTypeWithIndex | null,
   handleUndoDeck:(deck:DeckTypeWithIndex | null)=>void,
@@ -128,7 +129,11 @@ type PropType={
     }
   
     return (
- 
+ <>
+   <Helmet>
+    <title>Decks</title>
+        <meta name="description" content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."/>
+      </Helmet>
       <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32 ">
 {<div ref={undoButtonRef}  className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"><span className="mr-4">Deck deleted successfully!</span><span className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400" onClick={(event)=>{handleUndo()}}>Undo</span></div>}
 <PopUpMessage message="Drag and drop the deck here to delete it." showPopUp={showPopUp}/>
@@ -297,7 +302,7 @@ type PropType={
 </div> */}
 {openEditDeckModal?<EditModalForDeck openEditDeckModal={openEditDeckModal} setOpenEditDeckModal={setOpenEditDeckModal} editData={editData} setEditData={setEditData} />:null}
       </div>
- 
+      </>
 
 
     );

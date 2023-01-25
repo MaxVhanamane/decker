@@ -17,6 +17,7 @@ import { IoIosArrowRoundBack } from 'react-icons/io';
 import ThemeToggler from "../components/ThemeToggler";
 import ConfirmDeleteModalForCard from './../components/ConfirmDeleteModalForCard';
 import { UserContext } from './../context/UserContext';
+import {Helmet} from "react-helmet";
 // let oldContent:string //this  works
 type ContentType={
   title:string,
@@ -189,7 +190,10 @@ if(isError){
   // }
   return (
     <>
-
+ <Helmet>
+  <title>Cards</title>
+        <meta name="description" content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."/>
+      </Helmet>
      
 <PopUpMessage message="Drag and drop the card here to delete it." showPopUp={showPopUp}/>
 

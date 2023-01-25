@@ -7,6 +7,7 @@ import { UserContext } from '../context/UserContext';
 import { FaFeatherAlt } from 'react-icons/fa';
 import { AlertContext } from '../context/AlertState';
 import { AlertData } from '../types/types';
+import { Helmet } from 'react-helmet';
 export default function SignUp() {
   const location = useLocation();
 
@@ -97,7 +98,9 @@ export default function SignUp() {
   }
   return (
     <>
-  
+  <Helmet>
+      <title>Decker-Signup</title>
+    </Helmet>
     <section className="h-screen">
   
       <div className=" py-12 px-6 h-full">

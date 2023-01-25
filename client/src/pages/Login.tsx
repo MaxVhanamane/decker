@@ -6,6 +6,7 @@ import {FcGoogle} from "react-icons/fc"
 import { FaFeatherAlt } from 'react-icons/fa';
 import { AlertContext } from '../context/AlertState';
 import { AlertData } from '../types/types';
+import { Helmet } from 'react-helmet';
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -64,6 +65,9 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
 
   return (
     <>
+    <Helmet>
+      <title>Decker-Login</title>
+    </Helmet>
     <section className="absolute top-0 left-0 w-full h-full">
     <div className=" py-12 px-6 h-full">
       <div className="flex justify-center items-center flex-wrap h-full g-6 ">
