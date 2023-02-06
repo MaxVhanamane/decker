@@ -105,6 +105,7 @@ const Cards: FC<PropType> = ({
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
   const handleBrowsersBackButton = useCallback(
     function (event:PopStateEvent) {
+      console.log("showFullScreen",showFullScreen)
       if (openModal || showFullScreen) {
         event.preventDefault()
         openModal?setOpenModal(false):setShowFullScreen(false)
@@ -123,7 +124,7 @@ const Cards: FC<PropType> = ({
       return () => {
         window.removeEventListener("popstate", handleBrowsersBackButton);
       };
-    }, [openModal]);
+    }, [openModal,showFullScreen]);
     
 
 
