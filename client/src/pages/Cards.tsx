@@ -8,6 +8,7 @@ import {
   MouseEvent,
   FC,
   useEffect,
+  useCallback,
 } from "react";
 import React from "react";
 import { useParams } from "react-router-dom";
@@ -33,6 +34,9 @@ import { Helmet } from "react-helmet";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { nightOwl } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { atelierEstuaryLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { useNavigate,useLocation  } from 'react-router-dom';
+import e from "express";
+
 
 // types
 // let oldContent:string //this  works
@@ -77,6 +81,8 @@ const Cards: FC<PropType> = ({
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const showPopUp = useRef<HTMLDivElement | null>(null);
   const { deck_id } = useParams();
+  const navigate = useNavigate ();
+  const location = useLocation();
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen>({
       title: "",
@@ -84,6 +90,8 @@ const Cards: FC<PropType> = ({
       _id: "",
       cardIndex: null,
     });
+
+  
   // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
   const { data, isError, error, isLoading } = useGetCards(deck_id!);
@@ -93,6 +101,35 @@ const Cards: FC<PropType> = ({
     _id: "",
     cardIndex: null,
   });
+
+  // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
+  // redirecting him to home page. if there is no modal open then we will navigate him to home page.
+  const handleBrowsersBackButton = useCallback(
+    function (event:PopStateEvent) {
+      if (openModal || showFullScreen) {
+        event.preventDefault()
+        openModal?setOpenModal(false):setShowFullScreen(false)
+        
+      } else {
+        event.preventDefault();
+        navigate("/")
+      }
+    },
+    [openModal,showFullScreen]
+  );
+    useEffect(() => {
+      // This is how you detect if the browser's back button is clicked or not.
+      window.history.pushState(null, '', document.URL);
+      window.addEventListener("popstate", handleBrowsersBackButton);
+      return () => {
+        window.removeEventListener("popstate", handleBrowsersBackButton);
+      };
+    }, [openModal]);
+    
+
+
+
+
   useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
 
@@ -781,7 +818,7 @@ setEditContent({ ...editContent, note: newNote });
 
       {openModal ? (
         <div className="w-screen h-screen z-[60]  backdrop-blur-md lg:backdrop-blur-lg fixed inset-0 flex items-center justify-center ">
-          <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-2 w-[98%] lg:w-1/3 dark:shadow-sm dark:shadow-slate-500">
+          <div className="fixed bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-2 w-[98%] lg:w-1/2 dark:shadow-sm dark:shadow-slate-500">
             {/* modal head  */}
             
             <div className="w-full   border-b border-gray-50 dark:border-gray-50/50 ">
