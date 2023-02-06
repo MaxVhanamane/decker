@@ -66,7 +66,7 @@ const Navbar:FC = () => {
       </div></Link>
   <div className='hidden md:block'>
   <ul className='flex gap-10  items-center justify-center'>
-        {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><li className='dark:text-gray-50 text-gray-800 cursor-pointer dark:hover:text-sky-500 hover:text-gray-600 font-semibold '>Home</li></Link>:null}
+        {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><li className='dark:text-gray-50 text-gray-800 cursor-pointer dark:hover:text-sky-500 hover:text-gray-600 font-semibold transition-[color] duration-300 '>Home</li></Link>:null}
     
       </ul>
   </div>
@@ -95,8 +95,8 @@ const Navbar:FC = () => {
         
       </ul>
       <div className='flex items-center justify-center gap-4 '>
-      {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><button onClick={handleShowUserInfomation} className=' md:hidden font-semibold  rounded px-1 text-center text-white cursor-pointer hover:bg-teal-700 mt-4 ' aria-label="Home" >Home</button></Link>:null}
-      <button onClick={()=>{handleLogout()}} className='font-semibold  rounded px-1 text-center text-red-600 cursor-pointer  mt-4' aria-label="Logout">Logout</button>
+      {(userInfo?.email && location.pathname.split("/")[1]=="cards")?<Link to="/"><button onClick={handleShowUserInfomation} className=' md:hidden font-semibold  rounded px-1 text-center text-white cursor-pointer mt-4 ' aria-label="Home" >Home</button></Link>:null}
+      <button onClick={()=>{handleLogout()}} className='font-semibold  rounded px-1 text-center text-red-600 hover:text-red-700 transition-[color] duration-300 cursor-pointer  mt-4' aria-label="Logout">Logout</button>
       
    
       </div>
