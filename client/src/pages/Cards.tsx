@@ -35,7 +35,6 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { nightOwl } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { atelierEstuaryLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useNavigate,useLocation  } from 'react-router-dom';
-import e from "express";
 
 
 // types
