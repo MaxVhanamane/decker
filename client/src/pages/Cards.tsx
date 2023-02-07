@@ -31,11 +31,10 @@ import ThemeToggler from "../components/ThemeToggler";
 import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
 import { UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { nightOwl } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { atelierEstuaryLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useNavigate,useLocation  } from 'react-router-dom';
-
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { coldarkDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // types
 // let oldContent:string //this  works
@@ -270,16 +269,19 @@ const Cards: FC<PropType> = ({
 
       result.push(noteVal.substring(currentIndex, startIndex));
   // best styles- atelierSulphurpoolDark nightOwl atelierPlateauLight atelierCaveLight
+  // best prism styles- synthwave84,coldarkDark,oneLight
 
       result.push(
         <SyntaxHighlighter
           key={startIndex}
+          language="javascript"
           wrapLongLines={true}
           style={
             localStorage.getItem("theme") === "dark"
-              ? nightOwl
-              : atelierEstuaryLight
+              ? coldarkDark 
+              : prism
           }
+          customStyle={{backgroundColor:`${localStorage.getItem("theme") === "dark"?"rgb(1, 22, 39)": "auto"}`}}
         >
           {codeBlock}
         </SyntaxHighlighter>
@@ -799,6 +801,7 @@ setEditContent({ ...editContent, note: newNote });
                               <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
                                 {card.title}
                               </p>
+                              {/* line-clamp-3 helps to truncate characters after 3 lines */}
                               <p className="text-sm lg:text-base text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1 ">
                                 {card.note}
                               </p>
@@ -817,11 +820,11 @@ setEditContent({ ...editContent, note: newNote });
       </div>
 
       {openModal ? (
-        <div className="w-screen h-screen z-[60]  backdrop-blur-md lg:backdrop-blur-lg fixed inset-0 flex items-center justify-center ">
-          <div className="fixed bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-2 w-[98%] lg:w-1/2 dark:shadow-sm dark:shadow-slate-500">
+        <div className="w-screen  z-[60]  backdrop-blur-lg lg:backdrop-blur-lg fixed inset-0  ">
+          <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-1 w-[98%] lg:w-1/2 dark:shadow-sm dark:shadow-slate-500">
             {/* modal head  */}
             
-            <div className="w-full   border-b border-gray-50 dark:border-gray-50/50 ">
+            <div className="w-full border-b border-gray-50 dark:border-gray-50/50 ">
               
               <div className=" flex item-center justify-between p-1 pr-4 gap-2 ">
                 <div>
@@ -909,7 +912,7 @@ setEditContent({ ...editContent, note: newNote });
               <p className="text-justify mb-5 mt-5 text-lg font-bold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100">
                 {fullScreenCardData?.title}
               </p>
-              <div className="text-justify  mb-10 break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-200">
+              <div className="text-justify  mb-10 break-words break-normal -ml-1 whitespace-pre-wrap text-gray-800 dark:text-slate-200">
                 {parseNote(fullScreenCardData?.note)}
               </div>
             </div>
