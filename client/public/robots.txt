@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://decker.vercel.app/sitemap.xml
