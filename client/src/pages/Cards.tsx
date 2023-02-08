@@ -78,9 +78,9 @@ const Cards: FC<PropType> = ({
   const { deleteConfirmationModalForCard } = useContext(UserContext);
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const showPopUp = useRef<HTMLDivElement | null>(null);
+  const [expandTextarea,setExpandTextArea]=useState(false)
   const { deck_id } = useParams();
   const navigate = useNavigate ();
-  const location = useLocation();
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen>({
       title: "",
@@ -100,11 +100,21 @@ const Cards: FC<PropType> = ({
     cardIndex: null,
   });
 
+  const elementRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if(elementRef?.current?.classList.contains("rounded-t-md")){
+      
+setTimeout(()=>{
+  elementRef?.current?.classList.remove("rounded-t-md");
+},1200)
+    }
+  }, [expandTextarea]);
+
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
   const handleBrowsersBackButton = useCallback(
     function (event:PopStateEvent) {
-      console.log("showFullScreen",showFullScreen)
       if (openModal || showFullScreen) {
         event.preventDefault()
         openModal?setOpenModal(false):setShowFullScreen(false)
@@ -169,6 +179,7 @@ const Cards: FC<PropType> = ({
       addCard(payload);
       setNote("");
       setTitle("");
+      setHeight(80)
     } else {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -640,16 +651,17 @@ setEditContent({ ...editContent, note: newNote });
       </Droppable>
 
       <div className="flex flex-col gap-2 w-full  relative overflow-auto h-screen ">
-        <div className="w-full px-4 mt-6 mx-auto">
+        <div className={`${expandTextarea?"mt-6":"mt-0"} w-full px-4  mx-auto transition-all duration-1000`}>
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col  gap-4 justify-center items-center"
+            className="flex flex-col  gap-4 justify-center items-center "
           >
             {/* <label htmlFor="title" className=" font-bold text-teal-600 dark:text-sky-400">
             Card details
           </label> */}
             <div className="flex flex-col ">
-              <div className=" flex item-center justify-end p-1 pr-4 border-t-2 border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-t-md gap-2 ">
+              <div className={` ${expandTextarea?"h-10 p-1 -translate-y-0  border-t-2 ":"h-0 p-0 translate-y-full  border-t-0 "} flex item-center justify-end  pr-4 border-r-2 border-l-2 transition duration-1000 delay-1000  border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw]  `}>
+              <div className={`${expandTextarea?"block":"hidden"} flex gap-2`}>
                 <button
                   title="Add code sample"
                   className="dark:text-gray-200 dark:hover:text-gray-400  text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
@@ -684,23 +696,29 @@ setEditContent({ ...editContent, note: newNote });
                 >
                   <FiPlusSquare />
                 </button>
+                </div>
               </div>
+              {/* <div onClick={()=>setExpandTextArea(true)} className={`${expandTextarea?"hidden":"block"} border-r-2 border-b-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-b-md`}>
+                <p>Add note</p>
+              </div> */}
               <input
+              ref={elementRef}
+              onClick={()=>setExpandTextArea(true)}
                 type="text"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setTitle(e.target.value);
                 }}
                 value={title}
-                className=" lg:w-[40vw] md:w-[70vw] bg-white w-[95vw] border-t-2 border-r-2 border-l-2  border-teal-500 dark:border-sky-400  font-semibold outline-none text-md text-gray-800 px-3 py-2 dark:bg-slate-900 dark:text-gray-50 pb-2"
-                placeholder="Title"
+                className={`${expandTextarea?"border-b-0  rounded-none text-left border-t-2 rounded-t-md": "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center mt-10"} h-10 px-3 py-2  pb-2 lg:w-[40vw] md:w-[70vw] w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400  font-semibold outline-none text-md text-gray-800   dark:bg-slate-900 dark:text-gray-50  `}
+                placeholder={`${expandTextarea?"Title": "Add a note"} `}
               />
               <textarea
-                className={` lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw] border-b-2 border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md py-2 dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height] duration-500 overflow-hidden`}
+                className={` ${expandTextarea?" py-2 border-b-2 rounded-t-0": "py-0 border-b-0 "} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding] duration-1000 overflow-hidden `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
                 ref={textareaRef}
-                style={{ height: height + "px" }}
+                style={{ height:expandTextarea? height + "px" :"0" }}
                 value={note}
                 placeholder="Note"
               ></textarea>
@@ -713,6 +731,7 @@ setEditContent({ ...editContent, note: newNote });
               >
                 Create Card
               </button>
+             
             </div>
           </form>
           <h1 className="font-bold text-xl text-gray-800 mb-6 dark:text-gray-50 mt-6">
@@ -820,22 +839,22 @@ setEditContent({ ...editContent, note: newNote });
       </div>
 
       {openModal ? (
-        <div className="w-screen  z-[60]  backdrop-blur-lg lg:backdrop-blur-lg fixed inset-0  ">
-          <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-1 w-[98%] lg:w-1/2 dark:shadow-sm dark:shadow-slate-500">
+        <div className="w-screen  z-[60] bg-white dark:bg-slate-900 fixed inset-0 flex items-center justify-center ">
+          <div className="  shadow w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%] dark:bg-slate-800 bg-teal-500 flex flex-col items-center justify-center md:rounded-md">
             {/* modal head  */}
             
-            <div className="w-full border-b border-gray-50 dark:border-gray-50/50 ">
+            <div className="w-full ">
               
-              <div className=" flex item-center justify-between p-1 pr-4 gap-2 ">
+              <div className=" flex item-center justify-between  pr-4 gap-2 ">
                 <div>
               <h2 className="py-2 px-4 text-left text-white font-bold ">
                 Edit Card
               </h2>
               </div>
-              <div className="flex items-center justify-center gap-4  px-2 py-1 rounded-md ">
+              <div className="flex items-center justify-center gap-4  px-2 py-1  ">
                 <button
                   title="Add code sample"
-                  className="text-gray-200  text-xl  hover:text-gray-300 transition-all duration-300"
+                  className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 text-xl  transition-all duration-300"
                   type="button"
                   name="addCodeSnippetToEditCard"
                   onClick={(e)=>addCodeBlock(e)}
@@ -845,7 +864,7 @@ setEditContent({ ...editContent, note: newNote });
                 <button
                 name="addBoldTextToEditCard"
                   title="Bold text"
-                  className="text-gray-200  text-xl  hover:text-gray-300 transition-all duration-300 "
+                  className="dark:text-gray-200    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-300 "
                   type="button"
                   onClick={(e)=>addBoldText(e)}
                 >
@@ -856,26 +875,26 @@ setEditContent({ ...editContent, note: newNote });
               </div>
             </div>
             {/* modal content  */}
-            <div className=" px-2 lg:px-4 py-4 w-full border-b border-gray-50 dark:border-gray-50/50">
+            <div className=" px-2 py-2  w-full border-b border-t border-gray-50/80 dark:border-gray-50/30 flex flex-col items-center justify-center ">
               <input
                 value={editContent.title}
                 onChange={handleChange}
                 name="title"
-                className="px-2 py-2 w-full outline-none rounded-t-md font-semibold text-gray-800 dark:bg-slate-800 dark:text-gray-50 "
+                className="px-2 py-2 w-full outline-none rounded-t-md  font-semibold text-gray-800 dark:bg-[#011627] dark:text-gray-50 "
                 placeholder="Title"
               />
               <textarea
                 value={editContent.note}
                 onChange={handleChange}
                 name="note"
-                className="px-2 py-2 w-full outline-none text-gray-800 rounded-b-md  dark:bg-slate-800 dark:text-gray-50 h-[60vh] "
+                className="px-2 py-2 w-full outline-none text-gray-800 rounded-b-md   dark:bg-[#011627] dark:text-gray-50 h-[75vh] resize-none "
                 placeholder="Note"
                 ref={editTextareaRef}
               ></textarea>
             </div>
 
             {/* modal footer  */}
-            <div className="flex items-center justify-end  space-x-2 mt-4 mb-4 mr-8 w-full ">
+            <div className="flex items-center justify-end  space-x-2 my-3 mr-8 w-full  ">
               <button
                 onClick={handleSave}
                 className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4 transition-all duration-300"
