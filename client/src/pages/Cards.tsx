@@ -9,6 +9,7 @@ import {
   FC,
   useEffect,
   useCallback,
+  KeyboardEvent
 } from "react";
 import React from "react";
 import { useParams } from "react-router-dom";
@@ -20,7 +21,7 @@ import { BiCodeCurly, BiEdit } from "react-icons/bi";
 import useEditCard from "../hooks/useEditCard";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { BsTrash } from "react-icons/bs";
-import { AiOutlineBold } from "react-icons/ai";
+import { AiOutlineBold, AiOutlineCloseSquare } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
@@ -35,6 +36,7 @@ import { useNavigate,useLocation  } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { coldarkDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { GoEyeClosed } from "react-icons/go";
 
 // types
 // let oldContent:string //this  works
@@ -79,6 +81,7 @@ const Cards: FC<PropType> = ({
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const showPopUp = useRef<HTMLDivElement | null>(null);
   const [expandTextarea,setExpandTextArea]=useState(false)
+  const [checkClose,setCheckClose]=useState(false)
   const { deck_id } = useParams();
   const navigate = useNavigate ();
   const [fullScreenCardData, setFullScreenCardData] =
@@ -100,16 +103,44 @@ const Cards: FC<PropType> = ({
     cardIndex: null,
   });
 
-  const elementRef = useRef<HTMLInputElement>(null);
+  const inputElementRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if(elementRef?.current?.classList.contains("rounded-t-md")){
+    if(inputElementRef?.current?.classList.contains("rounded-t-md")&& expandTextarea){
       
 setTimeout(()=>{
-  elementRef?.current?.classList.remove("rounded-t-md");
+  inputElementRef?.current?.classList.remove("rounded-t-md");
 },1200)
     }
+ 
+    else if(!inputElementRef?.current?.classList.contains("rounded-t-md") && !expandTextarea){
+      
+  inputElementRef?.current?.classList.add("rounded-t-md");
+ 
+    }
   }, [expandTextarea]);
+  useEffect(()=>{
+if(checkClose){
+
+  inputElementRef?.current?.classList.remove("rounded-b-md");
+  inputElementRef?.current?.classList.remove("rounded-t-md");
+  setTimeout(()=>{
+    inputElementRef?.current?.classList.add("rounded-t-md");
+    inputElementRef?.current?.classList.remove("duration-700");
+    inputElementRef?.current?.classList.add("duration-[1.2s]");
+    setCheckClose(false)
+  },1300)
+  setTimeout(()=>{
+    inputElementRef?.current?.classList.add("rounded-b-md");
+    inputElementRef?.current?.classList.add("duration-700");
+  },800)
+
+}
+else{
+  inputElementRef?.current?.classList.add("rounded-b-md");
+  inputElementRef?.current?.classList.add("rounded-t-md");
+}
+  },[checkClose])
 
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
@@ -194,6 +225,10 @@ setTimeout(()=>{
     setIndexOfCardForDeletion(index);
     if (deleteConfirmationModalForCard?.current?.classList.contains("hidden")) {
       deleteConfirmationModalForCard?.current?.classList.remove("hidden");
+    }
+    // If the user is reading in full-screen mode and deletes it from there, we will close the modal once the card gets deleted.
+    if(showFullScreen){
+      setShowFullScreen(false)
     }
   };
 
@@ -650,21 +685,22 @@ setEditContent({ ...editContent, note: newNote });
         }}
       </Droppable>
 
-      <div className="flex flex-col gap-2 w-full  relative overflow-auto h-screen ">
-        <div className={`${expandTextarea?"mt-6":"mt-0"} w-full px-4  mx-auto transition-all duration-1000`}>
+      <div className="flex flex-col gap-2 w-full  relative overflow-auto h-screen  ">
+        <div className={`${expandTextarea?"mt-4":"mt-0"} w-full px-4  mx-auto transition-all duration-1000 `}>
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col  gap-4 justify-center items-center "
+            className="flex flex-col  gap-4 justify-center items-center  "
           >
             {/* <label htmlFor="title" className=" font-bold text-teal-600 dark:text-sky-400">
             Card details
           </label> */}
             <div className="flex flex-col ">
-              <div className={` ${expandTextarea?"h-10 p-1 -translate-y-0  border-t-2 ":"h-0 p-0 translate-y-full  border-t-0 "} flex item-center justify-end  pr-4 border-r-2 border-l-2 transition duration-1000 delay-1000  border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw]  `}>
-              <div className={`${expandTextarea?"block":"hidden"} flex gap-2`}>
+            <div className={`transition duration-1000 delay-1000 ${expandTextarea ? 'h-8 p-1 border-t-2 opacity-100' : 'h-8 p-0 translate-y-full border-t-2'} flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] `}>
+
+              <div className={`flex gap-2 `}>
                 <button
                   title="Add code sample"
-                  className="dark:text-gray-200 dark:hover:text-gray-400  text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
+                  className="dark:text-gray-200 dark:hover:text-gray-400   text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
                   type="button"
                   name="addCodeSnippetToAddCard"
                   onClick={(e)=>addCodeBlock(e)}
@@ -682,7 +718,7 @@ setEditContent({ ...editContent, note: newNote });
                 </button>
                 <button
                   title="Contract Text Area"
-                  className="text-red-500 hover:text-red-600 text-xl transition-all duration-300"
+                  className="text-orange-500 hover:text-orange-600 text-xl transition-all duration-300"
                   type="button"
                   onClick={decreaseTextAreaHeight}
                 >
@@ -690,30 +726,44 @@ setEditContent({ ...editContent, note: newNote });
                 </button>
                 <button
                   title="Expand Text Area"
-                  className="text-emerald-500 hover:text-emerald-600  text-xl transition-all duration-300"
+                  className="text-green-500 hover:text-green-600  text-xl transition-all duration-300"
                   type="button"
                   onClick={increaseTextAreaHeight}
                 >
                   <FiPlusSquare />
                 </button>
+                <button
+                  title="Expand Text Area"
+                  className="text-red-500 hover:text-red-600  text-[1.2rem] transition-all duration-300 ml-4"
+                  type="button"
+                  onClick={()=>{setExpandTextArea(false),setCheckClose(true),setHeight(80)}}
+                >
+                  <GoEyeClosed/>
+                </button>
                 </div>
               </div>
-              {/* <div onClick={()=>setExpandTextArea(true)} className={`${expandTextarea?"hidden":"block"} border-r-2 border-b-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-b-md`}>
-                <p>Add note</p>
-              </div> */}
+            
               <input
-              ref={elementRef}
+              ref={inputElementRef}
               onClick={()=>setExpandTextArea(true)}
                 type="text"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setTitle(e.target.value);
                 }}
+                //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input 
+                //field typically triggers form submission by default. Afterwards, we will shift the focus from the input field to the textarea.
+                onKeyDown={(e:KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    textareaRef.current?.focus();
+                  }
+                }}
                 value={title}
-                className={`${expandTextarea?"border-b-0  rounded-none text-left border-t-2 rounded-t-md": "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center mt-10"} h-10 px-3 py-2  pb-2 lg:w-[40vw] md:w-[70vw] w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400  font-semibold outline-none text-md text-gray-800   dark:bg-slate-900 dark:text-gray-50  `}
+                className={`${expandTextarea?"border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0": "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center"} transition-[border-radius]  h-10 px-3 py-2  pb-2 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800 z-20  dark:bg-slate-900 dark:text-gray-50  `}
                 placeholder={`${expandTextarea?"Title": "Add a note"} `}
               />
               <textarea
-                className={` ${expandTextarea?" py-2 border-b-2 rounded-t-0": "py-0 border-b-0 "} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding] duration-1000 overflow-hidden `}
+                className={` ${expandTextarea?" py-2 border-b-2 rounded-t-0": "py-0 border-b-0 "} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-900 dark:text-gray-50 resize-none transition-all duration-1000 overflow-hidden shadow-sm dark:shadow-sky-500 shadow-teal-500 `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
@@ -725,9 +775,10 @@ setEditContent({ ...editContent, note: newNote });
             </div>
             <div className="flex justify-end">
               <button
-                className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-1 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 outline-none transition-all duration-300 "
+                className={`bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-1 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 outline-none transition-all duration-300 ${expandTextarea?"opacity-100":"opacity-0"} transition-opacity duration-1000`}
                 aria-label="Create Card"
                 type="submit"
+                disabled={expandTextarea?false:true}
               >
                 Create Card
               </button>

@@ -34,3 +34,9 @@ background-color: #000000;
 ::-webkit-scrollbar {
   width: 0px;
 }
+
+
+.transition-border {
+  border:1px solid red;
+  transition: border 5s;
+}
