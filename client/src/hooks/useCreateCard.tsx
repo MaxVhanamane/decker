@@ -66,6 +66,8 @@ const useCreateCard = () => {
       context
     ) => {
       queryClient.invalidateQueries(["cards", dataThatWePassed.deck_id]);
+      // I am invalidating decks because when you create a card and try to search for it immediately, the newly added data may not show up in the search results. To ensure that new data appears when searching, you need to clear the cache after adding a new card. This way, when you search for the newly added content or card, it will appear in the search results.
+      queryClient.invalidateQueries(["decks"]);
     },
   });
 };

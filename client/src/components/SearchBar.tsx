@@ -1,0 +1,47 @@
+import {Dispatch, FC,useContext,useRef,MouseEvent, useState} from 'react'
+import { AiOutlineSearch } from 'react-icons/ai'
+import SearchResult from './SearchResult';
+import { RiCloseFill } from 'react-icons/ri';
+import { UserContext } from '../context/UserContext';
+
+
+
+const SearchBar:FC = () => {
+  const {showSearchBar,setShowSearchBar}=useContext(UserContext)
+
+    const searchBarRef = useRef<HTMLInputElement>(null);
+    const [searchQuery,setSearchQuery]=useState<string>("")
+    // if you want to close the searchbar when user clicks outside the search bar you can use following code
+    // const handleClickOutside = (event:globalThis.MouseEvent) => {
+    //     if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+    //       setShowSearchBar(false);
+    //     }
+    //   };
+    
+    //   useEffect(() => {
+    //     document.addEventListener("mousedown", handleClickOutside);
+    
+    //     return () => {
+    //       document.removeEventListener("mousedown", handleClickOutside);
+    //     };
+    //   }, []);
+    
+  return (
+    <div className={` bg-slate-800 fixed top-14 lg:relative lg:top-auto`}>
+    <div className={`lg:relative ${showSearchBar?"w-72 right-1/2":"w-0 right-0"} overflow-hidden transition-all duration-500 lg:duration-700  lg:right-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-white dark:bg-slate-900 `}>
+    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+       <AiOutlineSearch className='dark:text-white text-gray-700 text-lg'/>
+    </div>
+    <input ref={searchBarRef} value={searchQuery} onChange={(e)=>{setSearchQuery(e.target.value)}} type="text" id="simple-search" className="bg-gray-50 dark:bg-gray-800 border border1`  -gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm rounded-md  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:outline-gray-500 outline-gray-300 dark:-outline-offset-1 " placeholder="Search for decks and cards" autoComplete="off" required/>
+    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+       <RiCloseFill onClick={()=>{setShowSearchBar(false),setSearchQuery("")}} className={`text-gray-700 dark:text-gray-100 ${showSearchBar?"opactiy-100":"opacity-0"} cursor-pointer transition-opacity duration-700`}/>
+    </div>
+</div>
+<div className={`fixed  ${showSearchBar?"left-0":"left-full"} transition-all duration-500 lg:duration-700`}>
+<SearchResult searchQuery={searchQuery} setShowSearchBar={setShowSearchBar}/>
+</div>
+</div>
+  )
+}
+
+export default SearchBar

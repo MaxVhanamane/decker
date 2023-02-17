@@ -46,3 +46,8 @@ export type CardDataType = {
     _id: string
   }[]
 }
+
+export type Data={
+  title:string;
+  cards:{title:string,note:string}[];
+}

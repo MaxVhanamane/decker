@@ -4,6 +4,7 @@ import { useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertState";
 import { AlertData, CardDataType } from "../types/types";
 import { useContext } from "react";
+import { UserContext } from "../context/UserContext";
 export type DeckTypes = {
   success: boolean;
   cards: { _id: string; title: string; cards: string[] };
@@ -20,12 +21,13 @@ export type OldData = {
 
 const deleteCard = async (payLoad: PayloadType): Promise<DeckTypes> => {
   const res = await request.delete(
-    `/card/${payLoad.deck_id}/${payLoad.index}}`
+    `/card/${payLoad.deck_id}/${payLoad.index}`
   );
   return res.data;
 };
 
 const useDeleteCard = () => {
+  const {showSearchBar}=useContext(UserContext)
   const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
   return useMutation(deleteCard, {
@@ -60,6 +62,10 @@ const useDeleteCard = () => {
         }));
       }
       queryClient.invalidateQueries(["cards", data.deck_id]);
+      // If the search bar is open, it means that the user has deleted the card after searching. As I am using the "decks" query for searching, I need updated data, so I will invalidate the query and retrieve fresh data.
+      if(showSearchBar){
+      queryClient.invalidateQueries("decks");
+      }
     },
   });
 };

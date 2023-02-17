@@ -144,7 +144,7 @@ function App() {
       >
           
    <ShowAlert />
-        <Layout>
+        <Layout >
           <Routes>
             <Route element={<PrivateRoutes />}>
               <Route path="/" element={<Deck undoDeck={undoDeck} handleUndoDeck={handleUndoDeck} undoButtonRef={undoButtonRef} handlePopupForUndoButton={handlePopupForUndoButton}/>} />
@@ -152,7 +152,15 @@ function App() {
                 path="/cards/:deck_id"
                 element={
                   <Suspense fallback={<Loading />}>
-                    <Cards indexOfCardForDeletion={indexOfCardForDeletion} setIndexOfCardForDeletion={setIndexOfCardForDeletion}/>
+                    <Cards />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/cards/:deck_id/:search_index"
+                element={
+                  <Suspense fallback={<Loading />}>
+                    <Cards />
                   </Suspense>
                 }
               />

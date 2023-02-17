@@ -20,11 +20,16 @@ interface ContexType {
     | undefined;
 
   setUserInfo: Dispatch<React.SetStateAction<userData | null>>;
+  setIndexOfCardForDeletion:Dispatch<React.SetStateAction<number | null>>;
 
   theme: string | null;
 
   setTheme: Dispatch<React.SetStateAction<string | null>>;
-  deleteConfirmationModalForCard:RefObject<HTMLDivElement>
+  deleteConfirmationModalForCard:RefObject<HTMLDivElement>;
+  indexOfCardForDeletion:number | null;
+  showSearchBar:boolean;
+  setShowSearchBar:Dispatch<React.SetStateAction<boolean>>;
+
 }
 export const UserContext = createContext<ContexType>({
   userInfo: {
@@ -37,7 +42,11 @@ export const UserContext = createContext<ContexType>({
   setUserInfo: () => {},
   theme: null,
   setTheme: () => {},
-  deleteConfirmationModalForCard:{ current: null } as RefObject<HTMLDivElement>
+  deleteConfirmationModalForCard:{ current: null } as RefObject<HTMLDivElement>,
+  setIndexOfCardForDeletion:() => {},
+  indexOfCardForDeletion:null,
+  showSearchBar:false,
+  setShowSearchBar:()=>{}
 });
 
 function UserContextProvider({ children }: UserContextProvider) {
@@ -53,7 +62,9 @@ function UserContextProvider({ children }: UserContextProvider) {
     email: "",
     __v: 0,
   });
- 
+  const [indexOfCardForDeletion,setIndexOfCardForDeletion]=useState<number | null>(null)
+  const [showSearchBar,setShowSearchBar]=useState(false)
+
   const getUser = async (): Promise<any> => {
     const data = await request.get("/getuser");
     if (data.data) {
@@ -136,7 +147,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ userInfo, setUserInfo, theme, setTheme,deleteConfirmationModalForCard}}>
+    <UserContext.Provider value={{ userInfo, setUserInfo, theme, setTheme,deleteConfirmationModalForCard,indexOfCardForDeletion,setIndexOfCardForDeletion,showSearchBar,setShowSearchBar}}>
       {children}
     </UserContext.Provider>
   );

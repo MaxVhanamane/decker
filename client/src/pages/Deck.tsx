@@ -23,11 +23,12 @@ type PropType={
   undoButtonRef:RefObject<HTMLDivElement>,
   handlePopupForUndoButton:()=>void
 }
+
   function Deck({undoDeck,handleUndoDeck,undoButtonRef,handlePopupForUndoButton}:PropType) {
     const {setAlert}=useContext(AlertContext) 
     const [title, setTitle] = useState<string>("");
     // const [deleteDeckId,setDeleteDeckId]=useState("")
-    const {data:alldecks,error,isError,isLoading}=useGetDecks()
+    const {data:allDecks,error,isError,isLoading}=useGetDecks()
   const [openEditDeckModal,setOpenEditDeckModal]=useState(false)
     const {mutate : addDeck} = useCreateDeck()
 
@@ -173,7 +174,7 @@ type PropType={
  
   
 
-{alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 lg:mb-10  mx-1  " >
+{allDecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 lg:mb-10  mx-1  " >
   <h1 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  m-4">Pinned </h1>
 
         <Droppable droppableId="pinnedArea" isDropDisabled={true} >
@@ -183,7 +184,7 @@ type PropType={
           (provided)=>{
            return   <div className=" flex flex-row flex-wrap gap-2  justify-center items-center p-2 lg:mx-20 " ref={provided.innerRef} {...provided.droppableProps}>
 
-               {alldecks?.filter((deck)=>deck.pinned===true).map((deck,index) => {
+               {allDecks?.filter((deck)=>deck.pinned===true).map((deck,index) => {
                  return (
                   <Draggable draggableId={deck._id} index={index} key={deck._id}  shouldRespectForcePress>
 
@@ -229,8 +230,8 @@ type PropType={
         </Droppable>
         </div>:null}
   
-       {alldecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-4 mb-24  mx-1" >
-        <h1 className="text-left text-md font-semibold text-gray-800 m-4 dark:text-gray-50 "> {alldecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
+       {allDecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-4 mb-24  mx-1" >
+        <h1 className="text-left text-md font-semibold text-gray-800 m-4 dark:text-gray-50 "> {allDecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
         <Droppable droppableId="othersDeckArea" isDropDisabled={true} >
 
@@ -239,7 +240,7 @@ type PropType={
           (provided)=>{
            return   <div className="  flex flex-row flex-wrap gap-2  justify-center items-center p-2 lg:mx-20 " ref={provided.innerRef} {...provided.droppableProps}>
 
-               {alldecks?.filter((deck)=>deck.pinned===false).map((deck,index) => {
+               {allDecks?.filter((deck)=>deck.pinned===false).map((deck,index) => {
                  return (
                   <Draggable draggableId={deck._id} index={index+500} key={deck._id}>
 

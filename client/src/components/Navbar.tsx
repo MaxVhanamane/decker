@@ -1,4 +1,4 @@
-import {FC}from 'react'
+import {FC,useState}from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request } from '../utils/axios-utils';
 import { useContext, useRef } from 'react';
@@ -8,8 +8,11 @@ import { userData } from '../types/types';
 import {FaUserCircle} from "react-icons/fa"
 import {RiCloseFill} from "react-icons/ri"
 import ThemeToggler from './ThemeToggler';
+import SearchBar from './SearchBar';
+import { AiOutlineSearch } from 'react-icons/ai';
+import { BsSearch } from 'react-icons/bs';
 const Navbar:FC = () => {
-  const {setUserInfo}=useContext(UserContext)
+  const {setUserInfo,showSearchBar,setShowSearchBar}=useContext(UserContext)
   const userDetails=localStorage.getItem("userInfo")
   // const [showInfo,setShowInfo]=useState(false)
   let userInfo:userData | undefined
@@ -20,6 +23,7 @@ const Navbar:FC = () => {
   }
   const navigate = useNavigate();
   const location=useLocation()
+
   const handleShowUserInfomation=()=>{
 
 
@@ -56,7 +60,7 @@ const Navbar:FC = () => {
   }
   return (
     <>
-    <nav className='border-b bg-white border-slate-900/10 dark:bg-slate-900 dark:border-b dark:border-slate-300/10 p-2 dark:py-3 py-3 flex flex-row justify-between items-center sticky top-0 z-10 '>
+    <nav className='border-b bg-white border-slate-900/10 dark:bg-slate-900 dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] '>
    
 
       <div className='flex items-center justify-center flex-row gap-8'>
@@ -71,12 +75,23 @@ const Navbar:FC = () => {
       </ul>
   </div>
   </div>
-  <div >
+  
+  <div className='flex gap-4 items-center justify-center ' >
+  <SearchBar />
+   <button onClick={()=>{setShowSearchBar(true)}} disabled={showSearchBar}>
+    <BsSearch className={`text-lg dark:text-gray-100 text-gray-500 ${!showSearchBar?"opacity-100":"opacity-0 pointer-events-none"} cursor-pointer transition-opacity lg:duration-[1200ms] duration-500 mr-2`} />
+    </button>
+<div>
+
+
+
+
     <ul className='flex items-center justify-center gap-3'>
   <li className=' text-2xl mr-2 '> <ThemeToggler /></li>
 
   {userInfo?.email?<li onClick={()=>{handleShowUserInfomation()}}className=' cursor-pointer   mr-1  rounded-full flex gap-2 px-2 items-center'> {userInfo?.profile_picture?<img className='rounded-full w-8 h-8 ' src={userInfo?.profile_picture} alt="profile" referrerPolicy="no-referrer"/>:<FaUserCircle className='w-8 h-8 dark:text-sky-500 text-gray-600 '/>}</li>:null}
         </ul>
+        </div>
   </div>
 
       {/* <div className='flex items-center justify-center text-xl '>

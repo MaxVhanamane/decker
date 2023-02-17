@@ -1,4 +1,5 @@
-import { MouseEvent, useContext } from 'react';
+import { Dispatch, MouseEvent, useContext } from 'react';
+import {  useLocation, useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
 interface IProp{
     deck_id:string;
@@ -6,15 +7,29 @@ interface IProp{
     deleteCardItem:(payload: {
         deck_id: string;
         index: number;
-    })=>void
+    })=>void,
+    setShowFullScreen?:Dispatch<React.SetStateAction<boolean>>
 }
-const ConfirmDeleteModalForCard = ({deck_id,indexOfCardForDeletion,deleteCardItem}:IProp) => {
-    const {deleteConfirmationModalForCard}=useContext(UserContext)
+const ConfirmDeleteModalForCard = ({deck_id,indexOfCardForDeletion,deleteCardItem,setShowFullScreen}:IProp) => {
+    const navigate=useNavigate()
+    const location = useLocation();
+    const {deleteConfirmationModalForCard,showSearchBar}=useContext(UserContext)
     const getUserConfirmation=(e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>)=>{
         const payload={deck_id:deck_id!,index:indexOfCardForDeletion!}
         if((e.target as HTMLButtonElement).id==="yesbutton"){
           deleteCardItem(payload)
           deleteConfirmationModalForCard?.current?.classList.add("hidden")
+          if(setShowFullScreen){ setShowFullScreen(false)}
+          if(showSearchBar){
+            // If the showSearchBar is true and the user clicks on the delete button, after deleting we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
+            if(location.state?.from==="/"){
+                navigate("/")
+            }
+            else{
+              navigate(location.state?.from)
+            }
+      
+          }
         }
         else{
             deleteConfirmationModalForCard?.current?.classList.add("hidden")
@@ -22,7 +37,7 @@ const ConfirmDeleteModalForCard = ({deck_id,indexOfCardForDeletion,deleteCardIte
           }
 
   return (
-<div ref={deleteConfirmationModalForCard} id="popup-modal" tabIndex={-1} className="fixed hidden z-[60] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-900 lg:backdrop-blur-none lg:bg-white">
+<div ref={deleteConfirmationModalForCard} id="popup-modal" tabIndex={-1} className="fixed hidden z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-900 lg:backdrop-blur-none lg:bg-white">
     <div className="relative w-full h-full flex items-center justify-center  ">
         <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-900 ring-1 ring-sky-500  ">
            

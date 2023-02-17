@@ -4,7 +4,7 @@ import { OldData } from "./useDeleteCard";
 import { AlertContext } from "../context/AlertState";
 import { AlertData, CardDataType } from "../types/types";
 import { useContext } from "react";
-
+import { UserContext } from './../context/UserContext';
 type CardData = {
   deck_id: string;
   newContent: { title: string; note: string; _id: string };
@@ -35,6 +35,7 @@ const editCard = async (cardData: CardData): Promise<PromiseData> => {
 };
 
 const useEditCard = () => {
+  const {showSearchBar}=useContext(UserContext)
   const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
   return useMutation(editCard, {
@@ -68,6 +69,11 @@ const useEditCard = () => {
           show: true,
           message: "Some error occured, please try again!",
         }));
+      }
+      // If the search bar is open, it indicates that the user edited the card from the search result. The search bar is using the 'decks' query as data, so we will invalidate the decks query to keep it updated.
+      if(showSearchBar){
+      queryClient.invalidateQueries("decks");
+
       }
       queryClient.invalidateQueries(["cards", data.deck_id]);
     },

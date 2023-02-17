@@ -372,6 +372,9 @@ app.put('/card/:deck_id', fetchUserDetails, async function (req: Request, res: R
 
 
 app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, res: Response) {
+  console.log(req.params.index)
+  console.log("hello")
+
   try {
 
     const deck = await DeckModal.findById(req.params.id)
