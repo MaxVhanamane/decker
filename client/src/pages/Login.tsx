@@ -72,7 +72,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     <div className=" py-12 px-6 h-full">
       <div className="flex justify-center items-center flex-wrap h-full g-6 ">
         <div className="xl:w-6/12">
-          <div className="block   rounded-lg shadow-2xl bg-white dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500 ">
+          <div className="block   rounded-lg shadow-2xl bg-white dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500 ">
             <div className="flex justify-center items-center g-0">
               <div className=" px-4 md:px-0">
                 <div className="md:p-12 p-4 md:mx-6">
@@ -87,7 +87,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                       <input 
                       onChange={handleChange}
                         type="email"
-                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1"
                         id="email"
                         placeholder="Email"
                         name="email"
@@ -98,7 +98,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                       <input
                       onChange={handleChange}
                         type="password"
-                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                        className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1"
                         id="password"
                         placeholder="Password"
                         name="password"
@@ -122,7 +122,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     <div className="w-full border-b border-gray-300 dark:border-gray-300/30"></div>
   </div>
   <div className="relative flex justify-center">
-    <span className="bg-white px-4 text-sm text-gray-500 dark:bg-slate-900">or</span>
+    <span className="bg-white px-4 text-sm text-gray-500 dark:bg-[#0c1221]">or</span>
   </div>
 </div>
                       <button onClick={()=>handleGoogleLogin()}

@@ -32,7 +32,7 @@ export default function AuthSuccess() {
    
   },[])
   return (
-    <div className='absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-white -z-10'>
+    <div className='absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-[#0c1221] bg-white -z-10'>
       <div className='flex items-center justify-center rounded-full bg-green-700 text-white '><p className='text-4xl'><TiTick/></p></div>
         <div className=' text-gray-800 p-4 rounded-lg dark:text-gray-50'>
       <p className='text-xl font-bold'>Logged In successfully</p>

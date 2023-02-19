@@ -12,7 +12,7 @@ import {RiCloseFill} from "react-icons/ri"
  
   return (
     <>
-    <div className='absolute top-0 left-0 w-full h-full flex items-center justify-center dark:bg-slate-900 bg-white flex-col gap-4 -z-10 '>
+    <div className='absolute top-0 left-0 w-full h-full flex items-center justify-center dark:bg-[#0c1221] bg-white flex-col gap-4 -z-10 '>
       <div className='rounded-full bg-red-600'><p className='text-xl p-1 text-gray-50'><RiCloseFill/></p></div>
         <div className=' rounded-lg '>
       <p className='text-xl text-gray-800 font-bold mb-2 dark:text-gray-50'>Login failed</p>
