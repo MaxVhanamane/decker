@@ -114,12 +114,12 @@ function UserContextProvider({ children }: UserContextProvider) {
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
-      document.body.classList.add("bg-gray-900");
-      document.documentElement.classList.add("bg-gray-900");
+      document.body.classList.add("bg-[#0D1017]");
+      document.documentElement.classList.add("bg-[#0D1017]");
     } else {
       document.documentElement.classList.remove("dark");
-      document.body.classList.remove("bg-gray-900");
-      document.documentElement.classList.remove("bg-gray-900");
+      document.body.classList.remove("bg-[#0D1017]");
+      document.documentElement.classList.remove("bg-[#0D1017]");
     }
   }, [theme]);
 
