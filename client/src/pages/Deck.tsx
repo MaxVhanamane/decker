@@ -136,7 +136,7 @@ type PropType={
         <meta name="description" content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."/>
       </Helmet>
       <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32 ">
-{<div ref={undoButtonRef}  className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"><span className="mr-4">Deck deleted successfully!</span><span className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400" onClick={(event)=>{handleUndo()}}>Undo</span></div>}
+{<div ref={undoButtonRef}  className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-gray-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"><span className="mr-4">Deck deleted successfully!</span><span className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400" onClick={(event)=>{handleUndo()}}>Undo</span></div>}
 <PopUpMessage message="Drag and drop the deck here to delete it." showPopUp={showPopUp}/>
         <Droppable droppableId="DeckDeleteArea">
           {
@@ -160,7 +160,7 @@ type PropType={
               Deck title
             </label>
             <input
-              className=" dark:bg-slate-900 dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
+              className=" dark:bg-gray-900 dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,7 +191,7 @@ type PropType={
                     {(provided,snapshot)=>{
                       // ${snapshot.draggingOver==="othersDeckArea" &&"border-violet-600 shadow-violet-600 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-slate-900 bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
+      className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-gray-900 bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
       
        text-gray-800 dark:text-gray-50 
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
@@ -247,7 +247,7 @@ type PropType={
                     {(provided,snapshot)=>{
                       //  ${snapshot.draggingOver==="pinnedArea" &&"border-yellow-500 shadow-yellow-500 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-slate-900 bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
+      className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-gray-900 bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
       text-gray-800 dark:text-gray-50 
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify `}
             ref={provided.innerRef}  
@@ -289,7 +289,7 @@ type PropType={
 {/*     
         <div ref={deleteConfirmationModal} id="popup-modal" tabIndex={-1} className="fixed hidden z-50 p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-sm">
     <div className="relative w-full h-full flex items-center justify-center  ">
-        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-900 ring-1 ring-sky-500  ">
+        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-gray-900 ring-1 ring-sky-500  ">
             <div className="p-6 text-center">
                 <svg aria-hidden="true" className="mx-auto mb-4 text-gray-400 w-14 h-14 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Are you sure you want to delete this deck?</h3>

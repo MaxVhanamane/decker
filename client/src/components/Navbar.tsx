@@ -60,7 +60,7 @@ const Navbar:FC = () => {
   }
   return (
     <>
-    <nav className='border-b bg-white border-slate-900/10 dark:bg-slate-900 dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] '>
+    <nav className='border-b bg-white border-slate-900/10 dark:bg-gray-900 dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] '>
    
 
       <div className='flex items-center justify-center flex-row gap-8'>
@@ -78,7 +78,7 @@ const Navbar:FC = () => {
   
   <div className='flex gap-4 items-center justify-center ' >
   <SearchBar />
-   <button onClick={()=>{setShowSearchBar(true)}} disabled={showSearchBar}>
+   <button onClick={()=>{setShowSearchBar(true)}} disabled={showSearchBar} aria-label="Search">
     <BsSearch className={`text-lg dark:text-gray-100 text-gray-500 ${!showSearchBar?"opacity-100":"opacity-0 pointer-events-none"} cursor-pointer transition-opacity lg:duration-[1200ms] duration-500 mr-2`} />
     </button>
 <div>
@@ -101,7 +101,7 @@ const Navbar:FC = () => {
     </nav>
    
     <div ref={divRefForLargeScreen}  className=' fixed transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-50 '>
-      <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded-md dark:bg-slate-900 mx-auto  '>
+      <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded-md dark:bg-gray-900 mx-auto  '>
 <button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer ' aria-label="Close"><RiCloseFill/></button>
     <h2 className='mb-3 font-bold text-gray-700 dark:text-gray-50'>My account</h2>
       <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 w-fit '>
