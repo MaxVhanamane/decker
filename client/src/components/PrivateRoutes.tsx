@@ -1,6 +1,5 @@
 import {Outlet,Navigate} from 'react-router-dom'
 export default function ProtectedRoutes() {
-   //  const {userInfo}=useContext(UserContext) 
    const userFromLocalStorage=localStorage.getItem("userInfo")
   const userInfo=userFromLocalStorage?JSON.parse(userFromLocalStorage):null
 

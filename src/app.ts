@@ -4,7 +4,7 @@ import mongoose, { ConnectOptions, Error } from "mongoose";
 import DeckModal from './models/deck';
 import cors from "cors"
 import session from "express-session";
-import passport, { use } from "passport";
+import passport from "passport";
 import User from "./models/user";
 import bcrypt from "bcryptjs"
 import { UserDetails } from "./types/UserDetails";
@@ -12,7 +12,7 @@ import passportLocal from "passport-local"
 import verifyEmail from './models/verifyemail';
 import ForgotPasswordOTP from './models/forgotpasswordotps';
 import { Profile, VerifyCallback } from "passport-google-oauth20";
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer"
 
 const LocalStrategy = passportLocal.Strategy
 const MongoDBStore = require('connect-mongodb-session')(session);
@@ -46,10 +46,10 @@ declare global {
     interface Request {
       userDetails: UserDetails | null
     }
-    interface User{
-      email:string;
-      profile_picture?:string | undefined;
-      username:string;
+    interface User {
+      email: string;
+      profile_picture?: string | undefined;
+      username: string;
     }
   }
 }
@@ -82,7 +82,7 @@ app.use(session({
   cookie:{
     httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-    secure:true,      // it allows only https requests
+    secure:true,      // it allows only https requests. you can only send these cookies to https sites
     maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
   }
 
@@ -128,14 +128,14 @@ passport.use(
       //extracting required user information from the profile that is given by goolge
       const userInfo: UserDetails = {
         email: profile?.emails ? profile?.emails[0]?.value : "",
-        profile_picture: profile?.photos? profile?.photos[0]?.value:"",
+        profile_picture: profile?.photos ? profile?.photos[0]?.value : "",
         username: profile.displayName
       }
 
       try {
         // now we will check if the user exist in the database. if not we will create new user.
 
-        const user:UserDetails | null = await User.findOne({ email: userInfo.email })
+        const user: UserDetails | null = await User.findOne({ email: userInfo.email })
         if (!user) {
           const newUser = new User(userInfo)
           await newUser.save()
@@ -147,7 +147,7 @@ passport.use(
       catch (err) {
         return done(err as Error);
       }
-      
+
 
     }
   )
@@ -155,7 +155,7 @@ passport.use(
 
 
 // serializeUser to store only id in session
-passport.serializeUser((user:any, done) => {
+passport.serializeUser((user: any, done) => {
   return done(null, user?._id)
 })
 
@@ -176,10 +176,10 @@ passport.deserializeUser((id: string, done) => {
 
 
 // middleware to get user details
-const fetchUserDetails = async function (req:Request, res: Response, next: NextFunction) {
+const fetchUserDetails = async function (req: Request, res: Response, next: NextFunction) {
   if (req?.user) {
     const email = req?.user?.email
-    const user:UserDetails| null = await User.findOne({ email: email })
+    const user: UserDetails | null = await User.findOne({ email: email })
     req.userDetails = user
     next()
   }
@@ -216,40 +216,46 @@ app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) 
   // as there is a relation defined between two collection DeckModal and User 
   // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
   const deck = await DeckModal.find({ email: user?._id }).sort({ date: -1 });
-  res.json(deck)
+  res.status(200).json(deck)
 
 })
 
 
 app.post('/deck', fetchUserDetails, async function (req: Request, res: Response) {
   const user = req.userDetails
-  const newDeck = new DeckModal({
-    email: user?._id,
-    title: req.body.title,
-    date: new Date()
-  })
-  const createdDeck = await newDeck.save()
-  res.json(createdDeck)
+  try{
+    const newDeck = new DeckModal({
+      email: user?._id,
+      title: req.body.title,
+      date: new Date()
+    })
+    const createdDeck = await newDeck.save()
+    res.status(201).json(createdDeck)
+  
+  }
+  catch{
+    res.status(500).json({message:"Internal server Error!"})
+
+  }
 
 })
 
 
 
-app.put('/deck', fetchUserDetails, async function (req: Request, res: Response) {
-
+app.patch('/deck/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
     //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
-    const updatedDeck = await DeckModal.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned, date: new Date() })
-    res.json(updatedDeck)
+    const updatedDeck = await DeckModal.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() })
+    res.status(200).json(updatedDeck)
   }
 
   catch (error) {
     if (error instanceof Error) {
 
-      res.status(400).send({ error: error.message, isError: true });
+      res.status(500).send({ message: error.message, isError: true });
     }
     else {
-      res.status(400).json({ error: "Unexpected error", isError: true })
+      res.status(500).json({ message: "Unexpected error", isError: true })
     }
   }
 
@@ -259,24 +265,24 @@ app.put('/deck', fetchUserDetails, async function (req: Request, res: Response) 
 
 app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Response) {
   delete req.body.index
-  const deck=req.body
+  const deck = req.body
   try {
     //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
     const newDeck = new DeckModal({
       ...deck
     })
     const createdDeck = await newDeck.save()
-  
-    res.json({createdDeck,success:true})
+
+    res.status(200).json({ createdDeck, success: true })
   }
 
   catch (error) {
     if (error instanceof Error) {
 
-      res.status(400).send({ error: error.message, isError: true });
+      res.status(500).send({ message: error.message, isError: true });
     }
     else {
-      res.status(400).json({ error: "Unexpected error", isError: true })
+      res.status(500).json({ message: "Unexpected error", isError: true })
     }
   }
 
@@ -286,19 +292,19 @@ app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Respon
 
 
 
-app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req:Request, res: Response) {
+app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
     const updatedDeck = await DeckModal.findByIdAndUpdate(req.params.deck_id, { title: req.body.title })
-    res.json(updatedDeck)
+    res.status(200).json(updatedDeck)
   }
 
   catch (error) {
     if (error instanceof Error) {
 
-      res.status(400).send({ error: error.message, isError: true });
+      res.status(500).send({ message: error.message, isError: true });
     }
     else {
-      res.status(400).json({ error: "Unexpected error", isError: true })
+      res.status(500).json({ message: "Unexpected error", isError: true })
     }
   }
 
@@ -310,10 +316,10 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
   try {
 
     const deletedDeck = await DeckModal.findByIdAndDelete(req.params.id)
-    res.json({ deletedDeck, success: true })
+    res.status(200).json({ deletedDeck, success: true })
   }
   catch (error) {
-    res.json({ error: "some error occurred", success: false })
+    res.status(500).json({ message: "some error occurred! Please try again later!", success: false })
   }
 
 })
@@ -322,13 +328,17 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
 
 app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Response) {
 
-  const cards = await DeckModal.findById({ _id: req.params._id });
-  if (cards) {
-
-    res.json({ cards: cards.cards, title: cards.title })
+  try {
+    const cards = await DeckModal.findById({ _id: req.params._id });
+    if (cards) {
+      res.status(200).json({ cards: cards.cards, title: cards.title })
+    }
+    else {
+      res.status(404).json({ message: "No cards found!" });
+    }
   }
-  else {
-    res.json({ error: "No cards found!" })
+  catch {
+    res.status(500).json({ message: "Internal server Error!" })
   }
 
 })
@@ -337,44 +347,47 @@ app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: 
   try {
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {
-      return res.status(400).json({ message: "No deck found! Please check deck id" })
+      return res.status(404).json({ message: "No deck found! Please check deck id" })
     }
     getDeck.cards.unshift(req.body.content)
     const createdCard = await getDeck.save()
-    res.json(createdCard)
+    res.status(201).json(createdCard)
   }
   catch (err) {
-    res.status(500).json({ error: "Invalid id" })
+    res.status(500).json({ message: "Invalid id" })
   }
-
-
 
 })
-//Edit card
-app.put('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
-  //get the deck using _id
-  const Deck = await DeckModal.findById(req.params.deck_id)
-  // take out cards from received deck
-  const cards = Deck?.cards
-  if (cards) {
-    // get the index from body
-    const index = req.body.index
-    //remove one item at index (which we received) and add newContent at that index
-    cards?.splice(index, 1, req.body.newContent); // this will modify original array
-    // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
-    Deck.cards.splice(0, Deck.cards.length, ...cards)
-    // save it in the db
-    const newCard = await Deck.save()
-    res.json(newCard)
-  }
 
+//Edit card
+app.patch('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
+  try {
+    //get the deck using _id
+    const Deck = await DeckModal.findById(req.params.deck_id)
+    // take out cards from received deck
+    const cards = Deck?.cards
+    if (cards) {
+      // get the index from body
+      const index = req.body.index
+      //remove one item at index (which we received) and add newContent at that index
+      cards?.splice(index, 1, req.body.newContent); // this will modify original array
+      // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
+      Deck.cards.splice(0, Deck.cards.length, ...cards)
+      // save it in the db
+      const newCard = await Deck.save()
+      res.status(200).json(newCard)
+    }
+    else {
+      res.status(404).json({ message: "No cards found!" })
+    }
+  }
+  catch {
+    res.status(500).json({ message: "Internal server Error!" })
+  }
 })
 
 
 app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, res: Response) {
-  console.log(req.params.index)
-  console.log("hello")
-
   try {
 
     const deck = await DeckModal.findById(req.params.id)
@@ -382,11 +395,15 @@ app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, r
 
       deck.cards.splice(parseInt(req.params.index), 1);
       let newArray = await deck.save()
-      res.json({ cards: newArray, success: true })
+      res.status(200).json({ cards: newArray, success: true })
+    }
+    else {
+      res.status(404).json({ message: "Card not found!", success: false })
+
     }
   }
   catch (error) {
-    res.json({ error: "some error occurred", success: false })
+    res.status(500).json({ message: "some error occurred", success: false })
   }
 })
 
@@ -396,27 +413,26 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, asy
   try {
 
     const deck = await DeckModal.findById(req.params.id)
-    
-    if (deck) {
 
+    if (deck) {
       // deck.cards.splice(parseInt(req.params.index), 1);
       // let newArray = await deck.save()
       // res.json({ cards: newArray, success: true })
       let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
-deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move)
- await deck.save()
-      res.json({  success: true })
+      deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move)
+      await deck.save()
+      res.status(200).json({ success: true })
+
+    }
+    else {
+      res.status(404).json({ message: "Card not found!", success: false })
 
     }
   }
   catch (error) {
-    res.json({ error: "some error occurred", success: false })
+    res.status(500).json({ message: "some error occurred", success: false })
   }
 })
-
-
-
-
 
 
 
@@ -431,30 +447,26 @@ app.get('/auth/google/callback',
 app.get("/getuser", (req, res) => {
   if (req.user) {
 
-    res.json(req.user) // here we get user in req.user because passports deserialize function attaches it automatically
+    res.status(200).json(req.user) // here we get user in req.user because passports deserialize function attaches it automatically
   }
   else {
-    res.json(null)
+    res.status(200).json(null)
   }
 })
 
 app.post('/auth/logout', function (req, res, next) {
   req.logout(function (err) {
     if (err) { return next(err); }
-    res.send('done');
+    res.status(200).send('done');
   });
 });
 
 
-
-
-
-
-
 app.post("/signup", async (req: Request, res: Response) => {
   const { username, email, password, otp } = req?.body
+
   if (!username && !password && !email) {
-    res.json({ success: false, message: "Please provide name, email and password" })
+    res.status(200).json({ success: false, message: "Please provide name, email and password" })
     return
   }
   const verifyUser: UserDetails | null = await verifyEmail.findOne({ email })
@@ -469,16 +481,15 @@ app.post("/signup", async (req: Request, res: Response) => {
           password: hashedPassword
         })
         await newUser.save()
-        res.json({ success: true, message: "Account created successfully." })
+        res.status(201).json({ success: true, message: "Account created successfully." })
 
       }
       else {
-        res.json({ success: false, message: "A user with this email address already exists." })
+        res.status(200).json({ success: false, message: "A user with this email address already exists." })
       }
     }
     catch (error) {
-      console.log(error)
-      res.json({ success: false, message: "Some error occured please try again." })
+      res.status(500).json({ success: false, message: "Some error occured please try again." })
     }
   }
   else {
@@ -528,7 +539,7 @@ function generateOTP(): number {
 
 app.post("/generateotp", async (req, res) => {
 
-  try{
+  try {
     let user = await verifyEmail.findOne({ email: req.body.email }) // This is where user with otp stored while creating account
     let mainUser = await User.findOne({ email: req.body.email })  // This is where the final user is stored
     let oneTimePassword = generateOTP();
@@ -538,30 +549,30 @@ app.post("/generateotp", async (req, res) => {
       // if there is no user in mainUser variable then we will check if his email exists in user variable 
       // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
       // if there is no user then we will create new one else we will update his previous
-  if(!user){
-    let generateUserWithOTP = new verifyEmail({
-      email: req.body.email,
-      otp: oneTimePassword,
-      expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
-    })
-    await generateUserWithOTP.save()
-  }
-  else{
-  let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
-        otp: oneTimePassword,
-        expiresIn: new Date().getTime() + 600 * 1000
-      })
-  }
-    
+      if (!user) {
+        let generateUserWithOTP = new verifyEmail({
+          email: req.body.email,
+          otp: oneTimePassword,
+          expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+        })
+        await generateUserWithOTP.save()
+      }
+      else {
+        let user = await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
+          otp: oneTimePassword,
+          expiresIn: new Date().getTime() + 600 * 1000
+        })
+      }
+
     }
-  
+
     else {
-    
-      return res.status(200).json({success:false,message:"User with this email already exists! Please Login or use different email address."})
+
+      return res.status(200).json({ success: false, message: "User with this email already exists! Please Login or use different email address." })
     }
-  
-  
-  
+
+
+
     let email = `
    <p> Dear Customer,</p>
     <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
@@ -581,7 +592,7 @@ app.post("/generateotp", async (req, res) => {
         pass: process.env.EMAIL_PASSWORD,
       },
     });
-  
+
     // send mail with defined transport object
     let info = await transporter.sendMail({
       from: process.env.EMAIL_ADDRESS, // sender address
@@ -591,15 +602,15 @@ app.post("/generateotp", async (req, res) => {
     });
     res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." })
   }
-  catch(err){
-    res.status(200).json({ success: false, message: "Some error occurred please try again later!" })
+  catch (err) {
+    res.status(500).json({ success: false, message: "Some error occurred please try again later!" })
 
   }
-  
+
 })
 
 
-app.post("/verifyotp", async (req:Request,res:Response) => {
+app.post("/verifyotp", async (req: Request, res: Response) => {
 
   let user = await verifyEmail.findOne({ email: req.body.email })
   if (user) {
@@ -630,9 +641,9 @@ app.post("/verifyotp", async (req:Request,res:Response) => {
 
 // forgot password
 
-app.post("/generateforgetpasswordotp", async (req:Request,res:Response) => {
+app.post("/generateforgetpasswordotp", async (req: Request, res: Response) => {
 
-  try{
+  try {
     let user = await ForgotPasswordOTP.findOne({ email: req.body.email }) // This is where user with otp stored while creating account
     let mainUser = await User.findOne({ email: req.body.email })  // This is where the final user is stored
     let oneTimePassword = generateOTP();
@@ -642,30 +653,30 @@ app.post("/generateforgetpasswordotp", async (req:Request,res:Response) => {
       // if there is no user in mainUser variable then we will check if his email exists in user variable 
       // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
       // if there is no user then we will create new one else we will update his previous
-  if(!user){
-    let generateUserWithOTP = new ForgotPasswordOTP({
-      email: req.body.email,
-      otp: oneTimePassword,
-      expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
-    })
-    await generateUserWithOTP.save()
-  }
-  else{
-  let user = await ForgotPasswordOTP.findOneAndUpdate({ email: req.body.email }, {
-        otp: oneTimePassword,
-        expiresIn: new Date().getTime() + 600 * 1000
-      })
-  }
-    
+      if (!user) {
+        let generateUserWithOTP = new ForgotPasswordOTP({
+          email: req.body.email,
+          otp: oneTimePassword,
+          expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+        })
+        await generateUserWithOTP.save()
+      }
+      else {
+        await ForgotPasswordOTP.findOneAndUpdate({ email: req.body.email }, {
+          otp: oneTimePassword,
+          expiresIn: new Date().getTime() + 600 * 1000
+        })
+      }
+
     }
-  
+
     else {
-    
-      return res.status(200).json({success:false,message:"User with this email doesn't exists! Please create an account first."})
+
+      return res.status(200).json({ success: false, message: "User with this email doesn't exists! Please create an account first." })
     }
-  
-  
-  
+
+
+
     let email = `
    <p> Dear Customer,</p>
     <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
@@ -686,7 +697,7 @@ app.post("/generateforgetpasswordotp", async (req:Request,res:Response) => {
         pass: process.env.EMAIL_PASSWORD,
       },
     });
-  
+
     // send mail with defined transport object
     let info = await transporter.sendMail({
       from: process.env.EMAIL_ADDRESS, // sender address
@@ -696,15 +707,15 @@ app.post("/generateforgetpasswordotp", async (req:Request,res:Response) => {
     });
     res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." })
   }
-  catch(err){
-    res.status(200).json({ success: false, message: "Some error occurred please try again later!" })
+  catch (err) {
+    res.status(500).json({ success: false, message: "Some error occurred please try again later!" })
 
   }
-  
+
 })
 
 
-app.post("/verifyforgotpasswordotp", async (req:Request,res:Response) => {
+app.post("/verifyforgotpasswordotp", async (req: Request, res: Response) => {
 
   let user = await ForgotPasswordOTP.findOne({ email: req.body.email })
   if (user) {
@@ -732,23 +743,23 @@ app.post("/verifyforgotpasswordotp", async (req:Request,res:Response) => {
 
 })
 
-app.post("/changepassword",async(req:Request,res:Response)=>{
+app.post("/changepassword", async (req: Request, res: Response) => {
   let user = await ForgotPasswordOTP.findOne({ email: req.body.email })
   // Here we will check if the OTP in our db and the otp that we get in our req are the same ones.
-  if((user?.otp === parseInt(req?.body?.otp))){
-    const newPassword=req.body.newPassword
+  if ((user?.otp === parseInt(req?.body?.otp))) {
+    const newPassword = req.body.newPassword
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    try{
-      let user= await User.findOneAndUpdate({email:req.body.email},{password:hashedPassword})
-      res.status(200).json({success:true,message:"Password changed successfully!"})
+    try {
+      let user = await User.findOneAndUpdate({ email: req.body.email }, { password: hashedPassword })
+      res.status(200).json({ success: true, message: "Password changed successfully!" })
     }
-  
-  catch(err){
-    res.status(200).json({success:false,message:"Some error occured, please try again later!"})
+
+    catch (err) {
+      res.status(200).json({ success: false, message: "Some error occured, please try again later!" })
+    }
   }
-  }
-  else{
-    res.status(200).json({success:false,message:"You are unauthorized!"})
+  else {
+    res.status(200).json({ success: false, message: "You are unauthorized!" })
   }
 
 })

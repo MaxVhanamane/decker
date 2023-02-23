@@ -1,4 +1,4 @@
-import {Dispatch, FC,useContext,useRef,MouseEvent, useState} from 'react'
+import {FC,useContext,useRef, useState} from 'react'
 import { AiOutlineSearch } from 'react-icons/ai'
 import SearchResult from './SearchResult';
 import { RiCloseFill } from 'react-icons/ri';
@@ -32,7 +32,7 @@ const SearchBar:FC = () => {
     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
        <AiOutlineSearch className='dark:text-white text-gray-700 text-lg'/>
     </div>
-    <input ref={searchBarRef} value={searchQuery} onChange={(e)=>{setSearchQuery(e.target.value)}} type="text" id="simple-search" className="bg-gray-50 dark:bg-gray-800 border border1`  -gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm rounded-md  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:outline-gray-500 outline-gray-300 dark:-outline-offset-1 " placeholder="Search for decks and cards" autoComplete="off" required/>
+    <input ref={searchBarRef} value={searchQuery} onChange={(e)=>{setSearchQuery(e.target.value)}} type="text" id="simple-search" className="bg-gray-50 dark:bg-gray-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm rounded-md  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300  " placeholder="Search for decks and cards" autoComplete="off" required/>
     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
        <RiCloseFill onClick={()=>{setShowSearchBar(false),setSearchQuery("")}} className={`text-gray-700 dark:text-gray-100 ${showSearchBar?"opactiy-100":"opacity-0"} cursor-pointer transition-opacity duration-700`}/>
     </div>

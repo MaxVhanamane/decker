@@ -25,7 +25,7 @@ import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
 import { AlertContext } from "../context/AlertState";
-import { AlertData } from "../types/types";
+import { AlertData, AxiosErrorType } from "../types/types";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import ThemeToggler from "../components/ThemeToggler";
 import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
@@ -55,6 +55,10 @@ type PayloadType = {
   deck_id: string;
   content: ContentType;
 };
+
+
+
+
 
 // Component
 const Cards: FC = () => {
@@ -549,10 +553,11 @@ const Cards: FC = () => {
   }
 
   if (isError) {
+    // If you do not define AxiosErrorType and directly access the error message using {(error as Error)?.message}, this will give the error message that Axios returns(something like request failed with status code 404). If you want to access the error message that you sent from the server, use {(error as AxiosErrorType)?.response?.data.message}.
     return (
       <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 ">
         <p className="font-semibold">
-          <span className="font-bold">Error </span>: {(error as Error)?.message}
+          <span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}
         </p>
       </div>
     );
@@ -680,7 +685,7 @@ const Cards: FC = () => {
                 placeholder={`${expandTextarea ? "Title" : "Add a note"} `}
               />
               <textarea
-                className={` ${expandTextarea ? " py-2 border-b-2 rounded-t-0" : "py-0 border-b-0 "} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-all duration-1000 overflow-hidden shadow-sm dark:shadow-sky-500 shadow-teal-500 `}
+                className={` ${expandTextarea ? " py-2 border-b-2 rounded-t-0" : "py-0 border-b-0 "} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-all duration-1000 overflow-hidden smaller-shadow dark:shadow-sm   dark:shadow-sky-500 shadow-teal-500 `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
@@ -751,9 +756,9 @@ const Cards: FC = () => {
                                   ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent"
                                   : null
                                 }   flex flex-col text-gray-800
-                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[50vw] w-[95vw] `}
+                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500`}
                             >
-                              <div className="absolute bottom-0 right-0">
+                              <div className="absolute bottom-0 right-0 ">
                                 {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
                                 <button
                                   onClick={(event) => {

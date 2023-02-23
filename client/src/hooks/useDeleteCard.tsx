@@ -2,7 +2,7 @@ import { request } from "./../utils/axios-utils";
 import { useMutation } from "react-query";
 import { useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertState";
-import { AlertData, CardDataType } from "../types/types";
+import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
 export type DeckTypes = {
@@ -58,7 +58,7 @@ const useDeleteCard = () => {
           ...preval,
           severity: "error",
           show: true,
-          message: "Some error occured, please try again!",
+          message: (error as AxiosErrorType)?.response?.data.message || (error as Error).message,
         }));
       }
       queryClient.invalidateQueries(["cards", data.deck_id]);

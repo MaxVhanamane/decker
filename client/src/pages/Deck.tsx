@@ -1,4 +1,4 @@
-import { FormEvent, useState,useRef, MouseEvent,useContext,RefObject} from "react";
+import { FormEvent, useState,useRef,useContext,RefObject} from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
@@ -6,15 +6,13 @@ import {BsFillPinFill} from "react-icons/bs"
 // import { MdOutlineDeleteOutline} from "react-icons/md"
 import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
-import useDeleteDeck from '../hooks/useDeleteDeck';
 import usePinDeck from '../hooks/usePinDeck';
 import { AlertContext } from '../context/AlertState';
-import { RiCloseFill } from 'react-icons/ri';
 import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from 'react-icons/bi';
 import Loading from '../components/Loading';
 import PopUpMessage from "../components/PopUpMessage";
-import { DeckType,AlertData, DeckTypeWithIndex  } from ".././types/types";
+import { AlertData, AxiosErrorType, DeckTypeWithIndex  } from ".././types/types";
 import useUndoDeck from './../hooks/useUndoDeck';
 import {Helmet} from "react-helmet";
 type PropType={
@@ -122,7 +120,7 @@ type PropType={
 
 
     if(isError){
-      return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 "><p className="font-semibold"><span className="font-bold">Error </span>: {(error as Error)?.message}</p></div>
+      return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 "><p className="font-semibold"><span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}</p></div>
     }
    
     if(isLoading){
@@ -194,7 +192,8 @@ type PropType={
       className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
       
        text-gray-800 dark:text-gray-50 
-                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify`}
+                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify
+                   transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 `}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
@@ -249,7 +248,8 @@ type PropType={
       return <div 
       className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
       text-gray-800 dark:text-gray-50 
-                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify `}
+                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
+                   transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 `}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 

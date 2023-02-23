@@ -51,3 +51,13 @@ export type Data={
   title:string;
   cards:{title:string,note:string}[];
 }
+
+export type AxiosErrorType = {
+  message: string;
+  response: {
+    data: {
+      message: string;
+    };
+    status: number;
+  };
+};

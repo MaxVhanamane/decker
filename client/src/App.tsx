@@ -1,4 +1,3 @@
-import "./App.css";
 import { lazy, Suspense, useContext,useRef} from "react";
 import Deck from "./pages/Deck";
 import { Routes, Route } from "react-router-dom";
@@ -8,7 +7,6 @@ import {
   DropResult,
   ResponderProvided,
 } from "react-beautiful-dnd";
-import usePinDeck from "./hooks/usePinDeck";
 import useDeleteDeck from "./hooks/useDeleteDeck";
 // import NotFound from "./componenets/NotFound";
 // import SignUp from "./pages/Signup";
@@ -28,7 +26,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
 import useMoveCard from './hooks/useMoveCard';
 import {useState} from "react"
-import { DeckType, DeckTypeWithIndex } from "./types/types";
+import { DeckTypeWithIndex } from "./types/types";
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout
@@ -37,8 +35,6 @@ function App() {
   const [undoDeck,setUndoDeck]=useState<DeckTypeWithIndex | null>(null)
   const { theme } = useContext(UserContext);
   const { mutate: deleteOneDeck } = useDeleteDeck();
-  // const { mutate: pinDeck } = usePinDeck();
-  const { mutate: deleteCardItem } = useDeleteCard();
   const {deleteConfirmationModalForCard}=useContext(UserContext)
   const {mutate:moveCard,error:editMutationError,isError:isEditMutationError}=useMoveCard()
   const undoButtonRef=useRef<HTMLDivElement | null >(null)

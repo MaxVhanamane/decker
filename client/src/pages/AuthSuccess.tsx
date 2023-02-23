@@ -17,15 +17,14 @@ export default function AuthSuccess() {
     }
   useEffect(()=>{
     (async()=>{
-
       const userInfo=await  getUser()
        if(userInfo?.email){
          setTimeout(()=>{
-             navigate("/")
+             navigate("/", { replace: true })
          },2000)
      }
     else{
-     navigate("/login")
+     navigate("/login", { replace: true })
     }
     } )()
    

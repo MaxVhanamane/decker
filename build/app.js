@@ -47,7 +47,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const passport_local_1 = __importDefault(require("passport-local"));
 const verifyemail_1 = __importDefault(require("./models/verifyemail"));
 const forgotpasswordotps_1 = __importDefault(require("./models/forgotpasswordotps"));
-const nodemailer = require("nodemailer");
+const nodemailer_1 = __importDefault(require("nodemailer"));
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require("passport-google-oauth20");
@@ -192,34 +192,39 @@ app.get('/deck', fetchUserDetails, function (req, res) {
         // as there is a relation defined between two collection DeckModal and User 
         // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
         const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }).sort({ date: -1 });
-        res.json(deck);
+        res.status(200).json(deck);
     });
 });
 app.post('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.userDetails;
-        const newDeck = new deck_1.default({
-            email: user === null || user === void 0 ? void 0 : user._id,
-            title: req.body.title,
-            date: new Date()
-        });
-        const createdDeck = yield newDeck.save();
-        res.json(createdDeck);
+        try {
+            const newDeck = new deck_1.default({
+                email: user === null || user === void 0 ? void 0 : user._id,
+                title: req.body.title,
+                date: new Date()
+            });
+            const createdDeck = yield newDeck.save();
+            res.status(201).json(createdDeck);
+        }
+        catch (_a) {
+            res.status(500).json({ message: "Internal server Error!" });
+        }
     });
 });
-app.put('/deck', fetchUserDetails, function (req, res) {
+app.patch('/deck/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
-            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.body.id, { pinned: req.body.pinned, date: new Date() });
-            res.json(updatedDeck);
+            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() });
+            res.status(200).json(updatedDeck);
         }
         catch (error) {
             if (error instanceof mongoose_1.Error) {
-                res.status(400).send({ error: error.message, isError: true });
+                res.status(500).send({ message: error.message, isError: true });
             }
             else {
-                res.status(400).json({ error: "Unexpected error", isError: true });
+                res.status(500).json({ message: "Unexpected error", isError: true });
             }
         }
     });
@@ -232,14 +237,14 @@ app.put('/undodeck', fetchUserDetails, function (req, res) {
             //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
             const newDeck = new deck_1.default(Object.assign({}, deck));
             const createdDeck = yield newDeck.save();
-            res.json({ createdDeck, success: true });
+            res.status(200).json({ createdDeck, success: true });
         }
         catch (error) {
             if (error instanceof mongoose_1.Error) {
-                res.status(400).send({ error: error.message, isError: true });
+                res.status(500).send({ message: error.message, isError: true });
             }
             else {
-                res.status(400).json({ error: "Unexpected error", isError: true });
+                res.status(500).json({ message: "Unexpected error", isError: true });
             }
         }
     });
@@ -248,14 +253,14 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { title: req.body.title });
-            res.json(updatedDeck);
+            res.status(200).json(updatedDeck);
         }
         catch (error) {
             if (error instanceof mongoose_1.Error) {
-                res.status(400).send({ error: error.message, isError: true });
+                res.status(500).send({ message: error.message, isError: true });
             }
             else {
-                res.status(400).json({ error: "Unexpected error", isError: true });
+                res.status(500).json({ message: "Unexpected error", isError: true });
             }
         }
     });
@@ -264,22 +269,27 @@ app.delete('/deck/:id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const deletedDeck = yield deck_1.default.findByIdAndDelete(req.params.id);
-            res.json({ deletedDeck, success: true });
+            res.status(200).json({ deletedDeck, success: true });
         }
         catch (error) {
-            res.json({ error: "some error occurred", success: false });
+            res.status(500).json({ message: "some error occurred! Please try again later!", success: false });
         }
     });
 });
 // Card routes
 app.get('/cards/:_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const cards = yield deck_1.default.findById({ _id: req.params._id });
-        if (cards) {
-            res.json({ cards: cards.cards, title: cards.title });
+        try {
+            const cards = yield deck_1.default.findById({ _id: req.params._id });
+            if (cards) {
+                res.status(200).json({ cards: cards.cards, title: cards.title });
+            }
+            else {
+                res.status(404).json({ message: "No cards found!" });
+            }
         }
-        else {
-            res.json({ error: "No cards found!" });
+        catch (_a) {
+            res.status(500).json({ message: "Internal server Error!" });
         }
     });
 });
@@ -288,34 +298,42 @@ app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
         try {
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
             if (!getDeck) {
-                return res.status(400).json({ message: "No deck found! Please check deck id" });
+                return res.status(404).json({ message: "No deck found! Please check deck id" });
             }
             getDeck.cards.unshift(req.body.content);
             const createdCard = yield getDeck.save();
-            res.json(createdCard);
+            res.status(201).json(createdCard);
         }
         catch (err) {
-            res.status(500).json({ error: "Invalid id" });
+            res.status(500).json({ message: "Invalid id" });
         }
     });
 });
 //Edit card
-app.put('/card/:deck_id', fetchUserDetails, function (req, res) {
+app.patch('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        //get the deck using _id
-        const Deck = yield deck_1.default.findById(req.params.deck_id);
-        // take out cards from received deck
-        const cards = Deck === null || Deck === void 0 ? void 0 : Deck.cards;
-        if (cards) {
-            // get the index from body
-            const index = req.body.index;
-            //remove one item at index (which we received) and add newContent at that index
-            cards === null || cards === void 0 ? void 0 : cards.splice(index, 1, req.body.newContent); // this will modify original array
-            // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
-            Deck.cards.splice(0, Deck.cards.length, ...cards);
-            // save it in the db
-            const newCard = yield Deck.save();
-            res.json(newCard);
+        try {
+            //get the deck using _id
+            const Deck = yield deck_1.default.findById(req.params.deck_id);
+            // take out cards from received deck
+            const cards = Deck === null || Deck === void 0 ? void 0 : Deck.cards;
+            if (cards) {
+                // get the index from body
+                const index = req.body.index;
+                //remove one item at index (which we received) and add newContent at that index
+                cards === null || cards === void 0 ? void 0 : cards.splice(index, 1, req.body.newContent); // this will modify original array
+                // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
+                Deck.cards.splice(0, Deck.cards.length, ...cards);
+                // save it in the db
+                const newCard = yield Deck.save();
+                res.status(200).json(newCard);
+            }
+            else {
+                res.status(404).json({ message: "No cards found!" });
+            }
+        }
+        catch (_a) {
+            res.status(500).json({ message: "Internal server Error!" });
         }
     });
 });
@@ -326,11 +344,14 @@ app.delete('/card/:id/:index', fetchUserDetails, function (req, res) {
             if (deck) {
                 deck.cards.splice(parseInt(req.params.index), 1);
                 let newArray = yield deck.save();
-                res.json({ cards: newArray, success: true });
+                res.status(200).json({ cards: newArray, success: true });
+            }
+            else {
+                res.status(404).json({ message: "Card not found!", success: false });
             }
         }
         catch (error) {
-            res.json({ error: "some error occurred", success: false });
+            res.status(500).json({ message: "some error occurred", success: false });
         }
     });
 });
@@ -345,11 +366,14 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, fun
                 let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
                 deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move);
                 yield deck.save();
-                res.json({ success: true });
+                res.status(200).json({ success: true });
+            }
+            else {
+                res.status(404).json({ message: "Card not found!", success: false });
             }
         }
         catch (error) {
-            res.json({ error: "some error occurred", success: false });
+            res.status(500).json({ message: "some error occurred", success: false });
         }
     });
 });
@@ -360,10 +384,10 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL}/auth/success` }));
 app.get("/getuser", (req, res) => {
     if (req.user) {
-        res.json(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
+        res.status(200).json(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
     }
     else {
-        res.json(null);
+        res.status(200).json(null);
     }
 });
 app.post('/auth/logout', function (req, res, next) {
@@ -371,13 +395,13 @@ app.post('/auth/logout', function (req, res, next) {
         if (err) {
             return next(err);
         }
-        res.send('done');
+        res.status(200).send('done');
     });
 });
 app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, email, password, otp } = req === null || req === void 0 ? void 0 : req.body;
     if (!username && !password && !email) {
-        res.json({ success: false, message: "Please provide name, email and password" });
+        res.status(200).json({ success: false, message: "Please provide name, email and password" });
         return;
     }
     const verifyUser = yield verifyemail_1.default.findOne({ email });
@@ -392,15 +416,14 @@ app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     password: hashedPassword
                 });
                 yield newUser.save();
-                res.json({ success: true, message: "Account created successfully." });
+                res.status(201).json({ success: true, message: "Account created successfully." });
             }
             else {
-                res.json({ success: false, message: "A user with this email address already exists." });
+                res.status(200).json({ success: false, message: "A user with this email address already exists." });
             }
         }
         catch (error) {
-            console.log(error);
-            res.json({ success: false, message: "Some error occured please try again." });
+            res.status(500).json({ success: false, message: "Some error occured please try again." });
         }
     }
     else {
@@ -469,7 +492,7 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
       `;
         // Sending a mail using nodemailer (read docs)
         // create reusable transporter object using the default SMTP transport
-        let transporter = nodemailer.createTransport({
+        let transporter = nodemailer_1.default.createTransport({
             host: "smtp.gmail.com",
             port: 587,
             secure: false,
@@ -488,7 +511,7 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." });
     }
     catch (err) {
-        res.status(200).json({ success: false, message: "Some error occurred please try again later!" });
+        res.status(500).json({ success: false, message: "Some error occurred please try again later!" });
     }
 }));
 app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -533,7 +556,7 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
                 yield generateUserWithOTP.save();
             }
             else {
-                let user = yield forgotpasswordotps_1.default.findOneAndUpdate({ email: req.body.email }, {
+                yield forgotpasswordotps_1.default.findOneAndUpdate({ email: req.body.email }, {
                     otp: oneTimePassword,
                     expiresIn: new Date().getTime() + 600 * 1000
                 });
@@ -553,7 +576,7 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
       `;
         // Sending a mail using nodemailer (read docs)
         // create reusable transporter object using the default SMTP transport
-        let transporter = nodemailer.createTransport({
+        let transporter = nodemailer_1.default.createTransport({
             host: "smtp.gmail.com",
             port: 587,
             secure: false,
@@ -572,7 +595,7 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
         res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." });
     }
     catch (err) {
-        res.status(200).json({ success: false, message: "Some error occurred please try again later!" });
+        res.status(500).json({ success: false, message: "Some error occurred please try again later!" });
     }
 }));
 app.post("/verifyforgotpasswordotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

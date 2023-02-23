@@ -1,6 +1,5 @@
 import  { useState ,ChangeEvent,useContext,FormEvent, useEffect} from 'react'
 import { Link, useNavigate } from 'react-router-dom';
-import { UserContext } from '../context/UserContext';
 import { request } from '../utils/axios-utils';
 import {FcGoogle} from "react-icons/fc"
 import { FaFeatherAlt } from 'react-icons/fa';
@@ -10,7 +9,6 @@ import { Helmet } from 'react-helmet';
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const {userInfo}=useContext(UserContext) 
   const {setAlert}=useContext(AlertContext) 
   const navigate=useNavigate()
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
@@ -24,11 +22,15 @@ export default function Login() {
   }
 }
 useEffect(()=>{
-
+  let getUser=localStorage.getItem("userInfo")
+  let userInfo
+if(getUser){
+   userInfo=JSON.parse(getUser)
+}
 if(userInfo?.email){
   navigate("/")
 }
-},[userInfo?.email])
+},[])
 
 
 const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
@@ -42,7 +44,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     localStorage.setItem("userInfo",JSON.stringify(response.data))
 
 
-  navigate("/auth/success")
+  navigate("/auth/success", { replace: true })
    }
   else{
     setAlert((preval:AlertData) => (
@@ -69,7 +71,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
       <title>Decker-Login</title>
     </Helmet>
     <section className="absolute top-0 left-0 w-full h-full">
-    <div className=" py-12 px-6 h-full">
+  { !localStorage.getItem("userInfo")? <div className=" py-12 px-6 h-full">
       <div className="flex justify-center items-center flex-wrap h-full g-6 ">
         <div className="xl:w-6/12">
           <div className="block   rounded-lg shadow-2xl bg-white dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500 ">
@@ -157,7 +159,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>:null}
   </section>
   </>
   )

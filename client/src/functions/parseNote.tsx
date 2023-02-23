@@ -70,7 +70,7 @@ const parseNote = (noteVal: string) => {
           finalResult.push(text.substring(index, startIndex));
           finalResult.push(
             <strong
-              className="font-bold dark:text-yellow-400  text-gray-900 "
+              className="font-bold dark:text-yellow-400  text-sky-600 "
               key={startIndex}
             >
               {boldText}

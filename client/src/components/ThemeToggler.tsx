@@ -1,5 +1,4 @@
-import React,{useContext,FC} from 'react'
-import {RiMoonClearFill} from "react-icons/ri"
+import {useContext,FC} from 'react'
 import {RiSunFill} from "react-icons/ri"
 import { UserContext } from '../context/UserContext'
 

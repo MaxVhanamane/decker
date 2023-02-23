@@ -18,7 +18,7 @@ type DeckTypes = {
 export const updateDeck = async (data: DataType) => {
   // you don't need to add try catch block as axios will automatically throw an error. 
   // If you want to throw an error then do it manually  using throw keyword because usequery or usemutation need that
-  const response = await request.put(`/deck`, { id:data.id, pinned: data.pinned, });
+  const response = await request.patch(`/deck/${data.id}`, { pinned: data.pinned, });
     return response.data
 
 

@@ -24,7 +24,7 @@ type PromiseData = {
   pinned: boolean;
 };
 const editCard = async (cardData: CardData): Promise<PromiseData> => {
-  const data = await request.put(`/card/${cardData.deck_id}`, {
+  const data = await request.patch(`/card/${cardData.deck_id}`, {
     index: cardData.index,
     newContent: {
       title: cardData.newContent.title,

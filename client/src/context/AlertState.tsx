@@ -1,5 +1,4 @@
 import React,{ReactNode} from 'react'
-// import NoteContext from "./NoteContext"
 import { createContext, useState } from "react";
 import { AlertType } from '../types/types';
 type AlertContextType = {

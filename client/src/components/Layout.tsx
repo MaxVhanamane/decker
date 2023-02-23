@@ -1,4 +1,4 @@
-import { ReactNode ,useContext} from 'react';
+import { ReactNode} from 'react';
 import Navbar from './Navbar';
 import { useLocation } from 'react-router-dom';
 interface Props {

@@ -1,4 +1,4 @@
-import {FC,useState}from 'react'
+import {FC}from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request } from '../utils/axios-utils';
 import { useContext, useRef } from 'react';
@@ -9,14 +9,11 @@ import {FaUserCircle} from "react-icons/fa"
 import {RiCloseFill} from "react-icons/ri"
 import ThemeToggler from './ThemeToggler';
 import SearchBar from './SearchBar';
-import { AiOutlineSearch } from 'react-icons/ai';
 import { BsSearch } from 'react-icons/bs';
 const Navbar:FC = () => {
   const {setUserInfo,showSearchBar,setShowSearchBar}=useContext(UserContext)
   const userDetails=localStorage.getItem("userInfo")
-  // const [showInfo,setShowInfo]=useState(false)
   let userInfo:userData | undefined
-  const divRef=useRef<HTMLDivElement | null >(null)
   const divRefForLargeScreen=useRef<HTMLDivElement | null >(null)
   if(userDetails){
     userInfo=JSON.parse(userDetails)
@@ -77,10 +74,12 @@ const Navbar:FC = () => {
   </div>
   
   <div className='flex gap-4 items-center justify-center ' >
+   { userInfo?.email&& <>
   <SearchBar />
    <button onClick={()=>{setShowSearchBar(true)}} disabled={showSearchBar} aria-label="Search">
     <BsSearch className={`text-lg dark:text-gray-100 text-gray-500 ${!showSearchBar?"opacity-100":"opacity-0 pointer-events-none"} cursor-pointer transition-opacity lg:duration-[1200ms] duration-500 mr-2`} />
     </button>
+    </>}
 <div>
 
 
@@ -102,7 +101,7 @@ const Navbar:FC = () => {
    
     <div ref={divRefForLargeScreen}  className=' fixed transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-50 '>
       <div className=' ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4   bg-white p-4 rounded-md dark:bg-[#0c1221] mx-auto  '>
-<button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center text-gray-50 cursor-pointer ' aria-label="Close"><RiCloseFill/></button>
+<button onClick={handleShowUserInfomation} className='font-semibold absolute top-2 right-1 rounded px-1 text-center dark:text-gray-50  text-gray-700 cursor-pointer ' aria-label="Close"><RiCloseFill/></button>
     <h2 className='mb-3 font-bold text-gray-700 dark:text-gray-50'>My account</h2>
       <ul className='flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 w-fit '>
         <li className='flex gap-1'><span className='font-semibold  w-fit'>username:</span> {userInfo?.username}</li>

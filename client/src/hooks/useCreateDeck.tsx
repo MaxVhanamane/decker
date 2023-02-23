@@ -1,7 +1,7 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertState";
-import { AlertData, DeckType } from "../types/types";
+import { AlertData, AxiosErrorType, DeckType } from "../types/types";
 import { useContext } from "react";
 const createDeck = async (title: string) => {
   // you don't need to add try catch block as axios will automatically throw an error.
@@ -53,7 +53,7 @@ const useCreateDeck = () => {
         ...preval,
         severity: "error",
         show: true,
-        message: (error as Error).message,
+        message: (error as AxiosErrorType)?.response?.data.message || (error as Error).message,
       }));
       queryClient.setQueryData("decks", context);
     },

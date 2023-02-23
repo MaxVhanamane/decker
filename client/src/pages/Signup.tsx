@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react'
+import  { useState,useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FormEvent, useContext } from 'react';
 import { ChangeEvent } from 'react';
@@ -29,6 +29,8 @@ export default function SignUp() {
       navigate("/")
     }
     },[userInfo?.email])
+
+    
 
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "username") {

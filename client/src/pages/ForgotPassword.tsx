@@ -3,24 +3,28 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FormEvent, useContext } from 'react';
 import { ChangeEvent } from 'react';
 import { request } from './../utils/axios-utils';
-import { UserContext } from '../context/UserContext';
 import { FaFeatherAlt } from 'react-icons/fa';
 import { AlertContext } from '../context/AlertState';
 import { AlertData } from '../types/types';
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState("")
   const [otp, setOTP] = useState("")
   const [showWaitMessage,setShowWaitMessage]=useState(false)
  const [showVerifyOTPButton,setShowVerifyOTPButton]=useState(false)
-  const {userInfo}=useContext(UserContext) 
   const navigate=useNavigate()
   const {setAlert}=useContext(AlertContext) 
-  useEffect(()=>{
 
-    if(userInfo?.email){
-      navigate("/")
-    }
-    },[userInfo?.email])
+  useEffect(()=>{
+    let getUser=localStorage.getItem("userInfo")
+    let userInfo
+  if(getUser){
+     userInfo=JSON.parse(getUser)
+  }
+  if(userInfo?.email){
+    navigate("/")
+  }
+  },[])
 
   const handleChange = (e:ChangeEvent<HTMLInputElement>) => {
 
@@ -92,7 +96,7 @@ export default function ForgotPassword() {
   return (
     <>
   
-    <section className="absolute top-0 left-0 w-full h-full">
+    {!localStorage.getItem("userInfo")?<section className="absolute top-0 left-0 w-full h-full">
   
       <div className=" py-12 px-6 h-full">
         <div className="flex justify-center items-center flex-wrap h-full g-6 text-gray-800">
@@ -185,7 +189,7 @@ export default function ForgotPassword() {
           </div>
         </div>
       </div>
-    </section>
+    </section>:null}
     </>
   )
 }
