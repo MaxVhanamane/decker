@@ -118,11 +118,6 @@ const Cards: FC = () => {
       }, 1200)
     }
 
-    else if (!inputElementRef?.current?.classList.contains("rounded-t-md") && !expandTextarea) {
-
-      inputElementRef?.current?.classList.add("rounded-t-md");
-
-    }
   }, [expandTextarea]);
 
   useEffect(() => {

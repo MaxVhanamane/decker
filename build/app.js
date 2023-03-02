@@ -68,7 +68,7 @@ store.on('error', function (error) {
 });
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use((0, cors_1.default)({ origin: ["https://decker.vercel.app", "http://localhost:5173"], credentials: true }));
+app.use((0, cors_1.default)({ origin: process.env.ORIGIN, credentials: true }));
 app.set('trust proxy', 1);
 // create session
 app.use((0, express_session_1.default)({
@@ -97,8 +97,12 @@ function (username, password, done) {
             return done(err);
         } // If there is error we will return an error to done function.
         if (!user) {
-            return done(null, false, { message: 'User not found!' });
-        } // If we don't find any user then we will return null and as there is no error we will send false
+            return done(new mongoose_1.Error("User with this email doesn't exist!"));
+        } // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
+        // check if user is registered with Google Auth
+        if (!user.password) {
+            return done(new mongoose_1.Error("You cannot log in with local credentials because you registered with Google Auth."));
+        }
         // If we reach this line it means we found the user now let's compare the passoword.
         bcryptjs_1.default.compare(password, user.password, (err, result) => {
             if (err)
@@ -107,7 +111,7 @@ function (username, password, done) {
                 return done(null, user); // If password matches we will send the user
             }
             else {
-                return done(null, false, { message: 'Incorrect username or password.' }); // If password doesn't match then we will send error as null and user as false
+                return done(new mongoose_1.Error("Incorrect password!")); // If password doesn't match then we will throw an error.we can receive this error using error.message in login route.
             }
         });
     });
@@ -137,8 +141,8 @@ passport_1.default.use(new GoogleStrategy({
         return done(null, user);
         //If some error occures while connecting to db of something else we will catch it here
     }
-    catch (err) {
-        return done(err);
+    catch (error) {
+        return done(error);
     }
 })));
 // serializeUser to store only id in session
@@ -162,12 +166,17 @@ const fetchUserDetails = function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (req === null || req === void 0 ? void 0 : req.user) {
             const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
-            const user = yield user_1.default.findOne({ email: email });
-            req.userDetails = user;
-            next();
+            try {
+                const user = yield user_1.default.findOne({ email: email });
+                req.userDetails = user;
+                next();
+            }
+            catch (error) {
+                return res.status(500).send("Error fetching user details. Please check your internet connection.");
+            }
         }
         else {
-            return res.status(401).send("You are unauthorized. Please Log in");
+            return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
         }
     });
 };
@@ -187,12 +196,17 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 //Deck routes 
 app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = req === null || req === void 0 ? void 0 : req.userDetails;
-        // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
-        // as there is a relation defined between two collection DeckModal and User 
-        // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
-        const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }).sort({ date: -1 });
-        res.status(200).json(deck);
+        try {
+            const user = req === null || req === void 0 ? void 0 : req.userDetails;
+            // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
+            // as there is a relation defined between two collection DeckModal and User 
+            // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
+            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }).sort({ date: -1 });
+            res.status(200).json(deck);
+        }
+        catch (error) {
+            res.status(500).json({ message: "Internal server error!" });
+        }
     });
 });
 app.post('/deck', fetchUserDetails, function (req, res) {
@@ -207,7 +221,7 @@ app.post('/deck', fetchUserDetails, function (req, res) {
             const createdDeck = yield newDeck.save();
             res.status(201).json(createdDeck);
         }
-        catch (_a) {
+        catch (error) {
             res.status(500).json({ message: "Internal server Error!" });
         }
     });
@@ -285,10 +299,10 @@ app.get('/cards/:_id', fetchUserDetails, function (req, res) {
                 res.status(200).json({ cards: cards.cards, title: cards.title });
             }
             else {
-                res.status(404).json({ message: "No cards found!" });
+                res.status(200).json({ message: "No cards found!" });
             }
         }
-        catch (_a) {
+        catch (error) {
             res.status(500).json({ message: "Internal server Error!" });
         }
     });
@@ -298,13 +312,13 @@ app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
         try {
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
             if (!getDeck) {
-                return res.status(404).json({ message: "No deck found! Please check deck id" });
+                return res.status(200).json({ message: "No deck found! Please check deck id" });
             }
             getDeck.cards.unshift(req.body.content);
             const createdCard = yield getDeck.save();
             res.status(201).json(createdCard);
         }
-        catch (err) {
+        catch (error) {
             res.status(500).json({ message: "Invalid id" });
         }
     });
@@ -329,10 +343,10 @@ app.patch('/card/:deck_id', fetchUserDetails, function (req, res) {
                 res.status(200).json(newCard);
             }
             else {
-                res.status(404).json({ message: "No cards found!" });
+                res.status(200).json({ message: "No cards found!" });
             }
         }
-        catch (_a) {
+        catch (error) {
             res.status(500).json({ message: "Internal server Error!" });
         }
     });
@@ -347,7 +361,7 @@ app.delete('/card/:id/:index', fetchUserDetails, function (req, res) {
                 res.status(200).json({ cards: newArray, success: true });
             }
             else {
-                res.status(404).json({ message: "Card not found!", success: false });
+                res.status(200).json({ message: "Card not found!", success: false });
             }
         }
         catch (error) {
@@ -369,7 +383,7 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, fun
                 res.status(200).json({ success: true });
             }
             else {
-                res.status(404).json({ message: "Card not found!", success: false });
+                res.status(200).json({ message: "Card not found!", success: false });
             }
         }
         catch (error) {
@@ -438,7 +452,7 @@ app.post('/login', passport_1.default.authenticate('local', { failWithError: tru
         res.status(200).json({ success: false });
     }
 }, function (error, req, res, next) {
-    return res.status(200).json({ success: false, message: error });
+    return res.status(200).json({ success: false, message: error.message });
 });
 function generateOTP() {
     // Declare a variable to store the OTP

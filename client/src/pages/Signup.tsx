@@ -143,6 +143,7 @@ export default function SignUp() {
                           value={password}
                           placeholder="Password" 
                           required
+                          autoComplete='new-password'
                         />
                       </div>
                       <div className="mb-4">
@@ -154,6 +155,7 @@ export default function SignUp() {
                           value={confirmPass}
                           placeholder="Confirm password"
                           required
+                          autoComplete='new-password'
                         />
                       </div>
                       <div className="text-center pt-1 mb-10 pb-1">

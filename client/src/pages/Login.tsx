@@ -47,12 +47,14 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
   navigate("/auth/success", { replace: true })
    }
   else{
+    console.log(response.data)
     setAlert((preval:AlertData) => (
       {
         ...preval,
         severity: "error",
         show: true,
-        message: "Invalid username or password"
+        message: response.data.message,
+        autoHideDuration:5000
       }))
   }
   
@@ -105,6 +107,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                         placeholder="Password"
                         name="password"
                         required
+                        autoComplete="current-password"
                       />
                     </div>
                  

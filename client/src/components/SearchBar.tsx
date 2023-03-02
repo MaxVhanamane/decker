@@ -4,8 +4,6 @@ import SearchResult from './SearchResult';
 import { RiCloseFill } from 'react-icons/ri';
 import { UserContext } from '../context/UserContext';
 
-
-
 const SearchBar:FC = () => {
   const {showSearchBar,setShowSearchBar}=useContext(UserContext)
 
@@ -25,6 +23,11 @@ const SearchBar:FC = () => {
     //       document.removeEventListener("mousedown", handleClickOutside);
     //     };
     //   }, []);
+ 
+    const handleInputChange = (event:any) => {
+      const { value } = event.target;
+      setSearchQuery(value);
+    };
     
   return (
     <div className={` bg-slate-800 fixed top-14 lg:relative lg:top-auto`}>
@@ -32,7 +35,11 @@ const SearchBar:FC = () => {
     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
        <AiOutlineSearch className='dark:text-white text-gray-700 text-lg'/>
     </div>
-    <input ref={searchBarRef} value={searchQuery} onChange={(e)=>{setSearchQuery(e.target.value)}} type="text" id="simple-search" className="bg-gray-50 dark:bg-gray-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm rounded-md  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300  " placeholder="Search for decks and cards" autoComplete="off" required/>
+    <input ref={searchBarRef} value={searchQuery} onChange={
+
+     handleInputChange
+      
+      } type="text" id="simple-search" className="bg-gray-50 dark:bg-gray-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm rounded-md  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300  " placeholder="Search for decks and cards" autoComplete="off" required/>
     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
        <RiCloseFill onClick={()=>{setShowSearchBar(false),setSearchQuery("")}} className={`text-gray-700 dark:text-gray-100 ${showSearchBar?"opactiy-100":"opacity-0"} cursor-pointer transition-opacity duration-700`}/>
     </div>

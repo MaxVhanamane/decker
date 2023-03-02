@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 import usePinDeck from '../hooks/usePinDeck';
 import EditModalForDeck from './EditModalForDeck';
 import { UserContext } from '../context/UserContext';
+let timer:any
 interface IProp{
     searchQuery:string;
     setShowSearchBar:Dispatch<React.SetStateAction<boolean>>;
@@ -27,6 +28,7 @@ interface IProp{
 
 
 const SearchResult:FC<IProp> = ({searchQuery,setShowSearchBar}) => {
+  const[showResult,setShowResult]=useState(false)
 const [foundCards,setFoundCards]=useState<SearchResultCardsType[]>([])
 const [foundDecks,setFoundDecks]=useState<SearchResultDeckType[]>([])
 const { data, isError, error, isLoading } = useGetDecks()
@@ -54,8 +56,7 @@ const allCards = useMemo(() => {
     return data.map((data) => ({ deck_id: data._id, title: data.title, pinned: data.pinned }));
   }, [data]);
   
-let pinnedDeckCount
-let unPinnedDeckCount
+
 //Cards code
 const filterCards = useCallback(() => {
   // const allCards =  data?.flatMap(deck => deck.cards.map((card,index) => ({ ...card, deck_id: deck._id,cardIndex:index})))
@@ -78,14 +79,21 @@ const filterCards = useCallback(() => {
       : [];
     setFoundDecks(filteredDecks);
     setFoundCards(filteredCards);
+    setShowResult(true)
   }, [searchQuery,data]);
   
   useEffect(() => {
     if (searchQuery.length > 0) {
-      filterCards();
+      clearTimeout(timer)
+     timer= setTimeout(()=>{
+        filterCards();
+      },500)
+      
     } else {
+      clearTimeout(timer)
       setFoundDecks([]);
       setFoundCards([]);
+      setShowResult(false)
     }
   }, [searchQuery, filterCards,data]);
   
@@ -230,7 +238,7 @@ return <>
     </Link>
   ))}
 </div>
-</div> : <div className={`flex ${searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0) ? "items-center": "items-start"} justify-center z-50 w-screen h-full font-semibold`}> {searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0)?<p className='text-red-500'>No result found</p>:<p className='hidden lg:block mt-8 text-gray-700 dark:text-gray-200'>Discover relevant content from all decks and cards with keyword search</p>}</div>}
+</div> : <div className={`flex ${showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0) ? "items-center": "items-start"} justify-center z-50 w-screen h-full font-semibold`}> {showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0)?<p className='text-red-500 animate-bounce'>No result found!</p>:<p className='hidden lg:block mt-8 text-gray-700 dark:text-gray-200'>Discover relevant content from all decks and cards with keyword search</p>}</div>}
 </div>
 </>
 }

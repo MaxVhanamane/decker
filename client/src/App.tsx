@@ -1,4 +1,4 @@
-import { lazy, Suspense, useContext,useRef} from "react";
+import { useContext,useRef} from "react";
 import Deck from "./pages/Deck";
 import { Routes, Route } from "react-router-dom";
 // import Cards from "./pages/Cards";
@@ -15,9 +15,8 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import Layout from "./components/Layout";
 import AuthSuccess from "./pages/AuthSuccess";
 import AuthFailure from "./pages/AuthFailure";
-import useDeleteCard from "./hooks/useDeleteCard";
-const SignUp = lazy(() => import("./pages/Signup"));
-const Cards = lazy(() => import("./pages/Cards"));
+import SignUp from "./pages/Signup";
+import Cards from "./pages/Cards";
 import Loading from "./components/Loading";
 import { UserContext } from "./context/UserContext";
 import VerifyEmail from './pages/VerifyEmail';
@@ -147,17 +146,13 @@ function App() {
               <Route
                 path="/cards/:deck_id"
                 element={
-                  <Suspense fallback={<Loading />}>
                     <Cards />
-                  </Suspense>
                 }
               />
               <Route
                 path="/cards/:deck_id/:search_index"
                 element={
-                  <Suspense fallback={<Loading />}>
                     <Cards />
-                  </Suspense>
                 }
               />
             </Route>
@@ -165,9 +160,7 @@ function App() {
             <Route
               path="/signup"
               element={
-                <Suspense fallback={<Loading />}>
                   <SignUp />
-                </Suspense>
               }
             />
             <Route path="/login" element={<Login />} />

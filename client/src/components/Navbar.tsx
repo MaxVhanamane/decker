@@ -86,7 +86,7 @@ const Navbar:FC = () => {
 
 
     <ul className='flex items-center justify-center gap-3'>
-  <li className=' text-2xl mr-2 '> <ThemeToggler /></li>
+  <li className=' text-2xl mr-2 '> <ThemeToggler/></li>
 
   {userInfo?.email?<li onClick={()=>{handleShowUserInfomation()}}className=' cursor-pointer   mr-1  rounded-full flex gap-2 px-2 items-center'> {userInfo?.profile_picture?<img className='rounded-full w-8 h-8 ' src={userInfo?.profile_picture} alt="profile" referrerPolicy="no-referrer"/>:<FaUserCircle className='w-8 h-8 dark:text-sky-500 text-gray-600 '/>}</li>:null}
         </ul>

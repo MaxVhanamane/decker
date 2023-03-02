@@ -67,7 +67,7 @@ store.on('error', function (error: Error) {
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
-app.use(cors({ origin: ["https://decker.vercel.app", "http://localhost:5173"], credentials: true }))
+app.use(cors({ origin: process.env.ORIGIN, credentials: true }))
 
 app.set('trust proxy', 1)
 
@@ -99,7 +99,11 @@ passport.use(new LocalStrategy(
   function (username, password, done) {
     User.findOne({ email: username }, function (err: Error, user: UserDetails) {
       if (err) { return done(err); }  // If there is error we will return an error to done function.
-      if (!user) { return done(null, false, { message: 'User not found!' }); } // If we don't find any user then we will return null and as there is no error we will send false
+      if (!user) { return done(new Error("User with this email doesn't exist!")); } // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
+       // check if user is registered with Google Auth
+       if (!user.password) {
+        return done(new Error("You cannot log in with local credentials because you registered with Google Auth."));
+      }
       // If we reach this line it means we found the user now let's compare the passoword.
       bcrypt.compare(password, user.password!, (err, result) => {
         if (err) throw err // If some error occures while decrypting we will throw an error. very less likely but still...
@@ -107,7 +111,7 @@ passport.use(new LocalStrategy(
           return done(null, user) // If password matches we will send the user
         }
         else {
-          return done(null, false, { message: 'Incorrect username or password.' }) // If password doesn't match then we will send error as null and user as false
+          return done(new Error("Incorrect password!")) // If password doesn't match then we will throw an error.we can receive this error using error.message in login route.
         }
       })
     });
@@ -144,8 +148,8 @@ passport.use(
         return done(null, user)
         //If some error occures while connecting to db of something else we will catch it here
       }
-      catch (err) {
-        return done(err as Error);
+      catch (error) {
+        return done(error as Error);
       }
 
 
@@ -179,13 +183,17 @@ passport.deserializeUser((id: string, done) => {
 const fetchUserDetails = async function (req: Request, res: Response, next: NextFunction) {
   if (req?.user) {
     const email = req?.user?.email
-    const user: UserDetails | null = await User.findOne({ email: email })
-    req.userDetails = user
-    next()
+    try {
+      const user: UserDetails | null = await User.findOne({ email: email })
+      req.userDetails = user
+      next()
+    } catch (error) {
+      return res.status(500).send("Error fetching user details. Please check your internet connection.")
+    }
   }
   else {
 
-    return res.status(401).send("You are unauthorized. Please Log in")
+    return res.status(200).json({message:"Your session has expired. Please log in again to continue."})
   }
 }
 
@@ -210,13 +218,19 @@ mongoose.connect(process.env.MONGO_URI!, {
 //Deck routes 
 
 app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) {
-  const user = req?.userDetails
+  try{
+    const user = req?.userDetails
 
-  // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
-  // as there is a relation defined between two collection DeckModal and User 
-  // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
-  const deck = await DeckModal.find({ email: user?._id }).sort({ date: -1 });
-  res.status(200).json(deck)
+    // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
+    // as there is a relation defined between two collection DeckModal and User 
+    // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
+    const deck = await DeckModal.find({ email: user?._id }).sort({ date: -1 });
+    res.status(200).json(deck)
+  
+  }
+  catch(error){
+    res.status(500).json({message:"Internal server error!"})
+  }
 
 })
 
@@ -233,7 +247,7 @@ app.post('/deck', fetchUserDetails, async function (req: Request, res: Response)
     res.status(201).json(createdDeck)
   
   }
-  catch{
+  catch(error){
     res.status(500).json({message:"Internal server Error!"})
 
   }
@@ -249,7 +263,7 @@ app.patch('/deck/:deck_id', fetchUserDetails, async function (req: Request, res:
     res.status(200).json(updatedDeck)
   }
 
-  catch (error) {
+  catch(error) {
     if (error instanceof Error) {
 
       res.status(500).send({ message: error.message, isError: true });
@@ -276,7 +290,7 @@ app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Respon
     res.status(200).json({ createdDeck, success: true })
   }
 
-  catch (error) {
+  catch(error) {
     if (error instanceof Error) {
 
       res.status(500).send({ message: error.message, isError: true });
@@ -298,7 +312,7 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: Reques
     res.status(200).json(updatedDeck)
   }
 
-  catch (error) {
+  catch(error) {
     if (error instanceof Error) {
 
       res.status(500).send({ message: error.message, isError: true });
@@ -318,7 +332,7 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
     const deletedDeck = await DeckModal.findByIdAndDelete(req.params.id)
     res.status(200).json({ deletedDeck, success: true })
   }
-  catch (error) {
+  catch(error) {
     res.status(500).json({ message: "some error occurred! Please try again later!", success: false })
   }
 
@@ -334,10 +348,10 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Resp
       res.status(200).json({ cards: cards.cards, title: cards.title })
     }
     else {
-      res.status(404).json({ message: "No cards found!" });
+      res.status(200).json({ message: "No cards found!" });
     }
   }
-  catch {
+  catch(error) {
     res.status(500).json({ message: "Internal server Error!" })
   }
 
@@ -347,13 +361,13 @@ app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: 
   try {
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {
-      return res.status(404).json({ message: "No deck found! Please check deck id" })
+      return res.status(200).json({ message: "No deck found! Please check deck id" })
     }
     getDeck.cards.unshift(req.body.content)
     const createdCard = await getDeck.save()
     res.status(201).json(createdCard)
   }
-  catch (err) {
+  catch(error) {
     res.status(500).json({ message: "Invalid id" })
   }
 
@@ -378,10 +392,10 @@ app.patch('/card/:deck_id', fetchUserDetails, async function (req: Request, res:
       res.status(200).json(newCard)
     }
     else {
-      res.status(404).json({ message: "No cards found!" })
+      res.status(200).json({ message: "No cards found!" })
     }
   }
-  catch {
+  catch(error) {
     res.status(500).json({ message: "Internal server Error!" })
   }
 })
@@ -398,7 +412,7 @@ app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, r
       res.status(200).json({ cards: newArray, success: true })
     }
     else {
-      res.status(404).json({ message: "Card not found!", success: false })
+      res.status(200).json({ message: "Card not found!", success: false })
 
     }
   }
@@ -425,7 +439,7 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, asy
 
     }
     else {
-      res.status(404).json({ message: "Card not found!", success: false })
+      res.status(200).json({ message: "Card not found!", success: false })
 
     }
   }
@@ -510,9 +524,9 @@ app.post('/login',
     else {
       res.status(200).json({ success: false });
     }
-  }, function (error: unknown, req: Request, res: Response, next: NextFunction) {
+  }, function (error: any, req: Request, res: Response, next: NextFunction) {
 
-    return res.status(200).json({ success: false, message: error });
+    return res.status(200).json({ success: false, message: error.message });
   }
 );
 

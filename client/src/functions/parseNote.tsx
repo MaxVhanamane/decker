@@ -56,7 +56,7 @@ const parseNote = (noteVal: string) => {
     // extracting bold text
     let finalResult: Array<string | React.ReactElement> = [];
     // I have added bold text in ** your bold text **. so we will use regular expression to extract it.
-    const regexBold = /\*\*(.*?)\*\*/g;
+    const regexBold = /\*\*([\s\S]+?)\*\*/g;
     // The 'result' is an array that we created above. We will map over each string in it and check if there is any bold text present in it
     result.forEach((item) => {
       if (typeof item === "string") {
