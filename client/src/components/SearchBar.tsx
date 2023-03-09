@@ -6,7 +6,6 @@ import { UserContext } from '../context/UserContext';
 
 const SearchBar:FC = () => {
   const {showSearchBar,setShowSearchBar}=useContext(UserContext)
-
     const searchBarRef = useRef<HTMLInputElement>(null);
     const [searchQuery,setSearchQuery]=useState<string>("")
     // if you want to close the searchbar when user clicks outside the search bar you can use following code
@@ -45,7 +44,7 @@ const SearchBar:FC = () => {
     </div>
 </div>
 <div className={`fixed  ${showSearchBar?"left-0":"left-full"} transition-all duration-500 lg:duration-700`}>
-<SearchResult searchQuery={searchQuery} setShowSearchBar={setShowSearchBar}/>
+{showSearchBar&& <SearchResult searchQuery={searchQuery} setShowSearchBar={setShowSearchBar}/>}
 </div>
 </div>
   )

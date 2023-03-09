@@ -11,6 +11,10 @@ import { request } from "../utils/axios-utils";
 
 export default function useGetDecks(){
 
-  return useQuery("decks",getDecks)
+  return useQuery("decks",getDecks,{
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: true, // Refetch on network reconnect
+    retry: 3, // Retry up to 3 times on network errors
+  })
 
 }

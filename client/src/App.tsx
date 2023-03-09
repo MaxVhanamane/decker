@@ -12,7 +12,6 @@ import useDeleteDeck from "./hooks/useDeleteDeck";
 // import SignUp from "./pages/Signup";
 import Login from "./pages/Login";
 import PrivateRoutes from "./components/PrivateRoutes";
-import Layout from "./components/Layout";
 import AuthSuccess from "./pages/AuthSuccess";
 import AuthFailure from "./pages/AuthFailure";
 import SignUp from "./pages/Signup";
@@ -139,7 +138,7 @@ function App() {
       >
           
    <ShowAlert />
-        <Layout >
+       
           <Routes>
             <Route element={<PrivateRoutes />}>
               <Route path="/" element={<Deck undoDeck={undoDeck} handleUndoDeck={handleUndoDeck} undoButtonRef={undoButtonRef} handlePopupForUndoButton={handlePopupForUndoButton}/>} />
@@ -171,7 +170,7 @@ function App() {
             <Route path="/verifyemail" element={<VerifyEmail />} />
             {/* <Route path='*' element={<NotFound/>} /> */}
           </Routes>
-        </Layout>
+        
       </DragDropContext>
     </>
   );

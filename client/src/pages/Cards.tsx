@@ -8,7 +8,8 @@ import {
   FC,
   useEffect,
   useCallback,
-  KeyboardEvent
+  KeyboardEvent,
+  memo
 } from "react";
 import React from "react";
 import { useParams } from "react-router-dom";
@@ -18,7 +19,7 @@ import useDeleteCard from "../hooks/useDeleteCard";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiCodeCurly, BiEdit } from "react-icons/bi";
 import useEditCard from "../hooks/useEditCard";
-import { Droppable, Draggable } from "react-beautiful-dnd";
+import { Droppable } from "react-beautiful-dnd";
 import { BsTrash } from "react-icons/bs";
 import { AiOutlineBold } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
@@ -34,6 +35,7 @@ import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from 'react-router-dom';
 import parseNote from "../functions/parseNote";
 import { GoEyeClosed } from "react-icons/go";
+import CardItems from "../components/CardItems";
 
 // types
 // let oldContent:string //this  works
@@ -115,7 +117,9 @@ const Cards: FC = () => {
 
       setTimeout(() => {
         inputElementRef?.current?.classList.remove("rounded-t-md");
+        
       }, 1200)
+
     }
 
   }, [expandTextarea]);
@@ -134,7 +138,10 @@ const Cards: FC = () => {
       setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-b-md");
         inputElementRef?.current?.classList.add("duration-700");
-      }, 800)
+      }, 600)
+      setTimeout(() => {
+        textareaRef?.current?.classList.add("opacity-0");
+      }, 950)
 
     }
     else {
@@ -159,6 +166,9 @@ const Cards: FC = () => {
     [openModal, showFullScreen]
   );
 
+  // Here we will check if user has used browser's back button if he uses browsers back button to go back then 
+  // we will first check if card is open in full screen if it is open then we will close it instead of going back to the previous page directly.
+  // This is usefull when user is accessing the site on mobile because most users swipe to go back.
   useEffect(() => {
     // This is how you detect if the browser's back button is clicked or not.
     window.history.pushState(null, '', document.URL);
@@ -228,18 +238,18 @@ const Cards: FC = () => {
     }
   };
 
-  const handleDelete = async (index: number) => {
+  const handleDelete = useCallback( (index: number) => {
     setIndexOfCardForDeletion(index);
     // This will take confirmation of user by showing him a modal.
     if (deleteConfirmationModalForCard?.current?.classList.contains("hidden")) {
       deleteConfirmationModalForCard?.current?.classList.remove("hidden");
     }
-  };
+  },[])
 
-  const handleEdit = (cardItem: ContentTypeForEdit) => {
+  const handleEdit = useCallback((cardItem: ContentTypeForEdit) => {
     setEditContent(cardItem);
     setOpenModal(true);
-  };
+  },[])
 
   const handleSave = () => {
     let data = {
@@ -285,13 +295,13 @@ const Cards: FC = () => {
     }
   };
 
-  const handleShowFullScreen = (card: ContentForFullScreen) => {
+  const handleShowFullScreen = useCallback((card: ContentForFullScreen) => {
     setShowFullScreen(true);
     setFullScreenCardData({ ...card });
-  };
+  },[])
 
 
-  const addCodeBlock = (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
+  const addCodeBlock = useCallback((e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
     let newNote: string;
     let currentSelectionStart: number;
     let currentSelectionEnd: number;
@@ -410,9 +420,9 @@ const Cards: FC = () => {
       }
     }
 
-  };
+  },[note,setNote,editContent,setEditContent]);
 
-  const addBoldText = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const addBoldText = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     let newNote: string;
     let currentSelectionStart: number;
     let currentSelectionEnd: number;
@@ -528,7 +538,7 @@ const Cards: FC = () => {
 
 
     }
-  };
+  },[note, setNote,editContent,setEditContent])
 
 
 
@@ -680,7 +690,7 @@ const Cards: FC = () => {
                 placeholder={`${expandTextarea ? "Title" : "Add a note"} `}
               />
               <textarea
-                className={` ${expandTextarea ? " py-2 border-b-2 rounded-t-0" : "py-0 border-b-0 "} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-all duration-1000 overflow-hidden smaller-shadow dark:shadow-sm   dark:shadow-sky-500 shadow-teal-500 `}
+                className={` ${expandTextarea ? " py-2 border-b-2 rounded-t-0 opacity-100" : "py-0 border-b-2"} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
@@ -707,101 +717,7 @@ const Cards: FC = () => {
           </h1>
         </div>
         {/* You can't use Draggable directly you have to use it inside Dropable component  */}
-        <Droppable droppableId="cardDropableArea">
-          {(provided, snapshot) => {
-            return (
-              <div
-                className="flex flex-row flex-wrap gap-4 justify-center items-center  mx-2 lg:mx-52 mb-48  "
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {data?.cards?.map((card, index) => {
-                  return (
-                    <Draggable
-                      draggableId={`${deck_id!}-${index}`}
-                      index={index}
-                      key={index}
-                    >
-                      {(provided, snapshot) => {
-                        if (snapshot.isDragging) {
-                          changeColorWhileDragging.current?.classList.add(
-                            "!lg:w-[90vw]"
-                          );
-                        }
-                        return (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.dragHandleProps}
-                            {...provided.draggableProps}
-                            key={index}
-                          >
-                            <div
-                              ref={changeColorWhileDragging}
-                              onClick={() =>
-                                handleShowFullScreen({
-                                  ...card,
-                                  _id: deck_id!,
-                                  cardIndex: index,
-                                })
-                              }
-                              className={`relative border   ${snapshot.isDragging
-                                ? "shadow-2xl  shadow-violet-600 border-violet-600  animate-pulse dark:bg-[#0c1221] bg-white"
-                                : "border-gray-400 "
-                                } ${snapshot.draggingOver === "cardDeleteArea"
-                                  ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent"
-                                  : null
-                                }   flex flex-col text-gray-800
-                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500`}
-                            >
-                              <div className="absolute bottom-0 right-0 ">
-                                {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
-                                <button
-                                  onClick={(event) => {
-                                    event.stopPropagation(),
-                                      handleDelete(index);
-                                  }}
-                                  type="button"
-                                  className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-95"
-                                  aria-label="Delete Card"
-                                >
-                                  <MdOutlineDeleteOutline />
-                                </button>
-
-                                <button
-                                  onClick={(event) => {
-                                    event.stopPropagation(),
-                                      handleEdit({
-                                        ...card,
-                                        _id: deck_id!,
-                                        cardIndex: index,
-                                      });
-                                  }}
-                                  type="button"
-                                  className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 dark:text-sky-400 "
-                                  aria-label="Edit Card"
-                                >
-                                  <BiEdit />
-                                </button>
-                              </div>
-                              <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
-                                {card.title}
-                              </p>
-                              {/* line-clamp-3 helps to truncate characters after 3 lines */}
-                              <p className="text-sm lg:text-base text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1 ">
-                                {card.note}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      }}
-                    </Draggable>
-                  );
-                })}
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
+       <CardItems handleDelete={handleDelete} handleEdit={handleEdit} handleShowFullScreen={handleShowFullScreen} data={data}/>
       </div>
 
       {openModal ? (
@@ -966,4 +882,4 @@ const Cards: FC = () => {
   );
 };
 
-export default Cards;
+export default memo(Cards);

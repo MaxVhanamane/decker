@@ -47,7 +47,6 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
   navigate("/auth/success", { replace: true })
    }
   else{
-    console.log(response.data)
     setAlert((preval:AlertData) => (
       {
         ...preval,
@@ -96,6 +95,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                         placeholder="Email"
                         name="email"
                         required
+                        autoComplete="username"
                       />
                     </div>
                     <div className="mb-4">

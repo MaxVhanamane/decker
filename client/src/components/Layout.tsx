@@ -1,11 +1,11 @@
-import { ReactNode} from 'react';
+import { ReactNode, memo } from 'react';
 import Navbar from './Navbar';
 import { useLocation } from 'react-router-dom';
 interface Props {
     children?: ReactNode
     // any props that come into the component
 }
-export default function Layout({children}:Props) {
+ const  Layout=({children}:Props)=> {
 const location=useLocation()
 const paths=["/auth/success","/auth/failure"]
 
@@ -16,3 +16,5 @@ const paths=["/auth/success","/auth/failure"]
     </div>
   )
 }
+
+export default memo(Layout)

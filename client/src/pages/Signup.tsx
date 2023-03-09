@@ -130,6 +130,7 @@ export default function SignUp() {
                           value={username}
                           placeholder="Username"
                           required
+                          autoComplete="username"
                         />
                       </div>
                 

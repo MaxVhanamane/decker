@@ -17,7 +17,11 @@ import { Data } from "../types/types";
 
 const useGetCards =(deck_id:string)=>{
 
-    return useQuery(["cards",deck_id],()=>{return getCards(deck_id)})
+    return useQuery(["cards",deck_id],()=>{return getCards(deck_id)},{
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnReconnect: true, // Refetch on network reconnect
+      retry: 3, // Retry up to 3 times on network errors
+    })
 }
 
 export default useGetCards

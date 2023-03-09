@@ -1,4 +1,4 @@
-import {Dispatch, FC,useEffect,useMemo,useState, useCallback,useContext} from 'react'
+import {Dispatch, FC,useEffect,useMemo,useState, useCallback,useContext, memo} from 'react'
 import { BiEdit } from 'react-icons/bi';
 import useGetDecks from '../hooks/useGetDecks';
 import { BsFillPinFill, BsPin } from 'react-icons/bs';
@@ -106,7 +106,10 @@ const filterCards = useCallback(() => {
 // The g flag stands for "global" and tells the regular expression to match all occurrences of the search query in the input text, not just the first one.
 // The i flag stands for "case-insensitive" and tells the regular expression to ignore the case of the search query when matching against the input text.
   function highlightText(text:string, searchQuery:string) {
-    const regex = new RegExp(`(${searchQuery})`, "gi");
+    // here we will escape special characters because they have some meaning in regular expression.
+    // for eg. if you put "/" in search string ("react/") this will throw an error so we will escape "/" and then search it.
+    const escapedSearchQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedSearchQuery})`, "gi");
     const foundString = text.split(regex);
     return (
       <>
@@ -243,4 +246,4 @@ return <>
 </>
 }
 
-export default SearchResult
+export default memo(SearchResult)

@@ -1,4 +1,4 @@
-import { FormEvent, useState,useRef,useContext,RefObject} from "react";
+import { FormEvent, useState,useRef,useContext,RefObject,memo} from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import {BsPin, BsTrash} from "react-icons/bs"
@@ -24,7 +24,7 @@ type PropType={
 
   function Deck({undoDeck,handleUndoDeck,undoButtonRef,handlePopupForUndoButton}:PropType) {
     const {setAlert}=useContext(AlertContext) 
-    const [title, setTitle] = useState<string>("");
+    const inputRefElement=useRef<HTMLInputElement>(null)
     // const [deleteDeckId,setDeleteDeckId]=useState("")
     const {data:allDecks,error,isError,isLoading}=useGetDecks()
   const [openEditDeckModal,setOpenEditDeckModal]=useState(false)
@@ -41,11 +41,10 @@ type PropType={
     const showPopUp=useRef<HTMLDivElement | null >(null)
     
     const handleSubmit = async (e: FormEvent) => {
-      setTitle("")
       e.preventDefault();
-      if(title.length>0){
+      if(inputRefElement.current!.value.length>0){
 
-        addDeck(title)
+        addDeck(inputRefElement.current!.value)
       }
       else{
         setAlert((preval:AlertData) => (
@@ -158,13 +157,11 @@ type PropType={
               Deck title
             </label>
             <input
+            ref={inputRefElement}
               className=" dark:bg-[#0c1221] dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setTitle(e.target.value);
-              }}
-              value={title}
+            
             />
             <button  className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300" aria-label="Add Deck">Add Deck</button>
           </form>
@@ -310,4 +307,4 @@ type PropType={
     
   }
   
-  export default Deck;
+  export default memo(Deck);

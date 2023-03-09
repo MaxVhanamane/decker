@@ -1,4 +1,4 @@
-import {FC}from 'react'
+import {FC,memo}from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request } from '../utils/axios-utils';
 import { useContext, useRef } from 'react';
@@ -62,7 +62,15 @@ const Navbar:FC = () => {
 
       <div className='flex items-center justify-center flex-row gap-8'>
       <Link to={"/"}><div className='flex items-center justify-center rounded px-2 gap-2'>
-      <span className='text-xl text-teal-600 dark:text-sky-400'><FaFeatherAlt/></span> <span className=' h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl   '>Decker</span>
+      <span className='text-xl text-teal-600 dark:text-sky-400'><FaFeatherAlt/></span> <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
+  <span className="inline-block transform hover:-translate-y-1 hover:duration-300">D</span>
+  <span className="inline-block transform hover:-translate-y-1 hover:duration-300">e</span>
+  <span className="inline-block transform hover:-translate-y-1 hover:duration-300">c</span>
+  <span className="inline-block transform hover:-translate-y-1 hover:duration-300">k</span>
+  <span className="inline-block transform hover:-translate-y-1 hover:duration-300">e</span>
+  <span className="inline-block transform hover:-translate-y-1 hover:duration-300">r</span>
+</span>
+
  
       </div></Link>
   <div className='hidden md:block'>
@@ -120,4 +128,4 @@ const Navbar:FC = () => {
   )
 }
 
-export default Navbar
+export default memo(Navbar)
