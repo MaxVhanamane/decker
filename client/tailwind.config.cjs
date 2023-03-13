@@ -8,13 +8,13 @@ module.exports = {
     extend: {
       keyframes: {
         changeBgDark: {
-          "0%, 100%": {  "background-image": "linear-gradient(to left, #4c1d95,#0284c7,blue)",
+          "0%, 100%": {  "background-image": "linear-gradient(to left, blue,#0284c7,blue)",
        
           "background-size":"200%",
           "background-position":"right"
       
         },
-          "50%": { "background-image": "linear-gradient(to right,blue,#0284c7,#4c1d95)",
+          "50%": { "background-image": "linear-gradient(to right,blue,#0284c7,blue)",
          
           "background-size":"200%",
           "background-position":"left"},

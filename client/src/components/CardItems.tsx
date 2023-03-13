@@ -2,12 +2,11 @@ import { Droppable } from 'react-beautiful-dnd';
 import { Draggable } from 'react-beautiful-dnd';
 import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
-import useGetCards from '../hooks/useGetCards';
 import { useRef, memo } from 'react';
 import { BiEdit } from 'react-icons/bi';
 
 const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
-    const { deck_id, search_index } = useParams();
+    const { deck_id } = useParams();
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
 
   return (

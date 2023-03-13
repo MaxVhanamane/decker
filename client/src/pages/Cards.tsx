@@ -36,6 +36,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import parseNote from "../functions/parseNote";
 import { GoEyeClosed } from "react-icons/go";
 import CardItems from "../components/CardItems";
+import SessionExpired from "../components/SessionExpired";
 
 // types
 // let oldContent:string //this  works
@@ -556,6 +557,10 @@ const Cards: FC = () => {
   if (isLoading) {
     return <Loading />;
   }
+
+  if(data?.message){
+    return  <SessionExpired/>
+    }
 
   if (isError) {
     // If you do not define AxiosErrorType and directly access the error message using {(error as Error)?.message}, this will give the error message that Axios returns(something like request failed with status code 404). If you want to access the error message that you sent from the server, use {(error as AxiosErrorType)?.response?.data.message}.

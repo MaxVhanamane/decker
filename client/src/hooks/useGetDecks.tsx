@@ -3,8 +3,9 @@ import { DeckType } from "../types/types";
 
 import { request } from "../utils/axios-utils";
 
+type DeckTypeValue=DeckType[] & {message?:string}
   
- const getDecks = async ():Promise<DeckType[]>=>{
+ const getDecks = async ():Promise<DeckTypeValue>=>{
     const decks = await request.get(`/deck`);
     return decks.data ;
 }

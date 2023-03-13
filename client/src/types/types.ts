@@ -50,7 +50,7 @@ export type CardDataType = {
 export type Data={
   title:string;
   cards:{title:string,note:string}[];
-}
+}& {message?:string}
 
 export type AxiosErrorType = {
   message: string;

@@ -15,6 +15,7 @@ import PopUpMessage from "../components/PopUpMessage";
 import { AlertData, AxiosErrorType, DeckTypeWithIndex  } from ".././types/types";
 import useUndoDeck from './../hooks/useUndoDeck';
 import {Helmet} from "react-helmet";
+import SessionExpired from "../components/SessionExpired";
 type PropType={
   undoDeck:DeckTypeWithIndex | null,
   handleUndoDeck:(deck:DeckTypeWithIndex | null)=>void,
@@ -111,13 +112,18 @@ type PropType={
    
   
   const handleUndo=()=>{
-    // request.put("/undodeck",undoDeck) 
+    // I have set the value of undoDeck state in useDeleteDeck()
     undoDeckItem(undoDeck!)
+    // Once we undo the deck, we will set the state that was holding the deleted item to null so that when we delete another item, it can hold that fresh data.
     handleUndoDeck(null)
+   // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
     handlePopupForUndoButton()
   }
 
-
+     if(allDecks?.message){
+      return  <SessionExpired/>
+      }
+      
     if(isError){
       return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 "><p className="font-semibold"><span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}</p></div>
     }
@@ -133,7 +139,7 @@ type PropType={
         <meta name="description" content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."/>
       </Helmet>
       <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32 ">
-{<div ref={undoButtonRef}  className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-[#0c1221] border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"><span className="mr-4">Deck deleted successfully!</span><span className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400" onClick={(event)=>{handleUndo()}}>Undo</span></div>}
+{<div ref={undoButtonRef}  className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-[#0c1221] border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"><span className="mr-4">Deck deleted successfully!</span><span className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400" onClick={()=>{handleUndo()}}>Undo</span></div>}
 <PopUpMessage message="Drag and drop the deck here to delete it." showPopUp={showPopUp}/>
         <Droppable droppableId="DeckDeleteArea">
           {
