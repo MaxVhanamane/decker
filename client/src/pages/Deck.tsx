@@ -192,7 +192,7 @@ type PropType={
                     {(provided,snapshot)=>{
                       // ${snapshot.draggingOver==="othersDeckArea" &&"border-violet-600 shadow-violet-600 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
+      className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="DeckDeleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
       
        text-gray-800 dark:text-gray-50 
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify
@@ -249,7 +249,7 @@ type PropType={
                     {(provided,snapshot)=>{
                       //  ${snapshot.draggingOver==="pinnedArea" &&"border-yellow-500 shadow-yellow-500 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="deleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
+      className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="DeckDeleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
       text-gray-800 dark:text-gray-50 
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
                    transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 `}
