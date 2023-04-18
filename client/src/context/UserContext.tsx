@@ -79,7 +79,7 @@ function UserContextProvider({ children }: UserContextProvider) {
     else{
       setUserInfo(null)
       localStorage.removeItem('userInfo')
-      navigate("/login")
+      navigate("/sessionexpired")
     }
   };
   useEffect(() => {

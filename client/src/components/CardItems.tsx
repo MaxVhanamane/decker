@@ -4,13 +4,18 @@ import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 import { useRef, memo } from 'react';
 import { BiEdit } from 'react-icons/bi';
-
+import { v4 as uuidv4 } from 'uuid';
+type CardType={
+title:string;
+note:string;
+}
 const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
     const { deck_id } = useParams();
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
 
   return (
     <Droppable droppableId="cardDropableArea">
+      {/* You can't use Draggable directly you have to use it inside Dropable component  */}
           {(provided, snapshot) => {
             return (
               <div
@@ -18,12 +23,12 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                 ref={provided.innerRef}
                 {...provided.droppableProps}
               >
-                {data?.cards?.map((card:any, index:number) => {
+                {data?.cards?.map((card:CardType, index:number) => {
                   return (
                     <Draggable
                       draggableId={`${deck_id!}-${index}`}
                       index={index}
-                      key={index}
+                      key={uuidv4()}
                     >
                       {(provided, snapshot) => {
                         if (snapshot.isDragging) {

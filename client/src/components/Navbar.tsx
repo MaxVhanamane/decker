@@ -9,7 +9,7 @@ import {FaUserCircle} from "react-icons/fa"
 import {RiCloseFill} from "react-icons/ri"
 import ThemeToggler from './ThemeToggler';
 import SearchBar from './SearchBar';
-import { BsSearch } from 'react-icons/bs';
+import { HiOutlineSearch } from 'react-icons/hi';
 const Navbar:FC = () => {
   const {setUserInfo,showSearchBar,setShowSearchBar}=useContext(UserContext)
   const userDetails=localStorage.getItem("userInfo")
@@ -85,7 +85,7 @@ const Navbar:FC = () => {
    { userInfo?.email&& <>
   <SearchBar />
    <button onClick={()=>{setShowSearchBar(true)}} disabled={showSearchBar} aria-label="Search">
-    <BsSearch className={`text-lg dark:text-gray-100 text-gray-500 ${!showSearchBar?"opacity-100":"opacity-0 pointer-events-none"} cursor-pointer transition-opacity lg:duration-[1200ms] duration-500 mr-2`} />
+    <HiOutlineSearch className={`text-lg dark:text-gray-100 text-gray-500 ${!showSearchBar?"opacity-100":"opacity-0 pointer-events-none"} cursor-pointer transition-opacity lg:duration-[1200ms] duration-500 mr-2`} />
     </button>
     </>}
 <div>

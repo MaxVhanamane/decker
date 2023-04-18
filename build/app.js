@@ -172,7 +172,7 @@ const fetchUserDetails = function (req, res, next) {
                 next();
             }
             catch (error) {
-                return res.status(500).send("Error fetching user details. Please check your internet connection.");
+                return res.status(500).json({ message: "Error fetching user details. Please check your internet connection." });
             }
         }
         else {
@@ -201,7 +201,8 @@ app.get('/deck', fetchUserDetails, function (req, res) {
             // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
             // as there is a relation defined between two collection DeckModal and User 
             // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
-            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }).sort({ date: -1 });
+            // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
+            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, pinned: 1 }).sort({ date: -1 });
             res.status(200).json(deck);
         }
         catch (error) {
@@ -294,7 +295,7 @@ app.delete('/deck/:id', fetchUserDetails, function (req, res) {
 app.get('/cards/:_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const cards = yield deck_1.default.findById({ _id: req.params._id });
+            const cards = yield deck_1.default.findById({ _id: req.params._id }, { cards: 1, title: 1 });
             if (cards) {
                 res.status(200).json({ cards: cards.cards, title: cards.title });
             }

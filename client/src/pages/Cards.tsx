@@ -721,8 +721,8 @@ const Cards: FC = () => {
             {data?.title}
           </h1>
         </div>
-        {/* You can't use Draggable directly you have to use it inside Dropable component  */}
-       <CardItems handleDelete={handleDelete} handleEdit={handleEdit} handleShowFullScreen={handleShowFullScreen} data={data}/>
+        
+       {data && data?.cards.length>0?<CardItems handleDelete={handleDelete} handleEdit={handleEdit} handleShowFullScreen={handleShowFullScreen} data={data}/>:<div className="font-bold dark:text-gray-50 text-gray-800">Looks like you haven't added any cards yet. Click the 'Add a note' button to get started.</div>}
       </div>
 
       {openModal ? (

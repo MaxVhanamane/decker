@@ -83,7 +83,7 @@ app.use(session({
     httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
     secure:true,      // it allows only https requests. you can only send these cookies to https sites
-    maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
+    maxAge: 1000 * 60 * 60 * 24 * 1  //cookie expires in 7 days
   }
 
 }))
@@ -188,7 +188,7 @@ const fetchUserDetails = async function (req: Request, res: Response, next: Next
       req.userDetails = user
       next()
     } catch (error) {
-      return res.status(500).send("Error fetching user details. Please check your internet connection.")
+      return res.status(500).json({message:"Error fetching user details. Please check your internet connection."})
     }
   }
   else {
@@ -224,7 +224,8 @@ app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) 
     // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
     // as there is a relation defined between two collection DeckModal and User 
     // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
-    const deck = await DeckModal.find({ email: user?._id }).sort({ date: -1 });
+    // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
+    const deck = await DeckModal.find({ email: user?._id },{ title: 1,  pinned: 1 }).sort({ date: -1 });
     res.status(200).json(deck)
   
   }
@@ -343,7 +344,7 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
 app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Response) {
 
   try {
-    const cards = await DeckModal.findById({ _id: req.params._id });
+    const cards = await DeckModal.findById({ _id: req.params._id },{cards:1,title:1});
     if (cards) {
       res.status(200).json({ cards: cards.cards, title: cards.title })
     }

@@ -22,10 +22,8 @@ export type AlertType = {
 export type DeckType = {
   _id: string,
   title: string,
-  cards: { title: string, note: string }[],
   pinned: boolean,
-  email: string,
-  date: Date,
+
 }
 
 export type DeckTypeWithIndex = {
@@ -48,6 +46,7 @@ export type CardDataType = {
 }
 
 export type Data={
+  _id:string;
   title:string;
   cards:{title:string,note:string}[];
 }& {message?:string}

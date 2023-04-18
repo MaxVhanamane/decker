@@ -25,6 +25,7 @@ import ChangePassword from './pages/ChangePassword';
 import useMoveCard from './hooks/useMoveCard';
 import {useState} from "react"
 import { DeckTypeWithIndex } from "./types/types";
+import SessionExpiredPage from "./pages/SessionExpiredPage";
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout
@@ -166,6 +167,7 @@ function App() {
               }
             />
             <Route path="/login" element={<Login />} />
+            <Route path="/sessionexpired" element={<SessionExpiredPage />} />
             <Route path="/forgotpassword" element={<ForgotPassword />} />
             <Route path="/changepassword" element={<ChangePassword />} />
             <Route path="/auth/success" element={<AuthSuccess />} />
