@@ -62,7 +62,7 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
 
 
   const handleGoogleLogin = async () => {
-    window.open(`${import.meta.env.VITE_APP_GOOGLE_AUTH_URL}`,"_self")
+    window.open(`${import.meta.env.VITE_GOOGLE_AUTH_URL}`,"_self")
 
   }
 
