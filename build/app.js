@@ -82,7 +82,7 @@ app.use((0, express_session_1.default)({
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7 //cookie expires in 7 days
+        maxAge: 1000 * 60 * 60 * 24 * 1 //cookie expires in 7 days
     }
 }));
 // using passport to handle login
@@ -203,6 +203,18 @@ app.get('/deck', fetchUserDetails, function (req, res) {
             // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
             // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
             const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, pinned: 1 }).sort({ date: -1 });
+            res.status(200).json(deck);
+        }
+        catch (error) {
+            res.status(500).json({ message: "Internal server error!" });
+        }
+    });
+});
+app.get('/decks-and-cards', fetchUserDetails, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const user = req === null || req === void 0 ? void 0 : req.userDetails;
+            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
             res.status(200).json(deck);
         }
         catch (error) {

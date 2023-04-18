@@ -235,6 +235,19 @@ app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) 
 
 })
 
+app.get('/decks-and-cards', fetchUserDetails, async function (req: Request, res: Response) {
+  try{
+    const user = req?.userDetails
+    const deck = await DeckModal.find({ email: user?._id },{ title: 1,cards:1,pinned: 1 }).sort({ date: -1 });
+    res.status(200).json(deck)
+  
+  }
+  catch(error){
+    res.status(500).json({message:"Internal server error!"})
+  }
+
+})
+
 
 app.post('/deck', fetchUserDetails, async function (req: Request, res: Response) {
   const user = req.userDetails

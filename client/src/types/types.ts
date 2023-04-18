@@ -23,16 +23,19 @@ export type DeckType = {
   _id: string,
   title: string,
   pinned: boolean,
+}
 
+export type DeckAndCardType = {
+  _id: string,
+  title: string,
+  cards: { title: string, note: string }[],
+  pinned: boolean,
 }
 
 export type DeckTypeWithIndex = {
   _id: string,
   title: string,
-  cards: { title: string, note: string }[],
   pinned: boolean,
-  email: string,
-  date: Date,
   index: number
 }
 

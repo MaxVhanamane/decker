@@ -1,11 +1,11 @@
 import {Dispatch, FC,useEffect,useMemo,useState, useCallback,useContext, memo} from 'react'
 import { BiEdit } from 'react-icons/bi';
-import useGetDecks from '../hooks/useGetDecks';
 import { BsFillPinFill, BsPin } from 'react-icons/bs';
 import { Link, useLocation } from 'react-router-dom';
 import usePinDeck from '../hooks/usePinDeck';
 import EditModalForDeck from './EditModalForDeck';
 import { UserContext } from '../context/UserContext';
+import useGetDecksAndCards from '../hooks/useGetDecksAndCards';
 let timer:any
 interface IProp{
     searchQuery:string;
@@ -31,7 +31,7 @@ const SearchResult:FC<IProp> = ({searchQuery,setShowSearchBar}) => {
   const[showResult,setShowResult]=useState(false)
 const [foundCards,setFoundCards]=useState<SearchResultCardsType[]>([])
 const [foundDecks,setFoundDecks]=useState<SearchResultDeckType[]>([])
-const { data, isError, error, isLoading } = useGetDecks()
+const { data, isError, error, isLoading } = useGetDecksAndCards()
 const [editData,setEditData]=useState({deck_id:"",title:""})
 const {mutate:pinDeck,error:pinError,isError:isPinError,isLoading:isPinning}=usePinDeck()
 const [openEditDeckModal,setOpenEditDeckModal]=useState(false)
