@@ -57,13 +57,19 @@ declare global {
 // To store sessions in mongodb
 const store = new MongoDBStore({
   uri: process.env.MONGO_URI!,
-  collection: 'mysessions'
+  collection: 'mysessions',
+  //The clearInterval option in express-session is used to specify how often expired sessions should be cleared from the session store, and the value you specify is in seconds. So, if you set the value to 3600, expired sessions will be removed from the store every 60 minutes.
+  clearInterval:3600
 });
 
 // Catch errors
 store.on('error', function (error: Error) {
   console.log(error);
 });
+
+
+
+
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
@@ -78,12 +84,12 @@ app.use(session({
   saveUninitialized: true,
   store: store,
   // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
-  // uncomment it while deploaying
+  // uncomment it while deploying
   cookie:{
     httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
     secure:true,      // it allows only https requests. you can only send these cookies to https sites
-    maxAge: 1000 * 60 * 60 * 24 * 1  //cookie expires in 7 days
+    maxAge: 1000 * 60 * 60 * 24 * 1  //cookie expires in 1 day
   }
 
 }))
@@ -214,6 +220,7 @@ mongoose.connect(process.env.MONGO_URI!, {
   .catch((err: Error) => { console.log(err) });
 
 
+  
 
 //Deck routes 
 

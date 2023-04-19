@@ -59,7 +59,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                                   ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent"
                                   : null
                                 }   flex flex-col text-gray-800
-                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500`}
+                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
                             >
                               <div className="absolute bottom-0 right-0 ">
                                 {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
@@ -69,7 +69,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                                       handleDelete(index);
                                   }}
                                   type="button"
-                                  className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center hover:scale-95"
+                                  className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center  lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 hover:text-red-600 "
                                   aria-label="Delete Card"
                                 >
                                   <MdOutlineDeleteOutline />
@@ -85,7 +85,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                                       });
                                   }}
                                   type="button"
-                                  className="text-blue-500 text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 dark:text-sky-400 "
+                                  className="text-blue-500 dark:hover:text-sky-600 hover:text-blue-600 text-lg outline-none rounded-tr px-1  text-center dark:text-sky-400 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500"
                                   aria-label="Edit Card"
                                 >
                                   <BiEdit />

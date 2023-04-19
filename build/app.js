@@ -60,7 +60,9 @@ app.use(express_1.default.json());
 // To store sessions in mongodb
 const store = new MongoDBStore({
     uri: process.env.MONGO_URI,
-    collection: 'mysessions'
+    collection: 'mysessions',
+    //The clearInterval option in express-session is used to specify how often expired sessions should be cleared from the session store, and the value you specify is in seconds. So, if you set the value to 3600, expired sessions will be removed from the store every 60 minutes.
+    clearInterval: 3600
 });
 // Catch errors
 store.on('error', function (error) {
@@ -77,12 +79,12 @@ app.use((0, express_session_1.default)({
     saveUninitialized: true,
     store: store,
     // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
-    // uncomment it while deploaying
+    // uncomment it while deploying
     cookie: {
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 1 //cookie expires in 7 days
+        maxAge: 1000 * 60 * 60 * 24 * 1 //cookie expires in 1 day
     }
 }));
 // using passport to handle login
