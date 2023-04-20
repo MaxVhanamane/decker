@@ -4,10 +4,10 @@ import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 import { useRef, memo } from 'react';
 import { BiEdit } from 'react-icons/bi';
-import { v4 as uuidv4 } from 'uuid';
 type CardType={
 title:string;
 note:string;
+_id:string
 }
 const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
     const { deck_id } = useParams();
@@ -28,7 +28,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                     <Draggable
                       draggableId={`${deck_id!}-${index}`}
                       index={index}
-                      key={uuidv4()}
+                      key={card._id+index}
                     >
                       {(provided, snapshot) => {
                         if (snapshot.isDragging) {
