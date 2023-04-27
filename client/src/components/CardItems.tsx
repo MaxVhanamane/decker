@@ -12,7 +12,6 @@ _id:string
 const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
     const { deck_id } = useParams();
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
-
   return (
     <Droppable droppableId="cardDropableArea">
       {/* You can't use Draggable directly you have to use it inside Dropable component  */}
@@ -23,6 +22,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                 ref={provided.innerRef}
                 {...provided.droppableProps}
               >
+
                 {data?.cards?.map((card:CardType, index:number) => {
                   return (
                     <Draggable
@@ -30,6 +30,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                       index={index}
                       key={card._id+index}
                     >
+                      
                       {(provided, snapshot) => {
                         if (snapshot.isDragging) {
                           changeColorWhileDragging.current?.classList.add(
@@ -41,7 +42,6 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                             ref={provided.innerRef}
                             {...provided.dragHandleProps}
                             {...provided.draggableProps}
-                            key={index}
                           >
                             <div
                               ref={changeColorWhileDragging}

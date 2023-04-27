@@ -16,6 +16,7 @@ export default function useGetDecks(){
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: true, // Refetch on network reconnect
     retry: 3, // Retry up to 3 times on network errors
+  
   })
 
 }

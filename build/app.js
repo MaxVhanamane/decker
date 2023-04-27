@@ -48,6 +48,7 @@ const passport_local_1 = __importDefault(require("passport-local"));
 const verifyemail_1 = __importDefault(require("./models/verifyemail"));
 const forgotpasswordotps_1 = __importDefault(require("./models/forgotpasswordotps"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const accountdeletionotps_1 = __importDefault(require("./models/accountdeletionotps"));
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require("passport-google-oauth20");
@@ -204,7 +205,7 @@ app.get('/deck', fetchUserDetails, function (req, res) {
             // as there is a relation defined between two collection DeckModal and User 
             // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
             // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
-            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, pinned: 1 }).sort({ date: -1 });
+            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, pinned: 1, email: 1, date: 1 }).sort({ date: -1 });
             res.status(200).json(deck);
         }
         catch (error) {
@@ -263,7 +264,6 @@ app.put('/undodeck', fetchUserDetails, function (req, res) {
         delete req.body.index;
         const deck = req.body;
         try {
-            //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
             const newDeck = new deck_1.default(Object.assign({}, deck));
             const createdDeck = yield newDeck.save();
             res.status(200).json({ createdDeck, success: true });
@@ -482,9 +482,10 @@ function generateOTP() {
     // Return the OTP
     return parseInt(otp);
 }
+// generate otp to verify email address while creating an account.
 app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let user = yield verifyemail_1.default.findOne({ email: req.body.email }); // This is where user with otp stored while creating account
+        let user = yield verifyemail_1.default.findOne({ email: req.body.email }); // This is where user with otp stored while creating account. If we find user here then we will update the old otp with new one else we will new user with otp.
         let mainUser = yield user_1.default.findOne({ email: req.body.email }); // This is where the final user is stored
         let oneTimePassword = generateOTP();
         // If the user has already completed signup process then user exist in mainUser variable.
@@ -502,7 +503,7 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
                 yield generateUserWithOTP.save();
             }
             else {
-                let user = yield verifyemail_1.default.findOneAndUpdate({ email: req.body.email }, {
+                yield verifyemail_1.default.findOneAndUpdate({ email: req.body.email }, {
                     otp: oneTimePassword,
                     expiresIn: new Date().getTime() + 600 * 1000
                 });
@@ -512,9 +513,9 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
             return res.status(200).json({ success: false, message: "User with this email already exists! Please Login or use different email address." });
         }
         let email = `
-   <p> Dear Customer,</p>
-    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
-   <p>This OTP is valid for 10 minutes. After it expires, you will need to request a new OTP.</p>
+   <p> Dear User,</p>
+    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:#38bdf8; font-size: 25px;"> ${oneTimePassword}</span> </p>
+   <p>This OTP is only valid for 10 minutes, after which you will need to request a new one.</p>
     <p>Thank you for your cooperation.</p>
     <p>Sincerely,</p>
     <p>Decker</>
@@ -568,14 +569,10 @@ app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function*
 app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email }); // This is where user with otp stored while creating account
-        let mainUser = yield user_1.default.findOne({ email: req.body.email }); // This is where the final user is stored
+        let mainUser = yield user_1.default.findOne({ email: req.body.email }); // We only allow users with existing accounts to reset their password.
         let oneTimePassword = generateOTP();
-        // If the user has already completed signup process then user exist in mainUser variable.
-        // so If we find user then we won't allow him to create new one
         if (mainUser) {
-            // if there is no user in mainUser variable then we will check if his email exists in user variable 
-            // if it exists it means he has previously asked for otp but for some reason he couldn't complete the signup process.
-            // if there is no user then we will create new one else we will update his previous
+            // If the user is found in the 'mainUser' variable, we will check if they exist in the 'ForgotPasswordOTP' modal. If they do, it indicates that they have previously requested an OTP. so we will replace the old OTP with new one.
             if (!user) {
                 let generateUserWithOTP = new forgotpasswordotps_1.default({
                     email: req.body.email,
@@ -595,10 +592,10 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
             return res.status(200).json({ success: false, message: "User with this email doesn't exists! Please create an account first." });
         }
         let email = `
-   <p> Dear Customer,</p>
-    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:red; font-size: 25px;"> ${oneTimePassword}</span> </p>
+   <p> Dear User,</p>
+    <p>We have received a request to verify your account. In order to complete the verification process, please enter the following one-time password (OTP) into the designated field:<span style="color:#38bdf8; font-size: 25px;"> ${oneTimePassword}</span> </p>
     <p>Once you enter the OTP into the designated field you will be redirected to the page where you can change your password.</p>
-   <p>This OTP is valid for 10 minutes. After it expires, you will need to request a new OTP.</p>
+   <p>This OTP is only valid for 10 minutes, after which you will need to request a new one.</p>
     <p>Thank you for your cooperation.</p>
     <p>Sincerely,</p>
     <p>Decker</>
@@ -665,5 +662,117 @@ app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, func
     }
     else {
         res.status(200).json({ success: false, message: "You are unauthorized!" });
+    }
+}));
+app.post("/generateaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let user = yield accountdeletionotps_1.default.findOne({ email: req.body.email });
+        let mainUser = yield user_1.default.findOne({ email: req.body.email });
+        let oneTimePassword = generateOTP();
+        if (mainUser) {
+            if (!user) {
+                let generateUserWithOTP = new accountdeletionotps_1.default({
+                    email: req.body.email,
+                    otp: oneTimePassword,
+                    expiresIn: new Date().getTime() + 600 * 1000 // expires in 10 min
+                });
+                yield generateUserWithOTP.save();
+            }
+            else {
+                yield accountdeletionotps_1.default.findOneAndUpdate({ email: req.body.email }, {
+                    otp: oneTimePassword,
+                    expiresIn: new Date().getTime() + 600 * 1000
+                });
+            }
+        }
+        else {
+            return res.status(200).json({ success: false, message: "User with this email doesn't exists! Please enter correct email address." });
+        }
+        let email = `
+    <p>Dear User,</p>
+    <p>We have received a request to delete your account. Please note that this action is irreversible and all of your data associated with this account will be permanently deleted.</p>
+    <p>your OTP is <span style="color:#38bdf8; font-size: 25px;"> ${oneTimePassword}</span></p>
+    <p>This OTP is only valid for 10 minutes, after which you will need to request a new one.</p>
+    <p>If you did not initiate this request, please contact us immediately.</p>
+    <p>Thank you for using our services.</p>
+    <p>Sincerely,</p>
+    <p>Decker</p>
+    
+      `;
+        // Sending a mail using nodemailer (read docs)
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer_1.default.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_ADDRESS,
+                pass: process.env.EMAIL_PASSWORD,
+            },
+        });
+        // send mail with defined transport object
+        let info = yield transporter.sendMail({
+            from: process.env.EMAIL_ADDRESS,
+            to: req.body.email,
+            subject: " OTP for your account on decker.vercel.app to delete your account",
+            html: email, // html body
+        });
+        res.status(200).json({ success: true, message: "OTP sent to your email successfully! Please check your email for OTP." });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: "Some error occurred please try again later!" });
+    }
+}));
+app.post("/verifyaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let user = yield accountdeletionotps_1.default.findOne({ email: req.body.email });
+    if (user) {
+        // Check If the otp is expired or not.
+        let difference = user.expiresIn - new Date().getTime();
+        if (user.otp === parseInt(req.body.otp)) {
+            if (difference > 0) {
+                res.status(200).json({ success: true, message: "OTP verification successful!" });
+            }
+            else {
+                res.status(200).json({ success: false, message: "OTP has expired!" });
+            }
+        }
+        else {
+            res.status(200).json({ success: false, message: "OTP verification failed!" });
+        }
+    }
+    else {
+        res.status(200).json({ success: false, message: "No user found!" });
+    }
+}));
+app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    if (req.user) {
+        try {
+            // saving user in userInfo so that I can use the _id of the user to delete the decks. because in DeckModal email field is a foreign key.
+            let userInfo = yield user_1.default.findOneAndDelete({ email: req.body.email });
+            yield deck_1.default.deleteMany({ email: userInfo === null || userInfo === void 0 ? void 0 : userInfo._id });
+            yield accountdeletionotps_1.default.findOneAndDelete({ email: req.body.email });
+            yield forgotpasswordotps_1.default.findOneAndDelete({ email: req.body.email });
+            yield verifyemail_1.default.findOneAndDelete({ email: req.body.email });
+            // once users data is delete we will logout the user and clear his session
+            req.logout(function (err) {
+                if (err) {
+                    throw err; // Throw the error to be caught by the catch block below
+                }
+                // Explicitly destroy the session
+                req.session.destroy(function (err) {
+                    if (err) {
+                        throw err; // Throw the error to be caught by the catch block below
+                    }
+                    res.status(200).json({ success: true });
+                });
+            });
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: "Some error occured please try again." });
+        }
+    }
+    else {
+        return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
     }
 }));

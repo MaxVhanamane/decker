@@ -54,7 +54,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   const navigate = useNavigate();
   const location = useLocation();
   const deleteConfirmationModalForCard=useRef<HTMLDivElement >(null)
-  const pathNames=["/signup","/verifyemail","/forgotpassword","/changepassword"]
+  const pathNames=["/signup","/verifyemail","/forgotpassword","/changepassword","/login","/accountdeletionsuccess"]
   const [userInfo, setUserInfo] = useState<userData | null>({
     _id: "",
     username: "",
@@ -69,8 +69,7 @@ function UserContextProvider({ children }: UserContextProvider) {
     const data = await request.get("/getuser");
     if (data.data) {
       localStorage.setItem("userInfo", JSON.stringify(data.data));
-      const newD = localStorage.getItem("userInfo");
-      setUserInfo({ ...JSON.parse(newD!) });
+      setUserInfo(data.data);
       return data.data;
     } else if(pathNames.includes(location.pathname)) {
  

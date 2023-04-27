@@ -140,7 +140,7 @@ export default function ForgotPassword() {
                           Request OTP
                         </button>
                         {showWaitMessage?<div className="absolute w-full flex items-center justify-center">
-                        <p className=' text-sm  text-center text-sky-700 dark:text-sky-500 font-semibold '>Sending OTP please wait...</p></div>:null}
+                        <p className=' text-sm  text-center text-sky-700 dark:text-sky-400 font-semibold '>Sending OTP please wait...</p></div>:null}
 
                       </div>:null}
                       {  showVerifyOTPButton? <div className="mb-4">

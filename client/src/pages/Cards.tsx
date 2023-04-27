@@ -562,15 +562,38 @@ const Cards: FC = () => {
     return  <SessionExpired/>
     }
 
+  // if (isError) {
+  //   // If you do not define AxiosErrorType and directly access the error message using {(error as Error)?.message}, this will give the error message that Axios returns(something like request failed with status code 404). If you want to access the error message that you sent from the server, use {(error as AxiosErrorType)?.response?.data.message}.
+  //   return (
+  //     <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 ">
+  //       <p className="font-semibold">
+  //         <span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}
+  //       </p>
+  //     </div>
+  //   );
+  // }
   if (isError) {
-    // If you do not define AxiosErrorType and directly access the error message using {(error as Error)?.message}, this will give the error message that Axios returns(something like request failed with status code 404). If you want to access the error message that you sent from the server, use {(error as AxiosErrorType)?.response?.data.message}.
-    return (
-      <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 ">
-        <p className="font-semibold">
-          <span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}
-        </p>
-      </div>
-    );
+    const axiosError = error as AxiosErrorType;
+    if (axiosError.message.includes("Network Error")) {
+      return (
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
+          <p className="font-semibold"><span className="font-bold">Error </span>: No internet connection.</p>
+        </div>
+      );
+    } else if (axiosError.response?.status === 500) {
+      return (
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
+          <p className="font-semibold"><span className="font-bold">Error </span>: An error occurred on the server. Please try again later.</p>
+        </div>
+      );
+    } else {
+      const errorMessage = axiosError.response?.data?.message || "An error occurred. Please try again later.";
+      return (
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
+          <p className="font-semibold"><span className="font-bold">Error </span>: {errorMessage}</p>
+        </div>
+      );
+    }
   }
   // if(isMutationError){
   //   return <p>Error{(mutationError as Error)?.message}</p>
@@ -722,7 +745,7 @@ const Cards: FC = () => {
           </h1>
         </div>
         
-       {data && data?.cards.length>0?<CardItems handleDelete={handleDelete} handleEdit={handleEdit} handleShowFullScreen={handleShowFullScreen} data={data}/>:<div className="font-bold dark:text-gray-50 text-gray-800">Looks like you haven't added any cards yet. Click the 'Add a note' button to get started.</div>}
+       {data && data?.cards.length>0?<CardItems handleDelete={handleDelete} handleEdit={handleEdit} handleShowFullScreen={handleShowFullScreen} data={data}/>:<div className="font-bold dark:text-gray-50 text-gray-800 px-1">Looks like you haven't added any cards yet. Click the 'Add a note' button to get started.</div>}
       </div>
 
       {openModal ? (

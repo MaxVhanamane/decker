@@ -1,7 +1,7 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { coldarkDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
+import { v4 as uuidv4 } from 'uuid';
 // The parseNote function separates code from the string and adds SyntaxHighlighter for improved syntax appearance.
 const parseNote = (noteVal: string) => {
     // in a string (noteVal) the code will be always written in (quotes) ``` code ```. so we will use regular expression to
@@ -33,7 +33,7 @@ const parseNote = (noteVal: string) => {
 
       result.push(
         <SyntaxHighlighter
-          key={startIndex}
+          key={uuidv4()}
           language="javascript"
           wrapLongLines={true}
           style={
@@ -71,7 +71,7 @@ const parseNote = (noteVal: string) => {
           finalResult.push(
             <strong
               className="font-bold dark:text-yellow-400  text-sky-600 "
-              key={startIndex}
+              key={uuidv4()}
             >
               {boldText}
             </strong>

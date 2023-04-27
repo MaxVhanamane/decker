@@ -46,6 +46,7 @@ type PropType={
       if(inputRefElement.current!.value.length>0){
 
         addDeck(inputRefElement.current!.value)
+        inputRefElement.current!.value=""
       }
       else{
         setAlert((preval:AlertData) => (
@@ -124,9 +125,32 @@ type PropType={
       return  <SessionExpired/>
       }
       
-    if(isError){
-      return  <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 "><p className="font-semibold"><span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}</p></div>
-    }
+      
+      if (isError) {
+        const axiosError = error as AxiosErrorType;
+        if (axiosError.message.includes("Network Error")) {
+          return (
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
+              <p className="font-semibold"><span className="font-bold">Error </span>: No internet connection.</p>
+            </div>
+          );
+        } else if (axiosError.response?.status === 500) {
+          return (
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
+              <p className="font-semibold"><span className="font-bold">Error </span>: An error occurred on the server. Please try again later.</p>
+            </div>
+          );
+        } else {
+          const errorMessage = axiosError.response?.data?.message || "An error occurred. Please try again later.";
+          return (
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
+              <p className="font-semibold"><span className="font-bold">Error </span>: {errorMessage}</p>
+            </div>
+          );
+        }
+      }
+      
+      
    
     if(isLoading){
       return <Loading/>
