@@ -1,7 +1,7 @@
 import { FormEvent, useState,useRef,useContext,RefObject,memo} from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import {BsPin, BsTrash} from "react-icons/bs"
+import {BsPin} from "react-icons/bs"
 import {BsFillPinFill} from "react-icons/bs"
 // import { MdOutlineDeleteOutline} from "react-icons/md"
 import useGetDecks from "../hooks/useGetDecks";
@@ -16,6 +16,7 @@ import { AlertData, AxiosErrorType, DeckTypeWithIndex  } from ".././types/types"
 import useUndoDeck from './../hooks/useUndoDeck';
 import {Helmet} from "react-helmet";
 import SessionExpired from "../components/SessionExpired";
+import { UserContext } from "../context/UserContext";
 type PropType={
   undoDeck:DeckTypeWithIndex | null,
   handleUndoDeck:(deck:DeckTypeWithIndex | null)=>void,
@@ -30,6 +31,7 @@ type PropType={
     const {data:allDecks,error,isError,isLoading}=useGetDecks()
   const [openEditDeckModal,setOpenEditDeckModal]=useState(false)
     const {mutate : addDeck} = useCreateDeck()
+    const {theme,divRefForUserSettings} = useContext(UserContext);
 
     const [editData,setEditData]=useState({deck_id:"",title:""})
 
@@ -128,23 +130,53 @@ type PropType={
       
       if (isError) {
         const axiosError = error as AxiosErrorType;
-        if (axiosError.message.includes("Network Error")) {
+        if (axiosError?.message?.includes("Network Error")) {
           return (
-            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
-              <p className="font-semibold"><span className="font-bold">Error </span>: No internet connection.</p>
+            <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4">
+               <img src={`${theme==="dark" ? "/illustrations/no_internet_dark.svg":"/illustrations/no_internet_light.svg"}`} alt="No internet image" className="lg:w-28 lg:h-28 w-24 h-24 "/>
+              <p className="font-semibold"> No internet connection.</p>
+              <button
+         onClick={() => window.location.reload()}
+                        className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+      
+                        type="button"
+                        aria-label="Refresh"
+                      >
+                        Refresh
+                      </button>
             </div>
           );
-        } else if (axiosError.response?.status === 500) {
+        } else if (axiosError?.response?.status === 500) {
           return (
-            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
-              <p className="font-semibold"><span className="font-bold">Error </span>: An error occurred on the server. Please try again later.</p>
+            <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
+              <img src={`${theme==="dark" ? "/illustrations/server_down_dark.svg":"/illustrations/server_down_light.svg"}`} alt="Server down image" className="lg:w-32 lg:h-32 w-28 h-28 "/>
+              <div className="font-semibold"><p> An error occurred on the server.</p><p> Please try again later.</p></div>
+              <button
+         onClick={() => window.location.reload()}
+                        className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+      
+                        type="button"
+                        aria-label="Refresh"
+                      >
+                        Refresh
+                      </button>
             </div>
           );
         } else {
-          const errorMessage = axiosError.response?.data?.message || "An error occurred. Please try again later.";
+          const errorMessage = axiosError?.response?.data?.message || "An error occurred. Please try again later.";
           return (
-            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
-              <p className="font-semibold"><span className="font-bold">Error </span>: {errorMessage}</p>
+            <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
+               <img src={`${theme==="dark" ? "/illustrations/error_dark.svg":"/illustrations/error_light.svg"}`} alt="Error image" className="lg:w-32 lg:h-32 w-28 h-28 "/>
+              <p className="font-semibold text-sm"> {errorMessage}</p>
+              <button
+         onClick={() => window.location.reload()}
+                        className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+      
+                        type="button"
+                        aria-label="Refresh"
+                      >
+                        Refresh
+                      </button>
             </div>
           );
         }
@@ -170,7 +202,13 @@ type PropType={
             (provided,snapshot)=>{
               return    <div className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${snapshot.isDraggingOver? "ring-1 ring-red-500 shadow-md shadow-red-500":"ring-1 dark:ring-sky-500/40 ring-teal-500/40"}`} ref={provided.innerRef} {...provided.droppableProps}>
                 
-              <span  className={`text-2xl lg:text-3xl text-teal-600 dark:text-sky-400 cursor-pointer ${snapshot.isDraggingOver? "rotate-[30deg] text-red-500 dark:text-red-500":"transform-none"} `}><BsTrash onClick={handlePopUp} title="Drag and drop the deck here to delete it."/></span>
+              <div  className={` cursor-pointer transition-transform duration-300 ${snapshot.isDraggingOver? "-rotate-12":"transform-none"} `} onClick={handlePopUp} title="Drag and drop the deck here to delete it.">
+                
+              {snapshot.isDraggingOver? <img src="/trashcan-open.svg" alt="Delete deck image" className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"/>:<img src="/trashcan-close.svg" alt="Delete deck image" className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"/>}
+                
+                
+                </div>
+              
              </div>
               
             }
@@ -193,10 +231,11 @@ type PropType={
               id="title"
             
             />
-            <button  className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300" aria-label="Add Deck">Add Deck</button>
+            <button  className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300" aria-label="Add Deck">Create Deck</button>
           </form>
+          
         </div>
- 
+
   
 
 {allDecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ? <div className="mt-4 lg:mb-10  mx-1  " >
@@ -216,15 +255,15 @@ type PropType={
                     {(provided,snapshot)=>{
                       // ${snapshot.draggingOver==="othersDeckArea" &&"border-violet-600 shadow-violet-600 shadow-2xl "} 
       return <div 
-      className={`relative border  ${snapshot.isDragging ? "border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white  ": "border-gray-400 "} ${snapshot.draggingOver==="DeckDeleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"}  
-      
-       text-gray-800 dark:text-gray-50 
-                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify
-                   transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 `}
+      className={`relative border  ${snapshot.isDragging ? " z-50 border-yellow-400 animate-pulse  shadow-2xl shadow-yellow-400 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-yellow-500 before:to-yellow-400 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-yellow-500 text-yellow-500 before:!opacity-100 ": "border-gray-400 "} ${snapshot.draggingOver==="DeckDeleteArea" && " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "} 
+      text-gray-800 dark:text-gray-50  
+                   rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
+                   transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-50`}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
     >
+      <div className="z-[60]">
     <div className="absolute bottom-0 right-0">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
 
@@ -232,8 +271,13 @@ type PropType={
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95" aria-label="Pin Deck"><BsFillPinFill/></button>
  </div>
 
-  <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
+  <Link to={`cards/${deck._id}`} ><p onClick={()=>{ if(divRefForUserSettings.current?.classList.contains("scale-100")){
+                                  divRefForUserSettings.current?.classList.remove("scale-100")
+                                  divRefForUserSettings.current?.classList.add("scale-0")
+                                  divRefForUserSettings.current?.classList.add("hidden")
+                                }}} className=" break-all font-semibold py-6 "> {deck.title}</p> </Link>
  
+    </div>
     </div>
    
                     }
@@ -255,7 +299,7 @@ type PropType={
        
         </Droppable>
         </div>:null}
-  
+ 
        {allDecks!?.filter((deck)=>{return deck?.pinned===false}).length>0 ? <div className="mt-4 mb-24  mx-1" >
         <h1 className="text-left text-md font-semibold text-gray-800 m-4 dark:text-gray-50 "> {allDecks!?.filter((deck)=>{return deck?.pinned===true}).length>0 ?"Others": "Decks"} </h1>
 
@@ -272,17 +316,21 @@ type PropType={
 
                     {(provided,snapshot)=>{
                       //  ${snapshot.draggingOver==="pinnedArea" &&"border-yellow-500 shadow-yellow-500 shadow-2xl "} 
+                      
+  // before:content-[''] before:absolute before:w-[10.5rem] before:h-[140%] before:bg-gradient-to-r before:from-sky-500 before:to-green-500 before:animate-rotateCard after:content-[''] after:absolute after:inset-1 after:bg-[#0c1221]
+  //                  after:rounded-sm
+  //                  overflow-hidden
       return <div 
-      className={`relative border  ${snapshot.isDragging ? " z-50 border-sky-500 animate-pulse  shadow-2xl shadow-sky-500 dark:bg-[#0c1221] bg-white ": "border-gray-400 "} ${snapshot.draggingOver==="DeckDeleteArea" && "!border-red-500 !shadow-2xl !shadow-red-500 !bg-transparent"} 
-      text-gray-800 dark:text-gray-50 
+      className={`relative border  ${snapshot.isDragging ? " z-50 border-yellow-400 animate-pulse  shadow-2xl shadow-yellow-400 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-yellow-500 before:to-yellow-400 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-yellow-500 text-yellow-500 before:!opacity-100 ": "border-gray-400 "} ${snapshot.draggingOver==="DeckDeleteArea" && " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "} 
+      text-gray-800 dark:text-gray-50  
                    rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
-                   transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 `}
+                   transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-50`}
             ref={provided.innerRef}  
             {...provided.dragHandleProps}  
             {...provided.draggableProps} 
     >
-      <div>
-      <div className="absolute bottom-0 right-0">
+      <div className="z-[60]">
+      <div className="absolute bottom-0 right-0 ">
  {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
  
  <button onClick={()=>{handleEditDeck(deck._id,deck.title)}} type="button" className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400" aria-label="Edit Deck"><BiEdit/></button>
@@ -290,7 +338,11 @@ type PropType={
  <button onClick={()=>{handlePin(deck._id,deck.pinned)}} type="button" className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95" aria-label="Pin Deck"><BsPin/></button>
  </div>
 
-  <Link to={`cards/${deck._id}`} ><p className=" break-all font-semibold py-6"> {deck.title}</p> </Link>
+  <Link to={`cards/${deck._id}`} ><p onClick={()=>{ if(divRefForUserSettings.current?.classList.contains("scale-100")){
+                                  divRefForUserSettings.current?.classList.remove("scale-100")
+                                  divRefForUserSettings.current?.classList.add("scale-0")
+                                  divRefForUserSettings.current?.classList.add("hidden")
+                                }}} className=" break-all font-semibold py-6 "> {deck.title}</p> </Link>
   </div>
     </div>
    
@@ -329,6 +381,13 @@ type PropType={
     </div>
 </div> */}
 {openEditDeckModal?<EditModalForDeck openEditDeckModal={openEditDeckModal} setOpenEditDeckModal={setOpenEditDeckModal} editData={editData} setEditData={setEditData} />:null}
+
+{allDecks?.length===0&&<div className="fixed w-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center justify-center  flex-col">
+  
+  <img src={`${theme==="dark" ? "/illustrations/no_decks_found_dark.svg":"/illustrations/no_decks_found_light.svg"}`} alt="No decks found image" className="w-40 h-40 "/>
+  <p className="pb-1 lg:text-sm text-xs font-bold dark:text-gray-50 text-gray-800">Looks like you haven't added any decks yet.</p> 
+  <p className="p-1 lg:text-sm text-xs font-bold dark:text-gray-50 text-gray-800">Create a new deck to get started.</p> 
+  </div>}
       </div>
       </>
 
@@ -338,3 +397,5 @@ type PropType={
   }
   
   export default memo(Deck);
+
+

@@ -159,18 +159,18 @@ setFoundDecks(finalData)
 
 
 return <>
- <div className="border-t dark:border-slate-300/10 dark:text-white text-gray-800 fixed top-0 mt-12 h-20 flex items-end justify-center w-full bg-white dark:bg-[#0c1221] z-50 lg:hidden font-bold " >
-    {(searchQuery.length>0 && (foundDecks.length>0 && foundCards.length>0)) && <p>Search Result</p>}
+ <div className="border-t dark:border-slate-300/10 dark:text-white text-gray-800 fixed top-0 mt-12 h-[5.5rem] flex items-end justify-center w-full bg-white dark:bg-[#0c1221] z-50 lg:hidden font-bold " >
+    {(searchQuery.length>0 && (foundDecks.length>0 || foundCards.length>0)) && <p className='absolute bottom-2'>Search Result</p>}
   </div>
-<div className='fixed lg:top-[3.42rem] top-12 overflow-scroll h-screen bg-white  dark:bg-[#0c1221] w-full   '>
+<div className='fixed lg:top-[3.42rem] top-12 overflow-scroll h-screen bg-white  dark:bg-[#0c1221] w-full    '>
  <div className='hidden bg-white border-t border-slate-900/10 dark:border-slate-300/10 fixed lg:top-[3.35rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-[#0c1221] z-50'>
-  {searchQuery.length>0 && (foundDecks.length>0 && foundCards.length>0) && <p className='mt-2 font-bold'>Search Result</p>}
+  {searchQuery.length>0 && (foundDecks.length>0 || foundCards.length>0) && <p className='mt-2 font-bold'>Search Result</p>}
  </div>
  {searchQuery.length>0 && foundDecks.length>0 || foundCards.length>0 ?<div>
-{foundDecks.length>0 && <div className="mt-24 lg:mt-12 lg:mb-10 mx-1">
-  {foundDecks.length>0 && <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">Pinned Decks</p>}
+{foundDecks?.filter((deck) => deck.pinned === true).length>0 && <div className="mt-24 lg:mt-12 lg:mb-10 mx-1">
+ <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">Pinned Decks</p>
   <div className="flex flex-row flex-wrap gap-2 justify-center items-center p-2 lg:mx-20">
-    {foundDecks?.filter((deck) => deck.pinned === true).map((deck, index) => {
+    {foundDecks?.filter((deck) => deck.pinned === true).map((deck) => {
       return (
         <div key={deck.deck_id} className="relative border border-gray-400 text-gray-800 dark:text-gray-50 rounded-md min-w-[10.5rem] px-2 min-h-[5.5rem] flex justify-center items-center text-justify">
           <div className="absolute bottom-0 right-0">
@@ -190,10 +190,11 @@ return <>
   </div>
 </div>}
 
-{foundDecks.length>0 &&<div className="mt-4 lg:mb-10 mx-1">
-  {foundDecks?.length>0 &&  <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">Other Decks</p>}
+{foundDecks?.filter((deck) => deck.pinned === false).length>0 &&
+<div className={`${foundDecks?.filter((deck) => deck.pinned === true).length>0 ?"mt-12" :"mt-24 "} mx-1 lg:mb-10`}>
+    <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">Other Decks</p>
   <div className="flex flex-row flex-wrap gap-2 justify-center items-center p-2 lg:mx-20">
-    {foundDecks?.filter((deck) => deck.pinned === false).map((deck, index) => {
+    {foundDecks?.filter((deck) => deck.pinned === false).map((deck) => {
       return (
         <div key={deck.deck_id} className="relative border border-gray-400 text-gray-800 dark:text-gray-50 rounded-md min-w-[10.5rem] px-2 min-h-[5.5rem] flex justify-center items-center text-justify">
           <div className="absolute bottom-0 right-0">
@@ -217,7 +218,7 @@ return <>
 
 {/* CARD  */}
 
-{foundCards.length>0 && <p className={`text-left text-md font-semibold text-gray-800 dark:text-gray-50 mx-5 mb-4 ${foundDecks.length>0?"mt-6":"mt-20"}`}>Cards</p>}
+{foundCards.length>0 && <p className={`text-left text-md font-semibold text-gray-800 dark:text-gray-50 mx-5 mb-4 ${foundDecks.length>0?"mt-12":"mt-[5.5rem]"}`}>Cards</p>}
 
 <div className="flex flex-row flex-wrap justify-center items-center  mx-2 lg:mx-52 mb-48 gap-4">
   {foundCards?.map((card, index) => (
@@ -226,7 +227,7 @@ return <>
     rounded-md px-2  h-[8rem] lg:h-36  text-justify lg:w-[50vw] w-[95vw]  items-center justify-center">
       <div
         
-        className="border bg-red-5000 relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8rem] lg:h-36 text-justify lg:w-[50vw] w-[95vw]"
+        className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8rem] lg:h-36 text-justify lg:w-[50vw] w-[95vw]"
       >
         
         <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
@@ -241,7 +242,15 @@ return <>
     </Link>
   ))}
 </div>
-</div> : <div className={`flex ${showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0) ? "items-center": "items-start"} justify-center z-50 w-screen h-full font-semibold`}> {showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0)?<p className='text-red-500 animate-bounce'>No result found!</p>:<p className='hidden lg:block mt-8 text-gray-700 dark:text-gray-200'>Discover relevant content from all decks and cards with keyword search</p>}</div>}
+</div> : <div className={`flex items-center justify-center z-50 w-screen h-full font-semibold`}> {showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0)?
+
+<div className='flex items-center justify-center flex-col'>
+<img src={`${theme==="dark" ? "/illustrations/no_result_found_dark.svg":"/illustrations/no_result_found_light.svg"}`} alt="No internet image" className="lg:w-40 lg:h-40 w-36 h-36  "/>
+  <p className='text-gray-800 dark:text-gray-50'>No result found!</p>
+  
+  </div>:<div className='relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-12 gap-2'>
+  <img src={`${theme==="dark" ? "/illustrations/search_dark.svg":"/illustrations/search_light.svg"}`} alt="No internet image" className="lg:w-40 lg:h-40 w-36 h-36  "/>
+  <p className=' text-gray-700 dark:text-gray-200'>Find relevant content from all decks and cards with keyword search.</p></div>}</div>}
 </div>
 </>
 }

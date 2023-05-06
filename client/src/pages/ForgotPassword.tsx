@@ -133,8 +133,6 @@ export default function ForgotPassword() {
                         <button
                           className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
                           type="submit"
-                          data-mdb-ripple="true"
-                          data-mdb-ripple-color="light"
                           aria-label="Request OTP"
                         >
                           Request OTP
@@ -160,8 +158,6 @@ export default function ForgotPassword() {
                         <button onClick={handleOTPVerification}
                           className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
                           type="button"
-                          data-mdb-ripple="true"
-                          data-mdb-ripple-color="light"
                           aria-label="Verify OTP"
                         >
                           Verify OTP
@@ -173,8 +169,6 @@ export default function ForgotPassword() {
                         <Link to="/login"><button
                           type="button"
                           className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-700 dark:border-sky-500 dark:text-sky-500 font-medium text-sm leading-tight  rounded hover:border-teal-500 hover:text-teal-600 dark:hover:text-sky-600 dark:hover:border-sky-400 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
-                          data-mdb-ripple="true"
-                          data-mdb-ripple-color="light"
                           aria-label="Login"
                         >
                           Login

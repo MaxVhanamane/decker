@@ -6,6 +6,10 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      backgroundImage: {
+        'bg-max': 'conic-gradient(from 0deg at 50% 50%, red 0deg, blue 120deg, green 360deg)',
+       
+      },
       keyframes: {
         changeBgDark: {
           "0%, 100%": {  "background-image": "linear-gradient(to left, blue,#0284c7,blue)",
@@ -32,12 +36,20 @@ module.exports = {
           "background-size":"200%",
           "background-position":"left"},
          
-        }
+        },
+        rotate: {
+          "0%": { "transform":"rotate(45deg)"
+      
+        },
+          "100%": {"transform":"rotate(405deg)"},
+         
+        },
       },
       
       animation: {
         changeBgLight: "changeBgLight 5s ease-in-out infinite",
-        changeBgDark: "changeBgDark 5s ease-in-out infinite"
+        changeBgDark: "changeBgDark 5s ease-in-out infinite",
+        rotate: "rotate 10s linear infinite",
 
       },
       

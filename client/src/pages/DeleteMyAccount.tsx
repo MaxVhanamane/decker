@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
 import { request } from "./../utils/axios-utils";
@@ -17,6 +17,8 @@ export default function DeleteMyAccount() {
   const navigate = useNavigate();
   const { setAlert } = useContext(AlertContext);
   const [captcha, setCaptcha] = useState(false);
+  const location = useLocation();
+  const from = location.state?.from || "/";
   useEffect(() => {
     let getUser=localStorage.getItem("userInfo")
     let userInformation
@@ -153,7 +155,6 @@ export default function DeleteMyAccount() {
 
                           {!showVerifyOTPButton && (
                             <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">
-                              {" "}
                               Account Deletion Verification
                             </h4>
                           )}
@@ -187,14 +188,22 @@ export default function DeleteMyAccount() {
                                 className="mb-1"
                               />
                               <button
-                                className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
+                                className=" mt-3 inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
                                 type="submit"
-                                data-mdb-ripple="true"
-                                data-mdb-ripple-color="light"
                                 aria-label="Request OTP"
                                 disabled={captcha ? false : true}
                               >
                                 Request OTP
+                              </button>
+                              <button
+                                className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-red-600 hover:bg-red-500  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
+                                type="submit"
+                                aria-label="Cancel"
+                                onClick={()=>{
+                                  navigate(from)
+                                }}
+                              >
+                                Cancel
                               </button>
                               {showWaitMessage ? (
                                 <div className="absolute w-full flex items-center justify-center">
@@ -221,17 +230,25 @@ export default function DeleteMyAccount() {
                           ) : null}
                         </form>
                         {showVerifyOTPButton ? (
-                          <div className="text-center pt-1 mb-10 pb-1">
+                          <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
                             <button
                               onClick={handleOTPVerification}
-                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
                               type="button"
-                              data-mdb-ripple="true"
-                              data-mdb-ripple-color="light"
-                              aria-label="Verify OTP"
+                              aria-label="Verify OTP and Delete My Account"
                             >
-                              Verify OTP
+                              Verify OTP and Delete My Account
                             </button>
+                            <button
+                                className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-red-600 hover:bg-red-500  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
+                                type="submit"
+                                aria-label="Cancel"
+                                onClick={()=>{
+                                  navigate(from)
+                                }}
+                              >
+                                Cancel
+                              </button>
                           </div>
                         ) : null}
                       </div>

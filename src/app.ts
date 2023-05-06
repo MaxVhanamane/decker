@@ -90,7 +90,7 @@ app.use(session({
     httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
     secure:true,      // it allows only https requests. you can only send these cookies to https sites
-    maxAge: 1000 * 60 * 60 * 24 * 1  //cookie expires in 1 day
+    maxAge: 1000 * 60 * 60 * 24 * 3  //cookie expires in 3 days
   }
 
 }))
@@ -424,7 +424,6 @@ app.patch('/card/:deck_id', fetchUserDetails, async function (req: Request, res:
 
 app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, res: Response) {
   try {
-
     const deck = await DeckModal.findById(req.params.id)
     if (deck) {
 

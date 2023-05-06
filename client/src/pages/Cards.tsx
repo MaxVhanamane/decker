@@ -9,7 +9,7 @@ import {
   useEffect,
   useCallback,
   KeyboardEvent,
-  memo
+  memo,
 } from "react";
 import React from "react";
 import { useParams } from "react-router-dom";
@@ -32,7 +32,7 @@ import ThemeToggler from "../components/ThemeToggler";
 import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
 import { UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from "react-router-dom";
 import parseNote from "../functions/parseNote";
 import { GoEyeClosed } from "react-icons/go";
 import CardItems from "../components/CardItems";
@@ -59,22 +59,23 @@ type PayloadType = {
   content: ContentType;
 };
 
-
-
-
-
 // Component
 const Cards: FC = () => {
   // States
   const { setAlert } = useContext(AlertContext);
-  const { indexOfCardForDeletion, setIndexOfCardForDeletion, deleteConfirmationModalForCard } = useContext(UserContext);
+  const {
+    indexOfCardForDeletion,
+    setIndexOfCardForDeletion,
+    deleteConfirmationModalForCard,
+    theme,
+  } = useContext(UserContext);
   const [note, setNote] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [openModal, setOpenModal] = useState(false);
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [height, setHeight] = useState(80);
-  const [expandTextarea, setExpandTextArea] = useState(false)
-  const [checkClose, setCheckClose] = useState(false)
+  const [expandTextarea, setExpandTextArea] = useState(false);
+  const [checkClose, setCheckClose] = useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen>({
       title: "",
@@ -94,8 +95,7 @@ const Cards: FC = () => {
   const { mutate: editCard } = useEditCard();
   const { mutate: deleteCardItem } = useDeleteCard();
 
-
-  // Refs 
+  // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
@@ -104,9 +104,8 @@ const Cards: FC = () => {
 
   // Other
   const navigate = useNavigate();
-  const url = window.location.pathname.split('/').pop();
+  const url = window.location.pathname.split("/").pop();
   const location = useLocation();
-
 
   // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
@@ -114,65 +113,60 @@ const Cards: FC = () => {
   //useEffects
 
   useEffect(() => {
-    if (inputElementRef?.current?.classList.contains("rounded-t-md") && expandTextarea) {
-
+    if (
+      inputElementRef?.current?.classList.contains("rounded-t-md") &&
+      expandTextarea
+    ) {
       setTimeout(() => {
         inputElementRef?.current?.classList.remove("rounded-t-md");
-        
-      }, 1200)
-
+      }, 1200);
     }
-
   }, [expandTextarea]);
 
   useEffect(() => {
     if (checkClose) {
-
       inputElementRef?.current?.classList.remove("rounded-b-md");
       inputElementRef?.current?.classList.remove("rounded-t-md");
       setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-t-md");
         inputElementRef?.current?.classList.remove("duration-700");
         inputElementRef?.current?.classList.add("duration-[1.2s]");
-        setCheckClose(false)
-      }, 1300)
+        setCheckClose(false);
+      }, 1300);
       setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-b-md");
         inputElementRef?.current?.classList.add("duration-700");
-      }, 600)
+      }, 600);
       setTimeout(() => {
         textareaRef?.current?.classList.add("opacity-0");
-      }, 950)
-
-    }
-    else {
+      }, 950);
+    } else {
       inputElementRef?.current?.classList.add("rounded-b-md");
       inputElementRef?.current?.classList.add("rounded-t-md");
     }
-  }, [checkClose])
+  }, [checkClose]);
 
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
   const handleBrowsersBackButton = useCallback(
     function (event: PopStateEvent) {
       if (openModal || showFullScreen) {
-        event.preventDefault()
-        openModal ? setOpenModal(false) : setShowFullScreen(false)
-
+        event.preventDefault();
+        openModal ? setOpenModal(false) : setShowFullScreen(false);
       } else {
         event.preventDefault();
-        navigate("/")
+        navigate("/");
       }
     },
     [openModal, showFullScreen]
   );
 
-  // Here we will check if user has used browser's back button if he uses browsers back button to go back then 
+  // Here we will check if user has used browser's back button if he uses browsers back button to go back then
   // we will first check if card is open in full screen if it is open then we will close it instead of going back to the previous page directly.
   // This is usefull when user is accessing the site on mobile because most users swipe to go back.
   useEffect(() => {
     // This is how you detect if the browser's back button is clicked or not.
-    window.history.pushState(null, '', document.URL);
+    window.history.pushState(null, "", document.URL);
     window.addEventListener("popstate", handleBrowsersBackButton);
     return () => {
       window.removeEventListener("popstate", handleBrowsersBackButton);
@@ -187,22 +181,21 @@ const Cards: FC = () => {
       let cardInfo: ContentType = {
         title: "",
         note: "",
-        _id: ""
-      }
+        _id: "",
+      };
       if (data !== undefined) {
         // The 'data' state contains the deck along with its cards. We can use the 'search_index' to retrieve the specific card that we want to display in fullscreen mode
         let cardData = { ...data.cards[parseInt(search_index)] };
         // here we will set the values for cardInfo object that we created above.
-        cardInfo.title = cardData.title
-        cardInfo.note = cardData.note,
-          cardInfo._id = deck_id!
+        cardInfo.title = cardData.title;
+        (cardInfo.note = cardData.note), (cardInfo._id = deck_id!);
       }
-      // here we will create all the data that is needed to show it in full screen 
-      let obj = { ...cardInfo, cardIndex: parseInt(search_index) }
-      setFullScreenCardData(obj)
-      setShowFullScreen(true)
+      // here we will create all the data that is needed to show it in full screen
+      let obj = { ...cardInfo, cardIndex: parseInt(search_index) };
+      setFullScreenCardData(obj);
+      setShowFullScreen(true);
     }
-  }, [data, url])
+  }, [data, url]);
 
   useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
@@ -218,7 +211,6 @@ const Cards: FC = () => {
     }
   }, [note]);
 
-
   // onClick handlers
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -228,7 +220,7 @@ const Cards: FC = () => {
       addCard(payload);
       setNote("");
       setTitle("");
-      setHeight(80)
+      setHeight(80);
     } else {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -239,18 +231,18 @@ const Cards: FC = () => {
     }
   };
 
-  const handleDelete = useCallback( (index: number) => {
+  const handleDelete = useCallback((index: number) => {
     setIndexOfCardForDeletion(index);
     // This will take confirmation of user by showing him a modal.
     if (deleteConfirmationModalForCard?.current?.classList.contains("hidden")) {
       deleteConfirmationModalForCard?.current?.classList.remove("hidden");
     }
-  },[])
+  }, []);
 
   const handleEdit = useCallback((cardItem: ContentTypeForEdit) => {
     setEditContent(cardItem);
     setOpenModal(true);
-  },[])
+  }, []);
 
   const handleSave = () => {
     let data = {
@@ -272,8 +264,9 @@ const Cards: FC = () => {
     }
   };
 
-
-  const handleChange = (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => {
     if (e.target.name === "title") {
       setEditContent({ ...editContent, title: e.target.value });
     } else if (e.target.name === "note") {
@@ -299,249 +292,297 @@ const Cards: FC = () => {
   const handleShowFullScreen = useCallback((card: ContentForFullScreen) => {
     setShowFullScreen(true);
     setFullScreenCardData({ ...card });
-  },[])
+  }, []);
 
-
-  const addCodeBlock = useCallback((e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
-    let newNote: string;
-    let currentSelectionStart: number;
-    let currentSelectionEnd: number;
-    // check which button is clicked using name property so that we can add  our code string(\`\`\`Code goes here\`\`\` ) to correct textarea
-    if (e.currentTarget.name === "addCodeSnippetToAddCard") {
-      // textareaRef?.current?.selectionStart will give us the cursor position. we will add our code string to that cursor position.
-      // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
-      const selectionStart = textareaRef?.current?.selectionStart || 0;
-      // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the code string(\`\`\`Code goes here\`\`\` ) in the middle of the note
-      // like this `${note.substring(0, selectionStart)} \`\`\`Code goes here\`\`\` ${note.substring(selectionEnd)}`;
-      const selectionEnd = textareaRef?.current?.selectionEnd || 0;
-      // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add \`\`\`Code goes here\`\`\`.
-      // if selectionEnd-selectionStart is greater than 0 it means user has selected some text in that case we will convert the selected text to code string like this \`\`\`selectedText\`\`\`.
-      if (selectionEnd - selectionStart === 0) {
-        // now here newNote variable contains original string with our code string.
-        newNote = `${note.substring(0, selectionStart)} \`\`\`Code goes here\`\`\` ${note.substring(selectionEnd)}`;
-        // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of \`\`\`Code goes here\`\`\`
-        // so that once user clicks on {}(i.e addCode button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "Code goes here" string manually I can start typing directly. 
-        // added 4 and 14  so that i can select only "Code goes here" not the whole string with backticks \`\`\`Code goes here\`\`\`
-        // I have used these variables in setTimeout for auto selection.
-        currentSelectionStart = (textareaRef?.current?.selectionStart || 0) + 4;
-        currentSelectionEnd = currentSelectionStart + 14;
-        // adding updated string to state so that I can see the changes on screen.
-        setNote(newNote);
-        // You need setTimeout because React will perform a batch update and re-render the component after setNote is called, which may result in the textarea's DOM not yet being updated when you call textareaRef.current.focus() and textareaRef.current.setSelectionRange(). Using setTimeout with a value of 0 allows React to finish its updates before the code in the setTimeout function is executed. This ensures that the textarea's DOM has been updated and that you are able to properly set the focus and selection range.
-        setTimeout(() => {
-          textareaRef?.current?.focus();
-          textareaRef?.current?.setSelectionRange(currentSelectionStart, currentSelectionEnd);
-        }, 0);
-      }
-      // If user has selected some text then we don't need to auto select the newly added text. we will just add code string to the selected text.
-      else {
-
-        // Check if the selected text is already in code string . If it has ``` on both sides (e.g ```your code```), it is already code string and will be converted to normal text. If it has no ``` on both sides, it is normal text and will be converted to code string.
-        // get the selected text
-        let selectedContent = note.substring(selectionStart, selectionEnd)
-        //expectedSubstring is used to compare text in if statement.
-        const expectedSubstring = `\`\`\`${selectedContent}\`\`\``;
-        // selectionStart will give us selected text's index. if we do -3 then we get text with ```. and we will use startingIndex+expectedSubstring.length to get the complete selected text with ```.
-        const startingIndex = selectionStart - 3;
-        const extractedSubstring = note.substring(startingIndex, startingIndex + expectedSubstring.length);
-        // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
-        if (extractedSubstring === expectedSubstring) {
-          // suppose I have a string that looks like this data="My name ```console.log("hello")``` Max"
-          //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
-          const before = note.slice(0, startingIndex);
-          const after = note.slice(startingIndex + expectedSubstring.length);
-
-          newNote = before + selectedContent + after;
+  const addCodeBlock = useCallback(
+    (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
+      let newNote: string;
+      let currentSelectionStart: number;
+      let currentSelectionEnd: number;
+      // check which button is clicked using name property so that we can add  our code string(\`\`\`Code goes here\`\`\` ) to correct textarea
+      if (e.currentTarget.name === "addCodeSnippetToAddCard") {
+        // textareaRef?.current?.selectionStart will give us the cursor position. we will add our code string to that cursor position.
+        // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
+        const selectionStart = textareaRef?.current?.selectionStart || 0;
+        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the code string(\`\`\`Code goes here\`\`\` ) in the middle of the note
+        // like this `${note.substring(0, selectionStart)} \`\`\`Code goes here\`\`\` ${note.substring(selectionEnd)}`;
+        const selectionEnd = textareaRef?.current?.selectionEnd || 0;
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add \`\`\`Code goes here\`\`\`.
+        // if selectionEnd-selectionStart is greater than 0 it means user has selected some text in that case we will convert the selected text to code string like this \`\`\`selectedText\`\`\`.
+        if (selectionEnd - selectionStart === 0) {
+          // now here newNote variable contains original string with our code string.
+          newNote = `${note.substring(
+            0,
+            selectionStart
+          )} \`\`\`Code goes here\`\`\` ${note.substring(selectionEnd)}`;
+          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of \`\`\`Code goes here\`\`\`
+          // so that once user clicks on {}(i.e addCode button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "Code goes here" string manually I can start typing directly.
+          // added 4 and 14  so that i can select only "Code goes here" not the whole string with backticks \`\`\`Code goes here\`\`\`
+          // I have used these variables in setTimeout for auto selection.
+          currentSelectionStart =
+            (textareaRef?.current?.selectionStart || 0) + 4;
+          currentSelectionEnd = currentSelectionStart + 14;
+          // adding updated string to state so that I can see the changes on screen.
           setNote(newNote);
+          // You need setTimeout because React will perform a batch update and re-render the component after setNote is called, which may result in the textarea's DOM not yet being updated when you call textareaRef.current.focus() and textareaRef.current.setSelectionRange(). Using setTimeout with a value of 0 allows React to finish its updates before the code in the setTimeout function is executed. This ensures that the textarea's DOM has been updated and that you are able to properly set the focus and selection range.
+          setTimeout(() => {
+            textareaRef?.current?.focus();
+            textareaRef?.current?.setSelectionRange(
+              currentSelectionStart,
+              currentSelectionEnd
+            );
+          }, 0);
         }
-        // if extractedSubstring === expectedSubstring is false means text is not in code string then we will make it code string by adding ```
+        // If user has selected some text then we don't need to auto select the newly added text. we will just add code string to the selected text.
         else {
-          newNote = `${note.substring(0, selectionStart)}\`\`\`${selectedContent}\`\`\`${note.substring(selectionEnd)}`;
-          setNote(newNote);
-        }
+          // Check if the selected text is already in code string . If it has ``` on both sides (e.g ```your code```), it is already code string and will be converted to normal text. If it has no ``` on both sides, it is normal text and will be converted to code string.
+          // get the selected text
+          let selectedContent = note.substring(selectionStart, selectionEnd);
+          //expectedSubstring is used to compare text in if statement.
+          const expectedSubstring = `\`\`\`${selectedContent}\`\`\``;
+          // selectionStart will give us selected text's index. if we do -3 then we get text with ```. and we will use startingIndex+expectedSubstring.length to get the complete selected text with ```.
+          const startingIndex = selectionStart - 3;
+          const extractedSubstring = note.substring(
+            startingIndex,
+            startingIndex + expectedSubstring.length
+          );
+          // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
+          if (extractedSubstring === expectedSubstring) {
+            // suppose I have a string that looks like this data="My name ```console.log("hello")``` Max"
+            //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
+            const before = note.slice(0, startingIndex);
+            const after = note.slice(startingIndex + expectedSubstring.length);
 
-
-
-
-      }
-    }
-    else if (e.currentTarget.name === "addCodeSnippetToEditCard") {
-      const selectionStart = editTextareaRef?.current?.selectionStart || 0;
-      const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
-      // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add \`\`\`Code goes here\`\`\`.
-      // if selectionEnd-selectionStart is greater than 0 it means user has selected some text in that case we will convert the selected text to code string like this \`\`\`selectedText\`\`\`.
-      if (selectionEnd - selectionStart === 0) {
-        newNote = `${editContent.note.substring(0, selectionStart)} \`\`\`Code goes here\`\`\` ${editContent.note.substring(selectionEnd)}`;
-
-        currentSelectionStart = (editTextareaRef?.current?.selectionStart || 0) + 4;
-        currentSelectionEnd = currentSelectionStart + 14;
-        setEditContent({ ...editContent, note: newNote });
-        setTimeout(() => {
-          // When I add code string in editTextArea it was scrolling to the top automatically.
-          // To avoid that we will get the scrollPosition using editTextareaRef?.current?.scrollTop 
-          // Then later we will use that so that when I add code string it stays where it was before.
-          const scrollTop = editTextareaRef?.current?.scrollTop || 0;
-          if (editTextareaRef?.current) {
-            editTextareaRef.current.focus();
-            editTextareaRef.current.setSelectionRange(currentSelectionStart, currentSelectionEnd);
-            editTextareaRef.current.scrollTop = scrollTop;
+            newNote = before + selectedContent + after;
+            setNote(newNote);
           }
-        }, 0);
-      }
-
-      // If user has selected some text then we don't need to auto select the newly added text. we will just add code string to the selected text.
-      else {
-
-        let selectedContent = editContent.note.substring(selectionStart, selectionEnd)
-        //expectedSubstring is used to compare text in if statement.
-        const expectedSubstring = `\`\`\`${selectedContent}\`\`\``;
-        // selectionStart will give us selected text's index. if we do -3 then we get text with ```. and we will use startingIndex+expectedSubstring.length to get the complete selected text with ```.
-        const startingIndex = selectionStart - 3;
-        const extractedSubstring = editContent.note.substring(startingIndex, startingIndex + expectedSubstring.length);
-        // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
-        if (extractedSubstring === expectedSubstring) {
-          // suppose I have a string that looks like this data="My name ```console.log("hello")``` Max"
-          //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
-          const before = editContent.note.slice(0, startingIndex);
-          const after = editContent.note.slice(startingIndex + expectedSubstring.length);
-
-          newNote = before + selectedContent + after;
-          setEditContent({ ...editContent, note: newNote });
-
-        }
-        // if extractedSubstring === expectedSubstring is false means text is not in code string then we will make it code string by adding ```
-        else {
-          newNote = `${editContent.note.substring(0, selectionStart)}\`\`\`${selectedContent}\`\`\`${editContent.note.substring(selectionEnd)}`;
-          setEditContent({ ...editContent, note: newNote });
-
-        }
-
-
-
-      }
-    }
-
-  },[note,setNote,editContent,setEditContent]);
-
-  const addBoldText = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    let newNote: string;
-    let currentSelectionStart: number;
-    let currentSelectionEnd: number;
-    // check which button is clicked using name property so that we can add our bold string (**Bold text**) to correct textarea
-    if (e.currentTarget.name === "addBoldTextToAddCard") {
-      // textareaRef?.current?.selectionStart will give us the cursor position. we will add our bold string to that cursor position.
-      // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
-      const selectionStart = textareaRef?.current?.selectionStart || 0;
-      // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the bold string (**Bold text**) in the middle of the note
-      // like this `${note.substring(0, selectionStart)} **Bold text** ${note.substring(selectionEnd)}`;
-      const selectionEnd = textareaRef?.current?.selectionEnd || 0;
-      // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add **Bold text**.
-      // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
-      if (selectionEnd - selectionStart === 0) {
-        newNote = `${note.substring(0, selectionStart)} **Bold text** ${note.substring(selectionEnd)}`;
-        // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of **Bold text**
-        // so that once user clicks on B(i.e add Bold Text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "Bold Text" string manually I can start typing directly. 
-        // added 3 and 9  so that i can select only "Bold Text" not the whole string with backticks \`\`\`**Bold text**\`\`\`
-        // I have used these variables in setTimeout for auto selection.
-        currentSelectionStart = (textareaRef?.current?.selectionStart || 0) + 3;
-        currentSelectionEnd = currentSelectionStart + 9;
-        setNote(newNote);
-        setTimeout(() => {
-          textareaRef?.current?.focus();
-          textareaRef?.current?.setSelectionRange(currentSelectionStart, currentSelectionEnd);
-        }, 0);
-      }
-      // If user has selected some text then we don't need to auto select the newly added text. we will just bold the selected text.
-      // or if it is already bold then we will make it normal text.
-      else {
-        // Check if the selected text is already bold. If it has "**" on both sides (e.g. **text**), it is already bold and will be converted to normal text. If it has no "**" on both sides, it is normal text and will be converted to bold.
-        // get the selected text
-        let selectedContent = note.substring(selectionStart, selectionEnd)
-        //expectedSubstring is used to compare text in if statement.
-        const expectedSubstring = `**${selectedContent}**`;
-        // selectionStart will give us selected text's index. if we do -2 then we get text with **. and we will use startingIndex+expectedSubstring.length to get the complete selected text with **.
-        const startingIndex = selectionStart - 2;
-        const extractedSubstring = note.substring(startingIndex, startingIndex + expectedSubstring.length);
-        // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
-        if (extractedSubstring === expectedSubstring) {
-          // suppose I have a string that looks like this data="My name **is** Max"
-          //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
-          const before = note.slice(0, startingIndex);
-          const after = note.slice(startingIndex + expectedSubstring.length);
-
-          newNote = before + selectedContent + after;
-          setNote(newNote);
-        }
-        // if extractedSubstring === expectedSubstring is false means text is not bold then we will make it bold by adding **
-        else {
-          newNote = `${note.substring(0, selectionStart)}**${selectedContent}**${note.substring(selectionEnd)}`;
-          setNote(newNote);
-        }
-
-
-      }
-    }
-    else if (e.currentTarget.name === "addBoldTextToEditCard") {
-      const selectionStart = editTextareaRef?.current?.selectionStart || 0;
-      const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
-      // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, **Bold text** will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
-      // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
-      if (selectionEnd - selectionStart === 0) {
-        newNote = `${editContent.note.substring(0, selectionStart)} **Bold text** ${editContent.note.substring(selectionEnd)}`;
-        currentSelectionStart = (editTextareaRef?.current?.selectionStart || 0) + 3;
-        currentSelectionEnd = currentSelectionStart + 9;
-        setEditContent({ ...editContent, note: newNote });
-
-        setTimeout(() => {
-          // When I add Bold string in editTextArea it was scrolling to the top automatically.
-          // To avoid that we will get the scrollPosition using editTextareaRef?.current?.scrollTop 
-          // Then later we will use that so that when I add code string it stays where it was before.
-          const scrollTop = editTextareaRef?.current?.scrollTop || 0;
-          if (editTextareaRef?.current) {
-            editTextareaRef?.current?.focus();
-            editTextareaRef?.current?.setSelectionRange(currentSelectionStart, currentSelectionEnd);
-            editTextareaRef.current.scrollTop = scrollTop;
-
+          // if extractedSubstring === expectedSubstring is false means text is not in code string then we will make it code string by adding ```
+          else {
+            newNote = `${note.substring(
+              0,
+              selectionStart
+            )}\`\`\`${selectedContent}\`\`\`${note.substring(selectionEnd)}`;
+            setNote(newNote);
           }
-
-        }, 0);
-      }
-      // If user has selected some text then we don't need to auto select the newly added text. we will just bold the selected text.
-      // or if it is already bold then we will make it normal text.
-      else {
-
-        // Check if the selected text is already bold. If it has "**" on both sides (e.g. **text**), it is already bold and will be converted to normal text. If it has no "**" on both sides, it is normal text and will be converted to bold.
-        // get the selected text
-        let selectedContent = editContent.note.substring(selectionStart, selectionEnd)
-        //expectedSubstring is used to compare text in if statement.
-        const expectedSubstring = `**${selectedContent}**`;
-        // selectionStart will give us selected text's index. if we do -2 then we get text with **. and we will use startingIndex+expectedSubstring.length to get the complete selected text with **.
-        const startingIndex = selectionStart - 2;
-        const extractedSubstring = editContent.note.substring(startingIndex, startingIndex + expectedSubstring.length);
-        // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
-        if (extractedSubstring === expectedSubstring) {
-          // suppose I have a string that looks like this data="My name **is** Max"
-          //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
-          const before = editContent.note.slice(0, startingIndex);
-          const after = editContent.note.slice(startingIndex + expectedSubstring.length);
-
-          newNote = before + selectedContent + after;
-          setEditContent({ ...editContent, note: newNote });
         }
-        // if extractedSubstring === expectedSubstring is false means text is not bold then we will make it bold by adding **
+      } else if (e.currentTarget.name === "addCodeSnippetToEditCard") {
+        const selectionStart = editTextareaRef?.current?.selectionStart || 0;
+        const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add \`\`\`Code goes here\`\`\`.
+        // if selectionEnd-selectionStart is greater than 0 it means user has selected some text in that case we will convert the selected text to code string like this \`\`\`selectedText\`\`\`.
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${editContent.note.substring(
+            0,
+            selectionStart
+          )} \`\`\`Code goes here\`\`\` ${editContent.note.substring(
+            selectionEnd
+          )}`;
+
+          currentSelectionStart =
+            (editTextareaRef?.current?.selectionStart || 0) + 4;
+          currentSelectionEnd = currentSelectionStart + 14;
+          setEditContent({ ...editContent, note: newNote });
+          setTimeout(() => {
+            // When I add code string in editTextArea it was scrolling to the top automatically.
+            // To avoid that we will get the scrollPosition using editTextareaRef?.current?.scrollTop
+            // Then later we will use that so that when I add code string it stays where it was before.
+            const scrollTop = editTextareaRef?.current?.scrollTop || 0;
+            if (editTextareaRef?.current) {
+              editTextareaRef.current.focus();
+              editTextareaRef.current.setSelectionRange(
+                currentSelectionStart,
+                currentSelectionEnd
+              );
+              editTextareaRef.current.scrollTop = scrollTop;
+            }
+          }, 0);
+        }
+
+        // If user has selected some text then we don't need to auto select the newly added text. we will just add code string to the selected text.
         else {
-          newNote = `${editContent.note.substring(0, selectionStart)}**${selectedContent}**${editContent.note.substring(selectionEnd)}`;
-          setEditContent({ ...editContent, note: newNote });
+          let selectedContent = editContent.note.substring(
+            selectionStart,
+            selectionEnd
+          );
+          //expectedSubstring is used to compare text in if statement.
+          const expectedSubstring = `\`\`\`${selectedContent}\`\`\``;
+          // selectionStart will give us selected text's index. if we do -3 then we get text with ```. and we will use startingIndex+expectedSubstring.length to get the complete selected text with ```.
+          const startingIndex = selectionStart - 3;
+          const extractedSubstring = editContent.note.substring(
+            startingIndex,
+            startingIndex + expectedSubstring.length
+          );
+          // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
+          if (extractedSubstring === expectedSubstring) {
+            // suppose I have a string that looks like this data="My name ```console.log("hello")``` Max"
+            //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
+            const before = editContent.note.slice(0, startingIndex);
+            const after = editContent.note.slice(
+              startingIndex + expectedSubstring.length
+            );
+
+            newNote = before + selectedContent + after;
+            setEditContent({ ...editContent, note: newNote });
+          }
+          // if extractedSubstring === expectedSubstring is false means text is not in code string then we will make it code string by adding ```
+          else {
+            newNote = `${editContent.note.substring(
+              0,
+              selectionStart
+            )}\`\`\`${selectedContent}\`\`\`${editContent.note.substring(
+              selectionEnd
+            )}`;
+            setEditContent({ ...editContent, note: newNote });
+          }
         }
-
       }
+    },
+    [note, setNote, editContent, setEditContent]
+  );
 
+  const addBoldText = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      let newNote: string;
+      let currentSelectionStart: number;
+      let currentSelectionEnd: number;
+      // check which button is clicked using name property so that we can add our bold string (**Bold text**) to correct textarea
+      if (e.currentTarget.name === "addBoldTextToAddCard") {
+        // textareaRef?.current?.selectionStart will give us the cursor position. we will add our bold string to that cursor position.
+        // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
+        const selectionStart = textareaRef?.current?.selectionStart || 0;
+        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the bold string (**Bold text**) in the middle of the note
+        // like this `${note.substring(0, selectionStart)} **Bold text** ${note.substring(selectionEnd)}`;
+        const selectionEnd = textareaRef?.current?.selectionEnd || 0;
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add **Bold text**.
+        // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${note.substring(
+            0,
+            selectionStart
+          )} **Bold text** ${note.substring(selectionEnd)}`;
+          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of **Bold text**
+          // so that once user clicks on B(i.e add Bold Text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "Bold Text" string manually I can start typing directly.
+          // added 3 and 9  so that i can select only "Bold Text" not the whole string with backticks \`\`\`**Bold text**\`\`\`
+          // I have used these variables in setTimeout for auto selection.
+          currentSelectionStart =
+            (textareaRef?.current?.selectionStart || 0) + 3;
+          currentSelectionEnd = currentSelectionStart + 9;
+          setNote(newNote);
+          setTimeout(() => {
+            textareaRef?.current?.focus();
+            textareaRef?.current?.setSelectionRange(
+              currentSelectionStart,
+              currentSelectionEnd
+            );
+          }, 0);
+        }
+        // If user has selected some text then we don't need to auto select the newly added text. we will just bold the selected text.
+        // or if it is already bold then we will make it normal text.
+        else {
+          // Check if the selected text is already bold. If it has "**" on both sides (e.g. **text**), it is already bold and will be converted to normal text. If it has no "**" on both sides, it is normal text and will be converted to bold.
+          // get the selected text
+          let selectedContent = note.substring(selectionStart, selectionEnd);
+          //expectedSubstring is used to compare text in if statement.
+          const expectedSubstring = `**${selectedContent}**`;
+          // selectionStart will give us selected text's index. if we do -2 then we get text with **. and we will use startingIndex+expectedSubstring.length to get the complete selected text with **.
+          const startingIndex = selectionStart - 2;
+          const extractedSubstring = note.substring(
+            startingIndex,
+            startingIndex + expectedSubstring.length
+          );
+          // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
+          if (extractedSubstring === expectedSubstring) {
+            // suppose I have a string that looks like this data="My name **is** Max"
+            //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
+            const before = note.slice(0, startingIndex);
+            const after = note.slice(startingIndex + expectedSubstring.length);
 
+            newNote = before + selectedContent + after;
+            setNote(newNote);
+          }
+          // if extractedSubstring === expectedSubstring is false means text is not bold then we will make it bold by adding **
+          else {
+            newNote = `${note.substring(
+              0,
+              selectionStart
+            )}**${selectedContent}**${note.substring(selectionEnd)}`;
+            setNote(newNote);
+          }
+        }
+      } else if (e.currentTarget.name === "addBoldTextToEditCard") {
+        const selectionStart = editTextareaRef?.current?.selectionStart || 0;
+        const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
+        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, **Bold text** will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
+        // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${editContent.note.substring(
+            0,
+            selectionStart
+          )} **Bold text** ${editContent.note.substring(selectionEnd)}`;
+          currentSelectionStart =
+            (editTextareaRef?.current?.selectionStart || 0) + 3;
+          currentSelectionEnd = currentSelectionStart + 9;
+          setEditContent({ ...editContent, note: newNote });
 
-    }
-  },[note, setNote,editContent,setEditContent])
+          setTimeout(() => {
+            // When I add Bold string in editTextArea it was scrolling to the top automatically.
+            // To avoid that we will get the scrollPosition using editTextareaRef?.current?.scrollTop
+            // Then later we will use that so that when I add code string it stays where it was before.
+            const scrollTop = editTextareaRef?.current?.scrollTop || 0;
+            if (editTextareaRef?.current) {
+              editTextareaRef?.current?.focus();
+              editTextareaRef?.current?.setSelectionRange(
+                currentSelectionStart,
+                currentSelectionEnd
+              );
+              editTextareaRef.current.scrollTop = scrollTop;
+            }
+          }, 0);
+        }
+        // If user has selected some text then we don't need to auto select the newly added text. we will just bold the selected text.
+        // or if it is already bold then we will make it normal text.
+        else {
+          // Check if the selected text is already bold. If it has "**" on both sides (e.g. **text**), it is already bold and will be converted to normal text. If it has no "**" on both sides, it is normal text and will be converted to bold.
+          // get the selected text
+          let selectedContent = editContent.note.substring(
+            selectionStart,
+            selectionEnd
+          );
+          //expectedSubstring is used to compare text in if statement.
+          const expectedSubstring = `**${selectedContent}**`;
+          // selectionStart will give us selected text's index. if we do -2 then we get text with **. and we will use startingIndex+expectedSubstring.length to get the complete selected text with **.
+          const startingIndex = selectionStart - 2;
+          const extractedSubstring = editContent.note.substring(
+            startingIndex,
+            startingIndex + expectedSubstring.length
+          );
+          // if extractedSubstring === expectedSubstring is true it means the text is already bold and will be converted to normal text.
+          if (extractedSubstring === expectedSubstring) {
+            // suppose I have a string that looks like this data="My name **is** Max"
+            //  before var will give us "My name" and after var will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
+            const before = editContent.note.slice(0, startingIndex);
+            const after = editContent.note.slice(
+              startingIndex + expectedSubstring.length
+            );
 
-
+            newNote = before + selectedContent + after;
+            setEditContent({ ...editContent, note: newNote });
+          }
+          // if extractedSubstring === expectedSubstring is false means text is not bold then we will make it bold by adding **
+          else {
+            newNote = `${editContent.note.substring(
+              0,
+              selectionStart
+            )}**${selectedContent}**${editContent.note.substring(
+              selectionEnd
+            )}`;
+            setEditContent({ ...editContent, note: newNote });
+          }
+        }
+      }
+    },
+    [note, setNote, editContent, setEditContent]
+  );
 
   const increaseTextAreaHeight = () => {
     setHeight((pre) => pre + 120);
@@ -558,9 +599,9 @@ const Cards: FC = () => {
     return <Loading />;
   }
 
-  if(data?.message){
-    return  <SessionExpired/>
-    }
+  if (data?.message) {
+    return <SessionExpired />;
+  }
 
   // if (isError) {
   //   // If you do not define AxiosErrorType and directly access the error message using {(error as Error)?.message}, this will give the error message that Axios returns(something like request failed with status code 404). If you want to access the error message that you sent from the server, use {(error as AxiosErrorType)?.response?.data.message}.
@@ -572,32 +613,86 @@ const Cards: FC = () => {
   //     </div>
   //   );
   // }
+
   if (isError) {
     const axiosError = error as AxiosErrorType;
-    if (axiosError.message.includes("Network Error")) {
+    if (axiosError?.message?.includes("Network Error")) {
       return (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
-          <p className="font-semibold"><span className="font-bold">Error </span>: No internet connection.</p>
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4">
+          <img
+            src={`${
+              theme === "dark"
+                ? "/illustrations/no_internet_dark.svg"
+                : "/illustrations/no_internet_light.svg"
+            }`}
+            alt="No internet image"
+            className="lg:w-28 lg:h-28 w-24 h-24 "
+          />
+          <p className="font-semibold"> No internet connection.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+            type="button"
+            aria-label="Refresh"
+          >
+            Refresh
+          </button>
         </div>
       );
-    } else if (axiosError.response?.status === 500) {
+    } else if (axiosError?.response?.status === 500) {
       return (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
-          <p className="font-semibold"><span className="font-bold">Error </span>: An error occurred on the server. Please try again later.</p>
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
+          <img
+            src={`${
+              theme === "dark"
+                ? "/illustrations/server_down_dark.svg"
+                : "/illustrations/server_down_light.svg"
+            }`}
+            alt="Server down image"
+            className="lg:w-32 lg:h-32 w-28 h-28 "
+          />
+          <div className="font-semibold">
+            <p> An error occurred on the server.</p>
+            <p> Please try again later.</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+            type="button"
+            aria-label="Refresh"
+          >
+            Refresh
+          </button>
         </div>
       );
     } else {
-      const errorMessage = axiosError.response?.data?.message || "An error occurred. Please try again later.";
+      const errorMessage =
+        axiosError?.response?.data?.message ||
+        "An error occurred. Please try again later.";
       return (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50">
-          <p className="font-semibold"><span className="font-bold">Error </span>: {errorMessage}</p>
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
+          <img
+            src={`${
+              theme === "dark"
+                ? "/illustrations/error_dark.svg"
+                : "/illustrations/error_light.svg"
+            }`}
+            alt="Error image"
+            className="lg:w-32 lg:h-32 w-28 h-28 "
+          />
+          <p className="font-semibold text-sm"> {errorMessage}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+            type="button"
+            aria-label="Refresh"
+          >
+            Refresh
+          </button>
         </div>
       );
     }
   }
-  // if(isMutationError){
-  //   return <p>Error{(mutationError as Error)?.message}</p>
-  // }
   return (
     <>
       <Helmet>
@@ -617,31 +712,46 @@ const Cards: FC = () => {
         {(provided, snapshot) => {
           return (
             <div
-              className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2 z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${snapshot.isDraggingOver
-                ? "ring-1 ring-red-500 shadow-md shadow-red-500"
-                : "ring-1 dark:ring-sky-500/40 ring-teal-500/40"
-                }`}
+              className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2 z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${
+                snapshot.isDraggingOver
+                  ? "ring-1 ring-red-500 shadow-md shadow-red-500"
+                  : "ring-1 dark:ring-sky-500/40 ring-teal-500/40"
+              }`}
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
-              <span
-                className={`lg:text-3xl text-2xl cursor-pointer text-teal-600 dark:text-sky-400  ${snapshot.isDraggingOver
-                  ? "rotate-[30deg] text-red-500 dark:text-red-500"
-                  : "transform-none"
-                  }  `}
+              <div
+                className={` cursor-pointer transition-transform duration-300   ${
+                  snapshot.isDraggingOver ? "-rotate-12 " : "transform-none"
+                }  `}
+                onClick={handlePopUp}
+                title="Drag and drop the card here to delete it."
               >
-                <BsTrash
-                  onClick={handlePopUp}
-                  title="Drag and drop the card here to delete it."
-                />
-              </span>
+                {snapshot.isDraggingOver ? (
+                  <img
+                    src="/trashcan-open.svg"
+                    alt="Delete card image"
+                    className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
+                  />
+                ) : (
+                  <img
+                    src="/trashcan-close.svg"
+                    alt="Delete card image"
+                    className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"
+                  />
+                )}
+              </div>
             </div>
           );
         }}
       </Droppable>
 
       <div className="flex flex-col gap-2 w-full  relative overflow-auto h-screen  ">
-        <div className={`${expandTextarea ? "mt-4" : "mt-2"} w-full px-4  mx-auto transition-all duration-1000 `}>
+        <div
+          className={`${
+            expandTextarea ? "mt-4" : "mt-2"
+          } w-full px-4  mx-auto transition-all duration-1000 `}
+        >
           <form
             onSubmit={handleSubmit}
             className="flex flex-col  gap-4 justify-center items-center  "
@@ -650,8 +760,13 @@ const Cards: FC = () => {
             Card details
           </label> */}
             <div className="flex flex-col ">
-              <div className={`transition duration-1000 delay-1000 ${expandTextarea ? 'h-8 p-1 border-t-2 opacity-100' : 'h-8 p-0 translate-y-full border-t-2'} flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] `}>
-
+              <div
+                className={`transition duration-1000 delay-1000 ${
+                  expandTextarea
+                    ? "h-8 p-1 border-t-2 opacity-100"
+                    : "h-8 p-0 translate-y-full border-t-2"
+                } flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] `}
+              >
                 <div className={`flex gap-2`}>
                   <button
                     title="Add code sample"
@@ -691,7 +806,11 @@ const Cards: FC = () => {
                     title="Expand Text Area"
                     className="text-red-500 hover:text-red-600  text-[1.2rem] transition-all duration-300 ml-5"
                     type="button"
-                    onClick={() => { setExpandTextArea(false), setCheckClose(true), setHeight(80) }}
+                    onClick={() => {
+                      setExpandTextArea(false),
+                        setCheckClose(true),
+                        setHeight(80);
+                    }}
                   >
                     <GoEyeClosed />
                   </button>
@@ -705,20 +824,28 @@ const Cards: FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setTitle(e.target.value);
                 }}
-                //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input 
+                //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input
                 //field typically triggers form submission by default. Afterwards, we will shift the focus from the input field to the textarea.
                 onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     textareaRef.current?.focus();
                   }
                 }}
                 value={title}
-                className={`${expandTextarea ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0" : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center"} transition-[border-radius]  h-10 px-3 py-2  pb-2 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-[#0c1221] dark:text-gray-50 z-10 `}
+                className={`${
+                  expandTextarea
+                    ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
+                    : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center"
+                } transition-[border-radius]  h-10 px-3 py-2  pb-2 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-[#0c1221] dark:text-gray-50 z-10 `}
                 placeholder={`${expandTextarea ? "Title" : "Add a note"} `}
               />
               <textarea
-                className={` ${expandTextarea ? " py-2 border-b-2 rounded-t-0 opacity-100" : "py-0 border-b-2"} lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 `}
+                className={` ${
+                  expandTextarea
+                    ? " py-2 border-b-2 rounded-t-0 opacity-100"
+                    : "py-0 border-b-2"
+                } lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
@@ -730,22 +857,60 @@ const Cards: FC = () => {
             </div>
             <div className="flex justify-end">
               <button
-                className={` outline-none py-1  ${expandTextarea ? "opacity-100" : "opacity-0"} transition-[opacity] duration-1000`}
+                className={` outline-none py-1  ${
+                  expandTextarea ? "opacity-100" : "opacity-0"
+                } transition-[opacity] duration-1000`}
                 aria-label="Create Card"
                 type="submit"
                 disabled={expandTextarea ? false : true}
               >
-                <span className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-2 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 transition-colors duration-300">Create Card</span>
+                <span className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-2 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 transition-colors duration-300">
+                  Create Card
+                </span>
               </button>
-
             </div>
           </form>
           <h1 className="font-bold text-xl text-gray-800 mb-6 dark:text-gray-50 mt-6">
             {data?.title}
           </h1>
         </div>
-        
-       {data && data?.cards.length>0?<CardItems handleDelete={handleDelete} handleEdit={handleEdit} handleShowFullScreen={handleShowFullScreen} data={data}/>:<div className="font-bold dark:text-gray-50 text-gray-800 px-1">Looks like you haven't added any cards yet. Click the 'Add a note' button to get started.</div>}
+
+        {data && data?.cards.length > 0 ? (
+          <CardItems
+            handleDelete={handleDelete}
+            handleEdit={handleEdit}
+            handleShowFullScreen={handleShowFullScreen}
+            data={data}
+          />
+        ) : !expandTextarea ? (
+          <div className="lg:mt-12 mt-11  font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col">
+            <img
+              src={`${
+                theme === "dark"
+                  ? "/illustrations/no_cards_found_dark.svg"
+                  : "/illustrations/no_cards_found_light.svg"
+              }`}
+              alt="No cards found image"
+              className="lg:w-24 lg:h-24 w-20 h-20 "
+            />
+            <p className="p-1 mt-1 lg:text-sm text-xs">
+              Looks like you haven't added any cards yet.
+            </p>{" "}
+            <p className="lg:text-sm text-xs">
+              Click the 'Add a note' button to get started.
+            </p>
+            {!expandTextarea && (
+              <button
+                onClick={() => setExpandTextArea(true)}
+                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+                type="button"
+                aria-label="Add a note"
+              >
+                Add a note
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {openModal ? (
@@ -754,7 +919,6 @@ const Cards: FC = () => {
             {/* modal head  */}
 
             <div className="w-full ">
-
               <div className=" flex item-center justify-between  pr-4 gap-2 ">
                 <div>
                   <h2 className="py-2 px-4 text-left text-white font-bold ">
@@ -780,7 +944,6 @@ const Cards: FC = () => {
                   >
                     <AiOutlineBold />
                   </button>
-
                 </div>
               </div>
             </div>
@@ -846,7 +1009,7 @@ const Cards: FC = () => {
                 {parseNote(fullScreenCardData?.note)}
               </div>
             </div>
-            <div className="fixed top-0 py-4 dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96">
+            <div className="fixed top-0 py-[0.85rem] dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96">
               <div>
                 <button
                   onClick={() => {
@@ -855,18 +1018,15 @@ const Cards: FC = () => {
                     if (search_index) {
                       // If the 'search_index' is present and the user clicks on the back button, we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
                       if (location.state?.from === "/") {
-                        navigate("/")
+                        navigate("/");
+                      } else {
+                        navigate(location.state?.from);
+                        setShowFullScreen(false);
                       }
-                      else {
-                        navigate(location.state?.from)
-                        setShowFullScreen(false)
-                      }
-
                     }
                     //"If the 'search_index' is undefined, it means that we did not arrive at this page from a search result, and instead opened it from the cards page. Therefore, we will simply close the fullscreen display.
                     else {
-                      setShowFullScreen(false)
-
+                      setShowFullScreen(false);
                     }
                   }}
                   className=" text-xl rounded px-1 text-center text-gray-50 cursor-pointer bg-red-500"

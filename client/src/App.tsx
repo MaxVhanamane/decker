@@ -36,10 +36,9 @@ function App() {
   const [undoDeck,setUndoDeck]=useState<DeckTypeWithIndex | null>(null)
   const { theme } = useContext(UserContext);
   const { mutate: deleteOneDeck } = useDeleteDeck();
-  const {deleteConfirmationModalForCard}=useContext(UserContext)
+  const {deleteConfirmationModalForCard,setIndexOfCardForDeletion}=useContext(UserContext)
   const {mutate:moveCard,error:editMutationError,isError:isEditMutationError}=useMoveCard()
   const undoButtonRef=useRef<HTMLDivElement | null >(null)
-  const [indexOfCardForDeletion,setIndexOfCardForDeletion]=useState<number | null>(null)
   const handlePopupForUndoButton=()=>{
     if(undoButtonRef.current?.classList.contains("scale-0")){
       undoButtonRef.current.classList.remove("scale-0")

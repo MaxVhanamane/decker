@@ -4,12 +4,15 @@ import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 import { useRef, memo } from 'react';
 import { BiEdit } from 'react-icons/bi';
+import { UserContext } from '../context/UserContext';
+import { useContext } from 'react';
 type CardType={
 title:string;
 note:string;
 _id:string
 }
 const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
+  const {divRefForUserSettings}=useContext(UserContext)
     const { deck_id } = useParams();
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   return (
@@ -46,20 +49,26 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                             <div
                               ref={changeColorWhileDragging}
                               onClick={() =>
+                              { 
+                                if(divRefForUserSettings.current?.classList.contains("scale-100")){
+                                  divRefForUserSettings.current?.classList.remove("scale-100")
+                                  divRefForUserSettings.current?.classList.add("scale-0")
+                                  divRefForUserSettings.current?.classList.add("hidden")
+                                }
                                 handleShowFullScreen({
                                   ...card,
                                   _id: deck_id!,
                                   cardIndex: index,
-                                })
+                                })}
                               }
                               className={`relative border   ${snapshot.isDragging
-                                ? "shadow-2xl  shadow-violet-600 border-violet-600  animate-pulse dark:bg-[#0c1221] bg-white"
+                                ? "shadow-2xl ring-1 ring-violet-600 shadow-violet-600 border-violet-600  animate-pulse dark:bg-[#0c1221] bg-white"
                                 : "border-gray-400 "
                                 } ${snapshot.draggingOver === "cardDeleteArea"
-                                  ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent"
+                                  ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent !ring-red-500"
                                   : null
                                 }   flex flex-col text-gray-800
-                rounded-md px-2 py-4  h-[9rem] lg:h-44  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
+                rounded-md px-2 py-4  h-[9rem] lg:h-40  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
                             >
                               <div className="absolute bottom-0 right-0 ">
                                 {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}

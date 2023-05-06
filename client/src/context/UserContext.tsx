@@ -26,6 +26,7 @@ interface ContexType {
 
   setTheme: Dispatch<React.SetStateAction<string | null>>;
   deleteConfirmationModalForCard:RefObject<HTMLDivElement>;
+  divRefForUserSettings:RefObject<HTMLDivElement>;
   indexOfCardForDeletion:number | null;
   showSearchBar:boolean;
   setShowSearchBar:Dispatch<React.SetStateAction<boolean>>;
@@ -43,6 +44,7 @@ export const UserContext = createContext<ContexType>({
   theme: null,
   setTheme: () => {},
   deleteConfirmationModalForCard:{ current: null } as RefObject<HTMLDivElement>,
+  divRefForUserSettings:{ current: null } as RefObject<HTMLDivElement>,
   setIndexOfCardForDeletion:() => {},
   indexOfCardForDeletion:null,
   showSearchBar:false,
@@ -54,6 +56,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   const navigate = useNavigate();
   const location = useLocation();
   const deleteConfirmationModalForCard=useRef<HTMLDivElement >(null)
+  const divRefForUserSettings=useRef<HTMLDivElement>(null)
   const pathNames=["/signup","/verifyemail","/forgotpassword","/changepassword","/login","/accountdeletionsuccess"]
   const [userInfo, setUserInfo] = useState<userData | null>({
     _id: "",
@@ -146,7 +149,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ userInfo, setUserInfo, theme, setTheme,deleteConfirmationModalForCard,indexOfCardForDeletion,setIndexOfCardForDeletion,showSearchBar,setShowSearchBar}}>
+    <UserContext.Provider value={{ userInfo, setUserInfo, theme, setTheme,deleteConfirmationModalForCard,indexOfCardForDeletion,setIndexOfCardForDeletion,showSearchBar,setShowSearchBar,divRefForUserSettings}}>
       {children}
     </UserContext.Provider>
   );

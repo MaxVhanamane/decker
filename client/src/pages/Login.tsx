@@ -114,9 +114,6 @@ const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
                     <div className="text-center pt-1  pb-1">
                     <button
                         className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full  animate-changeBgLight dark:animate-changeBgDark   "
-      
-                        data-mdb-ripple="true"
-                        data-mdb-ripple-color="light"
                         type="submit"
                         aria-label="Log in"
                       >

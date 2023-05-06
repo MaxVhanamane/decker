@@ -43,7 +43,7 @@ const SearchBar:FC = () => {
        <RiCloseFill onClick={()=>{setShowSearchBar(false),setSearchQuery("")}} className={`text-gray-700 dark:text-gray-100 ${showSearchBar?"opactiy-100":"opacity-0"} cursor-pointer transition-opacity duration-700`}/>
     </div>
 </div>
-<div className={`fixed  ${showSearchBar?"left-0":"left-full"} transition-all duration-500 lg:duration-700`}>
+<div className={`fixed  ${showSearchBar?"left-0":"left-full"} transition-all duration-500 lg:duration-700 `}>
 {showSearchBar&& <SearchResult searchQuery={searchQuery} setShowSearchBar={setShowSearchBar}/>}
 </div>
 </div>

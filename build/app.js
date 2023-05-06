@@ -85,7 +85,7 @@ app.use((0, express_session_1.default)({
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 1 //cookie expires in 1 day
+        maxAge: 1000 * 60 * 60 * 24 * 3 //cookie expires in 3 days
     }
 }));
 // using passport to handle login
