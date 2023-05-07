@@ -133,8 +133,8 @@ type PropType={
         if (axiosError?.message?.includes("Network Error")) {
           return (
             <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4">
-               <img src={`${theme==="dark" ? "/illustrations/no_internet_dark.svg":"/illustrations/no_internet_light.svg"}`} alt="No internet image" className="lg:w-28 lg:h-28 w-24 h-24 "/>
-              <p className="font-semibold"> No internet connection.</p>
+               <img src={`${theme==="dark" ? "/illustrations/no_internet_dark.svg":"/illustrations/no_internet_light.svg"}`} alt="No internet image" className="w-28 h-28 "/>
+              <p className="font-semibold text-md"> No internet connection.</p>
               <button
          onClick={() => window.location.reload()}
                         className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
@@ -149,8 +149,8 @@ type PropType={
         } else if (axiosError?.response?.status === 500) {
           return (
             <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
-              <img src={`${theme==="dark" ? "/illustrations/server_down_dark.svg":"/illustrations/server_down_light.svg"}`} alt="Server down image" className="lg:w-32 lg:h-32 w-28 h-28 "/>
-              <div className="font-semibold"><p> An error occurred on the server.</p><p> Please try again later.</p></div>
+              <img src={`${theme==="dark" ? "/illustrations/server_down_dark.svg":"/illustrations/server_down_light.svg"}`} alt="Server down image" className=" w-40 h-36 "/>
+              <div className="font-semibold text-md"><p> An error occurred on the server.</p><p> Please try again later.</p></div>
               <button
          onClick={() => window.location.reload()}
                         className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
@@ -166,8 +166,8 @@ type PropType={
           const errorMessage = axiosError?.response?.data?.message || "An error occurred. Please try again later.";
           return (
             <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
-               <img src={`${theme==="dark" ? "/illustrations/error_dark.svg":"/illustrations/error_light.svg"}`} alt="Error image" className="lg:w-32 lg:h-32 w-28 h-28 "/>
-              <p className="font-semibold text-sm"> {errorMessage}</p>
+               <img src={`${theme==="dark" ? "/illustrations/error_dark.svg":"/illustrations/error_light.svg"}`} alt="Error image" className=" w-40 h-40 "/>
+              <p className="font-semibold text-md"> {errorMessage}</p>
               <button
          onClick={() => window.location.reload()}
                         className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
@@ -204,7 +204,7 @@ type PropType={
                 
               <div  className={` cursor-pointer transition-transform duration-300 ${snapshot.isDraggingOver? "-rotate-12":"transform-none"} `} onClick={handlePopUp} title="Drag and drop the deck here to delete it.">
                 
-              {snapshot.isDraggingOver? <img src="/trashcan-open.svg" alt="Delete deck image" className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"/>:<img src="/trashcan-close.svg" alt="Delete deck image" className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"/>}
+              {snapshot.isDraggingOver? <img src="/trashcan-open.svg" alt="Delete deck trash can image" className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"/>:<img src="/trashcan-close.svg" alt="Delete deck trash can image" className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"/>}
                 
                 
                 </div>
@@ -384,9 +384,9 @@ type PropType={
 
 {allDecks?.length===0&&<div className="fixed w-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center justify-center  flex-col">
   
-  <img src={`${theme==="dark" ? "/illustrations/no_decks_found_dark.svg":"/illustrations/no_decks_found_light.svg"}`} alt="No decks found image" className="w-40 h-40 "/>
-  <p className="pb-1 lg:text-sm text-xs font-bold dark:text-gray-50 text-gray-800">Looks like you haven't added any decks yet.</p> 
-  <p className="p-1 lg:text-sm text-xs font-bold dark:text-gray-50 text-gray-800">Create a new deck to get started.</p> 
+  <img src={`${theme==="dark" ? "/illustrations/no_decks_found_dark.svg":"/illustrations/no_decks_found_light.svg"}`} alt="No decks found image" className="w-56 h-40 "/>
+  <p className="pb-1  text-md font-bold dark:text-gray-50 text-gray-800">Looks like you haven't added any decks yet.</p> 
+  <p className="p-1  text-md font-bold dark:text-gray-50 text-gray-800">Create a new deck to get started.</p> 
   </div>}
       </div>
       </>

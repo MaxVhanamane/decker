@@ -626,9 +626,9 @@ const Cards: FC = () => {
                 : "/illustrations/no_internet_light.svg"
             }`}
             alt="No internet image"
-            className="lg:w-28 lg:h-28 w-24 h-24 "
+            className="w-28 h-28 "
           />
-          <p className="font-semibold"> No internet connection.</p>
+          <p className="font-semibold text-md"> No internet connection.</p>
           <button
             onClick={() => window.location.reload()}
             className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
@@ -649,9 +649,9 @@ const Cards: FC = () => {
                 : "/illustrations/server_down_light.svg"
             }`}
             alt="Server down image"
-            className="lg:w-32 lg:h-32 w-28 h-28 "
+            className="w-40 h-36"
           />
-          <div className="font-semibold">
+          <div className="font-semibold text-md">
             <p> An error occurred on the server.</p>
             <p> Please try again later.</p>
           </div>
@@ -678,9 +678,9 @@ const Cards: FC = () => {
                 : "/illustrations/error_light.svg"
             }`}
             alt="Error image"
-            className="lg:w-32 lg:h-32 w-28 h-28 "
+            className="w-40 h-40 "
           />
-          <p className="font-semibold text-sm"> {errorMessage}</p>
+          <p className="font-semibold text-md"> {errorMessage}</p>
           <button
             onClick={() => window.location.reload()}
             className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
@@ -730,13 +730,13 @@ const Cards: FC = () => {
                 {snapshot.isDraggingOver ? (
                   <img
                     src="/trashcan-open.svg"
-                    alt="Delete card image"
+                    alt="Delete card trash can image"
                     className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
                   />
                 ) : (
                   <img
                     src="/trashcan-close.svg"
-                    alt="Delete card image"
+                    alt="Delete card trash can image"
                     className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"
                   />
                 )}
@@ -883,7 +883,7 @@ const Cards: FC = () => {
             data={data}
           />
         ) : !expandTextarea ? (
-          <div className="lg:mt-12 mt-11  font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col">
+          <div className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full">
             <img
               src={`${
                 theme === "dark"
@@ -891,12 +891,12 @@ const Cards: FC = () => {
                   : "/illustrations/no_cards_found_light.svg"
               }`}
               alt="No cards found image"
-              className="lg:w-24 lg:h-24 w-20 h-20 "
+              className="lg:w-32 lg:h-32 w-36 h-36 "
             />
-            <p className="p-1 mt-1 lg:text-sm text-xs">
+            <p className="p-1 mt-1 text-md">
               Looks like you haven't added any cards yet.
             </p>{" "}
-            <p className="lg:text-sm text-xs">
+            <p className="text-md">
               Click the 'Add a note' button to get started.
             </p>
             {!expandTextarea && (

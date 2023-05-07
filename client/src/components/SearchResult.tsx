@@ -242,15 +242,15 @@ return <>
     </Link>
   ))}
 </div>
-</div> : <div className={`flex items-center justify-center z-50 w-screen h-full font-semibold`}> {showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0)?
+</div> : <div className={`flex items-center justify-center z-50 w-screen h-full text-md font-semibold`}> {showResult && searchQuery.length>0 && (foundDecks.length<=0 && foundCards.length<=0)?
 
-<div className='flex items-center justify-center flex-col'>
-<img src={`${theme==="dark" ? "/illustrations/no_result_found_dark.svg":"/illustrations/no_result_found_light.svg"}`} alt="No internet image" className="lg:w-40 lg:h-40 w-36 h-36  "/>
+<div className='relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-12'>
+<img src={`${theme==="dark" ? "/illustrations/no_result_found_dark.svg":"/illustrations/no_result_found_light.svg"}`} alt="No result found image" className="w-52 h-44 "/>
   <p className='text-gray-800 dark:text-gray-50'>No result found!</p>
   
   </div>:<div className='relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-12 gap-2'>
-  <img src={`${theme==="dark" ? "/illustrations/search_dark.svg":"/illustrations/search_light.svg"}`} alt="No internet image" className="lg:w-40 lg:h-40 w-36 h-36  "/>
-  <p className=' text-gray-700 dark:text-gray-200'>Find relevant content from all decks and cards with keyword search.</p></div>}</div>}
+  <img src={`${theme==="dark" ? "/illustrations/search_dark.svg":"/illustrations/search_light.svg"}`} alt="Image depicting a person searching through a library of card" className="lg:w-44 lg:h-44 w-40 h-40  "/>
+  <p className=' text-gray-700 dark:text-gray-200 px-2'>Find relevant content from all decks and cards with keyword search.</p></div>}</div>}
 </div>
 </>
 }
