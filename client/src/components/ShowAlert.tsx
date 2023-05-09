@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import  { AlertColor } from '@mui/material/Alert';
-import { AlertContext } from "../context/AlertState"
+import { AlertContext } from "../context/AlertContext"
 import Alert from '@mui/material/Alert';
 
 export default function SimpleSnackbar() {

@@ -5,7 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import UserContextProvider from "./context/UserContext";
-import AlertState from "./context/AlertState";
+import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
 const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

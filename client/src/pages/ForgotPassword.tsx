@@ -4,7 +4,7 @@ import { FormEvent, useContext } from 'react';
 import { ChangeEvent } from 'react';
 import { request } from './../utils/axios-utils';
 import { FaFeatherAlt } from 'react-icons/fa';
-import { AlertContext } from '../context/AlertState';
+import { AlertContext } from '../context/AlertContext';
 import { AlertData } from '../types/types';
 
 export default function ForgotPassword() {

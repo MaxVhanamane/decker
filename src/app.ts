@@ -930,3 +930,24 @@ app.post("/deleteaccount",fetchUserDetails,async(req:Request,res:Response,next)=
   }
 
 })
+
+
+
+
+
+
+
+
+
+// to update multiple fields
+// with same value of cardId 
+  // const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
+// with different value of cardId
+  // const decks = await DeckModal.find({});
+  // decks.forEach((deck) => {
+  //   deck.cards = deck.cards.map((card) => ({
+  //     ...card,
+  //     cardId: uuidv4(),
+  //   }));
+  //   deck.save();
+  // });

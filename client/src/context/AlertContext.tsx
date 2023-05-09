@@ -1,4 +1,4 @@
-import React,{ReactNode} from 'react'
+import {ReactNode} from 'react'
 import { createContext, useState } from "react";
 import { AlertType } from '../types/types';
 type AlertContextType = {

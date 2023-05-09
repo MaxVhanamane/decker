@@ -107,12 +107,7 @@ function App() {
       if(deleteConfirmationModalForCard?.current?.classList.contains("hidden")){
         deleteConfirmationModalForCard?.current?.classList.remove("hidden")
    }  
-      // const receivedData = result.draggableId.split("-");
-      // const data = {
-      //   deck_id: receivedData[0],
-      //   index: parseInt(receivedData[1]),
-      // };
-      // deleteCardItem(data);
+    
     }
     else if(result.destination?.droppableId == "cardDropableArea"){
       let deleteIndex=result.source.index

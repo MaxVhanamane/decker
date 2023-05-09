@@ -1,7 +1,7 @@
 import { request } from "./../utils/axios-utils";
 import { useMutation } from "react-query";
 import { useQueryClient } from "react-query";
-import { AlertContext } from "../context/AlertState";
+import { AlertContext } from "../context/AlertContext";
 import { AlertData, CardDataType } from "../types/types";
 import { useContext } from "react";
 type PayloadData = {
@@ -9,6 +9,7 @@ type PayloadData = {
   content: {
     title: string;
     note: string;
+    cardId:string;
   };
 };
 

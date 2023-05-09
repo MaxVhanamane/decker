@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "react-query";
 import { request } from "./../utils/axios-utils";
-import { AlertContext } from "../context/AlertState";
+import { AlertContext } from "../context/AlertContext";
 import { AlertData, DeckType } from "../types/types";
 import { useContext } from "react";
 type CardData = {

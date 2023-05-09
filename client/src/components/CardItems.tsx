@@ -9,6 +9,7 @@ import { useContext } from 'react';
 type CardType={
 title:string;
 note:string;
+cardId:string;
 _id:string
 }
 const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
@@ -29,9 +30,9 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                 {data?.cards?.map((card:CardType, index:number) => {
                   return (
                     <Draggable
-                      draggableId={`${deck_id!}-${index}`}
+                      draggableId={`${deck_id!}-${card.cardId}`}
                       index={index}
-                      key={card._id+index}
+                      key={card.cardId}
                     >
                       
                       {(provided, snapshot) => {
@@ -46,6 +47,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                             {...provided.dragHandleProps}
                             {...provided.draggableProps}
                           >
+                          
                             <div
                               ref={changeColorWhileDragging}
                               onClick={() =>

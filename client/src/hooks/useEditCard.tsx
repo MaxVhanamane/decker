@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "react-query";
 import { request } from "./../utils/axios-utils";
 import { OldData } from "./useDeleteCard";
-import { AlertContext } from "../context/AlertState";
+import { AlertContext } from "../context/AlertContext";
 import { AlertData, CardDataType } from "../types/types";
 import { useContext } from "react";
 import { UserContext } from './../context/UserContext';

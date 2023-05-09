@@ -7,7 +7,7 @@ import {BsFillPinFill} from "react-icons/bs"
 import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import usePinDeck from '../hooks/usePinDeck';
-import { AlertContext } from '../context/AlertState';
+import { AlertContext } from '../context/AlertContext';
 import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from 'react-icons/bi';
 import Loading from '../components/Loading';

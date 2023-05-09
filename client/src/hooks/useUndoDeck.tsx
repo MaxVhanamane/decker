@@ -1,6 +1,6 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from 'react-query';
-import { AlertContext } from '../context/AlertState';
+import { AlertContext } from '../context/AlertContext';
 import { AlertData, DeckType, DeckTypeWithIndex } from '../types/types';
 import { useContext } from 'react';
 const  deleteDeck = async (undoDeck:DeckTypeWithIndex)=> {

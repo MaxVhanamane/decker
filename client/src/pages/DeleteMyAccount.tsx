@@ -5,7 +5,7 @@ import { ChangeEvent } from "react";
 import { request } from "./../utils/axios-utils";
 import { UserContext } from "../context/UserContext";
 import { FaFeatherAlt } from "react-icons/fa";
-import { AlertContext } from "../context/AlertState";
+import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import ReCAPTCHA from "react-google-recaptcha";
 export default function DeleteMyAccount() {

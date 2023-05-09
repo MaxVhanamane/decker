@@ -25,7 +25,7 @@ import { AiOutlineBold } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
-import { AlertContext } from "../context/AlertState";
+import { AlertContext } from "../context/AlertContext";
 import { AlertData, AxiosErrorType } from "../types/types";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import ThemeToggler from "../components/ThemeToggler";
@@ -37,6 +37,7 @@ import parseNote from "../functions/parseNote";
 import { GoEyeClosed } from "react-icons/go";
 import CardItems from "../components/CardItems";
 import SessionExpired from "../components/SessionExpired";
+import { v4 as uuidv4 } from 'uuid';
 
 // types
 // let oldContent:string //this  works
@@ -44,6 +45,12 @@ type ContentType = {
   title: string;
   note: string;
   _id: string;
+};
+
+type ContentTypeForPayload = {
+  title: string;
+  note: string;
+  cardId: string;
 };
 
 type ContentTypeForEdit = ContentType & {
@@ -56,7 +63,7 @@ type ContentForFullScreen = ContentType & {
 
 type PayloadType = {
   deck_id: string;
-  content: ContentType;
+  content: ContentTypeForPayload;
 };
 
 // Component
@@ -215,7 +222,7 @@ const Cards: FC = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (title.length > 0 || note.length > 0) {
-      const content = { title, note, _id: deck_id! };
+      const content = { title, note,cardId:uuidv4() };
       const payload: PayloadType = { deck_id: deck_id!, content };
       addCard(payload);
       setNote("");
@@ -998,7 +1005,7 @@ const Cards: FC = () => {
 
       {showFullScreen && (
         <div className="fixed inset-0 overflow-y-auto bg-white  dark:bg-[#0c1221]  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
-          <div className="mt-2 lg:mt-4 relative">
+          <div className="mt-2 lg:mt-4 relative w-full">
             <div className="mt-12">
               {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words. */}
               {/* whitespace-pre-line to keep the new lines and spaces as it is */}

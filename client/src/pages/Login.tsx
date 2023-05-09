@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { request } from '../utils/axios-utils';
 import {FcGoogle} from "react-icons/fc"
 import { FaFeatherAlt } from 'react-icons/fa';
-import { AlertContext } from '../context/AlertState';
+import { AlertContext } from '../context/AlertContext';
 import { AlertData } from '../types/types';
 import { Helmet } from 'react-helmet';
 export default function Login() {
