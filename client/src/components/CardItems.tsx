@@ -70,7 +70,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                                   ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent !ring-red-500"
                                   : null
                                 }   flex flex-col text-gray-800
-                rounded-md px-2 py-4  h-[9rem] lg:h-40  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
+                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
                             >
                               <div className="absolute bottom-0 right-0 ">
                                 {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
@@ -102,7 +102,7 @@ const CardItems = ({handleDelete,handleEdit,handleShowFullScreen,data}:any) => {
                                   <BiEdit />
                                 </button>
                               </div>
-                              <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
+                              <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">
                                 {card.title}
                               </p>
                               {/* line-clamp-3 helps to truncate characters after 3 lines */}

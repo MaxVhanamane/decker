@@ -6,12 +6,14 @@ import usePinDeck from '../hooks/usePinDeck';
 import EditModalForDeck from './EditModalForDeck';
 import { UserContext } from '../context/UserContext';
 import useGetDecksAndCards from '../hooks/useGetDecksAndCards';
+
 let timer:any
+
+// types
 interface IProp{
     searchQuery:string;
     setShowSearchBar:Dispatch<React.SetStateAction<boolean>>;
 }
-// types
 
   type SearchResultCardsType={
     deck_id: string;
@@ -28,7 +30,7 @@ interface IProp{
 
 
 const SearchResult:FC<IProp> = ({searchQuery,setShowSearchBar}) => {
-  const[showResult,setShowResult]=useState(false)
+const[showResult,setShowResult]=useState(false)
 const [foundCards,setFoundCards]=useState<SearchResultCardsType[]>([])
 const [foundDecks,setFoundDecks]=useState<SearchResultDeckType[]>([])
 const { data, isError, error, isLoading } = useGetDecksAndCards()

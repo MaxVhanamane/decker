@@ -1,6 +1,5 @@
-import { FC, memo } from "react";
+import { FC, memo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { request } from "../utils/axios-utils";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
 import { FaFeatherAlt } from "react-icons/fa";
@@ -11,9 +10,9 @@ import ThemeToggler from "./ThemeToggler";
 import SearchBar from "./SearchBar";
 import { HiOutlineSearch } from "react-icons/hi";
 import { AiOutlineWarning } from "react-icons/ai";
+import ConfirmLogoutModal from "./ConfirmLogoutModal";
 const Navbar: FC = () => {
   const {
-    setUserInfo,
     showSearchBar,
     setShowSearchBar,
     divRefForUserSettings,
@@ -25,7 +24,7 @@ const Navbar: FC = () => {
   }
   const navigate = useNavigate();
   const location = useLocation();
-
+const [showLogoutModal,setShowLogoutModal]=useState(false)
   const handleShowUserInfomation = () => {
     if (divRefForUserSettings.current?.classList.contains("scale-0")) {
       divRefForUserSettings.current?.classList.add("!block");
@@ -40,15 +39,7 @@ const Navbar: FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    const res = await request.post("/auth/logout");
-    if (res.data === "done") {
-      handleShowUserInfomation();
-      setUserInfo(null);
-      localStorage.removeItem("userInfo");
-      navigate("/login", { replace: true });
-    }
-  };
+ 
   return (
     <>
       <nav className="border-b bg-white border-slate-900/10 dark:bg-[#0c1221] dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] ">
@@ -202,7 +193,7 @@ const Navbar: FC = () => {
                 navigate("/account/deletemyaccount", { state: { from: location.pathname } });
               }}
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 transition-[color] duration-300 cursor-pointer  mt-3"
-              aria-label="Logout"
+              aria-label="Delete My Account"
             >
               Delete My Account
               <AiOutlineWarning
@@ -227,7 +218,7 @@ const Navbar: FC = () => {
 
             <button
               onClick={() => {
-                handleLogout();
+                setShowLogoutModal(true)
               }}
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer   pb-2"
               aria-label="Logout"
@@ -237,6 +228,7 @@ const Navbar: FC = () => {
           </div>
         </div>
       </div>
+      {showLogoutModal && <ConfirmLogoutModal handleShowUserInfomation={handleShowUserInfomation} setShowLogoutModal={setShowLogoutModal} showLogoutModal={showLogoutModal}/>}
     </>
   );
 };

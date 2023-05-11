@@ -350,8 +350,9 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: Reques
 app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
 
-    const deletedDeck = await DeckModal.findByIdAndDelete(req.params.id)
-    res.status(200).json({ deletedDeck, success: true })
+    const deletedDeckInfo = await DeckModal.findByIdAndDelete(req.params.id)
+    const modifiedDeckInfo={_id:deletedDeckInfo?._id,title: deletedDeckInfo?.title,  pinned: deletedDeckInfo?.pinned,email:deletedDeckInfo?.email,date:deletedDeckInfo?.date,cards:deletedDeckInfo?.cards }
+    res.status(200).json({ modifiedDeckInfo, success: true })
   }
   catch(error) {
     res.status(500).json({ message: "some error occurred! Please try again later!", success: false })

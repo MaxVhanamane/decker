@@ -28,6 +28,7 @@ import { DeckTypeWithIndex } from "./types/types";
 import SessionExpiredPage from "./pages/SessionExpiredPage";
 import DeleteMyAccount from "./pages/DeleteMyAccount";
 import AccountDeletionSuccess from "./pages/AccountDeletionSuccess";
+import PageNotFound from "./pages/PageNotFound";
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout
@@ -101,9 +102,8 @@ function App() {
         handlePopupForUndoButton()
       }
     } else if (result.destination?.droppableId == "cardDeleteArea") {
-      const receivedData = result.draggableId.split("-"); 
-      const index=parseInt(receivedData[1])
-      setIndexOfCardForDeletion(index)
+      let cardToDeleteIndex=result.source.index
+      setIndexOfCardForDeletion(cardToDeleteIndex)
       if(deleteConfirmationModalForCard?.current?.classList.contains("hidden")){
         deleteConfirmationModalForCard?.current?.classList.remove("hidden")
    }  
@@ -176,7 +176,7 @@ function App() {
             <Route path="/auth/failure" element={<AuthFailure />} />
             <Route path="/accountdeletionsuccess" element={<AccountDeletionSuccess />} />
             <Route path="/verifyemail" element={<VerifyEmail />} />
-            {/* <Route path='*' element={<NotFound/>} /> */}
+            <Route path='*' element={<PageNotFound/>} />
           </Routes>
         
       </DragDropContext>
