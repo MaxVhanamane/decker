@@ -11,7 +11,6 @@ import {
   KeyboardEvent,
   memo,
 } from "react";
-import React from "react";
 import { useParams } from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
@@ -20,7 +19,6 @@ import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiCodeCurly, BiEdit } from "react-icons/bi";
 import useEditCard from "../hooks/useEditCard";
 import { Droppable } from "react-beautiful-dnd";
-import { BsTrash } from "react-icons/bs";
 import { AiOutlineBold } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import Loading from "../components/Loading";
@@ -105,7 +103,6 @@ const Cards: FC = () => {
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const showPopUp = useRef<HTMLDivElement | null>(null);
   const inputElementRef = useRef<HTMLInputElement>(null);
 
@@ -120,37 +117,58 @@ const Cards: FC = () => {
   //useEffects
 
   useEffect(() => {
-    if (
-      inputElementRef?.current?.classList.contains("rounded-t-md") &&
-      expandTextarea
-    ) {
-      setTimeout(() => {
+    const isRoundedTopClassPresent  = inputElementRef?.current?.classList.contains("rounded-t-md");
+  
+    let timeoutId:NodeJS.Timeout;
+    if (isRoundedTopClassPresent  && expandTextarea) {
+      timeoutId = setTimeout(() => {
         inputElementRef?.current?.classList.remove("rounded-t-md");
       }, 1200);
     }
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [expandTextarea]);
+  
+  
 
   useEffect(() => {
+
+    let timeoutId1: NodeJS.Timeout, timeoutId2: NodeJS.Timeout, timeoutId3: NodeJS.Timeout;
+
     if (checkClose) {
+
       inputElementRef?.current?.classList.remove("rounded-b-md");
       inputElementRef?.current?.classList.remove("rounded-t-md");
-      setTimeout(() => {
+
+      timeoutId1=setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-t-md");
         inputElementRef?.current?.classList.remove("duration-700");
         inputElementRef?.current?.classList.add("duration-[1.2s]");
         setCheckClose(false);
       }, 1300);
-      setTimeout(() => {
+
+      timeoutId2= setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-b-md");
         inputElementRef?.current?.classList.add("duration-700");
       }, 600);
-      setTimeout(() => {
+
+      timeoutId3=setTimeout(() => {
         textareaRef?.current?.classList.add("opacity-0");
       }, 950);
-    } else {
+    } 
+    
+    else {
       inputElementRef?.current?.classList.add("rounded-b-md");
       inputElementRef?.current?.classList.add("rounded-t-md");
     }
+
+    return () => {
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+      clearTimeout(timeoutId3);
+    };
+
   }, [checkClose]);
 
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
@@ -171,6 +189,7 @@ const Cards: FC = () => {
   // Here we will check if user has used browser's back button if he uses browsers back button to go back then
   // we will first check if card is open in full screen if it is open then we will close it instead of going back to the previous page directly.
   // This is usefull when user is accessing the site on mobile because most users swipe to go back.
+
   useEffect(() => {
     // This is how you detect if the browser's back button is clicked or not.
     window.history.pushState(null, "", document.URL);
@@ -198,8 +217,8 @@ const Cards: FC = () => {
         (cardInfo.note = cardData.note), (cardInfo._id = deck_id!);
       }
       // here we will create all the data that is needed to show it in full screen
-      let obj = { ...cardInfo, cardIndex: parseInt(search_index) };
-      setFullScreenCardData(obj);
+      let cardDetails = { ...cardInfo, cardIndex: parseInt(search_index) };
+      setFullScreenCardData(cardDetails);
       setShowFullScreen(true);
     }
   }, [data, url]);
@@ -280,6 +299,7 @@ const Cards: FC = () => {
       setEditContent({ ...editContent, note: e.target.value });
     }
   };
+
   const handlePopUp = () => {
     if (showPopUp.current?.classList.contains("scale-0")) {
       showPopUp.current.classList.remove("scale-0");
@@ -609,17 +629,6 @@ const Cards: FC = () => {
   if (data?.message) {
     return <SessionExpired />;
   }
-
-  // if (isError) {
-  //   // If you do not define AxiosErrorType and directly access the error message using {(error as Error)?.message}, this will give the error message that Axios returns(something like request failed with status code 404). If you want to access the error message that you sent from the server, use {(error as AxiosErrorType)?.response?.data.message}.
-  //   return (
-  //     <div className=" absolute top-0 left-0  w-full h-full flex items-center justify-center text-gray-800 dark:text-gray-50 ">
-  //       <p className="font-semibold">
-  //         <span className="font-bold">Error </span>: {(error as AxiosErrorType)?.response?.data.message}
-  //       </p>
-  //     </div>
-  //   );
-  // }
 
   if (isError) {
     const axiosError = error as AxiosErrorType;
@@ -1016,7 +1025,7 @@ const Cards: FC = () => {
                 {parseNote(fullScreenCardData?.note)}
               </div>
             </div>
-            <div className="fixed top-0 py-[0.85rem] dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96">
+            <div className="fixed top-0 lg:py-[0.85rem] py-[0.68rem] dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96">
               <div>
                 <button
                   onClick={() => {

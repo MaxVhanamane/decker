@@ -85,7 +85,7 @@ app.use((0, express_session_1.default)({
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 3 //cookie expires in 3 days
+        maxAge: 1000 * 60 * 60 * 24 * 5 //cookie expires in 3 days
     }
 }));
 // using passport to handle login
@@ -297,8 +297,9 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, function (req, res) {
 app.delete('/deck/:id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const deletedDeck = yield deck_1.default.findByIdAndDelete(req.params.id);
-            res.status(200).json({ deletedDeck, success: true });
+            const deletedDeckInfo = yield deck_1.default.findByIdAndDelete(req.params.id);
+            const modifiedDeckInfo = { _id: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo._id, title: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.title, pinned: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.pinned, email: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.email, date: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.date, cards: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.cards };
+            res.status(200).json({ modifiedDeckInfo, success: true });
         }
         catch (error) {
             res.status(500).json({ message: "some error occurred! Please try again later!", success: false });
@@ -776,3 +777,15 @@ app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 
         return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
     }
 }));
+// to update multiple fields
+// with same value of cardId 
+// const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
+// with different value of cardId
+// const decks = await DeckModal.find({});
+// decks.forEach((deck) => {
+//   deck.cards = deck.cards.map((card) => ({
+//     ...card,
+//     cardId: uuidv4(),
+//   }));
+//   deck.save();
+// });

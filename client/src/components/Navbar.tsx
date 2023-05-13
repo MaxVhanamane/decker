@@ -45,10 +45,14 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
       <nav className="border-b bg-white border-slate-900/10 dark:bg-[#0c1221] dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] ">
         <div className="flex items-center justify-center flex-row gap-8">
           <Link to={"/"}>
-            <div className="flex items-center justify-center rounded px-2 gap-2">
+            <div onClick={()=>{  if (showSearchBar) setShowSearchBar(false);
+                      if (divRefForUserSettings.current?.classList.contains("scale-100")) {
+                        handleShowUserInfomation();
+                      }}} 
+                  className="flex items-center justify-center rounded px-2 gap-2">
               <span className="text-xl text-teal-600 dark:text-sky-400">
                 <FaFeatherAlt />
-              </span>{" "}
+              </span>
               <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
                 <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
                   D
@@ -79,6 +83,9 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
                     className="dark:text-gray-50 text-gray-800 cursor-pointer dark:hover:text-sky-500 hover:text-gray-600 font-semibold transition-[color] duration-300"
                     onClick={() => {
                       if (showSearchBar) setShowSearchBar(false);
+                      if (divRefForUserSettings.current?.classList.contains("scale-100")) {
+                        handleShowUserInfomation();
+                      }
                     }}
                   >
                     Home
@@ -95,11 +102,7 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
               <SearchBar />
               <button
                 onClick={() => {
-                  if (
-                    divRefForUserSettings.current?.classList.contains(
-                      "scale-100"
-                    )
-                  ) {
+                  if (divRefForUserSettings.current?.classList.contains("scale-100")) {
                     handleShowUserInfomation();
                   }
                   setShowSearchBar(true);

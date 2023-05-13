@@ -3,6 +3,7 @@ declare const DeckModal: mongoose.Model<{
     cards: {
         title?: string | undefined;
         note?: string | undefined;
+        cardId?: string | undefined;
     }[];
     pinned: boolean;
     title?: string | undefined;
@@ -12,6 +13,7 @@ declare const DeckModal: mongoose.Model<{
     cards: {
         title?: string | undefined;
         note?: string | undefined;
+        cardId?: string | undefined;
     }[];
     pinned: boolean;
     title?: string | undefined;
