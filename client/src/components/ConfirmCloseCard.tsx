@@ -1,0 +1,90 @@
+import { FC, MouseEvent, Dispatch } from "react";
+
+interface ConfirmCloseCardProps {
+  setShowConfirmCloseCardModal: Dispatch<React.SetStateAction<boolean>>;
+  setExpandTextArea: Dispatch<React.SetStateAction<boolean>>;
+  setCheckClose: Dispatch<React.SetStateAction<boolean>>;
+  setNote: Dispatch<React.SetStateAction<string>>;
+  setTitle: Dispatch<React.SetStateAction<string>>;
+  setHeight: Dispatch<React.SetStateAction<number>>;
+  showConfirmCloseCardModal: boolean;
+}
+
+const ConfirmCloseCard: FC<ConfirmCloseCardProps> = ({
+  setShowConfirmCloseCardModal,
+  setExpandTextArea,
+  setCheckClose,
+  setHeight,
+  setNote,
+  setTitle,
+  showConfirmCloseCardModal,
+}) => {
+  const getUserConfirmation = async (
+    e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
+  ) => {
+    if ((e.target as HTMLButtonElement).id === "yesbutton") {
+      setShowConfirmCloseCardModal(false);
+      setExpandTextArea(false), setCheckClose(true), setHeight(80);
+      setNote("");
+      setTitle("");
+    } else {
+      setShowConfirmCloseCardModal(false);
+    }
+  };
+
+  return (
+    <div
+      tabIndex={-1}
+      className={`fixed ${
+        showConfirmCloseCardModal ? "block" : "hidden"
+      } z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-[#0c1221] lg:backdrop-blur-none lg:bg-white`}
+    >
+      <div className="relative w-full h-full flex items-center justify-center  ">
+        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-[#0c1221] ring-1 ring-sky-500  ">
+          <div className="p-6 text-center">
+            <svg
+              aria-hidden="true"
+              className="mx-auto mb-4 text-gray-400 w-14 h-14 dark:text-gray-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              Are you sure you want to close? Any unsaved changes will be lost.
+            </h3>
+            <button
+              id="yesbutton"
+              aria-label="Yes,I'm sure"
+              onClick={getUserConfirmation}
+              data-modal-toggle="popup-modal"
+              type="button"
+              className="text-white bg-red-600 hover:bg-red-800    font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none"
+            >
+              Yes, I'm sure
+            </button>
+            <button
+              id="nobutton"
+              aria-label="No, cancel"
+              onClick={getUserConfirmation}
+              data-modal-toggle="popup-modal"
+              type="button"
+              className="text-gray-500 bg-white hover:bg-gray-100  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none"
+            >
+              No, cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ConfirmCloseCard;

@@ -1,4 +1,4 @@
-import { useContext,useRef} from "react";
+import { useContext, useRef } from "react";
 import Deck from "./pages/Deck";
 import { Routes, Route } from "react-router-dom";
 // import Cards from "./pages/Cards";
@@ -18,12 +18,12 @@ import SignUp from "./pages/Signup";
 import Cards from "./pages/Cards";
 import Loading from "./components/Loading";
 import { UserContext } from "./context/UserContext";
-import VerifyEmail from './pages/VerifyEmail';
-import ShowAlert from './components/ShowAlert';
-import ForgotPassword from './pages/ForgotPassword';
-import ChangePassword from './pages/ChangePassword';
-import useMoveCard from './hooks/useMoveCard';
-import {useState} from "react"
+import VerifyEmail from "./pages/VerifyEmail";
+import ShowAlert from "./components/ShowAlert";
+import ForgotPassword from "./pages/ForgotPassword";
+import ChangePassword from "./pages/ChangePassword";
+import useMoveCard from "./hooks/useMoveCard";
+import { useState } from "react";
 import { DeckTypeWithIndex } from "./types/types";
 import SessionExpiredPage from "./pages/SessionExpiredPage";
 import DeleteMyAccount from "./pages/DeleteMyAccount";
@@ -31,95 +31,99 @@ import AccountDeletionSuccess from "./pages/AccountDeletionSuccess";
 import PageNotFound from "./pages/PageNotFound";
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
-let timeout: NodeJS.Timeout
+let timeout: NodeJS.Timeout;
 
 function App() {
-  const [undoDeck,setUndoDeck]=useState<DeckTypeWithIndex | null>(null)
+  const [undoDeck, setUndoDeck] = useState<DeckTypeWithIndex | null>(null);
   const { theme } = useContext(UserContext);
   const { mutate: deleteOneDeck } = useDeleteDeck();
-  const {deleteConfirmationModalForCard,setIndexOfCardForDeletion}=useContext(UserContext)
-  const {mutate:moveCard,error:editMutationError,isError:isEditMutationError}=useMoveCard()
-  const undoButtonRef=useRef<HTMLDivElement | null >(null)
-  const handlePopupForUndoButton=()=>{
-    if(undoButtonRef.current?.classList.contains("scale-0")){
-      undoButtonRef.current.classList.remove("scale-0")
-      undoButtonRef?.current?.classList.add("!block")
-      undoButtonRef.current.classList.add("!w-[19rem]")
-      undoButtonRef.current.classList.add("!h-fit")
-      undoButtonRef.current.classList.add("scale-100")
-  
-      timeout= setTimeout(()=>{
-        undoButtonRef?.current?.classList.remove("scale-100")
-      undoButtonRef?.current?.classList.add("scale-0")
-      undoButtonRef?.current?.classList.add("hidden")
-      },7000)
-     
-    }
-    else if ( undoButtonRef?.current?.classList.contains("scale-100")){
-      clearTimeout(timeout)
-      undoButtonRef.current.classList.add("scale-0")
-      undoButtonRef?.current?.classList.add("hidden")
-      undoButtonRef.current.classList.remove("scale-100")
-    }
-   }
+  const { deleteConfirmationModalForCard, setIndexOfCardForDeletion } =
+    useContext(UserContext);
+  const {
+    mutate: moveCard,
+    error: editMutationError,
+    isError: isEditMutationError,
+  } = useMoveCard();
+  const undoButtonRef = useRef<HTMLDivElement | null>(null);
 
+  const handlePopupForUndoButton = () => {
+    if (undoButtonRef.current?.classList.contains("scale-0")) {
+      undoButtonRef.current.classList.remove("scale-0");
+      undoButtonRef?.current?.classList.add("!block");
+      undoButtonRef.current.classList.add("!w-[19rem]");
+      undoButtonRef.current.classList.add("!h-fit");
+      undoButtonRef.current.classList.add("scale-100");
 
-  const handleUndoDeck=(deck:DeckTypeWithIndex | null):void=>{
-    if(deck===null){
-      setUndoDeck(null)
+      timeout = setTimeout(() => {
+        undoButtonRef?.current?.classList.remove("scale-100");
+        undoButtonRef?.current?.classList.add("scale-0");
+        undoButtonRef?.current?.classList.add("hidden");
+      }, 7000);
+    } else if (undoButtonRef?.current?.classList.contains("scale-100")) {
+      clearTimeout(timeout);
+      undoButtonRef.current.classList.add("scale-0");
+      undoButtonRef?.current?.classList.add("hidden");
+      undoButtonRef.current.classList.remove("scale-100");
     }
-    else{
-      setUndoDeck({...deck})
-    }
-  }
+  };
 
-  const handleChange = async (result: DropResult, provided: ResponderProvided) => {
+  const handleUndoDeck = (deck: DeckTypeWithIndex | null): void => {
+    if (deck === null) {
+      setUndoDeck(null);
+    } else {
+      setUndoDeck({ ...deck });
+    }
+  };
+
+  const handleChange = async (
+    result: DropResult,
+    provided: ResponderProvided
+  ) => {
     // if (result.destination?.droppableId === "pinnedArea") {
     //   pinDeck({ id: result.draggableId, pinned: true });
     // } else if (result.destination?.droppableId === "othersDeckArea") {
     //   pinDeck({ id: result.draggableId, pinned: false });
     // } else
     if (result.destination?.droppableId == "DeckDeleteArea") {
-      let data={
-        _id:result.draggableId,
-        handleUndoDeck
-      }
+      let data = {
+        _id: result.draggableId,
+        handleUndoDeck,
+      };
       deleteOneDeck(data);
-      // If user deletes decks one after the another that creates problem because when user deletes second deck 
+      // If user deletes decks one after the another that creates problem because when user deletes second deck
       // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
-      if(undoButtonRef.current?.classList.contains("scale-0")){
+      if (undoButtonRef.current?.classList.contains("scale-0")) {
         // undoButtonRef?.current?.classList.remove("scale-100")
         // undoButtonRef?.current?.classList.add("scale-0")
         // undoButtonRef?.current?.classList.add("hidden")
-        handlePopupForUndoButton()
-      }
-      else{
-        clearTimeout(timeout)
-      undoButtonRef?.current?.classList.remove("scale-100")
+        handlePopupForUndoButton();
+      } else {
+        clearTimeout(timeout);
+        undoButtonRef?.current?.classList.remove("scale-100");
 
-        undoButtonRef?.current?.classList.add("scale-0")
-        undoButtonRef?.current?.classList.add("hidden")
-        handlePopupForUndoButton()
+        undoButtonRef?.current?.classList.add("scale-0");
+        undoButtonRef?.current?.classList.add("hidden");
+        handlePopupForUndoButton();
       }
     } else if (result.destination?.droppableId == "cardDeleteArea") {
-      let cardToDeleteIndex=result.source.index
-      setIndexOfCardForDeletion(cardToDeleteIndex)
-      if(deleteConfirmationModalForCard?.current?.classList.contains("hidden")){
-        deleteConfirmationModalForCard?.current?.classList.remove("hidden")
-   }  
-    
-    }
-    else if(result.destination?.droppableId == "cardDropableArea"){
-      let deleteIndex=result.source.index
-      let moveIndex=result.destination.index
-      const receivedData = result.draggableId.split("-");
-      const id= receivedData[0]
-      let data={
-        deleteIndex,moveIndex,
-        deck_id:id
+      let cardToDeleteIndex = result.source.index;
+      setIndexOfCardForDeletion(cardToDeleteIndex);
+      if (
+        deleteConfirmationModalForCard?.current?.classList.contains("hidden")
+      ) {
+        deleteConfirmationModalForCard?.current?.classList.remove("hidden");
       }
-      moveCard(data)
-
+    } else if (result.destination?.droppableId == "cardDropableArea") {
+      let deleteIndex = result.source.index;
+      let moveIndex = result.destination.index;
+      const receivedData = result.draggableId.split("-");
+      const id = receivedData[0];
+      let data = {
+        deleteIndex,
+        moveIndex,
+        deck_id: id,
+      };
+      moveCard(data);
     }
   };
 
@@ -136,49 +140,43 @@ function App() {
           handleChange(result, provided);
         }}
       >
-          
-   <ShowAlert />
-       
-          <Routes>
-            <Route element={<PrivateRoutes />}>
-              <Route path="/" element={<Deck undoDeck={undoDeck} handleUndoDeck={handleUndoDeck} undoButtonRef={undoButtonRef} handlePopupForUndoButton={handlePopupForUndoButton}/>} />
-              <Route
-                path="/cards/:deck_id"
-                element={
-                    <Cards />
-                }
-              />
-              <Route
-                path="/cards/:deck_id/:search_index"
-                element={
-                    <Cards />
-                }
-              />
-              <Route
-                path="/account/deletemyaccount"
-                element={
-                    <DeleteMyAccount />
-                }
-              />
-            </Route>
+        <ShowAlert />
 
+        <Routes>
+          <Route element={<PrivateRoutes />}>
             <Route
-              path="/signup"
+              path="/"
               element={
-                  <SignUp />
+                <Deck
+                  undoDeck={undoDeck}
+                  handleUndoDeck={handleUndoDeck}
+                  undoButtonRef={undoButtonRef}
+                  handlePopupForUndoButton={handlePopupForUndoButton}
+                />
               }
             />
-            <Route path="/login" element={<Login />} />
-            <Route path="/sessionexpired" element={<SessionExpiredPage />} />
-            <Route path="/forgotpassword" element={<ForgotPassword />} />
-            <Route path="/changepassword" element={<ChangePassword />} />
-            <Route path="/auth/success" element={<AuthSuccess />} />
-            <Route path="/auth/failure" element={<AuthFailure />} />
-            <Route path="/accountdeletionsuccess" element={<AccountDeletionSuccess />} />
-            <Route path="/verifyemail" element={<VerifyEmail />} />
-            <Route path='*' element={<PageNotFound/>} />
-          </Routes>
-        
+            <Route path="/cards/:deck_id" element={<Cards />} />
+            <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
+            <Route
+              path="/account/deletemyaccount"
+              element={<DeleteMyAccount />}
+            />
+          </Route>
+
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/sessionexpired" element={<SessionExpiredPage />} />
+          <Route path="/forgotpassword" element={<ForgotPassword />} />
+          <Route path="/changepassword" element={<ChangePassword />} />
+          <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/auth/failure" element={<AuthFailure />} />
+          <Route
+            path="/accountdeletionsuccess"
+            element={<AccountDeletionSuccess />}
+          />
+          <Route path="/verifyemail" element={<VerifyEmail />} />
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
       </DragDropContext>
     </>
   );

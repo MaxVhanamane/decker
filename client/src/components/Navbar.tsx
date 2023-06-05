@@ -12,11 +12,8 @@ import { HiOutlineSearch } from "react-icons/hi";
 import { AiOutlineWarning } from "react-icons/ai";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
 const Navbar: FC = () => {
-  const {
-    showSearchBar,
-    setShowSearchBar,
-    divRefForUserSettings,
-  } = useContext(UserContext);
+  const { showSearchBar, setShowSearchBar, divRefForUserSettings } =
+    useContext(UserContext);
   const userDetails = localStorage.getItem("userInfo");
   let userInfo: userData | undefined;
   if (userDetails) {
@@ -24,7 +21,7 @@ const Navbar: FC = () => {
   }
   const navigate = useNavigate();
   const location = useLocation();
-const [showLogoutModal,setShowLogoutModal]=useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const handleShowUserInfomation = () => {
     if (divRefForUserSettings.current?.classList.contains("scale-0")) {
       divRefForUserSettings.current?.classList.add("!block");
@@ -39,17 +36,22 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
     }
   };
 
- 
   return (
     <>
       <nav className="border-b bg-white border-slate-900/10 dark:bg-[#0c1221] dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] ">
         <div className="flex items-center justify-center flex-row gap-8">
           <Link to={"/"}>
-            <div onClick={()=>{  if (showSearchBar) setShowSearchBar(false);
-                      if (divRefForUserSettings.current?.classList.contains("scale-100")) {
-                        handleShowUserInfomation();
-                      }}} 
-                  className="flex items-center justify-center rounded px-2 gap-2">
+            <div
+              onClick={() => {
+                if (showSearchBar) setShowSearchBar(false);
+                if (
+                  divRefForUserSettings.current?.classList.contains("scale-100")
+                ) {
+                  handleShowUserInfomation();
+                }
+              }}
+              className="flex items-center justify-center rounded px-2 gap-2"
+            >
               <span className="text-xl text-teal-600 dark:text-sky-400">
                 <FaFeatherAlt />
               </span>
@@ -80,10 +82,14 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
               {userInfo?.email && location.pathname.split("/")[1] == "cards" ? (
                 <Link to="/">
                   <li
-                    className="dark:text-gray-50 text-gray-800 cursor-pointer dark:hover:text-sky-500 hover:text-gray-600 font-semibold transition-[color] duration-300"
+                    className="dark:text-gray-50 text-gray-600 cursor-pointer  font-semibold transition-all duration-150 dark:hover:bg-gray-700 hover:bg-gray-100 hover:rounded-full p-[0.4rem] px-2"
                     onClick={() => {
                       if (showSearchBar) setShowSearchBar(false);
-                      if (divRefForUserSettings.current?.classList.contains("scale-100")) {
+                      if (
+                        divRefForUserSettings.current?.classList.contains(
+                          "scale-100"
+                        )
+                      ) {
                         handleShowUserInfomation();
                       }
                     }}
@@ -102,7 +108,11 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
               <SearchBar />
               <button
                 onClick={() => {
-                  if (divRefForUserSettings.current?.classList.contains("scale-100")) {
+                  if (
+                    divRefForUserSettings.current?.classList.contains(
+                      "scale-100"
+                    )
+                  ) {
                     handleShowUserInfomation();
                   }
                   setShowSearchBar(true);
@@ -115,15 +125,14 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
                     !showSearchBar
                       ? "opacity-100"
                       : "opacity-0 pointer-events-none"
-                  } cursor-pointer transition-opacity lg:duration-[1200ms] duration-500 mr-2`}
+                  } cursor-pointer transition-opacity lg:duration-[1200ms]  mr-2 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] px-2  w-9 h-9`}
                 />
               </button>
             </>
           )}
           <div>
             <ul className="flex items-center justify-center gap-3">
-              <li className=" text-2xl mr-2 ">
-                {" "}
+              <li className=" text-2xl mr-2">
                 <ThemeToggler />
               </li>
 
@@ -193,7 +202,9 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
               onClick={() => {
                 if (showSearchBar) setShowSearchBar(false);
                 handleShowUserInfomation();
-                navigate("/account/deletemyaccount", { state: { from: location.pathname } });
+                navigate("/account/deletemyaccount", {
+                  state: { from: location.pathname },
+                });
               }}
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 transition-[color] duration-300 cursor-pointer  mt-3"
               aria-label="Delete My Account"
@@ -208,7 +219,7 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
             {userInfo?.email && location.pathname.split("/")[1] == "cards" ? (
               <button
                 onClick={() => {
-                    if (showSearchBar) setShowSearchBar(false);
+                  if (showSearchBar) setShowSearchBar(false);
                   navigate("/");
                   handleShowUserInfomation();
                 }}
@@ -221,7 +232,7 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
 
             <button
               onClick={() => {
-                setShowLogoutModal(true)
+                setShowLogoutModal(true);
               }}
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer   pb-2"
               aria-label="Logout"
@@ -231,7 +242,13 @@ const [showLogoutModal,setShowLogoutModal]=useState(false)
           </div>
         </div>
       </div>
-      {showLogoutModal && <ConfirmLogoutModal handleShowUserInfomation={handleShowUserInfomation} setShowLogoutModal={setShowLogoutModal} showLogoutModal={showLogoutModal}/>}
+      {showLogoutModal && (
+        <ConfirmLogoutModal
+          handleShowUserInfomation={handleShowUserInfomation}
+          setShowLogoutModal={setShowLogoutModal}
+          showLogoutModal={showLogoutModal}
+        />
+      )}
     </>
   );
 };

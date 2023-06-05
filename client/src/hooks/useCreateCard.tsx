@@ -9,7 +9,7 @@ type PayloadData = {
   content: {
     title: string;
     note: string;
-    cardId:string;
+    cardId: string;
   };
 };
 
@@ -18,9 +18,9 @@ type OldData = {
   title: string;
 };
 
-const createCard = async (content: PayloadData) => {
-  const data = await request.post(`/card/${content.deck_id}`, {
-    content: content.content,
+const createCard = async (payload: PayloadData) => {
+  const data = await request.post(`/card/${payload.deck_id}`, {
+    content: payload.content,
   });
   return data.data;
 };
@@ -39,7 +39,9 @@ const useCreateCard = () => {
         ["cards", data.deck_id],
         (oldCardData) => {
           if (oldCardData) {
-            const newArray = [...oldCardData.cards]; // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will refere the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
+            // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will refere the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
+
+            const newArray = [...oldCardData.cards];
 
             newArray.unshift(data.content);
             return { ...oldCardData, cards: newArray };

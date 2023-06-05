@@ -35,7 +35,8 @@ import parseNote from "../functions/parseNote";
 import { GoEyeClosed } from "react-icons/go";
 import CardItems from "../components/CardItems";
 import SessionExpired from "../components/SessionExpired";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
+import ConfirmCloseCard from "../components/ConfirmCloseCard";
 
 // types
 // let oldContent:string //this  works
@@ -81,6 +82,8 @@ const Cards: FC = () => {
   const [height, setHeight] = useState(80);
   const [expandTextarea, setExpandTextArea] = useState(false);
   const [checkClose, setCheckClose] = useState(false);
+  const [showConfirmCloseCardModal, setShowConfirmCloseCardModal] =
+    useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen>({
       title: "",
@@ -117,10 +120,11 @@ const Cards: FC = () => {
   //useEffects
 
   useEffect(() => {
-    const isRoundedTopClassPresent  = inputElementRef?.current?.classList.contains("rounded-t-md");
-  
-    let timeoutId:NodeJS.Timeout;
-    if (isRoundedTopClassPresent  && expandTextarea) {
+    const isRoundedTopClassPresent =
+      inputElementRef?.current?.classList.contains("rounded-t-md");
+
+    let timeoutId: NodeJS.Timeout;
+    if (isRoundedTopClassPresent && expandTextarea) {
       timeoutId = setTimeout(() => {
         inputElementRef?.current?.classList.remove("rounded-t-md");
       }, 1200);
@@ -129,36 +133,32 @@ const Cards: FC = () => {
       clearTimeout(timeoutId);
     };
   }, [expandTextarea]);
-  
-  
 
   useEffect(() => {
-
-    let timeoutId1: NodeJS.Timeout, timeoutId2: NodeJS.Timeout, timeoutId3: NodeJS.Timeout;
+    let timeoutId1: NodeJS.Timeout,
+      timeoutId2: NodeJS.Timeout,
+      timeoutId3: NodeJS.Timeout;
 
     if (checkClose) {
-
       inputElementRef?.current?.classList.remove("rounded-b-md");
       inputElementRef?.current?.classList.remove("rounded-t-md");
 
-      timeoutId1=setTimeout(() => {
+      timeoutId1 = setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-t-md");
         inputElementRef?.current?.classList.remove("duration-700");
         inputElementRef?.current?.classList.add("duration-[1.2s]");
         setCheckClose(false);
       }, 1300);
 
-      timeoutId2= setTimeout(() => {
+      timeoutId2 = setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-b-md");
         inputElementRef?.current?.classList.add("duration-700");
       }, 600);
 
-      timeoutId3=setTimeout(() => {
+      timeoutId3 = setTimeout(() => {
         textareaRef?.current?.classList.add("opacity-0");
       }, 950);
-    } 
-    
-    else {
+    } else {
       inputElementRef?.current?.classList.add("rounded-b-md");
       inputElementRef?.current?.classList.add("rounded-t-md");
     }
@@ -168,7 +168,6 @@ const Cards: FC = () => {
       clearTimeout(timeoutId2);
       clearTimeout(timeoutId3);
     };
-
   }, [checkClose]);
 
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
@@ -227,12 +226,30 @@ const Cards: FC = () => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
 
     // clientHeight is a property of an HTML element that represents the height of an element's content area, including padding but excluding the border, scrollbar or margin. (which means height that is our state and clientHeight are same. as we have added py-2 there is lil difference )
+
     if (textareaRef?.current) {
       const textarea = textareaRef.current;
+      const maxHeightForTextArea =
+        window.innerHeight - (window.innerHeight * 35) / 100;
+      if (textarea.scrollHeight === 24) {
+        return setHeight(80);
+      }
       // We will only increase the height of the textarea when the content height is greater than the textarea's height.
-      if (textarea.scrollHeight > textarea.clientHeight) {
+      if (
+        textarea.scrollHeight > textarea.clientHeight &&
+        maxHeightForTextArea > textarea.scrollHeight
+      ) {
         // adding an extra 40+ to avoid weird bug. if I don't add this, then if you hit enter then while adding height it moves the content inside textarea which looks weird.
-        setHeight(textarea.scrollHeight + 40);
+        setHeight((preViousHight) => {
+          if (
+            textarea.scrollHeight > textarea.clientHeight &&
+            maxHeightForTextArea > preViousHight
+          )
+            return preViousHight + 120;
+          else {
+            return preViousHight;
+          }
+        });
       }
     }
   }, [note]);
@@ -240,14 +257,17 @@ const Cards: FC = () => {
   // onClick handlers
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (title.length > 0 || note.length > 0) {
-      const content = { title, note,cardId:uuidv4() };
+    //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
+    if (title.trim().length > 0 || note.trim().length > 0) {
+      const content = { title, note, cardId: uuidv4() };
       const payload: PayloadType = { deck_id: deck_id!, content };
       addCard(payload);
       setNote("");
       setTitle("");
       setHeight(80);
     } else {
+      setNote("");
+      setTitle("");
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "warning",
@@ -612,13 +632,22 @@ const Cards: FC = () => {
   );
 
   const increaseTextAreaHeight = () => {
-    setHeight((pre) => pre + 120);
+    const textarea = textareaRef.current;
+    const maxHeightForTextArea =
+      window.innerHeight - (window.innerHeight * 40) / 100;
+    if (maxHeightForTextArea > textarea!.clientHeight) {
+      setHeight((previousHeight) => {
+        return maxHeightForTextArea > previousHeight
+          ? previousHeight + 120
+          : previousHeight;
+      });
+    }
   };
   const decreaseTextAreaHeight = () => {
-    if (height < 80) {
+    if (height <= 80) {
       setHeight(80);
     } else {
-      setHeight((pre) => pre - 120);
+      setHeight((previousHeight) => previousHeight - 120);
     }
   };
 
@@ -641,7 +670,7 @@ const Cards: FC = () => {
                 ? "/illustrations/no_internet_dark.svg"
                 : "/illustrations/no_internet_light.svg"
             }`}
-            alt="No internet image"
+            alt="No internet"
             className="w-28 h-28 "
           />
           <p className="font-semibold text-md"> No internet connection.</p>
@@ -664,7 +693,7 @@ const Cards: FC = () => {
                 ? "/illustrations/server_down_dark.svg"
                 : "/illustrations/server_down_light.svg"
             }`}
-            alt="Server down image"
+            alt="Server down"
             className="w-40 h-36"
           />
           <div className="font-semibold text-md">
@@ -693,7 +722,7 @@ const Cards: FC = () => {
                 ? "/illustrations/error_dark.svg"
                 : "/illustrations/error_light.svg"
             }`}
-            alt="Error image"
+            alt="Error"
             className="w-40 h-40 "
           />
           <p className="font-semibold text-md"> {errorMessage}</p>
@@ -746,13 +775,13 @@ const Cards: FC = () => {
                 {snapshot.isDraggingOver ? (
                   <img
                     src="/trashcan-open.svg"
-                    alt="Delete card trash can image"
+                    alt="Delete card trash can"
                     className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
                   />
                 ) : (
                   <img
                     src="/trashcan-close.svg"
-                    alt="Delete card trash can image"
+                    alt="Delete card trash can"
                     className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"
                   />
                 )}
@@ -819,13 +848,19 @@ const Cards: FC = () => {
                     <FiPlusSquare />
                   </button>
                   <button
-                    title="Expand Text Area"
+                    title="Close"
                     className="text-red-500 hover:text-red-600  text-[1.2rem] transition-all duration-300 ml-5"
                     type="button"
                     onClick={() => {
-                      setExpandTextArea(false),
-                        setCheckClose(true),
-                        setHeight(80);
+                      if (title.trim().length > 0 || note.trim().length > 0) {
+                        setShowConfirmCloseCardModal(true);
+                      } else {
+                        setExpandTextArea(false),
+                          setCheckClose(true),
+                          setHeight(80);
+                        setNote("");
+                        setTitle("");
+                      }
                     }}
                   >
                     <GoEyeClosed />
@@ -861,12 +896,14 @@ const Cards: FC = () => {
                   expandTextarea
                     ? " py-2 border-b-2 rounded-t-0 opacity-100"
                     : "py-0 border-b-2"
-                } lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 `}
+                } lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
                 ref={textareaRef}
-                style={{ height: expandTextarea ? height + "px" : "0" }}
+                style={{
+                  height: expandTextarea ? height + "px" : "0",
+                }}
                 value={note}
                 placeholder="Note"
               ></textarea>
@@ -906,7 +943,7 @@ const Cards: FC = () => {
                   ? "/illustrations/no_cards_found_dark.svg"
                   : "/illustrations/no_cards_found_light.svg"
               }`}
-              alt="No cards found image"
+              alt="No cards found"
               className="lg:w-32 lg:h-32 w-36 h-36 "
             />
             <p className="p-1 mt-1 text-md">
@@ -944,7 +981,7 @@ const Cards: FC = () => {
                 <div className="flex items-center justify-center gap-4  px-2 py-1  ">
                   <button
                     title="Add code sample"
-                    className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 text-xl  transition-all duration-300"
+                    className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1 text-xl  transition-all duration-150"
                     type="button"
                     name="addCodeSnippetToEditCard"
                     onClick={(e) => addCodeBlock(e)}
@@ -954,7 +991,7 @@ const Cards: FC = () => {
                   <button
                     name="addBoldTextToEditCard"
                     title="Bold text"
-                    className="dark:text-gray-200    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-300 "
+                    className="dark:text-gray-200  dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-150 "
                     type="button"
                     onClick={(e) => addBoldText(e)}
                   >
@@ -1011,6 +1048,17 @@ const Cards: FC = () => {
         deleteCardItem={deleteCardItem}
         setShowFullScreen={setShowFullScreen}
       />
+      {showConfirmCloseCardModal ? (
+        <ConfirmCloseCard
+          setShowConfirmCloseCardModal={setShowConfirmCloseCardModal}
+          showConfirmCloseCardModal={showConfirmCloseCardModal}
+          setExpandTextArea={setExpandTextArea}
+          setCheckClose={setCheckClose}
+          setHeight={setHeight}
+          setNote={setNote}
+          setTitle={setTitle}
+        />
+      ) : null}
 
       {showFullScreen && (
         <div className="fixed inset-0 overflow-y-auto bg-white  dark:bg-[#0c1221]  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
@@ -1052,7 +1100,7 @@ const Cards: FC = () => {
                 </button>
               </div>
               <div className="flex items-center justify-center gap-2 ">
-                <div className="">
+                <div>
                   <ThemeToggler />
                 </div>
 
@@ -1061,7 +1109,7 @@ const Cards: FC = () => {
                     handleDelete(fullScreenCardData?.cardIndex!);
                   }}
                   type="button"
-                  className="text-red-500 text-xl outline-none  rounded-tr  px-1  text-center hover:scale-95"
+                  className="text-red-500 text-xl outline-none px-1  text-center hover:scale-95 "
                   aria-label="Delete Card"
                 >
                   <MdOutlineDeleteOutline />
@@ -1072,7 +1120,7 @@ const Cards: FC = () => {
                     handleEdit(fullScreenCardData);
                   }}
                   type="button"
-                  className="text-blue-500 text-xl outline-none  rounded-tr px-1  text-center hover:scale-95 dark:text-sky-400"
+                  className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-400"
                   aria-label="Edit Card"
                 >
                   <BiEdit />

@@ -325,6 +325,7 @@ app.get('/cards/:_id', fetchUserDetails, function (req, res) {
 });
 app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log(req.body.content);
         try {
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
             if (!getDeck) {
@@ -777,8 +778,8 @@ app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 
         return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
     }
 }));
-// to update multiple fields
-// with same value of cardId 
+// to update multiple fields with the same value.
+// here I have updated the value of a cardId
 // const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
 // with different value of cardId
 // const decks = await DeckModal.find({});

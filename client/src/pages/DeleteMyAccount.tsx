@@ -8,6 +8,7 @@ import { FaFeatherAlt } from "react-icons/fa";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import ReCAPTCHA from "react-google-recaptcha";
+
 export default function DeleteMyAccount() {
   const [email, setEmail] = useState("");
   const [otp, setOTP] = useState("");
@@ -19,14 +20,14 @@ export default function DeleteMyAccount() {
   const [captcha, setCaptcha] = useState(false);
   const location = useLocation();
   const from = location.state?.from || "/";
+
   useEffect(() => {
-    let getUser=localStorage.getItem("userInfo")
-    let userInformation
-  if(getUser){
-     userInformation=JSON.parse(getUser)
-  }
+    let getUser = localStorage.getItem("userInfo");
+    let userInformation;
+    if (getUser) {
+      userInformation = JSON.parse(getUser);
+    }
     if (!userInformation?.email) {
-        
       setUserInfo(null);
       localStorage.removeItem("userInfo");
       navigate("/login", { replace: true });
@@ -44,79 +45,82 @@ export default function DeleteMyAccount() {
 
   const handleGetOTP = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if(userInfo?.email===email){
-        setShowWaitMessage(true);
-        const res = await request.post("/generateaccountdeletionotp", { email });
-        if (res.data.success) {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "success",
-            show: true,
-            message: res.data.message,
-            autoHideDuration: 5000,
-          }));
-          setShowVerifyOTPButton(true);
-          setShowWaitMessage(false);
-        } else {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "error",
-            show: true,
-            message: res.data.message,
-            autoHideDuration: 6000,
-          }));
-          setShowWaitMessage(false);
-        }
-    }
-    else{
-        setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "error",
-            show: true,
-            message: "The email you entered does not match with your Logged-in email. Please enter the correct email address to proceed",
-            autoHideDuration: 6000,
-          }));
-          setShowWaitMessage(false);
-    }
-
-  };
-
-  const handleOTPVerification = async () => {
-    if(otp.length===6){
-
-    
-    const res = await request.post("/verifyaccountdeletionotp", { email, otp });
-    if (res.data.success) {
-      const res = await request.post("/deleteaccount", { email });
+    if (userInfo?.email === email) {
+      setShowWaitMessage(true);
+      const res = await request.post("/generateaccountdeletionotp", { email });
       if (res.data.success) {
-          setUserInfo(null);
-          localStorage.removeItem("userInfo");
-          navigate("/accountdeletionsuccess" ,{ replace: true,state:{accountDeletedSuccessfully:true}});
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "success",
+          show: true,
+          message: res.data.message,
+          autoHideDuration: 5000,
+        }));
+        setShowVerifyOTPButton(true);
+        setShowWaitMessage(false);
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: res.data.message,
+          autoHideDuration: 6000,
+        }));
+        setShowWaitMessage(false);
       }
     } else {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: res.data.message,
-        autoHideDuration: 5000,
+        message:
+          "The email you entered does not match with your Logged-in email. Please enter the correct email address to proceed",
+        autoHideDuration: 6000,
       }));
+      setShowWaitMessage(false);
     }
-  }
-  else{
-    setAlert((preval: AlertData) => ({
+  };
+
+  const handleOTPVerification = async () => {
+    if (otp.length === 6) {
+      const res = await request.post("/verifyaccountdeletionotp", {
+        email,
+        otp,
+      });
+      if (res.data.success) {
+        const res = await request.post("/deleteaccount", { email });
+        if (res.data.success) {
+          setUserInfo(null);
+          localStorage.removeItem("userInfo");
+          navigate("/accountdeletionsuccess", {
+            replace: true,
+            state: { accountDeletedSuccessfully: true },
+          });
+        }
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: res.data.message,
+          autoHideDuration: 5000,
+        }));
+      }
+    } else {
+      setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message:"Invalid OTP. Please enter a 6-digit OTP to proceed.",
+        message: "Invalid OTP. Please enter a 6-digit OTP to proceed.",
         autoHideDuration: 6000,
       }));
-  }
-};
+    }
+  };
 
   const handleCaptchaChange = () => {
     setCaptcha(true);
   };
+
   const handleCaptchaExpired = () => {
     setCaptcha(false);
   };
@@ -160,8 +164,6 @@ export default function DeleteMyAccount() {
                           )}
                         </div>
                         <form onSubmit={handleGetOTP}>
-                          {/* <p className="mb-4">Please login to your account</p> */}
-
                           {!showVerifyOTPButton ? (
                             <div className="mb-1">
                               <input
@@ -176,11 +178,12 @@ export default function DeleteMyAccount() {
                               />
                             </div>
                           ) : null}
-
                           {!showVerifyOTPButton ? (
                             <div className="text-center pt-1 mb-5 pb-1 relative">
                               <ReCAPTCHA
-                                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                                sitekey={
+                                  import.meta.env.VITE_RECAPTCHA_SITE_KEY
+                                }
                                 onChange={handleCaptchaChange}
                                 onExpired={handleCaptchaExpired}
                                 size="normal"
@@ -199,8 +202,8 @@ export default function DeleteMyAccount() {
                                 className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-red-600 hover:bg-red-500  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
                                 type="submit"
                                 aria-label="Cancel"
-                                onClick={()=>{
-                                  navigate(from)
+                                onClick={() => {
+                                  navigate(from);
                                 }}
                               >
                                 Cancel
@@ -240,15 +243,15 @@ export default function DeleteMyAccount() {
                               Verify OTP and Delete My Account
                             </button>
                             <button
-                                className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-red-600 hover:bg-red-500  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
-                                type="submit"
-                                aria-label="Cancel"
-                                onClick={()=>{
-                                  navigate(from)
-                                }}
-                              >
-                                Cancel
-                              </button>
+                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-red-600 hover:bg-red-500  outline-none "
+                              type="submit"
+                              aria-label="Cancel"
+                              onClick={() => {
+                                navigate(from);
+                              }}
+                            >
+                              Cancel
+                            </button>
                           </div>
                         ) : null}
                       </div>

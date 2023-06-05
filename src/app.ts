@@ -60,16 +60,13 @@ const store = new MongoDBStore({
   uri: process.env.MONGO_URI!,
   collection: 'mysessions',
   //The clearInterval option in express-session is used to specify how often expired sessions should be cleared from the session store, and the value you specify is in seconds. So, if you set the value to 3600, expired sessions will be removed from the store every 60 minutes.
-  clearInterval:3600
+  clearInterval: 3600
 });
 
 // Catch errors
 store.on('error', function (error: Error) {
   console.log(error);
 });
-
-
-
 
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
@@ -86,13 +83,12 @@ app.use(session({
   store: store,
   // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
   // uncomment it while deploying
-  cookie:{
-    httpOnly:true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
-    sameSite:"none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-    secure:true,      // it allows only https requests. you can only send these cookies to https sites
+  cookie: {
+    httpOnly: true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    sameSite: "none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    secure: true,      // it allows only https requests. you can only send these cookies to https sites
     maxAge: 1000 * 60 * 60 * 24 * 5  //cookie expires in 3 days
   }
-
 }))
 
 // using passport to handle login
@@ -107,8 +103,8 @@ passport.use(new LocalStrategy(
     User.findOne({ email: username }, function (err: Error, user: UserDetails) {
       if (err) { return done(err); }  // If there is error we will return an error to done function.
       if (!user) { return done(new Error("User with this email doesn't exist!")); } // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
-       // check if user is registered with Google Auth
-       if (!user.password) {
+      // check if user is registered with Google Auth
+      if (!user.password) {
         return done(new Error("You cannot log in with local credentials because you registered with Google Auth."));
       }
       // If we reach this line it means we found the user now let's compare the passoword.
@@ -195,12 +191,12 @@ const fetchUserDetails = async function (req: Request, res: Response, next: Next
       req.userDetails = user
       next()
     } catch (error) {
-      return res.status(500).json({message:"Error fetching user details. Please check your internet connection."})
+      return res.status(500).json({ message: "Error fetching user details. Please check your internet connection." })
     }
   }
   else {
 
-    return res.status(200).json({message:"Your session has expired. Please log in again to continue."})
+    return res.status(200).json({ message: "Your session has expired. Please log in again to continue." })
   }
 }
 
@@ -221,37 +217,37 @@ mongoose.connect(process.env.MONGO_URI!, {
   .catch((err: Error) => { console.log(err) });
 
 
-  
+
 
 //Deck routes 
 
 app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) {
-  try{
+  try {
     const user = req?.userDetails
 
     // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
     // as there is a relation defined between two collection DeckModal and User 
     // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
     // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
-    const deck = await DeckModal.find({ email: user?._id },{ title: 1,  pinned: 1,email:1,date:1 }).sort({ date: -1 });
+    const deck = await DeckModal.find({ email: user?._id }, { title: 1, pinned: 1, email: 1, date: 1 }).sort({ date: -1 });
     res.status(200).json(deck)
-  
+
   }
-  catch(error){
-    res.status(500).json({message:"Internal server error!"})
+  catch (error) {
+    res.status(500).json({ message: "Internal server error!" })
   }
 
 })
 
 app.get('/decks-and-cards', fetchUserDetails, async function (req: Request, res: Response) {
-  try{
+  try {
     const user = req?.userDetails
-    const deck = await DeckModal.find({ email: user?._id },{ title: 1,cards:1,pinned: 1 }).sort({ date: -1 });
+    const deck = await DeckModal.find({ email: user?._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
     res.status(200).json(deck)
-  
+
   }
-  catch(error){
-    res.status(500).json({message:"Internal server error!"})
+  catch (error) {
+    res.status(500).json({ message: "Internal server error!" })
   }
 
 })
@@ -259,7 +255,7 @@ app.get('/decks-and-cards', fetchUserDetails, async function (req: Request, res:
 
 app.post('/deck', fetchUserDetails, async function (req: Request, res: Response) {
   const user = req.userDetails
-  try{
+  try {
     const newDeck = new DeckModal({
       email: user?._id,
       title: req.body.title,
@@ -267,10 +263,10 @@ app.post('/deck', fetchUserDetails, async function (req: Request, res: Response)
     })
     const createdDeck = await newDeck.save()
     res.status(201).json(createdDeck)
-  
+
   }
-  catch(error){
-    res.status(500).json({message:"Internal server Error!"})
+  catch (error) {
+    res.status(500).json({ message: "Internal server Error!" })
 
   }
 
@@ -285,7 +281,7 @@ app.patch('/deck/:deck_id', fetchUserDetails, async function (req: Request, res:
     res.status(200).json(updatedDeck)
   }
 
-  catch(error) {
+  catch (error) {
     if (error instanceof Error) {
 
       res.status(500).send({ message: error.message, isError: true });
@@ -311,7 +307,7 @@ app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Respon
     res.status(200).json({ createdDeck, success: true })
   }
 
-  catch(error) {
+  catch (error) {
     if (error instanceof Error) {
 
       res.status(500).send({ message: error.message, isError: true });
@@ -333,7 +329,7 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: Reques
     res.status(200).json(updatedDeck)
   }
 
-  catch(error) {
+  catch (error) {
     if (error instanceof Error) {
 
       res.status(500).send({ message: error.message, isError: true });
@@ -351,10 +347,10 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
   try {
 
     const deletedDeckInfo = await DeckModal.findByIdAndDelete(req.params.id)
-    const modifiedDeckInfo={_id:deletedDeckInfo?._id,title: deletedDeckInfo?.title,  pinned: deletedDeckInfo?.pinned,email:deletedDeckInfo?.email,date:deletedDeckInfo?.date,cards:deletedDeckInfo?.cards }
+    const modifiedDeckInfo = { _id: deletedDeckInfo?._id, title: deletedDeckInfo?.title, pinned: deletedDeckInfo?.pinned, email: deletedDeckInfo?.email, date: deletedDeckInfo?.date, cards: deletedDeckInfo?.cards }
     res.status(200).json({ modifiedDeckInfo, success: true })
   }
-  catch(error) {
+  catch (error) {
     res.status(500).json({ message: "some error occurred! Please try again later!", success: false })
   }
 
@@ -365,7 +361,7 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
 app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Response) {
 
   try {
-    const cards = await DeckModal.findById({ _id: req.params._id },{cards:1,title:1});
+    const cards = await DeckModal.findById({ _id: req.params._id }, { cards: 1, title: 1 });
     if (cards) {
       res.status(200).json({ cards: cards.cards, title: cards.title })
     }
@@ -373,13 +369,14 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Resp
       res.status(200).json({ message: "No cards found!" });
     }
   }
-  catch(error) {
+  catch (error) {
     res.status(500).json({ message: "Internal server Error!" })
   }
 
 })
 
 app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
+  console.log(req.body.content)
   try {
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {
@@ -389,7 +386,7 @@ app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: 
     const createdCard = await getDeck.save()
     res.status(201).json(createdCard)
   }
-  catch(error) {
+  catch (error) {
     res.status(500).json({ message: "Invalid id" })
   }
 
@@ -417,7 +414,7 @@ app.patch('/card/:deck_id', fetchUserDetails, async function (req: Request, res:
       res.status(200).json({ message: "No cards found!" })
     }
   }
-  catch(error) {
+  catch (error) {
     res.status(500).json({ message: "Internal server Error!" })
   }
 })
@@ -593,7 +590,7 @@ app.post("/generateotp", async (req, res) => {
         await generateUserWithOTP.save()
       }
       else {
-       await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
+        await verifyEmail.findOneAndUpdate({ email: req.body.email }, {
           otp: oneTimePassword,
           expiresIn: new Date().getTime() + 600 * 1000
         })
@@ -682,10 +679,10 @@ app.post("/generateforgetpasswordotp", async (req: Request, res: Response) => {
     let user = await ForgotPasswordOTP.findOne({ email: req.body.email }) // This is where user with otp stored while creating account
     let mainUser = await User.findOne({ email: req.body.email })  // We only allow users with existing accounts to reset their password.
     let oneTimePassword = generateOTP();
-  
+
     if (mainUser) {
       // If the user is found in the 'mainUser' variable, we will check if they exist in the 'ForgotPasswordOTP' modal. If they do, it indicates that they have previously requested an OTP. so we will replace the old OTP with new one.
-     if (!user) {
+      if (!user) {
         let generateUserWithOTP = new ForgotPasswordOTP({
           email: req.body.email,
           otp: oneTimePassword,
@@ -800,11 +797,11 @@ app.post("/generateaccountdeletionotp", async (req: Request, res: Response) => {
 
   try {
     let user = await AccountDeletionOTP.findOne({ email: req.body.email })
-    let mainUser = await User.findOne({ email: req.body.email })  
+    let mainUser = await User.findOne({ email: req.body.email })
     let oneTimePassword = generateOTP();
- 
+
     if (mainUser) {
-    
+
       if (!user) {
         let generateUserWithOTP = new AccountDeletionOTP({
           email: req.body.email,
@@ -896,15 +893,15 @@ app.post("/verifyaccountdeletionotp", async (req: Request, res: Response) => {
 
 })
 
-app.post("/deleteaccount",fetchUserDetails,async(req:Request,res:Response,next)=>{
-  if(req.user){
-    try{
+app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response, next) => {
+  if (req.user) {
+    try {
       // saving user in userInfo so that I can use the _id of the user to delete the decks. because in DeckModal email field is a foreign key.
-      let userInfo=await User.findOneAndDelete({email:req.body.email})
-      await DeckModal.deleteMany({email:userInfo?._id})
-      await AccountDeletionOTP.findOneAndDelete({email:req.body.email})
-      await ForgotPasswordOTP.findOneAndDelete({email:req.body.email})
-      await verifyEmail.findOneAndDelete({email:req.body.email})
+      let userInfo = await User.findOneAndDelete({ email: req.body.email })
+      await DeckModal.deleteMany({ email: userInfo?._id })
+      await AccountDeletionOTP.findOneAndDelete({ email: req.body.email })
+      await ForgotPasswordOTP.findOneAndDelete({ email: req.body.email })
+      await verifyEmail.findOneAndDelete({ email: req.body.email })
       // once users data is delete we will logout the user and clear his session
       req.logout(function (err) {
         if (err) {
@@ -919,15 +916,15 @@ app.post("/deleteaccount",fetchUserDetails,async(req:Request,res:Response,next)=
         });
       });
     }
-    catch(err){
+    catch (err) {
       console.error(err)
       res.status(500).json({ success: false, message: "Some error occured please try again." })
     }
-  
+
   }
   else {
 
-    return res.status(200).json({message:"Your session has expired. Please log in again to continue."})
+    return res.status(200).json({ message: "Your session has expired. Please log in again to continue." })
   }
 
 })
@@ -940,9 +937,9 @@ app.post("/deleteaccount",fetchUserDetails,async(req:Request,res:Response,next)=
 
 
 
-// to update multiple fields
-// with same value of cardId 
-  // const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
+// to update multiple fields with the same value.
+// here I have updated the value of a cardId
+// const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
 // with different value of cardId
   // const decks = await DeckModal.find({});
   // decks.forEach((deck) => {

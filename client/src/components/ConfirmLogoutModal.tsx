@@ -16,7 +16,6 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
   setShowLogoutModal,
   showLogoutModal,
 }) => {
-  const logOutModalRef = useRef<HTMLDivElement>(null);
   const { setUserInfo } = useContext(UserContext);
   const navigate = useNavigate();
   const { setAlert } = useContext(AlertContext);
@@ -49,8 +48,6 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
 
   return (
     <div
-      ref={logOutModalRef}
-      id="popup-modal"
       tabIndex={-1}
       className={`fixed ${
         showLogoutModal ? "block" : "hidden"
