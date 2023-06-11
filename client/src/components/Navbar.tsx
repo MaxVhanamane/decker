@@ -38,7 +38,11 @@ const Navbar: FC = () => {
 
   return (
     <>
-      <nav className="border-b bg-white border-slate-900/10 dark:bg-[#0c1221] dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] ">
+      <nav
+        className={`border-b ${
+          localStorage.getItem("theme") === "dark" ? "bg-[#0c1221]" : "bg-white"
+        } border-slate-900/10 dark: dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60]`}
+      >
         <div className="flex items-center justify-center flex-row gap-8">
           <Link to={"/"}>
             <div

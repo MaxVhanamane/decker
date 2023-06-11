@@ -23,10 +23,10 @@ import { AlertContext } from "../context/AlertContext";
 import parseNote from "../functions/parseNote";
 import { v4 as uuidv4 } from "uuid";
 import { AlertData, AxiosErrorType } from "../types/types";
+import { Droppable } from "react-beautiful-dnd";
 
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiCodeCurly, BiEdit } from "react-icons/bi";
-import { Droppable } from "react-beautiful-dnd";
 import { AiOutlineBold } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { IoIosArrowRoundBack } from "react-icons/io";

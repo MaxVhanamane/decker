@@ -11,11 +11,11 @@ import {
 import useDeleteDeck from "./hooks/useDeleteDeck";
 import Loading from "./components/Loading";
 import AuthSuccess from "./pages/AuthSuccess";
+import ShowAlert from "./components/ShowAlert";
 
 // Lazy load the components
 const Deck = lazy(() => import("./pages/Deck"));
 const Cards = lazy(() => import("./pages/Cards"));
-const ShowAlert = lazy(() => import("./components/ShowAlert"));
 const SignUp = lazy(() => import("./pages/Signup"));
 const Login = lazy(() => import("./pages/Login"));
 const PrivateRoutes = lazy(() => import("./components/PrivateRoutes"));
@@ -140,45 +140,116 @@ function App() {
           handleChange(result, provided);
         }}
       >
-        <Suspense fallback={<Loading />}>
-          <ShowAlert />
+        <ShowAlert />
 
-          <Routes>
-            <Route element={<PrivateRoutes />}>
-              <Route
-                path="/"
-                element={
+        <Routes>
+          <Route element={<PrivateRoutes />}>
+            <Route
+              path="/"
+              element={
+                <Suspense fallback={<Loading />}>
                   <Deck
                     undoDeck={undoDeck}
                     handleUndoDeck={handleUndoDeck}
                     undoButtonRef={undoButtonRef}
                     handlePopupForUndoButton={handlePopupForUndoButton}
                   />
-                }
-              />
-              <Route path="/cards/:deck_id" element={<Cards />} />
-              <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
-              <Route
-                path="/account/deletemyaccount"
-                element={<DeleteMyAccount />}
-              />
-            </Route>
-
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/sessionexpired" element={<SessionExpiredPage />} />
-            <Route path="/forgotpassword" element={<ForgotPassword />} />
-            <Route path="/changepassword" element={<ChangePassword />} />
-            <Route path="/auth/failure" element={<AuthFailure />} />
-            <Route
-              path="/accountdeletionsuccess"
-              element={<AccountDeletionSuccess />}
+                </Suspense>
+              }
             />
-            <Route path="/verifyemail" element={<VerifyEmail />} />
-            <Route path="*" element={<PageNotFound />} />
-          </Routes>
-        </Suspense>
-        <Route path="/auth/success" element={<AuthSuccess />} />
+            <Route
+              path="/cards/:deck_id"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <Cards />
+                </Suspense>
+              }
+            />
+            <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
+            <Route
+              path="/account/deletemyaccount"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <DeleteMyAccount />
+                </Suspense>
+              }
+            />
+          </Route>
+
+          <Route
+            path="/signup"
+            element={
+              <Suspense fallback={<Loading />}>
+                <SignUp />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <Suspense fallback={<Loading />}>
+                <Login />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/sessionexpired"
+            element={
+              <Suspense fallback={<Loading />}>
+                <SessionExpiredPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/forgotpassword"
+            element={
+              <Suspense fallback={<Loading />}>
+                <ForgotPassword />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/changepassword"
+            element={
+              <Suspense fallback={<Loading />}>
+                <ChangePassword />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/auth/failure"
+            element={
+              <Suspense fallback={<Loading />}>
+                <AuthFailure />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/accountdeletionsuccess"
+            element={
+              <Suspense fallback={<Loading />}>
+                <AccountDeletionSuccess />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/verifyemail"
+            element={
+              <Suspense fallback={<Loading />}>
+                <VerifyEmail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <Suspense fallback={<Loading />}>
+                <PageNotFound />
+              </Suspense>
+            }
+          />
+          <Route path="/auth/success" element={<AuthSuccess />} />
+        </Routes>
       </DragDropContext>
     </>
   );
