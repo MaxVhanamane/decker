@@ -7,12 +7,13 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import UserContextProvider from "./context/UserContext";
 import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
+import ThemeColorUpdater from "./components/ThemeCodeUpdater";
 
 const queryClient = new QueryClient();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js").catch((error) => {
+    navigator.serviceWorker.register("/serviceWorker.js").catch((error) => {
       console.log("Service worker registration failed:", error);
     });
   });
@@ -24,6 +25,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <UserContextProvider>
+            <ThemeColorUpdater />
+
             <Layout>
               <App />
             </Layout>

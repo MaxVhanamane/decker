@@ -73,6 +73,8 @@ function UserContextProvider({ children }: UserContextProvider) {
     "/changepassword",
     "/login",
     "/accountdeletionsuccess",
+    "/auth/success",
+    "/auth/failure",
   ];
   const [userInfo, setUserInfo] = useState<userData | null>({
     _id: "",
@@ -87,6 +89,17 @@ function UserContextProvider({ children }: UserContextProvider) {
   const [showSearchBar, setShowSearchBar] = useState(false);
 
   const getUser = async (): Promise<any> => {
+    const userInfo = localStorage.getItem("userInfo");
+    if (!userInfo) {
+      // User is visiting the website for the first time or not logged in
+      if (pathNames.includes(location.pathname)) {
+        navigate(location.pathname);
+      } else {
+        navigate("/login"); // Redirect to the login page
+      }
+      return null;
+    }
+
     const data = await request.get("/getuser");
     if (data.data) {
       localStorage.setItem("userInfo", JSON.stringify(data.data));
@@ -100,6 +113,7 @@ function UserContextProvider({ children }: UserContextProvider) {
       navigate("/sessionexpired");
     }
   };
+
   useEffect(() => {
     getUser();
   }, []);

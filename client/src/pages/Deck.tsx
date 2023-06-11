@@ -288,7 +288,7 @@ function Deck({
               id="title"
             />
             <button
-              className="bg-[#459C98] dark:bg-sky-500 dark:hover:bg-sky-600  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300"
+              className="bg-[#459C98] dark:bg-sky-600 dark:hover:bg-sky-700  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300"
               aria-label="Add Deck"
             >
               Create Deck

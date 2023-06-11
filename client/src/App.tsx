@@ -1,34 +1,34 @@
-import { useContext, useRef } from "react";
-import Deck from "./pages/Deck";
+import { useContext, useRef, useState, lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
-// import Cards from "./pages/Cards";
+import { DeckTypeWithIndex } from "./types/types";
+import useMoveCard from "./hooks/useMoveCard";
+import { UserContext } from "./context/UserContext";
 import {
   DragDropContext,
   DropResult,
   ResponderProvided,
 } from "react-beautiful-dnd";
 import useDeleteDeck from "./hooks/useDeleteDeck";
-// import NotFound from "./componenets/NotFound";
-// import SignUp from "./pages/Signup";
-import Login from "./pages/Login";
-import PrivateRoutes from "./components/PrivateRoutes";
-import AuthSuccess from "./pages/AuthSuccess";
-import AuthFailure from "./pages/AuthFailure";
-import SignUp from "./pages/Signup";
-import Cards from "./pages/Cards";
 import Loading from "./components/Loading";
-import { UserContext } from "./context/UserContext";
-import VerifyEmail from "./pages/VerifyEmail";
-import ShowAlert from "./components/ShowAlert";
-import ForgotPassword from "./pages/ForgotPassword";
-import ChangePassword from "./pages/ChangePassword";
-import useMoveCard from "./hooks/useMoveCard";
-import { useState } from "react";
-import { DeckTypeWithIndex } from "./types/types";
-import SessionExpiredPage from "./pages/SessionExpiredPage";
-import DeleteMyAccount from "./pages/DeleteMyAccount";
-import AccountDeletionSuccess from "./pages/AccountDeletionSuccess";
-import PageNotFound from "./pages/PageNotFound";
+import AuthSuccess from "./pages/AuthSuccess";
+
+// Lazy load the components
+const Deck = lazy(() => import("./pages/Deck"));
+const Cards = lazy(() => import("./pages/Cards"));
+const ShowAlert = lazy(() => import("./components/ShowAlert"));
+const SignUp = lazy(() => import("./pages/Signup"));
+const Login = lazy(() => import("./pages/Login"));
+const PrivateRoutes = lazy(() => import("./components/PrivateRoutes"));
+const AuthFailure = lazy(() => import("./pages/AuthFailure"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
+const SessionExpiredPage = lazy(() => import("./pages/SessionExpiredPage"));
+const DeleteMyAccount = lazy(() => import("./pages/DeleteMyAccount"));
+const AccountDeletionSuccess = lazy(
+  () => import("./pages/AccountDeletionSuccess")
+);
+const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout;
@@ -140,43 +140,45 @@ function App() {
           handleChange(result, provided);
         }}
       >
-        <ShowAlert />
+        <Suspense fallback={<Loading />}>
+          <ShowAlert />
 
-        <Routes>
-          <Route element={<PrivateRoutes />}>
-            <Route
-              path="/"
-              element={
-                <Deck
-                  undoDeck={undoDeck}
-                  handleUndoDeck={handleUndoDeck}
-                  undoButtonRef={undoButtonRef}
-                  handlePopupForUndoButton={handlePopupForUndoButton}
-                />
-              }
-            />
-            <Route path="/cards/:deck_id" element={<Cards />} />
-            <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
-            <Route
-              path="/account/deletemyaccount"
-              element={<DeleteMyAccount />}
-            />
-          </Route>
+          <Routes>
+            <Route element={<PrivateRoutes />}>
+              <Route
+                path="/"
+                element={
+                  <Deck
+                    undoDeck={undoDeck}
+                    handleUndoDeck={handleUndoDeck}
+                    undoButtonRef={undoButtonRef}
+                    handlePopupForUndoButton={handlePopupForUndoButton}
+                  />
+                }
+              />
+              <Route path="/cards/:deck_id" element={<Cards />} />
+              <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
+              <Route
+                path="/account/deletemyaccount"
+                element={<DeleteMyAccount />}
+              />
+            </Route>
 
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/sessionexpired" element={<SessionExpiredPage />} />
-          <Route path="/forgotpassword" element={<ForgotPassword />} />
-          <Route path="/changepassword" element={<ChangePassword />} />
-          <Route path="/auth/success" element={<AuthSuccess />} />
-          <Route path="/auth/failure" element={<AuthFailure />} />
-          <Route
-            path="/accountdeletionsuccess"
-            element={<AccountDeletionSuccess />}
-          />
-          <Route path="/verifyemail" element={<VerifyEmail />} />
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/sessionexpired" element={<SessionExpiredPage />} />
+            <Route path="/forgotpassword" element={<ForgotPassword />} />
+            <Route path="/changepassword" element={<ChangePassword />} />
+            <Route path="/auth/failure" element={<AuthFailure />} />
+            <Route
+              path="/accountdeletionsuccess"
+              element={<AccountDeletionSuccess />}
+            />
+            <Route path="/verifyemail" element={<VerifyEmail />} />
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </Suspense>
+        <Route path="/auth/success" element={<AuthSuccess />} />
       </DragDropContext>
     </>
   );

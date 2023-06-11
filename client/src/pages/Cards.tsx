@@ -15,27 +15,29 @@ import { useParams } from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
 import useDeleteCard from "../hooks/useDeleteCard";
-import { MdOutlineDeleteOutline } from "react-icons/md";
-import { BiCodeCurly, BiEdit } from "react-icons/bi";
 import useEditCard from "../hooks/useEditCard";
-import { Droppable } from "react-beautiful-dnd";
-import { AiOutlineBold } from "react-icons/ai";
-import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
-import Loading from "../components/Loading";
-import PopUpMessage from "../components/PopUpMessage";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData, AxiosErrorType } from "../types/types";
-import { IoIosArrowRoundBack } from "react-icons/io";
-import ThemeToggler from "../components/ThemeToggler";
-import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
 import { UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AlertContext } from "../context/AlertContext";
 import parseNote from "../functions/parseNote";
+import { v4 as uuidv4 } from "uuid";
+import { AlertData, AxiosErrorType } from "../types/types";
+
+import { MdOutlineDeleteOutline } from "react-icons/md";
+import { BiCodeCurly, BiEdit } from "react-icons/bi";
+import { Droppable } from "react-beautiful-dnd";
+import { AiOutlineBold } from "react-icons/ai";
+import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
+import { IoIosArrowRoundBack } from "react-icons/io";
 import { GoEyeClosed } from "react-icons/go";
+
+import Loading from "../components/Loading";
+import PopUpMessage from "../components/PopUpMessage";
+import ThemeToggler from "../components/ThemeToggler";
+import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
 import CardItems from "../components/CardItems";
 import SessionExpired from "../components/SessionExpired";
-import { v4 as uuidv4 } from "uuid";
 import ConfirmCloseCard from "../components/ConfirmCloseCard";
 
 // types
@@ -917,7 +919,7 @@ const Cards: FC = () => {
                 type="submit"
                 disabled={expandTextarea ? false : true}
               >
-                <span className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-2 px-2 rounded-md dark:bg-sky-500 dark:hover:bg-sky-600 transition-colors duration-300">
+                <span className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-2 px-2 rounded-md dark:bg-sky-600 dark:hover:bg-sky-700 transition-colors duration-300">
                   Create Card
                 </span>
               </button>

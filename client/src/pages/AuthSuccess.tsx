@@ -6,12 +6,12 @@ import { userData } from "../types/types";
 export default function AuthSuccess() {
   const navigate = useNavigate();
   const getUser = async (): Promise<userData> => {
-    const data = await request.get("/getuser");
-    localStorage.setItem("userInfo", JSON.stringify(data.data));
-    const newD = localStorage.getItem("userInfo");
+    const userData = await request.get("/getuser");
+    localStorage.setItem("userInfo", JSON.stringify(userData.data));
+    const userInfo = localStorage.getItem("userInfo");
     let user;
-    if (newD) {
-      user = JSON.parse(newD);
+    if (userInfo) {
+      user = JSON.parse(userInfo);
     }
     return user;
   };
@@ -21,7 +21,6 @@ export default function AuthSuccess() {
       const userInfo = await getUser();
       // These if-else conditions are used to prevent the user from accessing this page directly via the URL.
       if (userInfo?.email) {
-
         timeout = setTimeout(() => {
           navigate("/", { replace: true });
         }, 2000);
@@ -30,7 +29,6 @@ export default function AuthSuccess() {
       }
 
       return () => clearTimeout(timeout);
-      
     })();
   }, []);
   return (
