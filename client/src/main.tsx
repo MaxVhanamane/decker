@@ -8,17 +8,24 @@ import UserContextProvider from "./context/UserContext";
 import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
 import ThemeColorUpdater from "./components/ThemeCodeUpdater";
-
+import { registerSW } from "virtual:pwa-register";
 const queryClient = new QueryClient();
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/serviceWorker.js").catch((error) => {
-      console.log("Service worker registration failed:", error);
-    });
-  });
-}
-
+// if ("serviceWorker" in navigator) {
+//   window.addEventListener("load", () => {
+//     navigator.serviceWorker.register("/serviceWorker.js").catch((error) => {
+//       console.log("Service worker registration failed:", error);
+//     });
+//   });
+// }
+// add this to prompt for a refresh
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm("New content available. Reload?")) {
+      updateSW(true);
+    }
+  },
+});
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <>
     <AlertState>

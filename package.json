@@ -4,12 +4,11 @@
   "main": "app.js",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon --watch \"src/**\" --ext \"ts,json\" --exec \"ts-node ./src/app.ts",
+    "dev": "nodemon --watch \"src/**\" --ext \"ts,json\" --exec \"ts-node  ./src/app.ts",
     "start": "node ./build/app.js",
     "build": "tsc -p ."
   },
   "dependencies": {
-    "@vespaiach/axios-fetch-adapter": "^0.3.1",
     "bcryptjs": "^2.4.3",
     "connect-mongodb-session": "^3.1.1",
     "cors": "^2.8.5",

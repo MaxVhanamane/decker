@@ -85,7 +85,7 @@ app.use((0, express_session_1.default)({
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 5 //cookie expires in 3 days
+        maxAge: 1000 * 60 * 60 * 24 * 3 //cookie expires in 3 days
     }
 }));
 // using passport to handle login
@@ -184,6 +184,7 @@ const fetchUserDetails = function (req, res, next) {
     });
 };
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
+mongoose_1.default.set("strictQuery", true);
 mongoose_1.default.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true,
     useNewUrlParser: true
@@ -325,7 +326,6 @@ app.get('/cards/:_id', fetchUserDetails, function (req, res) {
 });
 app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(req.body.content);
         try {
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
             if (!getDeck) {

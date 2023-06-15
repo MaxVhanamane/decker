@@ -202,7 +202,7 @@ const fetchUserDetails = async function (req: Request, res: Response, next: Next
 
 
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
-
+mongoose.set("strictQuery", true);
 mongoose.connect(process.env.MONGO_URI!, {
   useUnifiedTopology: true,
   useNewUrlParser: true
@@ -376,7 +376,6 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Resp
 })
 
 app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
-  console.log(req.body.content)
   try {
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {

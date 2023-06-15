@@ -12,15 +12,14 @@ import useDeleteDeck from "./hooks/useDeleteDeck";
 import Loading from "./components/Loading";
 import AuthSuccess from "./pages/AuthSuccess";
 import ShowAlert from "./components/ShowAlert";
-
+import Cards from "./pages/Cards";
+import Deck from "./pages/Deck";
+import PrivateRoutes from "./components/PrivateRoutes";
+import Login from "./pages/Login";
+import SignUp from "./pages/Signup";
+import VerifyEmail from "./pages/VerifyEmail";
 // Lazy load the components
-const Deck = lazy(() => import("./pages/Deck"));
-const Cards = lazy(() => import("./pages/Cards"));
-const SignUp = lazy(() => import("./pages/Signup"));
-const Login = lazy(() => import("./pages/Login"));
-const PrivateRoutes = lazy(() => import("./components/PrivateRoutes"));
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const SessionExpiredPage = lazy(() => import("./pages/SessionExpiredPage"));
@@ -39,11 +38,7 @@ function App() {
   const { mutate: deleteOneDeck } = useDeleteDeck();
   const { deleteConfirmationModalForCard, setIndexOfCardForDeletion } =
     useContext(UserContext);
-  const {
-    mutate: moveCard,
-    error: editMutationError,
-    isError: isEditMutationError,
-  } = useMoveCard();
+  const { mutate: moveCard } = useMoveCard();
   const undoButtonRef = useRef<HTMLDivElement | null>(null);
 
   const handlePopupForUndoButton = () => {
@@ -147,24 +142,15 @@ function App() {
             <Route
               path="/"
               element={
-                <Suspense fallback={<Loading />}>
-                  <Deck
-                    undoDeck={undoDeck}
-                    handleUndoDeck={handleUndoDeck}
-                    undoButtonRef={undoButtonRef}
-                    handlePopupForUndoButton={handlePopupForUndoButton}
-                  />
-                </Suspense>
+                <Deck
+                  undoDeck={undoDeck}
+                  handleUndoDeck={handleUndoDeck}
+                  undoButtonRef={undoButtonRef}
+                  handlePopupForUndoButton={handlePopupForUndoButton}
+                />
               }
             />
-            <Route
-              path="/cards/:deck_id"
-              element={
-                <Suspense fallback={<Loading />}>
-                  <Cards />
-                </Suspense>
-              }
-            />
+            <Route path="/cards/:deck_id" element={<Cards />} />
             <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
             <Route
               path="/account/deletemyaccount"
@@ -176,22 +162,8 @@ function App() {
             />
           </Route>
 
-          <Route
-            path="/signup"
-            element={
-              <Suspense fallback={<Loading />}>
-                <SignUp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <Suspense fallback={<Loading />}>
-                <Login />
-              </Suspense>
-            }
-          />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
           <Route
             path="/sessionexpired"
             element={
@@ -232,14 +204,8 @@ function App() {
               </Suspense>
             }
           />
-          <Route
-            path="/verifyemail"
-            element={
-              <Suspense fallback={<Loading />}>
-                <VerifyEmail />
-              </Suspense>
-            }
-          />
+          <Route path="/verifyemail" element={<VerifyEmail />} />
+          <Route path="/auth/success" element={<AuthSuccess />} />
           <Route
             path="*"
             element={
@@ -248,7 +214,6 @@ function App() {
               </Suspense>
             }
           />
-          <Route path="/auth/success" element={<AuthSuccess />} />
         </Routes>
       </DragDropContext>
     </>
