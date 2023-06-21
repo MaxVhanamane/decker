@@ -6,6 +6,9 @@ import { useRef, memo } from "react";
 import { BiEdit } from "react-icons/bi";
 import { UserContext } from "../context/UserContext";
 import { useContext } from "react";
+import { AlertContext } from "../context/AlertContext";
+import { OfflineContext } from "../context/OfflineContext";
+import { AlertData } from "../types/types";
 type CardType = {
   title: string;
   note: string;
@@ -21,6 +24,8 @@ const CardItems = ({
   const { divRefForUserSettings } = useContext(UserContext);
   const { deck_id } = useParams();
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
+  const { setAlert } = useContext(AlertContext);
+  const { isOnline } = useContext(OfflineContext);
   return (
     <Droppable droppableId="cardDropableArea">
       {/* You can't use Draggable directly you have to use it inside Dropable component  */}
@@ -31,7 +36,7 @@ const CardItems = ({
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
-            {data?.cards?.map((card: CardType, index: number) => {
+            {data.cards.map((card: CardType, index: number) => {
               return (
                 <Draggable
                   draggableId={`${deck_id!}-${card.cardId}`}
@@ -89,7 +94,18 @@ const CardItems = ({
                             {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
                             <button
                               onClick={(event) => {
-                                event.stopPropagation(), handleDelete(index);
+                                event.stopPropagation();
+                                if (!isOnline) {
+                                  setAlert((preval: AlertData) => ({
+                                    ...preval,
+                                    severity: "error",
+                                    show: true,
+                                    message: "No internet connection",
+                                    autoHideDuration: 5000,
+                                  }));
+                                  return;
+                                }
+                                handleDelete(index);
                               }}
                               type="button"
                               className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center  lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 hover:text-red-600 "

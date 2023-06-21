@@ -6,12 +6,16 @@ import { FaFeatherAlt } from "react-icons/fa";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { Helmet } from "react-helmet";
+import { OfflineContext } from "../context/OfflineContext";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
+  const { isOnline } = useContext(OfflineContext);
 
+  // If a user clicks multiple times on the login button, multiple requests will be sent to the server. To avoid this, we will disable the button while the request is being processed.
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "email") {
       setEmail(e.target.value);
@@ -33,27 +37,60 @@ export default function Login() {
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const data = { email, password };
-
-    const response = await request.post("/login", data);
-    if (response.data.success == true) {
-      const response = await request.get("/getuser");
-      localStorage.setItem("userInfo", JSON.stringify(response.data));
-
-      navigate("/auth/success", { replace: true });
-    } else {
+    if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: response.data.message,
+        message: "No internet connection",
         autoHideDuration: 5000,
       }));
+      return;
+    }
+    setIsLoggingIn(true);
+
+    try {
+      const data = { email, password };
+
+      const response = await request.post("/login", data);
+      if (response.data.success == true) {
+        const response = await request.get("/getuser");
+        localStorage.setItem("userInfo", JSON.stringify(response.data));
+
+        navigate("/auth/success", { replace: true });
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: response.data.message,
+          autoHideDuration: 5000,
+        }));
+      }
+    } catch (error) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "An error occurred during login.",
+        autoHideDuration: 5000,
+      }));
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     window.open(`${import.meta.env.VITE_GOOGLE_AUTH_URL}`, "_self");
   };
 
@@ -108,14 +145,14 @@ export default function Login() {
                               autoComplete="current-password"
                             />
                           </div>
-
                           <div className="text-center pt-1  pb-1">
                             <button
-                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full  animate-changeBgLight dark:animate-changeBgDark   "
+                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full  animate-changeBgLight dark:animate-changeBgDark  disabled:bg-gray-500  disabled:animate-none dark:disabled:animate-none"
                               type="submit"
                               aria-label="Log in"
+                              disabled={isLoggingIn}
                             >
-                              Log in
+                              {isLoggingIn ? "Logging in..." : "Log in"}
                             </button>
                             <div className="relative py-1">
                               <div className="absolute inset-0 flex items-center">

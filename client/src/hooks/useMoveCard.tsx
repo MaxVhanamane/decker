@@ -2,7 +2,7 @@ import { request } from "./../utils/axios-utils";
 import { useMutation } from "react-query";
 import { useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, CardDataType } from "../types/types";
+import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
 import { useContext } from "react";
 
 type Data = {
@@ -17,10 +17,18 @@ type OldData = {
 };
 
 const moveCard = async (data: Data) => {
-  const res = await request.put(
-    `/card/changepostion/${data.deck_id}/${data.deleteIndex}/${data.moveIndex}`
-  );
-  return res.data;
+  try {
+    const res = await request.put(
+      `/card/changepostion/${data.deck_id}/${data.deleteIndex}/${data.moveIndex}`
+    );
+    return res.data;
+  } catch (error) {
+    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
+    if ((error as Error).message === "Network Error") {
+      throw new Error("Network Error");
+    }
+    throw error;
+  }
 };
 
 const useMoveCard = () => {
@@ -29,7 +37,7 @@ const useMoveCard = () => {
   return useMutation(moveCard, {
     onMutate: async (data: Data) => {
       await queryClient.cancelQueries(["cards", data.deck_id]);
-      const previousCardData:CardDataType[] = queryClient.getQueryData([
+      const previousCardData: CardDataType[] = queryClient.getQueryData([
         "cards",
         data.deck_id,
       ])!;
@@ -45,15 +53,20 @@ const useMoveCard = () => {
         }
       );
 
-      return { previousCardData };
+      return previousCardData;
     },
 
     onError: (error, data: Data, context) => {
+      const message =
+        (error as Error).message === "Network Error"
+          ? "No internet connection"
+          : (error as Error).message;
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: "Some error occured, please try again!",
+        message: (error as AxiosErrorType)?.response?.data.message || message,
+        autoHideDuration: 7000,
       }));
 
       queryClient.setQueryData(["cards", data.deck_id], context);

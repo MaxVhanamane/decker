@@ -1,8 +1,13 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, DeckType, DeckTypeWithIndex } from "../types/types";
-import { useContext } from "react";
+import {
+  AlertData,
+  AxiosErrorType,
+  DeckType,
+  DeckTypeWithIndex,
+} from "../types/types";
+import { useContext, RefObject } from "react";
 
 type ResponseType = {
   modifiedDeckInfo: {
@@ -28,7 +33,11 @@ const deleteDeck = async ({ _id }: { _id: string }) => {
     const response = await request.delete(`/deck/${_id}`);
     return response.data;
   } catch (error) {
-    return error;
+    // if I don't check (error as Error).message === "Network Error") it doen't throw isError===true i.e mutation error when there is no internet.
+    if ((error as Error).message === "Network Error") {
+      throw new Error("Network Error");
+    }
+    throw error;
   }
 };
 
@@ -39,14 +48,20 @@ const useDeleteDeck = () => {
     onMutate: async ({
       _id,
       handleUndoDeck,
+      undoButtonRef,
+      handlePopupForUndoButton,
+      timeout,
     }: {
       _id: string;
       handleUndoDeck: (data: DeckTypeWithIndex | null) => void;
+      undoButtonRef: RefObject<HTMLDivElement>;
+      handlePopupForUndoButton: () => void;
+      timeout: NodeJS.Timeout;
     }) => {
       await queryClient.cancelQueries("decks");
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      let indexOfDeletedDeck!:number
+      let indexOfDeletedDeck!: number;
       const previousQueryData: DeckType[] = queryClient.getQueryData("decks")!;
       queryClient.setQueryData(
         "decks",
@@ -55,7 +70,7 @@ const useDeleteDeck = () => {
           const newData = oldQueryData?.filter(
             (deck: DeckType, index: number) => {
               if (deck._id === _id) {
-                indexOfDeletedDeck=index
+                indexOfDeletedDeck = index;
               }
               return deck._id != _id;
             }
@@ -65,24 +80,51 @@ const useDeleteDeck = () => {
       );
       // Return previous data so that if something goes wrong we can use this in onError method
       // you can pass it in object or you can pass it directly like I did above in create deck
-      return { previousQueryData ,indexOfDeletedDeck,handleUndoDeck};
+      return {
+        previousQueryData,
+        indexOfDeletedDeck,
+        handleUndoDeck,
+        undoButtonRef,
+        handlePopupForUndoButton,
+        timeout,
+      };
     },
-    onSuccess: (data: ResponseType,_variables,context) => {
+    onSuccess: (data: ResponseType, _variables, context) => {
       // we need index of deck here so that when we undo, we can insert it in a right place.
-      let deletedDeckInformation = { ...data.modifiedDeckInfo, index:context!.indexOfDeletedDeck };
+      let deletedDeckInformation = {
+        ...data.modifiedDeckInfo,
+        index: context!.indexOfDeletedDeck,
+      };
       context?.handleUndoDeck(deletedDeckInformation);
+      // If user deletes decks one after the another that creates problem because when user deletes second deck
+      // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
+      if (context!.undoButtonRef.current?.classList.contains("scale-0")) {
+        context!.handlePopupForUndoButton();
+      } else {
+        clearTimeout(context!.timeout);
+        context!.undoButtonRef?.current?.classList.remove("scale-100");
+
+        context!.undoButtonRef?.current?.classList.add("scale-0");
+        context!.undoButtonRef?.current?.classList.add("hidden");
+        context!.handlePopupForUndoButton();
+      }
     },
 
-    onError: (_error, _title, context) => {
+    onError: (error, _title, context) => {
       // I have returned the previous query data in onMutate function I can receive that data in context. I can use that data to
       // reverse what I have done in onMutate because onMutate runs before request goes to server there I have assumed that
       // Everthing will be fine on the server and I did optimistic updates in onMutate function. If some error occures I will
       // reverse that here using previousQuery data
+      const message =
+        (error as Error).message === "Network Error"
+          ? "No internet connection"
+          : (error as Error).message;
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: "Some error occured, please try again!",
+        message: (error as AxiosErrorType)?.response?.data.message || message,
+        autoHideDuration: 7000,
       }));
       queryClient.setQueryData("decks", context?.previousQueryData);
     },

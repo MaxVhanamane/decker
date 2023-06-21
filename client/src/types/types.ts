@@ -23,8 +23,8 @@ export type DeckType = {
   _id: string,
   title: string,
   pinned: boolean,
-  email:string
-  date:Date
+  email: string,
+  date: Date
 }
 
 export type DeckAndCardType = {
@@ -39,8 +39,8 @@ export type DeckTypeWithIndex = {
   title: string,
   pinned: boolean,
   index: number
-  email:string,
-  date:Date
+  email: string,
+  date: Date
 }
 
 export type CardDataType = {
@@ -52,11 +52,11 @@ export type CardDataType = {
   }[]
 }
 
-export type Data={
-  _id:string;
-  title:string;
-  cards:{title:string,note:string}[];
-}& {message?:string}
+export type Data = {
+  _id: string;
+  title: string;
+  cards: { title: string, note: string }[];
+} & { message?: string }
 
 export type AxiosErrorType = {
   message: string;

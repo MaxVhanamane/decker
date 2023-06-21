@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "react-query";
 import { request } from "./../utils/axios-utils";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, DeckType } from "../types/types";
+import { AlertData, AxiosErrorType, DeckType } from "../types/types";
 import { useContext } from "react";
 type CardData = {
   deck_id: string;
@@ -16,10 +16,18 @@ type PromiseData = {
 };
 
 const editDeck = async (deckItem: CardData): Promise<PromiseData> => {
-  const data = await request.put(`/deck/editdeck/${deckItem.deck_id}`, {
-    title: deckItem.newTitle,
-  });
-  return data.data;
+  try {
+    const data = await request.put(`/deck/editdeck/${deckItem.deck_id}`, {
+      title: deckItem.newTitle,
+    });
+    return data.data;
+  } catch (error) {
+    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
+    if ((error as Error).message === "Network Error") {
+      throw new Error("Network Error");
+    }
+    throw error;
+  }
 };
 
 const useEditDeck = () => {
@@ -51,17 +59,22 @@ const useEditDeck = () => {
       // Return previous data so that if something goes wrong we can use this in onError method
       return previousQueryData;
     },
+    onError: (error, _title, context) => {
+      const message =
+        (error as Error).message === "Network Error"
+          ? "No internet connection"
+          : (error as Error).message;
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: (error as AxiosErrorType)?.response?.data.message || message,
+        autoHideDuration: 7000,
+      }));
+      queryClient.setQueryData("decks", context);
+    },
 
     onSettled: (serverData, error, data, context) => {
-      if (error) {
-        queryClient.setQueryData("decks", context);
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
-          message: "Some error occured, please try again!",
-        }));
-      }
       queryClient.invalidateQueries("decks");
     },
   });

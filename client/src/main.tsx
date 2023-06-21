@@ -8,7 +8,7 @@ import UserContextProvider from "./context/UserContext";
 import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
 import ThemeColorUpdater from "./components/ThemeCodeUpdater";
-import { registerSW } from "virtual:pwa-register";
+import OfflineProvider from "./context/OfflineContext";
 const queryClient = new QueryClient();
 
 // if ("serviceWorker" in navigator) {
@@ -18,26 +18,21 @@ const queryClient = new QueryClient();
 //     });
 //   });
 // }
-// add this to prompt for a refresh
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm("New content available. Reload?")) {
-      updateSW(true);
-    }
-  },
-});
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <>
     <AlertState>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <UserContextProvider>
-            <ThemeColorUpdater />
+          <OfflineProvider>
+            <UserContextProvider>
+              <ThemeColorUpdater />
 
-            <Layout>
-              <App />
-            </Layout>
-          </UserContextProvider>
+              <Layout>
+                <App />
+              </Layout>
+            </UserContextProvider>
+          </OfflineProvider>
         </BrowserRouter>
 
         <ReactQueryDevtools initialIsOpen={false} position="bottom-left" />

@@ -2,7 +2,7 @@ import { request } from "./../utils/axios-utils";
 import { useMutation } from "react-query";
 import { useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, CardDataType } from "../types/types";
+import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
 import { useContext } from "react";
 type PayloadData = {
   deck_id: string;
@@ -19,10 +19,18 @@ type OldData = {
 };
 
 const createCard = async (payload: PayloadData) => {
-  const data = await request.post(`/card/${payload.deck_id}`, {
-    content: payload.content,
-  });
-  return data.data;
+  try {
+    const data = await request.post(`/card/${payload.deck_id}`, {
+      content: payload.content,
+    });
+    return data.data;
+  } catch (error) {
+    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
+    if ((error as Error).message === "Network Error") {
+      throw new Error("Network Error");
+    }
+    throw error;
+  }
 };
 
 const useCreateCard = () => {
@@ -49,15 +57,20 @@ const useCreateCard = () => {
         }
       );
 
-      return { previousCardData };
+      return previousCardData;
     },
 
     onError: (error, data: PayloadData, context) => {
+      const message =
+        (error as Error).message === "Network Error"
+          ? "No internet connection"
+          : (error as Error).message;
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: "Some error occured, please try again!",
+        message: (error as AxiosErrorType)?.response?.data.message || message,
+        autoHideDuration: 7000,
       }));
 
       queryClient.setQueryData(["cards", data.deck_id], context);

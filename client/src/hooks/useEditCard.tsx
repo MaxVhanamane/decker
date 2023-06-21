@@ -2,9 +2,10 @@ import { useMutation, useQueryClient } from "react-query";
 import { request } from "./../utils/axios-utils";
 import { OldData } from "./useDeleteCard";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, CardDataType } from "../types/types";
+import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
 import { useContext } from "react";
-import { UserContext } from './../context/UserContext';
+import { UserContext } from "./../context/UserContext";
+
 type CardData = {
   deck_id: string;
   newContent: { title: string; note: string; _id: string };
@@ -23,19 +24,28 @@ type PromiseData = {
   cards: { title: string; note: string }[];
   pinned: boolean;
 };
+
 const editCard = async (cardData: CardData): Promise<PromiseData> => {
-  const data = await request.patch(`/card/${cardData.deck_id}`, {
-    index: cardData.index,
-    newContent: {
-      title: cardData.newContent.title,
-      note: cardData.newContent.note,
-    },
-  });
-  return data.data;
+  try {
+    const data = await request.patch(`/card/${cardData.deck_id}`, {
+      index: cardData.index,
+      newContent: {
+        title: cardData.newContent.title,
+        note: cardData.newContent.note,
+      },
+    });
+    return data.data;
+  } catch (error) {
+    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
+    if ((error as Error).message === "Network Error") {
+      throw new Error("Network Error");
+    }
+    throw error;
+  }
 };
 
 const useEditCard = () => {
-  const {showSearchBar}=useContext(UserContext)
+  const { showSearchBar } = useContext(UserContext);
   const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
   return useMutation(editCard, {
@@ -63,17 +73,21 @@ const useEditCard = () => {
     onSettled: (serverData, error, data, context) => {
       if (error) {
         queryClient.setQueryData(["cards", data.deck_id], context);
+        const message =
+          (error as Error).message === "Network Error"
+            ? "No internet connection"
+            : (error as Error).message;
         setAlert((preval: AlertData) => ({
           ...preval,
           severity: "error",
           show: true,
-          message: "Some error occured, please try again!",
+          message: (error as AxiosErrorType)?.response?.data.message || message,
+          autoHideDuration: 7000,
         }));
       }
       // If the search bar is open, it indicates that the user edited the card from the search result. The search bar is using the 'decks' query as data, so we will invalidate the decks query to keep it updated.
-      if(showSearchBar){
-      queryClient.invalidateQueries("decks");
-
+      if (showSearchBar) {
+        queryClient.invalidateQueries("decks");
       }
       queryClient.invalidateQueries(["cards", data.deck_id]);
     },

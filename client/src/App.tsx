@@ -1,8 +1,10 @@
-import { useContext, useRef, useState, lazy, Suspense } from "react";
+import { useContext, useRef, useState, lazy, Suspense, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import { DeckTypeWithIndex } from "./types/types";
+import { AlertData, DeckTypeWithIndex } from "./types/types";
 import useMoveCard from "./hooks/useMoveCard";
 import { UserContext } from "./context/UserContext";
+import { useRegisterSW } from "virtual:pwa-register/react";
+
 import {
   DragDropContext,
   DropResult,
@@ -18,6 +20,9 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import Login from "./pages/Login";
 import SignUp from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
+import { request } from "./utils/axios-utils";
+import { AlertContext } from "./context/AlertContext";
+import { OfflineContext } from "./context/OfflineContext";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -33,13 +38,29 @@ const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 let timeout: NodeJS.Timeout;
 
 function App() {
+  // add this to prompt for a refresh
+  if ("serviceWorker" in navigator) {
+    useRegisterSW();
+  }
+
   const [undoDeck, setUndoDeck] = useState<DeckTypeWithIndex | null>(null);
   const { theme } = useContext(UserContext);
-  const { mutate: deleteOneDeck } = useDeleteDeck();
+  const { mutate: deleteOneDeck, isError: deleteDeckMutationError } =
+    useDeleteDeck();
   const { deleteConfirmationModalForCard, setIndexOfCardForDeletion } =
     useContext(UserContext);
   const { mutate: moveCard } = useMoveCard();
   const undoButtonRef = useRef<HTMLDivElement | null>(null);
+  const { setAlert } = useContext(AlertContext);
+  const { isOnline } = useContext(OfflineContext);
+
+  useEffect(() => {
+    if (localStorage.getItem("userInfo")) {
+      request.get("/decks-and-cards").catch(() => {
+        // Empty catch block or minimal error handling
+      });
+    }
+  }, [localStorage.getItem("userInfo")]);
 
   const handlePopupForUndoButton = () => {
     if (undoButtonRef.current?.classList.contains("scale-0")) {
@@ -74,32 +95,25 @@ function App() {
     result: DropResult,
     provided: ResponderProvided
   ) => {
-    // if (result.destination?.droppableId === "pinnedArea") {
-    //   pinDeck({ id: result.draggableId, pinned: true });
-    // } else if (result.destination?.droppableId === "othersDeckArea") {
-    //   pinDeck({ id: result.draggableId, pinned: false });
-    // } else
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     if (result.destination?.droppableId == "DeckDeleteArea") {
       let data = {
         _id: result.draggableId,
         handleUndoDeck,
+        timeout,
+        undoButtonRef,
+        handlePopupForUndoButton,
       };
       deleteOneDeck(data);
-      // If user deletes decks one after the another that creates problem because when user deletes second deck
-      // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
-      if (undoButtonRef.current?.classList.contains("scale-0")) {
-        // undoButtonRef?.current?.classList.remove("scale-100")
-        // undoButtonRef?.current?.classList.add("scale-0")
-        // undoButtonRef?.current?.classList.add("hidden")
-        handlePopupForUndoButton();
-      } else {
-        clearTimeout(timeout);
-        undoButtonRef?.current?.classList.remove("scale-100");
-
-        undoButtonRef?.current?.classList.add("scale-0");
-        undoButtonRef?.current?.classList.add("hidden");
-        handlePopupForUndoButton();
-      }
     } else if (result.destination?.droppableId == "cardDeleteArea") {
       let cardToDeleteIndex = result.source.index;
       setIndexOfCardForDeletion(cardToDeleteIndex);

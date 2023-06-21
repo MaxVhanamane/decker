@@ -1,9 +1,7 @@
-import { FC, memo, useState } from "react";
+import { FC, memo, useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
-import { FaFeatherAlt } from "react-icons/fa";
-import { userData } from "../types/types";
+import { AlertData, AxiosErrorType, userData } from "../types/types";
 import { FaUserCircle } from "react-icons/fa";
 import { RiCloseFill } from "react-icons/ri";
 import ThemeToggler from "./ThemeToggler";
@@ -11,9 +9,14 @@ import SearchBar from "./SearchBar";
 import { HiOutlineSearch } from "react-icons/hi";
 import { AiOutlineWarning } from "react-icons/ai";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
+import { OfflineContext } from "../context/OfflineContext";
+import { AlertContext } from "../context/AlertContext";
 const Navbar: FC = () => {
   const { showSearchBar, setShowSearchBar, divRefForUserSettings } =
     useContext(UserContext);
+  const { isOnline } = useContext(OfflineContext);
+  const { setAlert } = useContext(AlertContext);
+
   const userDetails = localStorage.getItem("userInfo");
   let userInfo: userData | undefined;
   if (userDetails) {
@@ -36,6 +39,15 @@ const Navbar: FC = () => {
     }
   };
 
+  /*If the user clears the site storage, there will be no data available when we use localStorage.getItem("theme"). As a result, you might see the body color and navbar in different colors. To avoid this issue, I have added an if statement.*/
+
+  if (
+    document.body.classList.contains("bg-[#0c1221]") &&
+    !localStorage.getItem("theme")
+  ) {
+    localStorage.setItem("theme", "dark");
+  }
+
   return (
     <>
       <nav
@@ -57,7 +69,15 @@ const Navbar: FC = () => {
               className="flex items-center justify-center rounded px-2 gap-2"
             >
               <span className="text-xl text-teal-600 dark:text-sky-400">
-                <FaFeatherAlt />
+                <img
+                  src={`${
+                    localStorage.getItem("theme") === "dark"
+                      ? "/decker_logo_dark.png"
+                      : "/decker_logo_light.png"
+                  }`}
+                  className="w-7 h-7 object-contain"
+                  alt="decker logo"
+                />
               </span>
               <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
                 <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
@@ -205,10 +225,20 @@ const Navbar: FC = () => {
             <button
               onClick={() => {
                 if (showSearchBar) setShowSearchBar(false);
-                handleShowUserInfomation();
-                navigate("/account/deletemyaccount", {
-                  state: { from: location.pathname },
-                });
+                if (isOnline) {
+                  handleShowUserInfomation();
+                  navigate("/account/deletemyaccount", {
+                    state: { from: location.pathname },
+                  });
+                } else {
+                  setAlert((preval: AlertData) => ({
+                    ...preval,
+                    severity: "error",
+                    show: true,
+                    message: "No internet connection",
+                    autoHideDuration: 7000,
+                  }));
+                }
               }}
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 transition-[color] duration-300 cursor-pointer  mt-3"
               aria-label="Delete My Account"
@@ -236,7 +266,17 @@ const Navbar: FC = () => {
 
             <button
               onClick={() => {
-                setShowLogoutModal(true);
+                if (isOnline) {
+                  setShowLogoutModal(true);
+                } else {
+                  setAlert((preval: AlertData) => ({
+                    ...preval,
+                    severity: "error",
+                    show: true,
+                    message: "No internet connection",
+                    autoHideDuration: 7000,
+                  }));
+                }
               }}
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer   pb-2"
               aria-label="Logout"

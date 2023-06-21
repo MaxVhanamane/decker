@@ -8,6 +8,7 @@ import { FaFeatherAlt } from "react-icons/fa";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import ReCAPTCHA from "react-google-recaptcha";
+import { OfflineContext } from "../context/OfflineContext";
 
 export default function DeleteMyAccount() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export default function DeleteMyAccount() {
   const [showWaitMessage, setShowWaitMessage] = useState(false);
   const [showVerifyOTPButton, setShowVerifyOTPButton] = useState(false);
   const { userInfo, setUserInfo, theme } = useContext(UserContext);
+  const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
   const { setAlert } = useContext(AlertContext);
   const [captcha, setCaptcha] = useState(false);
@@ -45,6 +47,16 @@ export default function DeleteMyAccount() {
 
   const handleGetOTP = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     if (userInfo?.email === email) {
       setShowWaitMessage(true);
       const res = await request.post("/generateaccountdeletionotp", { email });
@@ -82,6 +94,17 @@ export default function DeleteMyAccount() {
   };
 
   const handleOTPVerification = async () => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
+
     if (otp.length === 6) {
       const res = await request.post("/verifyaccountdeletionotp", {
         email,
@@ -118,10 +141,30 @@ export default function DeleteMyAccount() {
   };
 
   const handleCaptchaChange = () => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     setCaptcha(true);
   };
 
   const handleCaptchaExpired = () => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     setCaptcha(false);
   };
 
@@ -129,11 +172,11 @@ export default function DeleteMyAccount() {
     <>
       <section className="absolute top-0 left-0 w-full h-full">
         {localStorage.getItem("userInfo") != null ? (
-          <div className=" py-12 px-6 h-full">
-            <div className="flex justify-center items-center flex-wrap h-full g-6 text-gray-800">
-              <div className="xl:w-6/12">
+          <div className=" py-12 px-2 h-full">
+            <div className="flex justify-center items-center flex-wrap h-full  text-gray-800">
+              <div className="w-full md:w-6/12">
                 <div className="block   rounded-lg shadow-2xl bg-white dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
-                  <div className="flex justify-center items-center g-0">
+                  <div className="flex justify-center items-center ">
                     <div className=" px-4 md:px-0">
                       <div className="md:p-12 p-4 md:mx-6">
                         <div className="flex items-center justify-center flex-col rounded-full">
@@ -179,17 +222,26 @@ export default function DeleteMyAccount() {
                             </div>
                           ) : null}
                           {!showVerifyOTPButton ? (
-                            <div className="text-center pt-1 mb-5 pb-1 relative">
-                              <ReCAPTCHA
-                                sitekey={
-                                  import.meta.env.VITE_RECAPTCHA_SITE_KEY
-                                }
-                                onChange={handleCaptchaChange}
-                                onExpired={handleCaptchaExpired}
-                                size="normal"
-                                theme={theme === "dark" ? "dark" : "light"}
-                                className="mb-1"
-                              />
+                            <div className="text-center pt-1 mb-5 pb-1 relative  ">
+                              {isOnline ? (
+                                <div className="w-[18.75rem] h-[4.625rem]">
+                                  <ReCAPTCHA
+                                    sitekey={
+                                      import.meta.env.VITE_RECAPTCHA_SITE_KEY
+                                    }
+                                    onChange={handleCaptchaChange}
+                                    onExpired={handleCaptchaExpired}
+                                    size="normal"
+                                    theme={theme === "dark" ? "dark" : "light"}
+                                    className="mb-1"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="dark:text-gray-400 text-gray-500 w-[18.75rem] h-[4.625rem]  flex items-center justify-center flex-col">
+                                  <p>Couldn't load ReCAPTCHA because</p>
+                                  <p> you have no internet connection.</p>
+                                </div>
+                              )}
                               <button
                                 className=" mt-3 inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
                                 type="submit"
@@ -199,7 +251,7 @@ export default function DeleteMyAccount() {
                                 Request OTP
                               </button>
                               <button
-                                className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-red-600 hover:bg-red-500  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
+                                className="  inline-block px-6 py-2.5 text-red-500 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 border  border-red-500 hover:border-red-600  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
                                 type="submit"
                                 aria-label="Cancel"
                                 onClick={() => {
@@ -243,7 +295,7 @@ export default function DeleteMyAccount() {
                               Verify OTP and Delete My Account
                             </button>
                             <button
-                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-red-600 hover:bg-red-500  outline-none "
+                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 border  border-red-500 hover:border-red-600  outline-none "
                               type="submit"
                               aria-label="Cancel"
                               onClick={() => {

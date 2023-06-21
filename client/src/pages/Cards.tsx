@@ -39,6 +39,7 @@ import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard
 import CardItems from "../components/CardItems";
 import SessionExpired from "../components/SessionExpired";
 import ConfirmCloseCard from "../components/ConfirmCloseCard";
+import { OfflineContext } from "../context/OfflineContext";
 
 // types
 // let oldContent:string //this  works
@@ -77,6 +78,7 @@ const Cards: FC = () => {
     deleteConfirmationModalForCard,
     theme,
   } = useContext(UserContext);
+  const { isOnline } = useContext(OfflineContext);
   const [note, setNote] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [openModal, setOpenModal] = useState(false);
@@ -95,6 +97,7 @@ const Cards: FC = () => {
     });
   const { deck_id, search_index } = useParams();
   const { data, isError, error, isLoading } = useGetCards(deck_id!);
+
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
     note: "",
@@ -259,6 +262,16 @@ const Cards: FC = () => {
   // onClick handlers
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
     if (title.trim().length > 0 || note.trim().length > 0) {
       const content = { title, note, cardId: uuidv4() };
@@ -280,6 +293,16 @@ const Cards: FC = () => {
   };
 
   const handleDelete = useCallback((index: number) => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     setIndexOfCardForDeletion(index);
     // This will take confirmation of user by showing him a modal.
     if (deleteConfirmationModalForCard?.current?.classList.contains("hidden")) {
@@ -293,6 +316,16 @@ const Cards: FC = () => {
   }, []);
 
   const handleSave = () => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     let data = {
       deck_id: deck_id!,
       newContent: editContent,

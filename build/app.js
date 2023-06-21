@@ -197,6 +197,12 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
     });
 })
     .catch((err) => { console.log(err); });
+// To detect if the user is offline
+app.get('/ping', function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        res.sendStatus(200);
+    });
+});
 //Deck routes 
 app.get('/deck', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
