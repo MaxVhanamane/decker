@@ -97,7 +97,6 @@ const Cards: FC = () => {
     });
   const { deck_id, search_index } = useParams();
   const { data, isError, error, isLoading } = useGetCards(deck_id!);
-
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
     note: "",

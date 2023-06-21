@@ -6,7 +6,7 @@ import { AlertContext } from "../context/AlertContext";
 import { OfflineContext } from "../context/OfflineContext";
 
 const getCards = async (_id: string, isOnline: boolean): Promise<Data> => {
-  if (!isOnline) {
+  if (isOnline) {
     try {
       const data = await request.get(`/cards/${_id}`);
       return data.data;
