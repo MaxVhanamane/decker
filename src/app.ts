@@ -14,6 +14,7 @@ import ForgotPasswordOTP from './models/forgotpasswordotps';
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import nodemailer from "nodemailer"
 import AccountDeletionOTP from "./models/accountdeletionotps";
+import { v4 as uuidv4 } from "uuid";
 
 const LocalStrategy = passportLocal.Strategy
 const MongoDBStore = require('connect-mongodb-session')(session);
@@ -373,13 +374,20 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Resp
     }
   }
   catch (error) {
-    res.status(500).json({ message: "Internal server Error!" })
+    if ((error as Error).name === "CastError") {
+      // Handle the error specifically when an invalid ID is provided
+      res.status(400).json({ message: "Invalid deck ID" });
+    } else {
+      res.status(500).json({ message: "Internal server error" });
+    }
   }
 
 })
 
 app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
+    //add a unique id  that I can use it as a key while rendering in a react app.
+    req.body.content.cardId = uuidv4()
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {
       return res.status(200).json({ message: "No deck found! Please check deck id" })
@@ -943,11 +951,23 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
 // here I have updated the value of a cardId
 // const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
 // with different value of cardId
+// forEach() function does not work well with asynchronous operations like deck.save().
+// Doesn't Work properly
   // const decks = await DeckModal.find({});
   // decks.forEach((deck) => {
   //   deck.cards = deck.cards.map((card) => ({
   //     ...card,
   //     cardId: uuidv4(),
   //   }));
-  //   deck.save();
+  //   await deck.save();
   // });
+
+  // Works properly
+  // const decks = await DeckModal.find({});
+  // for (const deck of decks) {
+  //   deck.cards = deck.cards.map((card) => ({
+  //     ...card,
+  //     cardId: uuidv4(),
+  //   }));
+  //   await deck.save();
+  // }

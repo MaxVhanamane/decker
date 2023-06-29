@@ -20,7 +20,6 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import Login from "./pages/Login";
 import SignUp from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
-import { request } from "./utils/axios-utils";
 import { AlertContext } from "./context/AlertContext";
 import { OfflineContext } from "./context/OfflineContext";
 // Lazy load the components
@@ -53,14 +52,6 @@ function App() {
   const undoButtonRef = useRef<HTMLDivElement | null>(null);
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
-
-  useEffect(() => {
-    if (localStorage.getItem("userInfo")) {
-      request.get("/decks-and-cards").catch(() => {
-        // Empty catch block or minimal error handling
-      });
-    }
-  }, [localStorage.getItem("userInfo")]);
 
   const handlePopupForUndoButton = () => {
     if (undoButtonRef.current?.classList.contains("scale-0")) {
@@ -95,17 +86,17 @@ function App() {
     result: DropResult,
     provided: ResponderProvided
   ) => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
     if (result.destination?.droppableId == "DeckDeleteArea") {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
       let data = {
         _id: result.draggableId,
         handleUndoDeck,
@@ -115,6 +106,16 @@ function App() {
       };
       deleteOneDeck(data);
     } else if (result.destination?.droppableId == "cardDeleteArea") {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
       let cardToDeleteIndex = result.source.index;
       setIndexOfCardForDeletion(cardToDeleteIndex);
       if (
@@ -123,6 +124,16 @@ function App() {
         deleteConfirmationModalForCard?.current?.classList.remove("hidden");
       }
     } else if (result.destination?.droppableId == "cardDropableArea") {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
       let deleteIndex = result.source.index;
       let moveIndex = result.destination.index;
       const receivedData = result.draggableId.split("-");

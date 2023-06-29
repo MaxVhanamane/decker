@@ -147,7 +147,7 @@ export default function Login() {
                           </div>
                           <div className="text-center pt-1  pb-1">
                             <button
-                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full  animate-changeBgLight dark:animate-changeBgDark  disabled:bg-gray-500  disabled:animate-none dark:disabled:animate-none"
+                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full   dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   disabled:bg-gray-500"
                               type="submit"
                               aria-label="Log in"
                               disabled={isLoggingIn}

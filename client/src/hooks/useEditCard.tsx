@@ -5,6 +5,7 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
 import { useContext } from "react";
 import { UserContext } from "./../context/UserContext";
+import { searchContext } from "../context/SearchContext";
 
 type CardData = {
   deck_id: string;
@@ -34,6 +35,7 @@ const editCard = async (cardData: CardData): Promise<PromiseData> => {
         note: cardData.newContent.note,
       },
     });
+
     return data.data;
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
@@ -45,7 +47,7 @@ const editCard = async (cardData: CardData): Promise<PromiseData> => {
 };
 
 const useEditCard = () => {
-  const { showSearchBar } = useContext(UserContext);
+  const { showSearchBar } = useContext(searchContext);
   const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
   return useMutation(editCard, {
@@ -87,7 +89,7 @@ const useEditCard = () => {
       }
       // If the search bar is open, it indicates that the user edited the card from the search result. The search bar is using the 'decks' query as data, so we will invalidate the decks query to keep it updated.
       if (showSearchBar) {
-        queryClient.invalidateQueries("decks");
+        queryClient.invalidateQueries("decks-and-cards");
       }
       queryClient.invalidateQueries(["cards", data.deck_id]);
     },

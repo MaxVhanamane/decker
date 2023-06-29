@@ -9,7 +9,6 @@ type PayloadData = {
   content: {
     title: string;
     note: string;
-    cardId: string;
   };
 };
 

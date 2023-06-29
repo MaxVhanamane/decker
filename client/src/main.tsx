@@ -9,15 +9,8 @@ import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
 import ThemeColorUpdater from "./components/ThemeCodeUpdater";
 import OfflineProvider from "./context/OfflineContext";
+import SearchProvider from "./context/SearchContext";
 const queryClient = new QueryClient();
-
-// if ("serviceWorker" in navigator) {
-//   window.addEventListener("load", () => {
-//     navigator.serviceWorker.register("/serviceWorker.js").catch((error) => {
-//       console.log("Service worker registration failed:", error);
-//     });
-//   });
-// }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <>
@@ -26,11 +19,13 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         <BrowserRouter>
           <OfflineProvider>
             <UserContextProvider>
-              <ThemeColorUpdater />
+              <SearchProvider>
+                <ThemeColorUpdater />
 
-              <Layout>
-                <App />
-              </Layout>
+                <Layout>
+                  <App />
+                </Layout>
+              </SearchProvider>
             </UserContextProvider>
           </OfflineProvider>
         </BrowserRouter>

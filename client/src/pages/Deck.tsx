@@ -5,6 +5,7 @@ import {
   useContext,
   RefObject,
   memo,
+  useEffect,
 } from "react";
 import { Link } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
@@ -24,6 +25,8 @@ import { Helmet } from "react-helmet";
 import SessionExpired from "../components/SessionExpired";
 import { UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
+import { searchContext } from "../context/SearchContext";
+import { request } from "../utils/axios-utils";
 
 type PropType = {
   undoDeck: DeckTypeWithIndex | null;
@@ -40,12 +43,11 @@ function Deck({
 }: PropType) {
   const { setAlert } = useContext(AlertContext);
   const inputRefElement = useRef<HTMLInputElement>(null);
-  // const [deleteDeckId,setDeleteDeckId]=useState("")
-  const { data: allDecks, error, isError, isLoading } = useGetDecks();
+  const { data: allDecks, error, isError, isLoading, refetch } = useGetDecks();
   const [openEditDeckModal, setOpenEditDeckModal] = useState(false);
   const { mutate: addDeck } = useCreateDeck();
   const { theme, divRefForUserSettings } = useContext(UserContext);
-
+  const { showSearchBar } = useContext(searchContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
 
   const {
@@ -90,6 +92,18 @@ function Deck({
       }));
     }
   };
+
+  useEffect(() => {
+    if (localStorage.getItem("userInfo")) {
+      request.get("/decks-and-cards").catch(() => {});
+    }
+  }, [localStorage.getItem("userInfo")]);
+
+  useEffect(() => {
+    if (!showSearchBar && window.location.pathname === "/") {
+      refetch();
+    }
+  }, [showSearchBar]);
 
   const handlePin = async (id: string, pinned: boolean) => {
     if (!isOnline) {
@@ -166,7 +180,7 @@ function Deck({
           <p className="font-semibold text-md"> No internet connection.</p>
           <button
             onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
             type="button"
             aria-label="Refresh"
           >
@@ -192,7 +206,7 @@ function Deck({
           </div>
           <button
             onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   "
             type="button"
             aria-label="Refresh"
           >
@@ -218,7 +232,7 @@ function Deck({
           <p className="font-semibold text-md"> {errorMessage}</p>
           <button
             onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out "
             type="button"
             aria-label="Refresh"
           >

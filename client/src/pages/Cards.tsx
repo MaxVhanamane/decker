@@ -21,7 +21,6 @@ import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
 import parseNote from "../functions/parseNote";
-import { v4 as uuidv4 } from "uuid";
 import { AlertData, AxiosErrorType } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
 
@@ -52,7 +51,6 @@ type ContentType = {
 type ContentTypeForPayload = {
   title: string;
   note: string;
-  cardId: string;
 };
 
 type ContentTypeForEdit = ContentType & {
@@ -95,8 +93,15 @@ const Cards: FC = () => {
       _id: "",
       cardIndex: null,
     });
-  const { deck_id, search_index } = useParams();
-  const { data, isError, error, isLoading } = useGetCards(deck_id!);
+  const { deck_id, search_index = null } = useParams();
+
+  const location = useLocation();
+
+  const { data, isError, error, isLoading } = useGetCards(
+    deck_id!,
+    search_index,
+    location?.state?.deck
+  );
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
     note: "",
@@ -116,8 +121,6 @@ const Cards: FC = () => {
   // Other
   const navigate = useNavigate();
   const url = window.location.pathname.split("/").pop();
-  const location = useLocation();
-
   // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
 
@@ -205,6 +208,7 @@ const Cards: FC = () => {
   // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
   useEffect(() => {
     // First, we will check if the 'search_index' parameter is present in the URL. If it is, it means that we have arrived at this page from a search result.
+
     if (search_index) {
       // we need this info when we show the card in full screen
       let cardInfo: ContentType = {
@@ -212,19 +216,23 @@ const Cards: FC = () => {
         note: "",
         _id: "",
       };
-      if (data !== undefined) {
+
+      if (location.state.card !== undefined) {
         // The 'data' state contains the deck along with its cards. We can use the 'search_index' to retrieve the specific card that we want to display in fullscreen mode
-        let cardData = { ...data.cards[parseInt(search_index)] };
         // here we will set the values for cardInfo object that we created above.
-        cardInfo.title = cardData.title;
-        (cardInfo.note = cardData.note), (cardInfo._id = deck_id!);
+        cardInfo.title = location.state.card.title;
+        cardInfo.note = location.state.card.note;
+        cardInfo._id = location.state.card.deck_id;
       }
       // here we will create all the data that is needed to show it in full screen
-      let cardDetails = { ...cardInfo, cardIndex: parseInt(search_index) };
+      let cardDetails = {
+        ...cardInfo,
+        cardIndex: location.state.card.cardIndex,
+      };
       setFullScreenCardData(cardDetails);
       setShowFullScreen(true);
     }
-  }, [data, url]);
+  }, [location, search_index]);
 
   useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
@@ -273,7 +281,7 @@ const Cards: FC = () => {
     }
     //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
     if (title.trim().length > 0 || note.trim().length > 0) {
-      const content = { title, note, cardId: uuidv4() };
+      const content = { title, note };
       const payload: PayloadType = { deck_id: deck_id!, content };
       addCard(payload);
       setNote("");
@@ -708,14 +716,24 @@ const Cards: FC = () => {
             className="w-28 h-28 "
           />
           <p className="font-semibold text-md"> No internet connection.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
-            type="button"
-            aria-label="Refresh"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/")}
+              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+              type="button"
+              aria-label="Refresh"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-800 dark:text-gray-50 border  w-[7.3rem]  dark:border-sky-600 border-teal-600 hover:text-gray-600 dark:hover:text-gray-200 hover:border-teal-700 dark:hover:border-sky-700 transition-colors duration-150 ease-in-out  "
+              type="button"
+              aria-label="Refresh"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       );
     } else if (axiosError?.response?.status === 500) {
@@ -734,14 +752,24 @@ const Cards: FC = () => {
             <p> An error occurred on the server.</p>
             <p> Please try again later.</p>
           </div>
-          <button
-            onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
-            type="button"
-            aria-label="Refresh"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/")}
+              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+              type="button"
+              aria-label="Refresh"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-800 dark:text-gray-50 border  w-[7.3rem]  dark:border-sky-600 border-teal-600 hover:text-gray-600 dark:hover:text-gray-200 hover:border-teal-700 dark:hover:border-sky-700 transition-colors duration-150 ease-in-out  "
+              type="button"
+              aria-label="Refresh"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       );
     } else {
@@ -760,14 +788,24 @@ const Cards: FC = () => {
             className="w-40 h-40 "
           />
           <p className="font-semibold text-md"> {errorMessage}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
-            type="button"
-            aria-label="Refresh"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/")}
+              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+              type="button"
+              aria-label="Refresh"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-800 dark:text-gray-50 border  w-[7.3rem]  dark:border-sky-600 border-teal-600 hover:text-gray-600 dark:hover:text-gray-200 hover:border-teal-700 dark:hover:border-sky-700 transition-colors duration-150 ease-in-out  "
+              type="button"
+              aria-label="Refresh"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       );
     }
@@ -989,7 +1027,7 @@ const Cards: FC = () => {
             {!expandTextarea && (
               <button
                 onClick={() => setExpandTextArea(true)}
-                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
                 type="button"
                 aria-label="Add a note"
               >
@@ -1118,7 +1156,14 @@ const Cards: FC = () => {
                       if (location.state?.from === "/") {
                         navigate("/");
                       } else {
-                        navigate(location.state?.from);
+                        // if user is on /cards/ReactJs(deck_id) and opens searchbar and searches something and opens card and closes when he closes the card I am navigating him to /cards/ReactJs(deck_id) but while navigating If I don't send deck as state value I will not see any cards that is why I am sending this data to avoid no cards found error. This value  location?.state?.deckInfo I set this value in searchResult component.
+                        navigate(location.state?.from, {
+                          state: {
+                            deck: location?.state?.deckInfo
+                              ? location?.state?.deckInfo
+                              : null,
+                          },
+                        });
                         setShowFullScreen(false);
                       }
                     }

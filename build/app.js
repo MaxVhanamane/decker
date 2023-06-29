@@ -49,6 +49,7 @@ const verifyemail_1 = __importDefault(require("./models/verifyemail"));
 const forgotpasswordotps_1 = __importDefault(require("./models/forgotpasswordotps"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const accountdeletionotps_1 = __importDefault(require("./models/accountdeletionotps"));
+const uuid_1 = require("uuid");
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require("passport-google-oauth20");
@@ -326,13 +327,21 @@ app.get('/cards/:_id', fetchUserDetails, function (req, res) {
             }
         }
         catch (error) {
-            res.status(500).json({ message: "Internal server Error!" });
+            if (error.name === "CastError") {
+                // Handle the error specifically when an invalid ID is provided
+                res.status(400).json({ message: "Invalid deck ID" });
+            }
+            else {
+                res.status(500).json({ message: "Internal server error" });
+            }
         }
     });
 });
 app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            //add a unique id  that I can use it as a key while rendering in a react app.
+            req.body.content.cardId = (0, uuid_1.v4)();
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
             if (!getDeck) {
                 return res.status(200).json({ message: "No deck found! Please check deck id" });
@@ -788,11 +797,22 @@ app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 
 // here I have updated the value of a cardId
 // const decks = await DeckModal.updateMany({}, { $set: { "cards.$[].cardId": uuidv4() } });
 // with different value of cardId
+// forEach() function does not work well with asynchronous operations like deck.save().
+// Doesn't Work properly
 // const decks = await DeckModal.find({});
 // decks.forEach((deck) => {
 //   deck.cards = deck.cards.map((card) => ({
 //     ...card,
 //     cardId: uuidv4(),
 //   }));
-//   deck.save();
+//   await deck.save();
 // });
+// Works properly
+// const decks = await DeckModal.find({});
+// for (const deck of decks) {
+//   deck.cards = deck.cards.map((card) => ({
+//     ...card,
+//     cardId: uuidv4(),
+//   }));
+//   await deck.save();
+// }

@@ -11,9 +11,10 @@ import { AiOutlineWarning } from "react-icons/ai";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertContext } from "../context/AlertContext";
+import { searchContext } from "../context/SearchContext";
 const Navbar: FC = () => {
-  const { showSearchBar, setShowSearchBar, divRefForUserSettings } =
-    useContext(UserContext);
+  const { divRefForUserSettings } = useContext(UserContext);
+  const { showSearchBar, setShowSearchBar } = useContext(searchContext);
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
 
@@ -80,22 +81,22 @@ const Navbar: FC = () => {
                 />
               </span>
               <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
-                <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
+                <span className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300">
                   D
                 </span>
-                <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
+                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
                   e
                 </span>
-                <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
+                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
                   c
                 </span>
-                <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
+                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
                   k
                 </span>
-                <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
+                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
                   e
                 </span>
-                <span className="inline-block transform hover:-translate-y-1 hover:duration-300">
+                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
                   r
                 </span>
               </span>

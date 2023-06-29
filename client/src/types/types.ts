@@ -30,7 +30,7 @@ export type DeckType = {
 export type DeckAndCardType = {
   _id: string,
   title: string,
-  cards: { title: string, note: string }[],
+  cards: { title: string, note: string, cardId: string, _id: string }[],
   pinned: boolean,
 }
 

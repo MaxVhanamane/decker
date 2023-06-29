@@ -3,7 +3,6 @@ import { UserContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 
 export default function PageNotFound() {
-
   const { theme } = useContext(UserContext);
   const navigate = useNavigate();
 
@@ -22,7 +21,7 @@ export default function PageNotFound() {
       </p>
       <button
         onClick={() => navigate("/")}
-        className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  animate-changeBgLight dark:animate-changeBgDark   "
+        className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   "
         type="button"
         aria-label="Go Home"
       >

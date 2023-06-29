@@ -15,6 +15,9 @@ import usePinDeck from "../hooks/usePinDeck";
 import EditModalForDeck from "./EditModalForDeck";
 import { UserContext } from "../context/UserContext";
 import useGetDecksAndCards from "../hooks/useGetDecksAndCards";
+import { OfflineContext } from "../context/OfflineContext";
+import { AlertContext } from "../context/AlertContext";
+import { AlertData, DeckAndCardType } from "../types/types";
 
 let timer: any;
 
@@ -22,6 +25,7 @@ let timer: any;
 interface IProp {
   searchQuery: string;
   setShowSearchBar: Dispatch<React.SetStateAction<boolean>>;
+  setSearchQuery: Dispatch<React.SetStateAction<string>>;
 }
 
 type SearchResultCardsType = {
@@ -37,7 +41,14 @@ type SearchResultDeckType = {
   pinned: boolean;
 };
 
-const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
+const SearchResult: FC<IProp> = ({
+  searchQuery,
+  setShowSearchBar,
+  setSearchQuery,
+}) => {
+  const { isOnline } = useContext(OfflineContext);
+  const { setAlert } = useContext(AlertContext);
+
   const [showResult, setShowResult] = useState(false);
   const [foundCards, setFoundCards] = useState<SearchResultCardsType[]>([]);
   const [foundDecks, setFoundDecks] = useState<SearchResultDeckType[]>([]);
@@ -49,10 +60,24 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
     isError: isPinError,
     isLoading: isPinning,
   } = usePinDeck();
+  const [deckInfo, setDeckInfo] = useState<DeckAndCardType | null>();
   const [openEditDeckModal, setOpenEditDeckModal] = useState(false);
   const location = useLocation();
+  useEffect(() => {
+    const regex = /\/cards\/.*/;
+    const deck_id_value = location.pathname.split("/")[2];
+    if (regex.test(location.pathname)) {
+      const filteredDeck = data?.filter((deck) => {
+        if (deck._id === deck_id_value) {
+          return deck;
+        }
+      });
+      setDeckInfo(filteredDeck?.[0]);
+    } else {
+      setDeckInfo(null);
+    }
+  }, []);
   const { theme } = useContext(UserContext);
-
   // Here, we will add all the cards from all the decks in a single array by including some additional properties that we require later
   const allCards = useMemo(() => {
     if (!data) {
@@ -76,6 +101,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
       deck_id: data._id,
       title: data.title,
       pinned: data.pinned,
+      cards: data.cards,
     }));
   }, [data]);
 
@@ -117,6 +143,16 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
   }, [searchQuery, filterCards, data]);
 
   const handleEditDeck = (deck_id: string, title: string) => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     setEditData({ ...editData, deck_id, title });
     setOpenEditDeckModal(true);
   };
@@ -156,7 +192,16 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
   const handlePin = async (id: string, pinned: boolean) => {
     // This code is for optimistic updates. as I am updating data in useEffect it takes a little time to show pinned or unpinned changes.
     // To see the changes instantly I am doing optimistic updates here.
-
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     const pinnedDecks = foundDecks.filter((obj) => obj.pinned === true);
     const unpinnedDecks = foundDecks.filter((obj) => obj.pinned === false);
     const deckToBeChanged = foundDecks.find((obj) => obj.deck_id === id);
@@ -235,8 +280,12 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
                           <Link
                             onClick={() => setShowSearchBar(false)}
                             to={`cards/${deck.deck_id}`}
+                            state={{ deck }}
                           >
-                            <p className="break-all font-semibold py-6">
+                            <p
+                              className="break-all font-semibold py-6"
+                              onClick={() => setSearchQuery("")}
+                            >
                               {searchQuery.length > 0 &&
                                 highlightText(deck.title, searchQuery)}
                             </p>
@@ -293,8 +342,12 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
                           <Link
                             onClick={() => setShowSearchBar(false)}
                             to={`cards/${deck.deck_id}`}
+                            state={{ deck }}
                           >
-                            <p className="break-all font-semibold py-6">
+                            <p
+                              className="break-all font-semibold py-6"
+                              onClick={() => setSearchQuery("")}
+                            >
                               {searchQuery.length > 0 &&
                                 highlightText(deck.title, searchQuery)}
                             </p>
@@ -332,7 +385,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, setShowSearchBar }) => {
                 <Link
                   key={index}
                   to={`cards/${card.deck_id}/${card.cardIndex}`}
-                  state={{ from: location.pathname }}
+                  state={{ from: location.pathname, card, deckInfo }}
                 >
                   <div
                     className="flex flex-col text-gray-800

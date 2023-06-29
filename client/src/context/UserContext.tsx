@@ -36,8 +36,6 @@ interface ContexType {
   deleteConfirmationModalForCard: RefObject<HTMLDivElement>;
   divRefForUserSettings: RefObject<HTMLDivElement>;
   indexOfCardForDeletion: number | null;
-  showSearchBar: boolean;
-  setShowSearchBar: Dispatch<React.SetStateAction<boolean>>;
 }
 export const UserContext = createContext<ContexType>({
   userInfo: {
@@ -56,8 +54,6 @@ export const UserContext = createContext<ContexType>({
   divRefForUserSettings: { current: null } as RefObject<HTMLDivElement>,
   setIndexOfCardForDeletion: () => {},
   indexOfCardForDeletion: null,
-  showSearchBar: false,
-  setShowSearchBar: () => {},
 });
 
 function UserContextProvider({ children }: UserContextProvider) {
@@ -86,7 +82,6 @@ function UserContextProvider({ children }: UserContextProvider) {
   const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
     number | null
   >(null);
-  const [showSearchBar, setShowSearchBar] = useState(false);
 
   const getUser = async (): Promise<any> => {
     const userInfo = localStorage.getItem("userInfo");
@@ -180,8 +175,6 @@ function UserContextProvider({ children }: UserContextProvider) {
         deleteConfirmationModalForCard,
         indexOfCardForDeletion,
         setIndexOfCardForDeletion,
-        showSearchBar,
-        setShowSearchBar,
         divRefForUserSettings,
       }}
     >
