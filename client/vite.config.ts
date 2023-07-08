@@ -23,7 +23,7 @@ export default defineConfig(({ command, mode }) => {
         runtimeCaching: [
           {
 
-            urlPattern: new RegExp(`${API_URL}/deck$`), //  your API endpoint
+            urlPattern: new RegExp(`${API_URL}/decks$`), //  your API endpoint
             handler: 'NetworkFirst', //  caching strategy 
             options: {
               cacheName: 'decks-cache',

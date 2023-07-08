@@ -3,7 +3,6 @@ import { AlertData, AxiosErrorType, DeckType } from "../types/types";
 import { useContext } from "react";
 import { request } from "../utils/axios-utils";
 import { AlertContext } from "../context/AlertContext";
-import { UserContext } from "../context/UserContext";
 import { searchContext } from "../context/SearchContext";
 
 type DeckTypeValue = DeckType[] & { message?: string };
@@ -15,11 +14,13 @@ const getDecks = async (
   // If the search bar is open and the user opens the search results (e.g., any card) and reads it, and then closes it, if the user has opened the search bar on the home page, and when the user closes it by hitting the back button, they will be navigated to "/", which will trigger the execution of the useGetDecks() function. To avoid unnecessary network requests, I will serve the cached data in this case.
   if (!showSearchBar) {
     try {
-      const decks = await request.get(`/deck`);
+      const decks = await request.get(`/decks`);
       return decks.data;
     } catch (error) {
       // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-      if ((error as Error).message === "Network Error") {
+      if ((error as AxiosErrorType)?.response?.status === 500) {
+        throw new Error("Internal server error");
+      } else if ((error as Error).message === "Network Error") {
         throw new Error("Network Error");
       }
       throw error;

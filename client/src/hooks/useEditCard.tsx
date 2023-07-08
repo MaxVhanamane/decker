@@ -4,7 +4,6 @@ import { OldData } from "./useDeleteCard";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
 import { useContext } from "react";
-import { UserContext } from "./../context/UserContext";
 import { searchContext } from "../context/SearchContext";
 
 type CardData = {
@@ -39,7 +38,9 @@ const editCard = async (cardData: CardData): Promise<PromiseData> => {
     return data.data;
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    if ((error as Error).message === "Network Error") {
+    if ((error as AxiosErrorType)?.response?.status === 500) {
+      throw new Error("Internal server error");
+    } else if ((error as Error).message === "Network Error") {
       throw new Error("Network Error");
     }
     throw error;

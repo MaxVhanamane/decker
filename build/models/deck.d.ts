@@ -4,9 +4,9 @@ declare const DeckModal: mongoose.Model<{
     updatedAt: NativeDate;
 } & {
     cards: {
+        cardId: string;
         title?: string | undefined;
         note?: string | undefined;
-        cardId?: string | undefined;
     }[];
     pinned: boolean;
     title?: string | undefined;
@@ -19,9 +19,9 @@ declare const DeckModal: mongoose.Model<{
     updatedAt: NativeDate;
 } & {
     cards: {
+        cardId: string;
         title?: string | undefined;
         note?: string | undefined;
-        cardId?: string | undefined;
     }[];
     pinned: boolean;
     title?: string | undefined;

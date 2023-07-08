@@ -14,12 +14,12 @@ import ForgotPasswordOTP from './models/forgotpasswordotps';
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import nodemailer from "nodemailer"
 import AccountDeletionOTP from "./models/accountdeletionotps";
-import { v4 as uuidv4 } from "uuid";
 
 const LocalStrategy = passportLocal.Strategy
 const MongoDBStore = require('connect-mongodb-session')(session);
 const GoogleStrategy = require("passport-google-oauth20")
 config()
+
 
 
 let PORT: number = 5000
@@ -225,7 +225,7 @@ app.get('/ping', async function (req: Request, res: Response) {
 
 //Deck routes 
 
-app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) {
+app.get('/decks', fetchUserDetails, async function (req: Request, res: Response) {
   try {
     const user = req?.userDetails
 
@@ -233,8 +233,14 @@ app.get('/deck', fetchUserDetails, async function (req: Request, res: Response) 
     // as there is a relation defined between two collection DeckModal and User 
     // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
     // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
-    const deck = await DeckModal.find({ email: user?._id }, { title: 1, pinned: 1, email: 1, date: 1 }).sort({ date: -1 });
-    res.status(200).json(deck)
+    // const deck = await DeckModal.find({ email: user?._id }, { title: 1, pinned: 1, date: 1 }).sort({ date: -1 });
+    const decks = await DeckModal.aggregate([
+      { $match: { email: user?._id } },
+      { $sort: { date: -1 } },
+      { $project: { title: 1, pinned: 1, _id: 1 } }
+    ]);
+
+    res.status(200).json(decks)
 
   }
   catch (error) {
@@ -266,7 +272,8 @@ app.post('/deck', fetchUserDetails, async function (req: Request, res: Response)
       date: new Date()
     })
     const createdDeck = await newDeck.save()
-    res.status(201).json(createdDeck)
+
+    res.status(201).json({ _id: createdDeck._id, title: createdDeck.title, pinned: createdDeck.pinned })
 
   }
   catch (error) {
@@ -386,8 +393,7 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Resp
 
 app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
   try {
-    //add a unique id  that I can use it as a key while rendering in a react app.
-    req.body.content.cardId = uuidv4()
+
     const getDeck = await DeckModal.findById(req.params.deck_id)
     if (!getDeck) {
       return res.status(200).json({ message: "No deck found! Please check deck id" })
@@ -397,7 +403,7 @@ app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: 
     res.status(201).json(createdCard)
   }
   catch (error) {
-    res.status(500).json({ message: "Invalid id" })
+    res.status(500).json({ message: "Some Error occurred please try again later!" })
   }
 
 })

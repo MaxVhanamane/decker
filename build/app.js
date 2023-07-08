@@ -49,7 +49,6 @@ const verifyemail_1 = __importDefault(require("./models/verifyemail"));
 const forgotpasswordotps_1 = __importDefault(require("./models/forgotpasswordotps"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const accountdeletionotps_1 = __importDefault(require("./models/accountdeletionotps"));
-const uuid_1 = require("uuid");
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require("passport-google-oauth20");
@@ -205,7 +204,7 @@ app.get('/ping', function (req, res) {
     });
 });
 //Deck routes 
-app.get('/deck', fetchUserDetails, function (req, res) {
+app.get('/decks', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const user = req === null || req === void 0 ? void 0 : req.userDetails;
@@ -213,8 +212,13 @@ app.get('/deck', fetchUserDetails, function (req, res) {
             // as there is a relation defined between two collection DeckModal and User 
             // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
             // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
-            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, pinned: 1, email: 1, date: 1 }).sort({ date: -1 });
-            res.status(200).json(deck);
+            // const deck = await DeckModal.find({ email: user?._id }, { title: 1, pinned: 1, date: 1 }).sort({ date: -1 });
+            const decks = yield deck_1.default.aggregate([
+                { $match: { email: user === null || user === void 0 ? void 0 : user._id } },
+                { $sort: { date: -1 } },
+                { $project: { title: 1, pinned: 1, _id: 1 } }
+            ]);
+            res.status(200).json(decks);
         }
         catch (error) {
             res.status(500).json({ message: "Internal server error!" });
@@ -243,7 +247,7 @@ app.post('/deck', fetchUserDetails, function (req, res) {
                 date: new Date()
             });
             const createdDeck = yield newDeck.save();
-            res.status(201).json(createdDeck);
+            res.status(201).json({ _id: createdDeck._id, title: createdDeck.title, pinned: createdDeck.pinned });
         }
         catch (error) {
             res.status(500).json({ message: "Internal server Error!" });
@@ -340,8 +344,6 @@ app.get('/cards/:_id', fetchUserDetails, function (req, res) {
 app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            //add a unique id  that I can use it as a key while rendering in a react app.
-            req.body.content.cardId = (0, uuid_1.v4)();
             const getDeck = yield deck_1.default.findById(req.params.deck_id);
             if (!getDeck) {
                 return res.status(200).json({ message: "No deck found! Please check deck id" });
@@ -351,7 +353,7 @@ app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
             res.status(201).json(createdCard);
         }
         catch (error) {
-            res.status(500).json({ message: "Invalid id" });
+            res.status(500).json({ message: "Some Error occurred please try again later!" });
         }
     });
 });

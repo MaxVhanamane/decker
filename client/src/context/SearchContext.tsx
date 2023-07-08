@@ -10,9 +10,11 @@ interface ContexType {
   showSearchBar: boolean;
   setShowSearchBar: Dispatch<React.SetStateAction<boolean>>;
 }
+
 type SearchContextProvider = {
   children: ReactNode;
 };
+
 export const searchContext = createContext<ContexType>({
   showSearchBar: false,
   setShowSearchBar: () => {},

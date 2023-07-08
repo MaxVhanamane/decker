@@ -1,4 +1,7 @@
 module.exports = {
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -27,5 +30,4 @@ module.exports = {
 
     },
   },
-  plugins: [require('@tailwindcss/line-clamp')],
 };

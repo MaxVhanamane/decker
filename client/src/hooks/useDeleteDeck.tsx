@@ -34,7 +34,9 @@ const deleteDeck = async ({ _id }: { _id: string }) => {
     return response.data;
   } catch (error) {
     // if I don't check (error as Error).message === "Network Error") it doen't throw isError===true i.e mutation error when there is no internet.
-    if ((error as Error).message === "Network Error") {
+    if ((error as AxiosErrorType)?.response?.status === 500) {
+      throw new Error("Internal server error");
+    } else if ((error as Error).message === "Network Error") {
       throw new Error("Network Error");
     }
     throw error;
@@ -78,6 +80,27 @@ const useDeleteDeck = () => {
           return newData;
         }
       );
+
+      const previousQueryDataForSearch: DeckType[] =
+        queryClient.getQueryData("decks-and-cards")!;
+      if (previousQueryDataForSearch) {
+        queryClient.setQueryData(
+          "decks-and-cards",
+          (oldQueryData: DeckType[] | undefined) => {
+            if (!oldQueryData) return [];
+            const newData = oldQueryData?.filter(
+              (deck: DeckType, index: number) => {
+                if (deck._id === _id) {
+                  indexOfDeletedDeck = index;
+                }
+                return deck._id != _id;
+              }
+            );
+            return newData;
+          }
+        );
+      }
+
       // Return previous data so that if something goes wrong we can use this in onError method
       // you can pass it in object or you can pass it directly like I did above in create deck
       return {
@@ -87,6 +110,7 @@ const useDeleteDeck = () => {
         undoButtonRef,
         handlePopupForUndoButton,
         timeout,
+        previousQueryDataForSearch,
       };
     },
     onSuccess: (data: ResponseType, _variables, context) => {
@@ -127,6 +151,10 @@ const useDeleteDeck = () => {
         autoHideDuration: 7000,
       }));
       queryClient.setQueryData("decks", context?.previousQueryData);
+      queryClient.setQueryData(
+        "decks-and-cards",
+        context?.previousQueryDataForSearch
+      );
     },
 
     // onSettled is called in the end it doesnt matter if the mutation is successful or failed it will be called everytime. After doing above operations we will refetch the data. so that our data and the data in the db will be in sync.

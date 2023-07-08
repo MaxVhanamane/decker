@@ -30,6 +30,7 @@ import { AiOutlineBold } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { GoEyeClosed } from "react-icons/go";
+import shortid from "shortid";
 
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
@@ -51,6 +52,7 @@ type ContentType = {
 type ContentTypeForPayload = {
   title: string;
   note: string;
+  cardId: string;
 };
 
 type ContentTypeForEdit = ContentType & {
@@ -233,7 +235,6 @@ const Cards: FC = () => {
       setShowFullScreen(true);
     }
   }, [location, search_index]);
-
   useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
 
@@ -281,7 +282,7 @@ const Cards: FC = () => {
     }
     //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
     if (title.trim().length > 0 || note.trim().length > 0) {
-      const content = { title, note };
+      const content = { title, note, cardId: shortid.generate() };
       const payload: PayloadType = { deck_id: deck_id!, content };
       addCard(payload);
       setNote("");
@@ -318,6 +319,16 @@ const Cards: FC = () => {
   }, []);
 
   const handleEdit = useCallback((cardItem: ContentTypeForEdit) => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     setEditContent(cardItem);
     setOpenModal(true);
   }, []);
@@ -716,24 +727,14 @@ const Cards: FC = () => {
             className="w-28 h-28 "
           />
           <p className="font-semibold text-md"> No internet connection.</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate("/")}
-              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Refresh"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-800 dark:text-gray-50 border  w-[7.3rem]  dark:border-sky-600 border-teal-600 hover:text-gray-600 dark:hover:text-gray-200 hover:border-teal-700 dark:hover:border-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Refresh"
-            >
-              Refresh
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/")}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+            type="button"
+            aria-label="Home"
+          >
+            Home
+          </button>
         </div>
       );
     } else if (axiosError?.response?.status === 500) {
@@ -752,24 +753,14 @@ const Cards: FC = () => {
             <p> An error occurred on the server.</p>
             <p> Please try again later.</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate("/")}
-              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Refresh"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-800 dark:text-gray-50 border  w-[7.3rem]  dark:border-sky-600 border-teal-600 hover:text-gray-600 dark:hover:text-gray-200 hover:border-teal-700 dark:hover:border-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Refresh"
-            >
-              Refresh
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/")}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+            type="button"
+            aria-label="Home"
+          >
+            Home
+          </button>
         </div>
       );
     } else {
@@ -788,24 +779,14 @@ const Cards: FC = () => {
             className="w-40 h-40 "
           />
           <p className="font-semibold text-md"> {errorMessage}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate("/")}
-              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Refresh"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-800 dark:text-gray-50 border  w-[7.3rem]  dark:border-sky-600 border-teal-600 hover:text-gray-600 dark:hover:text-gray-200 hover:border-teal-700 dark:hover:border-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Refresh"
-            >
-              Refresh
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/")}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+            type="button"
+            aria-label="Home"
+          >
+            Home
+          </button>
         </div>
       );
     }

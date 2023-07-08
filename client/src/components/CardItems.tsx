@@ -9,6 +9,7 @@ import { useContext } from "react";
 import { AlertContext } from "../context/AlertContext";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertData } from "../types/types";
+
 type CardType = {
   title: string;
   note: string;

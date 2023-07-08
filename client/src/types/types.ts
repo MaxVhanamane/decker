@@ -23,8 +23,7 @@ export type DeckType = {
   _id: string,
   title: string,
   pinned: boolean,
-  email: string,
-  date: Date
+  isProcessing?: boolean
 }
 
 export type DeckAndCardType = {
@@ -41,6 +40,7 @@ export type DeckTypeWithIndex = {
   index: number
   email: string,
   date: Date
+  cards: { title: string, note: string, cardId: string, _id: string }[]
 }
 
 export type CardDataType = {

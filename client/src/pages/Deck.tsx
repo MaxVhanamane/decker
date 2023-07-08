@@ -7,7 +7,7 @@ import {
   memo,
   useEffect,
 } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { BsPin } from "react-icons/bs";
 import { BsFillPinFill } from "react-icons/bs";
@@ -25,9 +25,7 @@ import { Helmet } from "react-helmet";
 import SessionExpired from "../components/SessionExpired";
 import { UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
-import { searchContext } from "../context/SearchContext";
-import { request } from "../utils/axios-utils";
-
+import useGetDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
 type PropType = {
   undoDeck: DeckTypeWithIndex | null;
   handleUndoDeck: (deck: DeckTypeWithIndex | null) => void;
@@ -43,13 +41,14 @@ function Deck({
 }: PropType) {
   const { setAlert } = useContext(AlertContext);
   const inputRefElement = useRef<HTMLInputElement>(null);
-  const { data: allDecks, error, isError, isLoading, refetch } = useGetDecks();
-  const [openEditDeckModal, setOpenEditDeckModal] = useState(false);
-  const { mutate: addDeck } = useCreateDeck();
+  const { data: allDecks, error, isError, isLoading } = useGetDecks();
+  const navigate = useNavigate();
+  const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
+  const { mutate: addDeck, isLoading: isCreatingDeck } = useCreateDeck();
+  // Calling decks-and-cards to cache the data so that users can search offline.
+  useGetDecksAndCardsCache();
   const { theme, divRefForUserSettings } = useContext(UserContext);
-  const { showSearchBar } = useContext(searchContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
-
   const {
     mutate: pinDeck,
     error: pinError,
@@ -93,18 +92,6 @@ function Deck({
     }
   };
 
-  useEffect(() => {
-    if (localStorage.getItem("userInfo")) {
-      request.get("/decks-and-cards").catch(() => {});
-    }
-  }, [localStorage.getItem("userInfo")]);
-
-  useEffect(() => {
-    if (!showSearchBar && window.location.pathname === "/") {
-      refetch();
-    }
-  }, [showSearchBar]);
-
   const handlePin = async (id: string, pinned: boolean) => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
@@ -120,6 +107,16 @@ function Deck({
   };
 
   const handleEditDeck = (deck_id: string, title: string) => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
     setEditData({ ...editData, deck_id, title });
     setOpenEditDeckModal(true);
   };
@@ -345,7 +342,7 @@ function Deck({
           return deck?.pinned === true;
         }).length > 0 ? (
           <div className="mt-4 lg:mb-10  mx-1  ">
-            <h1 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  m-4">
+            <h1 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2 ">
               Pinned
             </h1>
 
@@ -353,7 +350,7 @@ function Deck({
               {(provided) => {
                 return (
                   <div
-                    className=" flex flex-row flex-wrap gap-2  justify-center items-center p-2 lg:mx-20 "
+                    className=" flex flex-row flex-wrap gap-2  justify-center items-center py-2 px-1 lg:mx-20 "
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
@@ -380,7 +377,7 @@ function Deck({
                                     " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
                                   } 
         text-gray-800 dark:text-gray-50  
-                     rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
+                     rounded-md w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
                      transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
@@ -411,7 +408,6 @@ function Deck({
                                         <BsFillPinFill />
                                       </button>
                                     </div>
-
                                     <Link to={`cards/${deck._id}`}>
                                       <p
                                         onClick={() => {
@@ -431,7 +427,7 @@ function Deck({
                                             );
                                           }
                                         }}
-                                        className=" break-all font-semibold py-6 "
+                                        className=" break-all font-bold  line-clamp-1 h-7 text-center  "
                                       >
                                         {deck.title}
                                       </p>
@@ -455,7 +451,7 @@ function Deck({
           return deck?.pinned === false;
         }).length > 0 ? (
           <div className="mt-4 mb-24  mx-1">
-            <h1 className="text-left text-md font-semibold text-gray-800 m-4 dark:text-gray-50 ">
+            <h1 className="text-left text-md font-semibold text-gray-800  my-4 mx-2 dark:text-gray-50 ">
               {allDecks!?.filter((deck) => {
                 return deck?.pinned === true;
               }).length > 0
@@ -467,7 +463,7 @@ function Deck({
               {(provided) => {
                 return (
                   <div
-                    className="  flex flex-row flex-wrap gap-2  justify-center items-center p-2 lg:mx-20 "
+                    className="  flex flex-row flex-wrap gap-2  justify-center items-center  py-2 px-1 lg:mx-20 "
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
@@ -479,6 +475,7 @@ function Deck({
                             draggableId={deck._id}
                             index={index + 500}
                             key={deck._id}
+                            isDragDisabled={deck.isProcessing}
                           >
                             {(provided, snapshot) => {
                               return (
@@ -493,61 +490,105 @@ function Deck({
                                     " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
                                   } 
         text-gray-800 dark:text-gray-50  
-                     rounded-md min-w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
-                     transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
+                     rounded-md w-[10.5rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
+                     transition-[background-color,border-color] duration-100   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 after:rounded-sm z-30 ${
+                       deck.isProcessing
+                         ? "cursor-not-allowed"
+                         : "dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-900  hover:before:opacity-100"
+                     } `}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
                                 >
-                                  <div className="z-40">
-                                    <div className="absolute bottom-0 right-0 ">
-                                      <button
-                                        onClick={() => {
-                                          handleEditDeck(deck._id, deck.title);
-                                        }}
-                                        type="button"
-                                        className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                                        aria-label="Edit Deck"
-                                      >
-                                        <BiEdit />
-                                      </button>
+                                  <div className="z-40 flex">
+                                    {!deck.isProcessing && (
+                                      <div className="absolute bottom-0 right-0 ">
+                                        <button
+                                          onClick={() => {
+                                            handleEditDeck(
+                                              deck._id,
+                                              deck.title
+                                            );
+                                          }}
+                                          type="button"
+                                          className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
+                                          aria-label="Edit Deck"
+                                        >
+                                          <BiEdit />
+                                        </button>
 
-                                      <button
-                                        onClick={() => {
-                                          handlePin(deck._id, deck.pinned);
-                                        }}
-                                        type="button"
-                                        className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"
-                                        aria-label="Pin Deck"
-                                      >
-                                        <BsPin />
-                                      </button>
+                                        <button
+                                          onClick={() => {
+                                            handlePin(deck._id, deck.pinned);
+                                          }}
+                                          type="button"
+                                          className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"
+                                          aria-label="Pin Deck"
+                                        >
+                                          <BsPin />
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    <div
+                                      onClick={() => {
+                                        if (
+                                          !isCreatingDeck &&
+                                          !deck.isProcessing
+                                        ) {
+                                          navigate(`cards/${deck._id}`);
+                                        }
+                                        if (
+                                          divRefForUserSettings.current?.classList.contains(
+                                            "scale-100"
+                                          )
+                                        ) {
+                                          divRefForUserSettings.current?.classList.remove(
+                                            "scale-100"
+                                          );
+                                          divRefForUserSettings.current?.classList.add(
+                                            "scale-0"
+                                          );
+                                          divRefForUserSettings.current?.classList.add(
+                                            "hidden"
+                                          );
+                                        }
+                                      }}
+                                      className={` break-all font-bold  line-clamp-1 h-7 text-center `}
+                                    >
+                                      {deck.isProcessing ? (
+                                        <svg
+                                          className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                          ></circle>
+                                          <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                          ></path>
+                                        </svg>
+                                      ) : (
+                                        <p
+                                          className={`transition-opacity duration-700 ${
+                                            deck.isProcessing
+                                              ? "opacity-0"
+                                              : "opacity-100"
+                                          }`}
+                                        >
+                                          {deck.title}
+                                        </p>
+                                      )}
                                     </div>
-
-                                    <Link to={`cards/${deck._id}`}>
-                                      <p
-                                        onClick={() => {
-                                          if (
-                                            divRefForUserSettings.current?.classList.contains(
-                                              "scale-100"
-                                            )
-                                          ) {
-                                            divRefForUserSettings.current?.classList.remove(
-                                              "scale-100"
-                                            );
-                                            divRefForUserSettings.current?.classList.add(
-                                              "scale-0"
-                                            );
-                                            divRefForUserSettings.current?.classList.add(
-                                              "hidden"
-                                            );
-                                          }
-                                        }}
-                                        className=" break-all font-semibold py-6 "
-                                      >
-                                        {deck.title}
-                                      </p>
-                                    </Link>
                                   </div>
                                 </div>
                               );

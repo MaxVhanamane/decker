@@ -4,6 +4,7 @@ import { AlertContext } from "../context/AlertContext";
 import {
   AlertData,
   AxiosErrorType,
+  DeckAndCardType,
   DeckType,
   DeckTypeWithIndex,
 } from "../types/types";
@@ -14,7 +15,9 @@ const deleteDeck = async (undoDeck: DeckTypeWithIndex) => {
     return response.data;
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    if ((error as Error).message === "Network Error") {
+    if ((error as AxiosErrorType)?.response?.status === 500) {
+      throw new Error("Internal server error");
+    } else if ((error as Error).message === "Network Error") {
       throw new Error("Network Error");
     }
     throw error;
@@ -33,12 +36,35 @@ const useUndoDeck = () => {
 
       queryClient.setQueryData("decks", () => {
         const newArray = [...previousQueryData];
-        newArray.splice(data.index, 0, data);
+        newArray.splice(data.index, 0, {
+          _id: data._id,
+          title: data.title,
+          pinned: data.pinned,
+        });
         return newArray;
       });
+
+      await queryClient.cancelQueries("decks-and-cards");
+      // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      const previousQueryDataForSearch: DeckAndCardType[] =
+        queryClient.getQueryData("decks-and-cards")!;
+      if (previousQueryDataForSearch) {
+        queryClient.setQueryData("decks-and-cards", () => {
+          const newArray = [...previousQueryDataForSearch];
+          newArray.splice(data.index, 0, {
+            _id: data._id,
+            title: data.title,
+            pinned: data.pinned,
+            cards: data.cards,
+          });
+          return newArray;
+        });
+      }
+
       // Return previous data so that if something goes wrong we can use this in onError method
       // you can pass it in object or you can pass it directly like I did above in create deck
-      return { previousQueryData };
+      return { previousQueryData, previousQueryDataForSearch };
     },
 
     onError: (error, _title, context) => {
@@ -58,6 +84,10 @@ const useUndoDeck = () => {
         autoHideDuration: 7000,
       }));
       queryClient.setQueryData("decks", context?.previousQueryData);
+      queryClient.setQueryData(
+        "decks-and-cards",
+        context?.previousQueryDataForSearch
+      );
     },
 
     // onSettled is called in the end it doesnt matter if the mutation is successful or failed it will be called everytime. After doing above operations we will refetch the data. so that our data and the data in the db will be in sync.

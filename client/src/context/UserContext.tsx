@@ -113,21 +113,17 @@ function UserContextProvider({ children }: UserContextProvider) {
     getUser();
   }, []);
 
+  // give default theme as dark
   useEffect(() => {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      if (localStorage.getItem("theme") == null) {
-        localStorage.setItem("theme", "dark");
-        setTheme(localStorage.getItem("theme"));
-      } else {
-        setTheme(localStorage.getItem("theme"));
-      }
+    const userThemePreference = localStorage.getItem("theme");
+
+    if (userThemePreference) {
+      // User has already selected a theme, use their preference
+      setTheme(userThemePreference);
     } else {
-      if (localStorage.getItem("theme") == null) {
-        localStorage.setItem("theme", "light");
-        setTheme(localStorage.getItem("theme"));
-      } else {
-        setTheme(localStorage.getItem("theme"));
-      }
+      // No user preference found, default to dark theme
+      localStorage.setItem("theme", "dark");
+      setTheme("dark");
     }
   }, []);
 
@@ -143,25 +139,29 @@ function UserContextProvider({ children }: UserContextProvider) {
     }
   }, [theme]);
 
+  // if user changes the theme preference directly from localstorage we will listen to that change and select the them to dark or light
   useEffect(() => {
-    const listener = ({ matches }: MediaQueryListEvent) => {
-      if (matches) {
-        localStorage.setItem("theme", "dark");
-        setTheme(localStorage.getItem("theme"));
-      } else {
-        localStorage.setItem("theme", "light");
-        setTheme(localStorage.getItem("theme"));
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "theme") {
+        const newTheme = event.newValue;
+        const allowedThemes = ["dark", "light"]; // the allowed theme values
+
+        // Check if the new theme value is not null and is one of the allowed themes
+        if (newTheme && allowedThemes.includes(newTheme)) {
+          setTheme(newTheme);
+        } else {
+          // Fallback to a default theme:
+          setTheme("dark");
+          // Reset the theme value in localStorage to the default dark theme
+          localStorage.setItem("theme", "dark");
+        }
       }
     };
 
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", listener);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .removeEventListener("change", listener);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 

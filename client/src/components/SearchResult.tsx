@@ -18,6 +18,7 @@ import useGetDecksAndCards from "../hooks/useGetDecksAndCards";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData, DeckAndCardType } from "../types/types";
+import Loading from "./Loading";
 
 let timer: any;
 
@@ -53,6 +54,7 @@ const SearchResult: FC<IProp> = ({
   const [foundCards, setFoundCards] = useState<SearchResultCardsType[]>([]);
   const [foundDecks, setFoundDecks] = useState<SearchResultDeckType[]>([]);
   const { data, isError, error, isLoading } = useGetDecksAndCards();
+
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
   const {
     mutate: pinDeck,
@@ -223,6 +225,10 @@ const SearchResult: FC<IProp> = ({
     pinDeck({ id, pinned: !pinned });
   };
 
+  if (isLoading) {
+    <Loading />;
+  }
+
   return (
     <>
       <div className="border-t dark:border-slate-300/10 dark:text-white text-gray-800 fixed top-0 mt-12 h-[5.5rem] flex items-end justify-center w-full bg-white dark:bg-[#0c1221] z-50 lg:hidden font-bold ">
@@ -253,43 +259,45 @@ const SearchResult: FC<IProp> = ({
                       return (
                         <div
                           key={deck.deck_id}
-                          className="relative border border-gray-400 text-gray-800 dark:text-gray-50 rounded-md min-w-[10.5rem] px-2 min-h-[5.5rem] flex justify-center items-center text-justify"
+                          className="relative border border-gray-400 text-gray-800 dark:text-gray-50 rounded-md w-[10.5rem] px-2  min-h-[5.5rem] flex justify-center items-center text-justify transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30"
                         >
-                          <div className="absolute bottom-0 right-0">
-                            <button
-                              onClick={() => {
-                                handleEditDeck(deck.deck_id, deck.title);
-                              }}
-                              type="button"
-                              className="text-lg outline-none rounded-tr px-1 text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                              aria-label="Edit Deck"
+                          <div className="z-40">
+                            <div className="absolute bottom-0 right-0">
+                              <button
+                                onClick={() => {
+                                  handleEditDeck(deck.deck_id, deck.title);
+                                }}
+                                type="button"
+                                className="text-lg outline-none rounded-tr px-1 text-center hover:scale-95 text-sky-600 dark:text-sky-400"
+                                aria-label="Edit Deck"
+                              >
+                                <BiEdit />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handlePin(deck.deck_id, deck.pinned);
+                                }}
+                                type="button"
+                                className="outline-none rounded-tr text-sm px-1 text-center text-red-500 hover:scale-95"
+                                aria-label="Pin Deck"
+                              >
+                                <BsFillPinFill />
+                              </button>
+                            </div>
+                            <Link
+                              onClick={() => setShowSearchBar(false)}
+                              to={`cards/${deck.deck_id}`}
+                              state={{ deck }}
                             >
-                              <BiEdit />
-                            </button>
-                            <button
-                              onClick={() => {
-                                handlePin(deck.deck_id, deck.pinned);
-                              }}
-                              type="button"
-                              className="outline-none rounded-tr text-sm px-1 text-center text-red-500 hover:scale-95"
-                              aria-label="Pin Deck"
-                            >
-                              <BsFillPinFill />
-                            </button>
+                              <p
+                                className=" break-all font-semibold  line-clamp-1 h-7 text-center  "
+                                onClick={() => setSearchQuery("")}
+                              >
+                                {searchQuery.length > 0 &&
+                                  highlightText(deck.title, searchQuery)}
+                              </p>
+                            </Link>
                           </div>
-                          <Link
-                            onClick={() => setShowSearchBar(false)}
-                            to={`cards/${deck.deck_id}`}
-                            state={{ deck }}
-                          >
-                            <p
-                              className="break-all font-semibold py-6"
-                              onClick={() => setSearchQuery("")}
-                            >
-                              {searchQuery.length > 0 &&
-                                highlightText(deck.title, searchQuery)}
-                            </p>
-                          </Link>
                         </div>
                       );
                     })}
@@ -315,43 +323,45 @@ const SearchResult: FC<IProp> = ({
                       return (
                         <div
                           key={deck.deck_id}
-                          className="relative border border-gray-400 text-gray-800 dark:text-gray-50 rounded-md min-w-[10.5rem] px-2 min-h-[5.5rem] flex justify-center items-center text-justify"
+                          className="relative border border-gray-400 text-gray-800 dark:text-gray-50 rounded-md w-[10.5rem] px-2  min-h-[5.5rem] flex justify-center items-center text-justify transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30"
                         >
-                          <div className="absolute bottom-0 right-0">
-                            <button
-                              onClick={() => {
-                                handleEditDeck(deck.deck_id, deck.title);
-                              }}
-                              type="button"
-                              className="text-lg outline-none rounded-tr px-1 text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                              aria-label="Edit Deck"
+                          <div className="z-40">
+                            <div className="absolute bottom-0 right-0">
+                              <button
+                                onClick={() => {
+                                  handleEditDeck(deck.deck_id, deck.title);
+                                }}
+                                type="button"
+                                className="text-lg outline-none rounded-tr px-1 text-center hover:scale-95 text-sky-600 dark:text-sky-400"
+                                aria-label="Edit Deck"
+                              >
+                                <BiEdit />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handlePin(deck.deck_id, deck.pinned);
+                                }}
+                                type="button"
+                                className="outline-none rounded-tr text-sm px-1 text-center text-red-500 hover:scale-95"
+                                aria-label="Pin Deck"
+                              >
+                                <BsPin />
+                              </button>
+                            </div>
+                            <Link
+                              onClick={() => setShowSearchBar(false)}
+                              to={`cards/${deck.deck_id}`}
+                              state={{ deck }}
                             >
-                              <BiEdit />
-                            </button>
-                            <button
-                              onClick={() => {
-                                handlePin(deck.deck_id, deck.pinned);
-                              }}
-                              type="button"
-                              className="outline-none rounded-tr text-sm px-1 text-center text-red-500 hover:scale-95"
-                              aria-label="Pin Deck"
-                            >
-                              <BsPin />
-                            </button>
+                              <p
+                                className=" break-all font-semibold  line-clamp-1 h-7 text-center  "
+                                onClick={() => setSearchQuery("")}
+                              >
+                                {searchQuery.length > 0 &&
+                                  highlightText(deck.title, searchQuery)}
+                              </p>
+                            </Link>
                           </div>
-                          <Link
-                            onClick={() => setShowSearchBar(false)}
-                            to={`cards/${deck.deck_id}`}
-                            state={{ deck }}
-                          >
-                            <p
-                              className="break-all font-semibold py-6"
-                              onClick={() => setSearchQuery("")}
-                            >
-                              {searchQuery.length > 0 &&
-                                highlightText(deck.title, searchQuery)}
-                            </p>
-                          </Link>
                         </div>
                       );
                     })}
@@ -387,20 +397,15 @@ const SearchResult: FC<IProp> = ({
                   to={`cards/${card.deck_id}/${card.cardIndex}`}
                   state={{ from: location.pathname, card, deckInfo }}
                 >
-                  <div
-                    className="flex flex-col text-gray-800
-    rounded-md px-2  h-[8rem] lg:h-36  text-justify lg:w-[50vw] w-[95vw]  items-center justify-center"
-                  >
-                    <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8rem] lg:h-36 text-justify lg:w-[50vw] w-[95vw]">
-                      <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
-                        {searchQuery.length > 0 &&
-                          highlightText(card.title, searchQuery)}
-                      </p>
-                      <p className="text-sm lg:text-base  text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1">
-                        {searchQuery.length > 0 &&
-                          highlightText(card.note, searchQuery)}
-                      </p>
-                    </div>
+                  <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8rem] lg:h-36 text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500">
+                    <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
+                      {searchQuery.length > 0 &&
+                        highlightText(card.title, searchQuery)}
+                    </p>
+                    <p className="text-sm lg:text-base  text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1">
+                      {searchQuery.length > 0 &&
+                        highlightText(card.note, searchQuery)}
+                    </p>
                   </div>
                 </Link>
               ))}

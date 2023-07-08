@@ -1,7 +1,12 @@
 import { request } from "../utils/axios-utils";
 import { useMutation, useQueryClient } from "react-query";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, AxiosErrorType, DeckType } from "../types/types";
+import {
+  AlertData,
+  AxiosErrorType,
+  DeckAndCardType,
+  DeckType,
+} from "../types/types";
 import { useContext } from "react";
 
 const createDeck = async (title: string) => {
@@ -12,7 +17,9 @@ const createDeck = async (title: string) => {
     return response.data;
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    if ((error as Error).message === "Network Error") {
+    if ((error as AxiosErrorType)?.response?.status === 500) {
+      throw new Error("Internal server error");
+    } else if ((error as Error).message === "Network Error") {
       throw new Error("Network Error");
     }
     throw error;
@@ -37,10 +44,8 @@ const useCreateDeck = () => {
               {
                 title,
                 _id: Math.random().toString(),
-                cards: [],
                 pinned: false,
-                email: "",
-                date: new Date(),
+                isProcessing: true,
               },
               ...oldQueryData,
             ];
@@ -49,8 +54,34 @@ const useCreateDeck = () => {
           }
         }
       );
+
+      await queryClient.cancelQueries("decks-and-cards");
+
+      const previousQueryDataForSearch: DeckAndCardType[] =
+        queryClient.getQueryData("decks-and-cards")!;
+      if (previousQueryDataForSearch) {
+        queryClient.setQueryData(
+          "decks-and-cards",
+          (oldQueryData: DeckType[] | undefined) => {
+            if (oldQueryData) {
+              return [
+                {
+                  title,
+                  _id: Math.random().toString(),
+                  pinned: false,
+                  cards: [],
+                },
+                ...oldQueryData,
+              ];
+            } else {
+              return [];
+            }
+          }
+        );
+      }
+
       // Return previous data so that if something goes wrong we can use this in onError method
-      return previousQueryData;
+      return { previousQueryData, previousQueryDataForSearch };
     },
 
     onSuccess: (data, _variables, _context) => {
@@ -64,7 +95,7 @@ const useCreateDeck = () => {
           if (oldQueryData) {
             return oldQueryData.map((deck) =>
               deck._id === allDecks![0]._id
-                ? { ...deck, _id } // Replace temporary id with actual id
+                ? { ...deck, _id, isProcessing: false } // Replace temporary id with actual id
                 : deck
             );
           } else {
@@ -90,7 +121,11 @@ const useCreateDeck = () => {
         message: (error as AxiosErrorType)?.response?.data.message || message,
         autoHideDuration: 7000,
       }));
-      queryClient.setQueryData("decks", context);
+      queryClient.setQueryData("decks", context?.previousQueryData);
+      queryClient.setQueryData(
+        "decks-and-cards",
+        context?.previousQueryDataForSearch
+      );
     },
 
     // onSettled is called in the end it doesnt matter if the mutation is successful or failed it will be called everytime. After doing above operations we will refetch the data. so that our data and the data in the db will be in sync.

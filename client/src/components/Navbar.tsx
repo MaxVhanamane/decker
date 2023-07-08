@@ -1,7 +1,7 @@
 import { FC, memo, useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
-import { AlertData, AxiosErrorType, userData } from "../types/types";
+import { AlertData, userData } from "../types/types";
 import { FaUserCircle } from "react-icons/fa";
 import { RiCloseFill } from "react-icons/ri";
 import ThemeToggler from "./ThemeToggler";
@@ -40,20 +40,14 @@ const Navbar: FC = () => {
     }
   };
 
-  /*If the user clears the site storage, there will be no data available when we use localStorage.getItem("theme"). As a result, you might see the body color and navbar in different colors. To avoid this issue, I have added an if statement.*/
-
-  if (
-    document.body.classList.contains("bg-[#0c1221]") &&
-    !localStorage.getItem("theme")
-  ) {
-    localStorage.setItem("theme", "dark");
-  }
-
   return (
     <>
       <nav
         className={`border-b ${
-          localStorage.getItem("theme") === "dark" ? "bg-[#0c1221]" : "bg-white"
+          localStorage.getItem("theme") === "dark" ||
+          localStorage.getItem("theme") === null
+            ? "bg-[#0c1221]"
+            : "bg-white"
         } border-slate-900/10 dark: dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60]`}
       >
         <div className="flex items-center justify-center flex-row gap-8">

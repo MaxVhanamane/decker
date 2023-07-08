@@ -5,7 +5,6 @@ import React, {
   Dispatch,
   ReactNode,
 } from "react";
-import { request } from "../utils/axios-utils";
 
 interface ContexType {
   isOnline: boolean;
@@ -21,7 +20,6 @@ export const OfflineContext = createContext<ContexType>({
 
 const OfflineProvider = ({ children }: OfflineContextProvider) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
