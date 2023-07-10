@@ -13,6 +13,7 @@ export default function VerifyEmail() {
   const [otp, setOTP] = useState("");
   const [showWaitMessage, setShowWaitMessage] = useState(false);
   const [showVerifyOTPButton, setShowVerifyOTPButton] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
   const { userInfo } = useContext(UserContext);
   const navigate = useNavigate();
   const { setAlert } = useContext(AlertContext);
@@ -80,23 +81,34 @@ export default function VerifyEmail() {
       }));
       return;
     }
-    const res = await request.post("/verifyotp", { email, otp });
-    if (res.data.success) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "success",
-        show: true,
-        message: res.data.message,
-      }));
-      navigate(`/signup?email=${email}&otp=${otp}`);
+    setIsVerifyingOTP(true);
+    if (otp.length === 6) {
+      const res = await request.post("/verifyotp", { email, otp });
+      if (res.data.success) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "success",
+          show: true,
+          message: res.data.message,
+        }));
+        navigate(`/signup?email=${email}&otp=${otp}`);
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: res.data.message,
+        }));
+      }
     } else {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: res.data.message,
+        message: "Invalid OTP. Please enter a 6-digit OTP to proceed.",
       }));
     }
+    setIsVerifyingOTP(false);
   };
   return (
     <>
@@ -145,9 +157,10 @@ export default function VerifyEmail() {
                           {!showVerifyOTPButton ? (
                             <div className="text-center pt-1 mb-5 pb-1 relative">
                               <button
-                                className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                                className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
                                 type="submit"
                                 aria-label="Request OTP"
+                                disabled={showWaitMessage}
                               >
                                 Request OTP
                               </button>
@@ -176,12 +189,13 @@ export default function VerifyEmail() {
                           ) : null}
                         </form>
                         {showVerifyOTPButton ? (
-                          <div className="text-center pt-1 mb-10 pb-1">
+                          <div className="text-center pt-1 mb-5 pb-1">
                             <button
                               onClick={handleOTPVerification}
-                              className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                              className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
                               type="button"
                               aria-label="Verify OTP"
+                              disabled={isVerifyingOTP}
                             >
                               Verify OTP
                             </button>

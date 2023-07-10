@@ -2,7 +2,7 @@ import { request } from "../utils/axios-utils";
 import { useQueryClient } from "react-query";
 import { useMutation } from "react-query";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, AxiosErrorType } from "../types/types";
+import { AlertData, AxiosErrorType, DeckAndCardType } from "../types/types";
 import { useContext } from "react";
 import { searchContext } from "../context/SearchContext";
 type DataType = {
@@ -76,10 +76,10 @@ const usePinDeck = () => {
       await queryClient.cancelQueries("decks-and-cards");
 
       const previousQueryDataForSearch =
-        queryClient.getQueryData<DeckTypes[]>("decks-and-cards");
+        queryClient.getQueryData<DeckAndCardType[]>("decks-and-cards");
 
       if (previousQueryDataForSearch) {
-        const CopiedPreviousQueryDataForSearch: DeckTypes[] = JSON.parse(
+        const CopiedPreviousQueryDataForSearch: DeckAndCardType[] = JSON.parse(
           JSON.stringify(previousQueryDataForSearch)
         );
         // all this code is to show pinned and unpinned items in the beginning
@@ -102,7 +102,7 @@ const usePinDeck = () => {
         // then we will add the item in the beginning of an array using unshift
         CopiedPreviousQueryDataForSearch!.unshift(deckToBeChanged!);
 
-        queryClient.setQueryData<DeckTypes[] | undefined>(
+        queryClient.setQueryData<DeckAndCardType[] | undefined>(
           "decks-and-cards",
           () => {
             return CopiedPreviousQueryDataForSearch;

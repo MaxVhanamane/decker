@@ -5,7 +5,6 @@ import {
   useContext,
   RefObject,
   memo,
-  useEffect,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
@@ -383,7 +382,7 @@ function Deck({
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
                                 >
-                                  <div className="z-40">
+                                  <div className="z-40 w-full">
                                     <div className="absolute bottom-0 right-0">
                                       {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
 
@@ -427,7 +426,7 @@ function Deck({
                                             );
                                           }
                                         }}
-                                        className=" break-all font-bold  line-clamp-1 h-7 text-center  "
+                                        className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full  "
                                       >
                                         {deck.title}
                                       </p>
@@ -500,7 +499,7 @@ function Deck({
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
                                 >
-                                  <div className="z-40 flex">
+                                  <div className="z-40 flex w-full">
                                     {!deck.isProcessing && (
                                       <div className="absolute bottom-0 right-0 ">
                                         <button
@@ -554,7 +553,7 @@ function Deck({
                                           );
                                         }
                                       }}
-                                      className={` break-all font-bold  line-clamp-1 h-7 text-center `}
+                                      className={` break-all font-bold  line-clamp-1 h-7 text-center w-full flex items-center justify-center`}
                                     >
                                       {deck.isProcessing ? (
                                         <svg
@@ -579,7 +578,7 @@ function Deck({
                                         </svg>
                                       ) : (
                                         <p
-                                          className={`transition-opacity duration-700 ${
+                                          className={`transition-opacity duration-700  cursor-pointer w-full ${
                                             deck.isProcessing
                                               ? "opacity-0"
                                               : "opacity-100"

@@ -54,9 +54,6 @@ export default function Login() {
 
       const response = await request.post("/login", data);
       if (response.data.success == true) {
-        const response = await request.get("/getuser");
-        localStorage.setItem("userInfo", JSON.stringify(response.data));
-
         navigate("/auth/success", { replace: true });
       } else {
         setAlert((preval: AlertData) => ({
@@ -99,7 +96,7 @@ export default function Login() {
       <Helmet>
         <title>Decker-Login</title>
       </Helmet>
-      <section className="absolute top-0 left-0 w-full h-full">
+      <section className="absolute top-0 left-0 w-full h-full bg-white dark:bg-[#0c1221]">
         {localStorage.getItem("userInfo") === null ? (
           <div className=" py-12 px-6 h-full">
             <div className="flex justify-center items-center flex-wrap h-full g-6 ">
@@ -147,7 +144,7 @@ export default function Login() {
                           </div>
                           <div className="text-center pt-1  pb-1">
                             <button
-                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full   dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   disabled:bg-gray-500"
+                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full   dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   disabled:cursor-not-allowed"
                               type="submit"
                               aria-label="Log in"
                               disabled={isLoggingIn}

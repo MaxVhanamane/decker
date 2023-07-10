@@ -20,6 +20,7 @@ export default function SignUp() {
   const otp = searchParams.get("otp");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isSigninigUp, setIsSigningUp] = useState(false);
   const [confirmPass, setConfirmPass] = useState("");
   const { userInfo } = useContext(UserContext);
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ export default function SignUp() {
       }));
       return;
     }
+    setIsSigningUp(true);
 
     if (password === confirmPass) {
       if (password.length > 7 && confirmPass.length > 7) {
@@ -94,6 +96,7 @@ export default function SignUp() {
         message: "Password and confirm password didn't match",
       }));
     }
+    setIsSigningUp(false);
   };
   return (
     <>
@@ -164,11 +167,12 @@ export default function SignUp() {
                               autoComplete="new-password"
                             />
                           </div>
-                          <div className="text-center pt-1 mb-10 pb-1">
+                          <div className="text-center pt-1 mb-5 pb-1">
                             <button
-                              className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                              className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
                               type="submit"
                               aria-label="Sign Up"
+                              disabled={isSigninigUp}
                             >
                               Sign Up
                             </button>

@@ -4,6 +4,7 @@ import { AlertContext } from "../context/AlertContext";
 import {
   AlertData,
   AxiosErrorType,
+  DeckAndCardType,
   DeckType,
   DeckTypeWithIndex,
 } from "../types/types";
@@ -81,12 +82,12 @@ const useDeleteDeck = () => {
         }
       );
 
-      const previousQueryDataForSearch: DeckType[] =
+      const previousQueryDataForSearch: DeckAndCardType[] =
         queryClient.getQueryData("decks-and-cards")!;
       if (previousQueryDataForSearch) {
         queryClient.setQueryData(
           "decks-and-cards",
-          (oldQueryData: DeckType[] | undefined) => {
+          (oldQueryData: DeckAndCardType[] | undefined) => {
             if (!oldQueryData) return [];
             const newData = oldQueryData?.filter(
               (deck: DeckType, index: number) => {

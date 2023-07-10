@@ -18,11 +18,9 @@ type UserContextProvider = {
 interface ContexType {
   userInfo:
     | {
-        _id: string;
         username: string;
         profile_picture: string;
         email: string;
-        __v: number;
       }
     | null
     | undefined;
@@ -39,11 +37,9 @@ interface ContexType {
 }
 export const UserContext = createContext<ContexType>({
   userInfo: {
-    _id: "",
     username: "",
     profile_picture: "",
     email: "",
-    __v: 0,
   },
   setUserInfo: () => {},
   theme: null,
@@ -73,11 +69,9 @@ function UserContextProvider({ children }: UserContextProvider) {
     "/auth/failure",
   ];
   const [userInfo, setUserInfo] = useState<userData | null>({
-    _id: "",
     username: "",
     profile_picture: "",
     email: "",
-    __v: 0,
   });
   const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
     number | null
@@ -128,7 +122,10 @@ function UserContextProvider({ children }: UserContextProvider) {
   }, []);
 
   useEffect(() => {
-    if (theme === "dark") {
+    if (
+      localStorage.getItem("theme") === "dark" ||
+      localStorage.getItem("theme") === null
+    ) {
       document.documentElement.classList.add("dark");
       document.body.classList.add("bg-[#0c1221]");
       document.documentElement.classList.add("bg-[#0c1221]");
@@ -136,6 +133,10 @@ function UserContextProvider({ children }: UserContextProvider) {
       document.documentElement.classList.remove("dark");
       document.body.classList.remove("bg-[#0c1221]");
       document.documentElement.classList.remove("bg-[#0c1221]");
+    }
+    // To avoid white or dark screen flicker, I have added the "hidden" class to the <html> tag and remove it once all the necessary classes are set.
+    if (document.body.classList.contains("hidden")) {
+      document.body.classList.remove("hidden");
     }
   }, [theme]);
 

@@ -1,12 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { TiTick } from "react-icons/ti";
 import { request } from "../utils/axios-utils";
 import { userData } from "../types/types";
+import { UserContext } from "../context/UserContext";
 export default function AuthSuccess() {
+  const { setUserInfo } = useContext(UserContext);
   const navigate = useNavigate();
   const getUser = async (): Promise<userData> => {
     const userData = await request.get("/getuser");
+    setUserInfo(userData.data);
     localStorage.setItem("userInfo", JSON.stringify(userData.data));
     const userInfo = localStorage.getItem("userInfo");
     let user;

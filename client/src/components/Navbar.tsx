@@ -66,7 +66,8 @@ const Navbar: FC = () => {
               <span className="text-xl text-teal-600 dark:text-sky-400">
                 <img
                   src={`${
-                    localStorage.getItem("theme") === "dark"
+                    localStorage.getItem("theme") === "dark" ||
+                    localStorage.getItem("theme") === null
                       ? "/decker_logo_dark.png"
                       : "/decker_logo_light.png"
                   }`}

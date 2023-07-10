@@ -358,6 +358,7 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
   try {
 
     const deletedDeckInfo = await DeckModal.findByIdAndDelete(req.params.id)
+    //Sending an email and including the date is important because if the user decides to undo the deck and add it again to the database, we will need those details.
     const modifiedDeckInfo = { _id: deletedDeckInfo?._id, title: deletedDeckInfo?.title, pinned: deletedDeckInfo?.pinned, email: deletedDeckInfo?.email, date: deletedDeckInfo?.date, cards: deletedDeckInfo?.cards }
     res.status(200).json({ modifiedDeckInfo, success: true })
   }
@@ -933,7 +934,6 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
       });
     }
     catch (err) {
-      console.error(err)
       res.status(500).json({ success: false, message: "Some error occured please try again." })
     }
 

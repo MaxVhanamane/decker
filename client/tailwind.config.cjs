@@ -1,5 +1,6 @@
 module.exports = {
   future: {
+    // now the hover features will only be applied when it is applicable, i.e., on Desktops, Laptops or anything with a pointer really.
     hoverOnlyWhenSupported: true,
   },
   content: [

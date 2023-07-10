@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
@@ -15,6 +15,8 @@ export default function DeleteMyAccount() {
   const [otp, setOTP] = useState("");
   const [showWaitMessage, setShowWaitMessage] = useState(false);
   const [showVerifyOTPButton, setShowVerifyOTPButton] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const recaptchaRef: RefObject<ReCAPTCHA> = useRef(null);
   const { userInfo, setUserInfo, theme } = useContext(UserContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
@@ -55,8 +57,12 @@ export default function DeleteMyAccount() {
         message: "No internet connection",
         autoHideDuration: 5000,
       }));
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
       return;
     }
+
     if (userInfo?.email === email) {
       setShowWaitMessage(true);
       const res = await request.post("/generateaccountdeletionotp", { email });
@@ -91,6 +97,10 @@ export default function DeleteMyAccount() {
       }));
       setShowWaitMessage(false);
     }
+    // reset the captcha
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
+    }
   };
 
   const handleOTPVerification = async () => {
@@ -104,6 +114,7 @@ export default function DeleteMyAccount() {
       }));
       return;
     }
+    setIsDeletingAccount(true);
 
     if (otp.length === 6) {
       const res = await request.post("/verifyaccountdeletionotp", {
@@ -115,6 +126,7 @@ export default function DeleteMyAccount() {
         if (res.data.success) {
           setUserInfo(null);
           localStorage.removeItem("userInfo");
+
           navigate("/accountdeletionsuccess", {
             replace: true,
             state: { accountDeletedSuccessfully: true },
@@ -138,6 +150,7 @@ export default function DeleteMyAccount() {
         autoHideDuration: 6000,
       }));
     }
+    setIsDeletingAccount(false);
   };
 
   const handleCaptchaChange = () => {
@@ -226,6 +239,7 @@ export default function DeleteMyAccount() {
                               {isOnline ? (
                                 <div className="w-[18.75rem] h-[4.625rem]">
                                   <ReCAPTCHA
+                                    ref={recaptchaRef}
                                     sitekey={
                                       import.meta.env.VITE_RECAPTCHA_SITE_KEY
                                     }
@@ -243,20 +257,50 @@ export default function DeleteMyAccount() {
                                 </div>
                               )}
                               <button
-                                className=" mt-3 inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
+                                className={` mt-3 flex items-center justify-center px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none  disabled:cursor-not-allowed ${
+                                  !showWaitMessage
+                                    ? "dark:disabled:bg-gray-500 disabled:bg-gray-500"
+                                    : ""
+                                }`}
                                 type="submit"
                                 aria-label="Request OTP"
-                                disabled={captcha ? false : true}
+                                disabled={
+                                  !captcha || showWaitMessage ? true : false
+                                }
                               >
-                                Request OTP
+                                {showWaitMessage ? (
+                                  <svg
+                                    className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                ) : (
+                                  "Request OTP"
+                                )}
                               </button>
                               <button
-                                className="  inline-block px-6 py-2.5 text-red-500 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 border  border-red-500 hover:border-red-600  outline-none dark:disabled:bg-gray-500 disabled:bg-gray-500"
-                                type="submit"
+                                className="  inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3  bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
+                                type="button"
                                 aria-label="Cancel"
                                 onClick={() => {
                                   navigate(from);
                                 }}
+                                disabled={showWaitMessage}
                               >
                                 Cancel
                               </button>
@@ -288,15 +332,19 @@ export default function DeleteMyAccount() {
                           <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
                             <button
                               onClick={handleOTPVerification}
-                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
                               type="button"
                               aria-label="Verify OTP and Delete My Account"
+                              disabled={isDeletingAccount}
                             >
-                              Verify OTP and Delete My Account
+                              {isDeletingAccount
+                                ? "Account Deletion in Progress..."
+                                : "Verify OTP and Delete My Account"}
                             </button>
                             <button
-                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 border  border-red-500 hover:border-red-600  outline-none "
-                              type="submit"
+                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3   bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
+                              disabled={isDeletingAccount}
+                              type="button"
                               aria-label="Cancel"
                               onClick={() => {
                                 navigate(from);

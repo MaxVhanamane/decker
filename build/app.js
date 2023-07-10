@@ -310,6 +310,7 @@ app.delete('/deck/:id', fetchUserDetails, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const deletedDeckInfo = yield deck_1.default.findByIdAndDelete(req.params.id);
+            //Sending an email and including the date is important because if the user decides to undo the deck and add it again to the database, we will need those details.
             const modifiedDeckInfo = { _id: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo._id, title: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.title, pinned: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.pinned, email: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.email, date: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.date, cards: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.cards };
             res.status(200).json({ modifiedDeckInfo, success: true });
         }
@@ -787,7 +788,6 @@ app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 
             });
         }
         catch (err) {
-            console.error(err);
             res.status(500).json({ success: false, message: "Some error occured please try again." });
         }
     }
