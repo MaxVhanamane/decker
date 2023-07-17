@@ -1,4 +1,4 @@
-import { useContext, useRef, useState, lazy, Suspense, useEffect } from "react";
+import { useContext, useRef, useState, lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AlertData, DeckTypeWithIndex } from "./types/types";
 import useMoveCard from "./hooks/useMoveCard";
@@ -26,7 +26,7 @@ import { OfflineContext } from "./context/OfflineContext";
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
-const SessionExpiredPage = lazy(() => import("./pages/SessionExpiredPage"));
+const SessionExpired = lazy(() => import("./pages/SessionExpired"));
 const DeleteMyAccount = lazy(() => import("./pages/DeleteMyAccount"));
 const AccountDeletionSuccess = lazy(
   () => import("./pages/AccountDeletionSuccess")
@@ -193,7 +193,7 @@ function App() {
             path="/sessionexpired"
             element={
               <Suspense fallback={<Loading />}>
-                <SessionExpiredPage />
+                <SessionExpired />
               </Suspense>
             }
           />

@@ -37,7 +37,7 @@ import PopUpMessage from "../components/PopUpMessage";
 import ThemeToggler from "../components/ThemeToggler";
 import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
 import CardItems from "../components/CardItems";
-import SessionExpired from "../components/SessionExpired";
+import SessionExpired from "../components/Session";
 import ConfirmCloseCard from "../components/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
 
@@ -707,8 +707,10 @@ const Cards: FC = () => {
   if (isLoading) {
     return <Loading />;
   }
-
-  if (data?.message) {
+  if (
+    data?.message ===
+    "Your session has expired. Please log in again to continue."
+  ) {
     return <SessionExpired />;
   }
 
@@ -1114,7 +1116,7 @@ const Cards: FC = () => {
       ) : null}
 
       {showFullScreen && (
-        <div className="fixed inset-0 overflow-y-auto bg-white  dark:bg-[#0c1221]  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
+        <article className="fixed inset-0 overflow-y-auto bg-white  dark:bg-[#0c1221]  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
           <div className="mt-2 lg:mt-4 relative w-full">
             <div className="mt-12">
               {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words. */}
@@ -1126,7 +1128,7 @@ const Cards: FC = () => {
                 {parseNote(fullScreenCardData?.note)}
               </div>
             </div>
-            <div className="fixed top-0 lg:py-[0.85rem] py-[0.68rem] dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96">
+            <div className="fixed top-0 lg:py-[0.85rem] py-[0.80rem] dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
               <div>
                 <button
                   onClick={() => {
@@ -1153,7 +1155,7 @@ const Cards: FC = () => {
                       setShowFullScreen(false);
                     }
                   }}
-                  className=" text-xl rounded px-1 text-center text-gray-50 cursor-pointer bg-red-500"
+                  className=" text-xl rounded px-1  text-center text-gray-50 cursor-pointer bg-red-500"
                   aria-label="Back"
                 >
                   <IoIosArrowRoundBack />
@@ -1188,7 +1190,7 @@ const Cards: FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </article>
       )}
     </>
   );

@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
 import { request } from "./../utils/axios-utils";
-import { FaFeatherAlt } from "react-icons/fa";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
@@ -117,9 +116,16 @@ export default function ForgotPassword() {
                     <div className=" px-4 md:px-0">
                       <div className="md:p-12 p-4 md:mx-6">
                         <div className="flex items-center justify-center flex-col rounded-full">
-                          <span className="text-2xl text-teal-600 dark:text-sky-500">
-                            <FaFeatherAlt />
-                          </span>
+                          <img
+                            src={`${
+                              localStorage.getItem("theme") === "dark" ||
+                              localStorage.getItem("theme") === null
+                                ? "/decker_logo_dark.png"
+                                : "/decker_logo_light.png"
+                            }`}
+                            className="w-7 h-7 object-contain"
+                            alt="decker logo"
+                          />
 
                           <h2 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
                             Decker

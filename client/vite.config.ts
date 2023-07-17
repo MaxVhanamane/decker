@@ -29,7 +29,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'decks-cache',
               expiration: {
                 maxEntries: 1, // number of entries to store
-                maxAgeSeconds: 60 * 60 * 24 * 3, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 7, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200]
@@ -45,7 +45,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'cards-cache',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 3, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 7, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200],
@@ -60,7 +60,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'search-cache',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 3, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 7, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200],

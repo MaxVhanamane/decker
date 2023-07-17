@@ -2,17 +2,18 @@ import { useState, ChangeEvent, useContext, FormEvent, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { request } from "../utils/axios-utils";
 import { FcGoogle } from "react-icons/fc";
-import { FaFeatherAlt } from "react-icons/fa";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { Helmet } from "react-helmet";
 import { OfflineContext } from "../context/OfflineContext";
+import { UserContext } from "../context/UserContext";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
   const { isOnline } = useContext(OfflineContext);
+  const { userInfo } = useContext(UserContext);
 
   // If a user clicks multiple times on the login button, multiple requests will be sent to the server. To avoid this, we will disable the button while the request is being processed.
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -23,17 +24,11 @@ export default function Login() {
       setPassword(e.target.value);
     }
   };
-
   useEffect(() => {
-    let getUser = localStorage.getItem("userInfo");
-    let userInfo;
-    if (getUser) {
-      userInfo = JSON.parse(getUser);
-    }
     if (userInfo?.email) {
       navigate("/");
     }
-  }, []);
+  }, [userInfo]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -77,6 +72,13 @@ export default function Login() {
     }
   };
 
+  const userFromLocalStorage = localStorage.getItem("userInfo");
+  let userInformation;
+  if (userFromLocalStorage) {
+    userInformation = JSON.parse(userFromLocalStorage);
+  } else {
+    userInformation = null;
+  }
   const handleGoogleLogin = async () => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
@@ -97,7 +99,7 @@ export default function Login() {
         <title>Decker-Login</title>
       </Helmet>
       <section className="absolute top-0 left-0 w-full h-full bg-white dark:bg-[#0c1221]">
-        {localStorage.getItem("userInfo") === null ? (
+        {userInformation === null ? (
           <div className=" py-12 px-6 h-full">
             <div className="flex justify-center items-center flex-wrap h-full g-6 ">
               <div className="xl:w-6/12">
@@ -106,9 +108,16 @@ export default function Login() {
                     <div className=" px-4 md:px-0">
                       <div className="md:p-12 p-4 md:mx-6">
                         <div className="flex items-center justify-center flex-col rounded-full">
-                          <span className="text-2xl text-teal-600 dark:text-sky-500">
-                            <FaFeatherAlt />
-                          </span>
+                          <img
+                            src={`${
+                              localStorage.getItem("theme") === "dark" ||
+                              localStorage.getItem("theme") === null
+                                ? "/decker_logo_dark.png"
+                                : "/decker_logo_light.png"
+                            }`}
+                            className="w-7 h-7 object-contain"
+                            alt="decker logo"
+                          />
                           <h1 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
                             Decker
                           </h1>
@@ -122,7 +131,7 @@ export default function Login() {
                             <input
                               onChange={handleChange}
                               type="email"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition-[border-color] ease-in-out duration-150 m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1"
                               id="email"
                               placeholder="Email"
                               name="email"
@@ -134,7 +143,7 @@ export default function Login() {
                             <input
                               onChange={handleChange}
                               type="password"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition-[border-color] duration-150 ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1"
                               id="password"
                               placeholder="Password"
                               name="password"
@@ -144,7 +153,7 @@ export default function Login() {
                           </div>
                           <div className="text-center pt-1  pb-1">
                             <button
-                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full   dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   disabled:cursor-not-allowed"
+                              className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full   dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition duration-150 ease-in-out   disabled:cursor-not-allowed"
                               type="submit"
                               aria-label="Log in"
                               disabled={isLoggingIn}
@@ -163,7 +172,7 @@ export default function Login() {
                             </div>
                             <button
                               onClick={() => handleGoogleLogin()}
-                              className="  px-6 py-[0.35rem] text-gray-800 font-medium text-sm leading-tight  rounded   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 flex items-center justify-center dark:text-gray-50 gap-4 border border-gray-500 dark:border-gray-100/80 hover:border hover:border-teal-500 dark:hover:border-sky-500"
+                              className="  px-6 py-[0.35rem] text-gray-800 font-medium text-sm leading-tight  rounded   active:shadow-lg transition-[border-color] duration-150 ease-in-out w-full mb-3 flex items-center justify-center dark:text-gray-50 gap-4 border border-gray-500 dark:border-gray-100/80 hover:border hover:border-teal-500 dark:hover:border-sky-500"
                               type="button"
                               aria-label="Continue with Google"
                             >

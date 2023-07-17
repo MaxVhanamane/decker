@@ -21,7 +21,7 @@ import PopUpMessage from "../components/PopUpMessage";
 import { AlertData, AxiosErrorType, DeckTypeWithIndex } from ".././types/types";
 import useUndoDeck from "./../hooks/useUndoDeck";
 import { Helmet } from "react-helmet";
-import SessionExpired from "../components/SessionExpired";
+import SessionExpired from "../components/Session";
 import { UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
 import useGetDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
@@ -154,8 +154,10 @@ function Deck({
     // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
     handlePopupForUndoButton();
   };
-
-  if (allDecks?.message) {
+  if (
+    allDecks?.message ===
+    "Your session has expired. Please log in again to continue."
+  ) {
     return <SessionExpired />;
   }
 
@@ -331,6 +333,7 @@ function Deck({
             <button
               className="bg-[#459C98] dark:bg-sky-600 dark:hover:bg-sky-700  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300"
               aria-label="Add Deck"
+              type="submit"
             >
               Create Deck
             </button>
@@ -340,10 +343,10 @@ function Deck({
         {allDecks!?.filter((deck) => {
           return deck?.pinned === true;
         }).length > 0 ? (
-          <div className="mt-4 lg:mb-10  mx-1  ">
-            <h1 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2 ">
+          <section className="mt-4 lg:mb-10  mx-1  ">
+            <h2 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2 ">
               Pinned
-            </h1>
+            </h2>
 
             <Droppable droppableId="pinnedArea" isDropDisabled={true}>
               {(provided) => {
@@ -443,20 +446,20 @@ function Deck({
                 );
               }}
             </Droppable>
-          </div>
+          </section>
         ) : null}
 
         {allDecks!?.filter((deck) => {
           return deck?.pinned === false;
         }).length > 0 ? (
-          <div className="mt-4 mb-24  mx-1">
-            <h1 className="text-left text-md font-semibold text-gray-800  my-4 mx-2 dark:text-gray-50 ">
+          <section className="mt-4 mb-24  mx-1">
+            <h2 className="text-left text-md font-semibold text-gray-800  my-4 mx-2 dark:text-gray-50 ">
               {allDecks!?.filter((deck) => {
                 return deck?.pinned === true;
               }).length > 0
                 ? "Others"
                 : "Decks"}
-            </h1>
+            </h2>
 
             <Droppable droppableId="othersDeckArea" isDropDisabled={true}>
               {(provided) => {
@@ -553,7 +556,7 @@ function Deck({
                                           );
                                         }
                                       }}
-                                      className={` break-all font-bold  line-clamp-1 h-7 text-center w-full flex items-center justify-center`}
+                                      className={`  h-7  w-full flex items-center justify-center`}
                                     >
                                       {deck.isProcessing ? (
                                         <svg
@@ -578,7 +581,7 @@ function Deck({
                                         </svg>
                                       ) : (
                                         <p
-                                          className={`transition-opacity duration-700  cursor-pointer w-full ${
+                                          className={`text-center transition-opacity duration-700  cursor-pointer w-full break-all font-bold  line-clamp-1  ${
                                             deck.isProcessing
                                               ? "opacity-0"
                                               : "opacity-100"
@@ -600,7 +603,7 @@ function Deck({
                 );
               }}
             </Droppable>
-          </div>
+          </section>
         ) : null}
 
         {openEditDeckModal ? (

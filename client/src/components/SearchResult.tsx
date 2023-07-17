@@ -34,6 +34,9 @@ type SearchResultCardsType = {
   title: string;
   note: string;
   cardIndex: number;
+  cardId: string;
+  _id: string;
+  deckTitle: string;
 };
 
 type SearchResultDeckType = {
@@ -91,6 +94,7 @@ const SearchResult: FC<IProp> = ({
         ...card,
         deck_id: deck._id,
         cardIndex: index,
+        deckTitle: deck.title,
       }))
     );
   }, [data]);
@@ -397,14 +401,17 @@ const SearchResult: FC<IProp> = ({
                   to={`cards/${card.deck_id}/${card.cardIndex}`}
                   state={{ from: location.pathname, card, deckInfo }}
                 >
-                  <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8rem] lg:h-36 text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500">
-                    <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1">
+                  <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8.8rem] lg:h-40 text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group">
+                    <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">
                       {searchQuery.length > 0 &&
                         highlightText(card.title, searchQuery)}
                     </p>
                     <p className="text-sm lg:text-base  text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1">
                       {searchQuery.length > 0 &&
                         highlightText(card.note, searchQuery)}
+                    </p>
+                    <p className="absolute text-gray-50 bg-teal-800 group-hover:bg-teal-700   dark:bg-sky-800  dark:group-hover:bg-sky-700 transition duration-300 right-0 bottom-0 px-2 rounded-br-[0.340rem] rounded-tl-md line-clamp-1 break-all text-center  max-w-[10rem]">
+                      {card.deckTitle}
                     </p>
                   </div>
                 </Link>

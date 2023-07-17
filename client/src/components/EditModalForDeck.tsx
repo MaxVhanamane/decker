@@ -1,4 +1,4 @@
-import { useState, Dispatch, useContext } from "react";
+import { useState, Dispatch, useContext, FormEvent } from "react";
 import useEditDeck from "../hooks/useEditDeck";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertData } from "../types/types";
@@ -30,7 +30,8 @@ const EditModalForDeck = ({
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
 
-  const handleSave = () => {
+  const handleSave = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -59,37 +60,41 @@ const EditModalForDeck = ({
               </h2>
             </div>
             {/* modal content  */}
-            <div className=" px-4 py-4 w-full border-b border-gray-50 dark:border-gray-50/50">
-              <input
-                value={newTitle}
-                onChange={(e) => {
-                  setNewTitle(e.target.value);
-                }}
-                name="title"
-                className="px-4 py-2 w-full outline-none rounded-md font-semibold text-gray-800 dark:bg-slate-800 dark:text-gray-50 "
-                placeholder="Title"
-              />
-            </div>
+            <form className="w-full" onSubmit={(e) => handleSave(e)}>
+              <div className=" px-4 py-4 w-full border-b border-gray-50 dark:border-gray-50/50 ">
+                <input
+                  value={newTitle}
+                  onChange={(e) => {
+                    setNewTitle(e.target.value);
+                  }}
+                  name="title"
+                  className="px-4 py-2 w-full outline-none rounded-md font-semibold text-gray-800 dark:bg-slate-800 dark:text-gray-50 "
+                  placeholder="Title"
+                  autoFocus
+                />
+              </div>
 
-            {/* modal footer  */}
-            <div className="flex items-center justify-end  space-x-2 mt-4 mb-4 mr-8 w-full ">
-              <button
-                onClick={handleSave}
-                className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4"
-                aria-label="Save"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setOpenEditDeckModal(false);
-                }}
-                className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white"
-                aria-label="Cancel"
-              >
-                Cancel
-              </button>
-            </div>
+              {/* modal footer  */}
+              <div className="flex items-center justify-end  space-x-2 mt-4 mb-4 mr-8 ">
+                <button
+                  className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4"
+                  aria-label="Save"
+                  type="submit"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setOpenEditDeckModal(false);
+                  }}
+                  className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white"
+                  aria-label="Cancel"
+                  type="button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       ) : null}

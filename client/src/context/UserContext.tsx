@@ -65,37 +65,34 @@ function UserContextProvider({ children }: UserContextProvider) {
     "/changepassword",
     "/login",
     "/accountdeletionsuccess",
-    "/auth/success",
-    "/auth/failure",
   ];
-  const [userInfo, setUserInfo] = useState<userData | null>({
-    username: "",
-    profile_picture: "",
-    email: "",
-  });
+  const authPaths = ["/auth/success", "/auth/failure"];
+  const [userInfo, setUserInfo] = useState<userData | null>(null);
   const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
     number | null
   >(null);
-
   const getUser = async (): Promise<any> => {
     const userInfo = localStorage.getItem("userInfo");
     if (!userInfo) {
       // User is visiting the website for the first time or not logged in
       if (pathNames.includes(location.pathname)) {
         navigate(location.pathname);
+      }
+      if (authPaths.includes(location.pathname)) {
+        navigate(location.pathname);
       } else {
         navigate("/login"); // Redirect to the login page
       }
       return null;
     }
-
     const data = await request.get("/getuser");
     if (data.data) {
       localStorage.setItem("userInfo", JSON.stringify(data.data));
       setUserInfo(data.data);
-      return data.data;
     } else if (pathNames.includes(location.pathname)) {
       navigate(location.pathname);
+    } else if (authPaths.includes(location.pathname)) {
+      navigate("/login");
     } else {
       setUserInfo(null);
       localStorage.removeItem("userInfo");
@@ -140,8 +137,33 @@ function UserContextProvider({ children }: UserContextProvider) {
     }
   }, [theme]);
 
-  // if user changes the theme preference directly from localstorage we will listen to that change and select the them to dark or light
+  //If the user changes the theme preference directly from localStorage or tampers with the userInfo, we will listen for that change and take appropriate action accordingly.
   useEffect(() => {
+    // If the user changes the information stored in localStorage, we will log them out.
+    const handleLogout = async () => {
+      try {
+        const res = await request.post("/auth/logout");
+        return res;
+      } catch (error) {
+        throw new Error("Logout failed");
+      }
+    };
+
+    const handleLogoutAndRedirect = async () => {
+      try {
+        const res = await handleLogout();
+        if (res.data === "done") {
+          setUserInfo(null);
+          localStorage.removeItem("userInfo");
+          navigate("/login", { replace: true });
+        }
+      } catch (error) {
+        setUserInfo(null);
+        localStorage.removeItem("userInfo");
+        navigate("/login", { replace: true });
+      }
+    };
+
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === "theme") {
         const newTheme = event.newValue;
@@ -156,6 +178,25 @@ function UserContextProvider({ children }: UserContextProvider) {
           // Reset the theme value in localStorage to the default dark theme
           localStorage.setItem("theme", "dark");
         }
+      } else if (event.key === "userInfo") {
+        const userInfoFromLocalStorage = localStorage.getItem("userInfo");
+        let localUserInfo;
+
+        try {
+          localUserInfo = userInfoFromLocalStorage
+            ? JSON.parse(userInfoFromLocalStorage)
+            : null;
+        } catch {
+          handleLogoutAndRedirect();
+          return;
+        }
+        if (
+          userInfo?.email !== localUserInfo.name ||
+          userInfo?.email !== localUserInfo.email ||
+          userInfo?.profile_picture !== localUserInfo.profile_picture
+        ) {
+          handleLogoutAndRedirect();
+        }
       }
     };
 
@@ -164,7 +205,7 @@ function UserContextProvider({ children }: UserContextProvider) {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
+  }, [userInfo]);
 
   return (
     <UserContext.Provider

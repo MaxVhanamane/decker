@@ -192,7 +192,7 @@ const fetchUserDetails = async function (req: Request, res: Response, next: Next
       req.userDetails = user
       next()
     } catch (error) {
-      return res.status(500).json({ message: "Error fetching user details. Please check your internet connection." })
+      return res.status(500).json({ message: "Internal server error!" })
     }
   }
   else {

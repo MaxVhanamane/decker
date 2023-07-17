@@ -1,7 +1,7 @@
 import { FC, memo, useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
-import { AlertData, userData } from "../types/types";
+import { AlertData } from "../types/types";
 import { FaUserCircle } from "react-icons/fa";
 import { RiCloseFill } from "react-icons/ri";
 import ThemeToggler from "./ThemeToggler";
@@ -13,16 +13,11 @@ import { OfflineContext } from "../context/OfflineContext";
 import { AlertContext } from "../context/AlertContext";
 import { searchContext } from "../context/SearchContext";
 const Navbar: FC = () => {
-  const { divRefForUserSettings } = useContext(UserContext);
+  const { divRefForUserSettings, userInfo } = useContext(UserContext);
   const { showSearchBar, setShowSearchBar } = useContext(searchContext);
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
 
-  const userDetails = localStorage.getItem("userInfo");
-  let userInfo: userData | undefined;
-  if (userDetails) {
-    userInfo = JSON.parse(userDetails);
-  }
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -40,6 +35,15 @@ const Navbar: FC = () => {
     }
   };
 
+  const pathNames = [
+    "/signup",
+    "/verifyemail",
+    "/forgotpassword",
+    "/changepassword",
+    "/login",
+    "/accountdeletionsuccess",
+  ];
+
   return (
     <>
       <nav
@@ -51,52 +55,49 @@ const Navbar: FC = () => {
         } border-slate-900/10 dark: dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60]`}
       >
         <div className="flex items-center justify-center flex-row gap-8">
-          <Link to={"/"}>
-            <div
-              onClick={() => {
-                if (showSearchBar) setShowSearchBar(false);
-                if (
-                  divRefForUserSettings.current?.classList.contains("scale-100")
-                ) {
-                  handleShowUserInfomation();
-                }
-              }}
-              className="flex items-center justify-center rounded px-2 gap-2"
-            >
-              <span className="text-xl text-teal-600 dark:text-sky-400">
-                <img
-                  src={`${
-                    localStorage.getItem("theme") === "dark" ||
-                    localStorage.getItem("theme") === null
-                      ? "/decker_logo_dark.png"
-                      : "/decker_logo_light.png"
-                  }`}
-                  className="w-7 h-7 object-contain"
-                  alt="decker logo"
-                />
+          <div
+            onClick={() => {
+              if (showSearchBar) setShowSearchBar(false);
+              if (
+                divRefForUserSettings.current?.classList.contains("scale-100")
+              ) {
+                handleShowUserInfomation();
+              }
+              if (!pathNames.includes(location.pathname)) navigate("/");
+            }}
+            className="flex items-center justify-center rounded px-2 gap-2"
+          >
+            <img
+              src={`${
+                localStorage.getItem("theme") === "dark" ||
+                localStorage.getItem("theme") === null
+                  ? "/decker_logo_dark.png"
+                  : "/decker_logo_light.png"
+              }`}
+              className="w-7 h-7 object-contain"
+              alt="decker logo"
+            />
+            <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
+              <span className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300">
+                D
               </span>
-              <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
-                <span className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300">
-                  D
-                </span>
-                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-                  e
-                </span>
-                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-                  c
-                </span>
-                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-                  k
-                </span>
-                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-                  e
-                </span>
-                <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-                  r
-                </span>
+              <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
+                e
               </span>
-            </div>
-          </Link>
+              <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
+                c
+              </span>
+              <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
+                k
+              </span>
+              <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
+                e
+              </span>
+              <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
+                r
+              </span>
+            </span>
+          </div>
           <div className="hidden md:block">
             <ul className="flex gap-10  items-center justify-center">
               {userInfo?.email && location.pathname.split("/")[1] == "cards" ? (

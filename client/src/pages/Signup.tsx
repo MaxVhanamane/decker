@@ -4,7 +4,6 @@ import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
 import { request } from "./../utils/axios-utils";
 import { UserContext } from "../context/UserContext";
-import { FaFeatherAlt } from "react-icons/fa";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { Helmet } from "react-helmet";
@@ -31,6 +30,14 @@ export default function SignUp() {
       navigate("/");
     }
   }, [userInfo?.email]);
+
+  const userFromLocalStorage = localStorage.getItem("userInfo");
+  let userInformation;
+  if (userFromLocalStorage) {
+    userInformation = JSON.parse(userFromLocalStorage);
+  } else {
+    userInformation = null;
+  }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "username") {
@@ -98,13 +105,14 @@ export default function SignUp() {
     }
     setIsSigningUp(false);
   };
+
   return (
     <>
       <Helmet>
         <title>Decker-Signup</title>
       </Helmet>
       <section className="h-screen">
-        {localStorage.getItem("userInfo") === null ? (
+        {userInformation === null ? (
           <div className=" py-12 px-6 h-full">
             <div className="flex justify-center items-center flex-wrap h-full g-6 text-gray-800">
               <div className="xl:w-6/12">
@@ -113,9 +121,16 @@ export default function SignUp() {
                     <div className=" px-4 md:px-0">
                       <div className="md:p-12 p-4 md:mx-6">
                         <div className="flex items-center justify-center flex-col rounded-full">
-                          <span className="text-2xl text-teal-600 dark:text-sky-500">
-                            <FaFeatherAlt />
-                          </span>
+                          <img
+                            src={`${
+                              localStorage.getItem("theme") === "dark" ||
+                              localStorage.getItem("theme") === null
+                                ? "/decker_logo_dark.png"
+                                : "/decker_logo_light.png"
+                            }`}
+                            className="w-7 h-7 object-contain"
+                            alt="decker logo"
+                          />
 
                           <h2 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
                             Decker
