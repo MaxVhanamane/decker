@@ -7,9 +7,7 @@ declare const User: mongoose.Model<{
     username: string;
     profile_picture?: string | undefined;
     password?: string | undefined;
-}, {}, {}, {}, mongoose.Schema<any, mongoose.Model<any, any, any, any, any>, {}, {}, {}, {}, mongoose.ResolveSchemaOptions<{
-    timestamps: true;
-}>, {
+}, {}, {}, {}, mongoose.Document<unknown, {}, {
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
@@ -17,5 +15,43 @@ declare const User: mongoose.Model<{
     username: string;
     profile_picture?: string | undefined;
     password?: string | undefined;
+}> & {
+    createdAt: NativeDate;
+    updatedAt: NativeDate;
+} & {
+    email: string;
+    username: string;
+    profile_picture?: string | undefined;
+    password?: string | undefined;
+} & {
+    _id: mongoose.Types.ObjectId;
+}, mongoose.Schema<any, mongoose.Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
+    timestamps: true;
+}, {
+    createdAt: NativeDate;
+    updatedAt: NativeDate;
+} & {
+    email: string;
+    username: string;
+    profile_picture?: string | undefined;
+    password?: string | undefined;
+}, mongoose.Document<unknown, {}, {
+    createdAt: NativeDate;
+    updatedAt: NativeDate;
+} & {
+    email: string;
+    username: string;
+    profile_picture?: string | undefined;
+    password?: string | undefined;
+}> & {
+    createdAt: NativeDate;
+    updatedAt: NativeDate;
+} & {
+    email: string;
+    username: string;
+    profile_picture?: string | undefined;
+    password?: string | undefined;
+} & {
+    _id: mongoose.Types.ObjectId;
 }>>;
 export default User;

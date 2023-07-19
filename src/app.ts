@@ -168,18 +168,24 @@ passport.serializeUser((user: any, done) => {
 })
 
 // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
-passport.deserializeUser((id: string, done) => {
+passport.deserializeUser(async (id: string, done: (err: any, user?: UserDetails | null) => void) => {
+  try {
+    const doc: UserDetails | null = await User.findById(id);
 
-  User.findById(id, (err: Error, doc: UserDetails) => {
-    const userInfo = {
-      username: doc.username,
-      email: doc.email,
-      profile_picture: doc.profile_picture,
+    if (doc) {
+      const userInfo: UserDetails = {
+        username: doc.username,
+        email: doc.email,
+        profile_picture: doc.profile_picture,
+      };
+      done(null, userInfo);
+    } else {
+      done(null, null);
     }
-    return done(null, userInfo)
-
-  })
-})
+  } catch (error) {
+    done(error);
+  }
+});
 
 
 
@@ -201,9 +207,9 @@ const fetchUserDetails = async function (req: Request, res: Response, next: Next
   }
 }
 
+mongoose.set("strictQuery", true);
 
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
-mongoose.set("strictQuery", true);
 mongoose.connect(process.env.MONGO_URI!, {
   useUnifiedTopology: true,
   useNewUrlParser: true
@@ -225,7 +231,7 @@ app.get('/ping', async function (req: Request, res: Response) {
 
 //Deck routes 
 
-app.get('/decks', fetchUserDetails, async function (req: Request, res: Response) {
+app.get('/decks', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     const user = req?.userDetails
 
@@ -249,7 +255,7 @@ app.get('/decks', fetchUserDetails, async function (req: Request, res: Response)
 
 })
 
-app.get('/decks-and-cards', fetchUserDetails, async function (req: Request, res: Response) {
+app.get('/decks-and-cards', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     const user = req?.userDetails
     const deck = await DeckModal.find({ email: user?._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
@@ -263,7 +269,7 @@ app.get('/decks-and-cards', fetchUserDetails, async function (req: Request, res:
 })
 
 
-app.post('/deck', fetchUserDetails, async function (req: Request, res: Response) {
+app.post('/deck', fetchUserDetails, async (req: Request, res: Response) => {
   const user = req.userDetails
   try {
     const newDeck = new DeckModal({
@@ -285,7 +291,7 @@ app.post('/deck', fetchUserDetails, async function (req: Request, res: Response)
 
 
 
-app.patch('/deck/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
+app.patch('/deck/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
     const updatedDeck = await DeckModal.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() })
@@ -306,7 +312,7 @@ app.patch('/deck/:deck_id', fetchUserDetails, async function (req: Request, res:
 
 })
 
-app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Response) {
+app.put('/undodeck', fetchUserDetails, async (req: Request, res: Response) => {
   delete req.body.index
   const deck = req.body
   try {
@@ -334,7 +340,7 @@ app.put('/undodeck', fetchUserDetails, async function (req: Request, res: Respon
 
 
 
-app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
+app.put('/deck/editdeck/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     const updatedDeck = await DeckModal.findByIdAndUpdate(req.params.deck_id, { title: req.body.title })
     res.status(200).json(updatedDeck)
@@ -354,7 +360,7 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, async function (req: Reques
 
 })
 
-app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Response) {
+app.delete('/deck/:id', fetchUserDetails, async (req: Request, res: Response) => {
   try {
 
     const deletedDeckInfo = await DeckModal.findByIdAndDelete(req.params.id)
@@ -370,7 +376,7 @@ app.delete('/deck/:id', fetchUserDetails, async function (req: Request, res: Res
 
 // Card routes
 
-app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Response) {
+app.get('/cards/:_id', fetchUserDetails, async (req: Request, res: Response) => {
 
   try {
     const cards = await DeckModal.findById({ _id: req.params._id }, { cards: 1, title: 1 });
@@ -392,7 +398,7 @@ app.get('/cards/:_id', fetchUserDetails, async function (req: Request, res: Resp
 
 })
 
-app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
+app.post('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
   try {
 
     const getDeck = await DeckModal.findById(req.params.deck_id)
@@ -410,7 +416,7 @@ app.post('/card/:deck_id', fetchUserDetails, async function (req: Request, res: 
 })
 
 //Edit card
-app.patch('/card/:deck_id', fetchUserDetails, async function (req: Request, res: Response) {
+app.patch('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     //get the deck using _id
     const Deck = await DeckModal.findById(req.params.deck_id)
@@ -437,7 +443,7 @@ app.patch('/card/:deck_id', fetchUserDetails, async function (req: Request, res:
 })
 
 
-app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, res: Response) {
+app.delete('/card/:id/:index', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     const deck = await DeckModal.findById(req.params.id)
     if (deck) {
@@ -458,7 +464,7 @@ app.delete('/card/:id/:index', fetchUserDetails, async function (req: Request, r
 
 
 
-app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, async function (req: Request, res: Response) {
+app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, async (req: Request, res: Response) => {
   try {
 
     const deck = await DeckModal.findById(req.params.id)
@@ -503,7 +509,7 @@ app.get("/getuser", (req, res) => {
   }
 })
 
-app.post('/auth/logout', function (req, res, next) {
+app.post('/auth/logout', (req, res, next) => {
   req.logout(function (err) {
     if (err) { return next(err); }
     res.status(200).send('done');
@@ -643,7 +649,7 @@ app.post("/generateotp", async (req, res) => {
     });
 
     // send mail with defined transport object
-    let info = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.EMAIL_ADDRESS, // sender address
       to: req.body.email, // list of receivers
       subject: "OTP for your account on decker.vercel.app", // Subject line
@@ -745,7 +751,7 @@ app.post("/generateforgetpasswordotp", async (req: Request, res: Response) => {
     });
 
     // send mail with defined transport object
-    let info = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.EMAIL_ADDRESS, // sender address
       to: req.body.email, // list of receivers
       subject: "OTP for your account on decker.vercel.app to reset the password", // Subject line
@@ -867,7 +873,7 @@ app.post("/generateaccountdeletionotp", async (req: Request, res: Response) => {
     });
 
     // send mail with defined transport object
-    let info = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.EMAIL_ADDRESS, // sender address
       to: req.body.email, // list of receivers
       subject: " OTP for your account on decker.vercel.app to delete your account", // Subject line

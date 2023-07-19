@@ -153,16 +153,25 @@ passport_1.default.serializeUser((user, done) => {
     return done(null, user === null || user === void 0 ? void 0 : user._id);
 });
 // deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
-passport_1.default.deserializeUser((id, done) => {
-    user_1.default.findById(id, (err, doc) => {
-        const userInfo = {
-            username: doc.username,
-            email: doc.email,
-            profile_picture: doc.profile_picture,
-        };
-        return done(null, userInfo);
-    });
-});
+passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const doc = yield user_1.default.findById(id);
+        if (doc) {
+            const userInfo = {
+                username: doc.username,
+                email: doc.email,
+                profile_picture: doc.profile_picture,
+            };
+            done(null, userInfo);
+        }
+        else {
+            done(null, null);
+        }
+    }
+    catch (error) {
+        done(error);
+    }
+}));
 // middleware to get user details
 const fetchUserDetails = function (req, res, next) {
     var _a;
@@ -183,8 +192,8 @@ const fetchUserDetails = function (req, res, next) {
         }
     });
 };
-// This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 mongoose_1.default.set("strictQuery", true);
+// This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
 mongoose_1.default.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true,
     useNewUrlParser: true
@@ -204,228 +213,204 @@ app.get('/ping', function (req, res) {
     });
 });
 //Deck routes 
-app.get('/decks', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const user = req === null || req === void 0 ? void 0 : req.userDetails;
-            // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
-            // as there is a relation defined between two collection DeckModal and User 
-            // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
-            // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
-            // const deck = await DeckModal.find({ email: user?._id }, { title: 1, pinned: 1, date: 1 }).sort({ date: -1 });
-            const decks = yield deck_1.default.aggregate([
-                { $match: { email: user === null || user === void 0 ? void 0 : user._id } },
-                { $sort: { date: -1 } },
-                { $project: { title: 1, pinned: 1, _id: 1 } }
-            ]);
-            res.status(200).json(decks);
+app.get('/decks', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = req === null || req === void 0 ? void 0 : req.userDetails;
+        // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
+        // as there is a relation defined between two collection DeckModal and User 
+        // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
+        // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
+        // const deck = await DeckModal.find({ email: user?._id }, { title: 1, pinned: 1, date: 1 }).sort({ date: -1 });
+        const decks = yield deck_1.default.aggregate([
+            { $match: { email: user === null || user === void 0 ? void 0 : user._id } },
+            { $sort: { date: -1 } },
+            { $project: { title: 1, pinned: 1, _id: 1 } }
+        ]);
+        res.status(200).json(decks);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal server error!" });
+    }
+}));
+app.get('/decks-and-cards', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = req === null || req === void 0 ? void 0 : req.userDetails;
+        const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
+        res.status(200).json(deck);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal server error!" });
+    }
+}));
+app.post('/deck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.userDetails;
+    try {
+        const newDeck = new deck_1.default({
+            email: user === null || user === void 0 ? void 0 : user._id,
+            title: req.body.title,
+            date: new Date()
+        });
+        const createdDeck = yield newDeck.save();
+        res.status(201).json({ _id: createdDeck._id, title: createdDeck.title, pinned: createdDeck.pinned });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal server Error!" });
+    }
+}));
+app.patch('/deck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
+        const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() });
+        res.status(200).json(updatedDeck);
+    }
+    catch (error) {
+        if (error instanceof mongoose_1.Error) {
+            res.status(500).send({ message: error.message, isError: true });
         }
-        catch (error) {
-            res.status(500).json({ message: "Internal server error!" });
+        else {
+            res.status(500).json({ message: "Unexpected error", isError: true });
         }
-    });
-});
-app.get('/decks-and-cards', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const user = req === null || req === void 0 ? void 0 : req.userDetails;
-            const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
-            res.status(200).json(deck);
+    }
+}));
+app.put('/undodeck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    delete req.body.index;
+    const deck = req.body;
+    try {
+        const newDeck = new deck_1.default(Object.assign({}, deck));
+        const createdDeck = yield newDeck.save();
+        res.status(200).json({ createdDeck, success: true });
+    }
+    catch (error) {
+        if (error instanceof mongoose_1.Error) {
+            res.status(500).send({ message: error.message, isError: true });
         }
-        catch (error) {
-            res.status(500).json({ message: "Internal server error!" });
+        else {
+            res.status(500).json({ message: "Unexpected error", isError: true });
         }
-    });
-});
-app.post('/deck', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const user = req.userDetails;
-        try {
-            const newDeck = new deck_1.default({
-                email: user === null || user === void 0 ? void 0 : user._id,
-                title: req.body.title,
-                date: new Date()
-            });
-            const createdDeck = yield newDeck.save();
-            res.status(201).json({ _id: createdDeck._id, title: createdDeck.title, pinned: createdDeck.pinned });
+    }
+}));
+app.put('/deck/editdeck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { title: req.body.title });
+        res.status(200).json(updatedDeck);
+    }
+    catch (error) {
+        if (error instanceof mongoose_1.Error) {
+            res.status(500).send({ message: error.message, isError: true });
         }
-        catch (error) {
-            res.status(500).json({ message: "Internal server Error!" });
+        else {
+            res.status(500).json({ message: "Unexpected error", isError: true });
         }
-    });
-});
-app.patch('/deck/:deck_id', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
-            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() });
-            res.status(200).json(updatedDeck);
-        }
-        catch (error) {
-            if (error instanceof mongoose_1.Error) {
-                res.status(500).send({ message: error.message, isError: true });
-            }
-            else {
-                res.status(500).json({ message: "Unexpected error", isError: true });
-            }
-        }
-    });
-});
-app.put('/undodeck', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        delete req.body.index;
-        const deck = req.body;
-        try {
-            const newDeck = new deck_1.default(Object.assign({}, deck));
-            const createdDeck = yield newDeck.save();
-            res.status(200).json({ createdDeck, success: true });
-        }
-        catch (error) {
-            if (error instanceof mongoose_1.Error) {
-                res.status(500).send({ message: error.message, isError: true });
-            }
-            else {
-                res.status(500).json({ message: "Unexpected error", isError: true });
-            }
-        }
-    });
-});
-app.put('/deck/editdeck/:deck_id', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { title: req.body.title });
-            res.status(200).json(updatedDeck);
-        }
-        catch (error) {
-            if (error instanceof mongoose_1.Error) {
-                res.status(500).send({ message: error.message, isError: true });
-            }
-            else {
-                res.status(500).json({ message: "Unexpected error", isError: true });
-            }
-        }
-    });
-});
-app.delete('/deck/:id', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const deletedDeckInfo = yield deck_1.default.findByIdAndDelete(req.params.id);
-            //Sending an email and including the date is important because if the user decides to undo the deck and add it again to the database, we will need those details.
-            const modifiedDeckInfo = { _id: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo._id, title: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.title, pinned: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.pinned, email: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.email, date: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.date, cards: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.cards };
-            res.status(200).json({ modifiedDeckInfo, success: true });
-        }
-        catch (error) {
-            res.status(500).json({ message: "some error occurred! Please try again later!", success: false });
-        }
-    });
-});
+    }
+}));
+app.delete('/deck/:id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deletedDeckInfo = yield deck_1.default.findByIdAndDelete(req.params.id);
+        //Sending an email and including the date is important because if the user decides to undo the deck and add it again to the database, we will need those details.
+        const modifiedDeckInfo = { _id: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo._id, title: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.title, pinned: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.pinned, email: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.email, date: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.date, cards: deletedDeckInfo === null || deletedDeckInfo === void 0 ? void 0 : deletedDeckInfo.cards };
+        res.status(200).json({ modifiedDeckInfo, success: true });
+    }
+    catch (error) {
+        res.status(500).json({ message: "some error occurred! Please try again later!", success: false });
+    }
+}));
 // Card routes
-app.get('/cards/:_id', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const cards = yield deck_1.default.findById({ _id: req.params._id }, { cards: 1, title: 1 });
-            if (cards) {
-                res.status(200).json({ cards: cards.cards, title: cards.title });
-            }
-            else {
-                res.status(200).json({ message: "No cards found!" });
-            }
+app.get('/cards/:_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const cards = yield deck_1.default.findById({ _id: req.params._id }, { cards: 1, title: 1 });
+        if (cards) {
+            res.status(200).json({ cards: cards.cards, title: cards.title });
         }
-        catch (error) {
-            if (error.name === "CastError") {
-                // Handle the error specifically when an invalid ID is provided
-                res.status(400).json({ message: "Invalid deck ID" });
-            }
-            else {
-                res.status(500).json({ message: "Internal server error" });
-            }
+        else {
+            res.status(200).json({ message: "No cards found!" });
         }
-    });
-});
-app.post('/card/:deck_id', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const getDeck = yield deck_1.default.findById(req.params.deck_id);
-            if (!getDeck) {
-                return res.status(200).json({ message: "No deck found! Please check deck id" });
-            }
-            getDeck.cards.unshift(req.body.content);
-            const createdCard = yield getDeck.save();
-            res.status(201).json(createdCard);
+    }
+    catch (error) {
+        if (error.name === "CastError") {
+            // Handle the error specifically when an invalid ID is provided
+            res.status(400).json({ message: "Invalid deck ID" });
         }
-        catch (error) {
-            res.status(500).json({ message: "Some Error occurred please try again later!" });
+        else {
+            res.status(500).json({ message: "Internal server error" });
         }
-    });
-});
+    }
+}));
+app.post('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const getDeck = yield deck_1.default.findById(req.params.deck_id);
+        if (!getDeck) {
+            return res.status(200).json({ message: "No deck found! Please check deck id" });
+        }
+        getDeck.cards.unshift(req.body.content);
+        const createdCard = yield getDeck.save();
+        res.status(201).json(createdCard);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Some Error occurred please try again later!" });
+    }
+}));
 //Edit card
-app.patch('/card/:deck_id', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            //get the deck using _id
-            const Deck = yield deck_1.default.findById(req.params.deck_id);
-            // take out cards from received deck
-            const cards = Deck === null || Deck === void 0 ? void 0 : Deck.cards;
-            if (cards) {
-                // get the index from body
-                const index = req.body.index;
-                //remove one item at index (which we received) and add newContent at that index
-                cards === null || cards === void 0 ? void 0 : cards.splice(index, 1, req.body.newContent); // this will modify original array
-                // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
-                Deck.cards.splice(0, Deck.cards.length, ...cards);
-                // save it in the db
-                const newCard = yield Deck.save();
-                res.status(200).json(newCard);
-            }
-            else {
-                res.status(200).json({ message: "No cards found!" });
-            }
+app.patch('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        //get the deck using _id
+        const Deck = yield deck_1.default.findById(req.params.deck_id);
+        // take out cards from received deck
+        const cards = Deck === null || Deck === void 0 ? void 0 : Deck.cards;
+        if (cards) {
+            // get the index from body
+            const index = req.body.index;
+            //remove one item at index (which we received) and add newContent at that index
+            cards === null || cards === void 0 ? void 0 : cards.splice(index, 1, req.body.newContent); // this will modify original array
+            // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
+            Deck.cards.splice(0, Deck.cards.length, ...cards);
+            // save it in the db
+            const newCard = yield Deck.save();
+            res.status(200).json(newCard);
         }
-        catch (error) {
-            res.status(500).json({ message: "Internal server Error!" });
+        else {
+            res.status(200).json({ message: "No cards found!" });
         }
-    });
-});
-app.delete('/card/:id/:index', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const deck = yield deck_1.default.findById(req.params.id);
-            if (deck) {
-                deck.cards.splice(parseInt(req.params.index), 1);
-                let newArray = yield deck.save();
-                res.status(200).json({ cards: newArray, success: true });
-            }
-            else {
-                res.status(200).json({ message: "Card not found!", success: false });
-            }
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal server Error!" });
+    }
+}));
+app.delete('/card/:id/:index', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deck = yield deck_1.default.findById(req.params.id);
+        if (deck) {
+            deck.cards.splice(parseInt(req.params.index), 1);
+            let newArray = yield deck.save();
+            res.status(200).json({ cards: newArray, success: true });
         }
-        catch (error) {
-            res.status(500).json({ message: "some error occurred", success: false });
+        else {
+            res.status(200).json({ message: "Card not found!", success: false });
         }
-    });
-});
-app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const deck = yield deck_1.default.findById(req.params.id);
-            if (deck) {
-                // deck.cards.splice(parseInt(req.params.index), 1);
-                // let newArray = await deck.save()
-                // res.json({ cards: newArray, success: true })
-                let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
-                deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move);
-                yield deck.save();
-                res.status(200).json({ success: true });
-            }
-            else {
-                res.status(200).json({ message: "Card not found!", success: false });
-            }
+    }
+    catch (error) {
+        res.status(500).json({ message: "some error occurred", success: false });
+    }
+}));
+app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deck = yield deck_1.default.findById(req.params.id);
+        if (deck) {
+            // deck.cards.splice(parseInt(req.params.index), 1);
+            // let newArray = await deck.save()
+            // res.json({ cards: newArray, success: true })
+            let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
+            deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move);
+            yield deck.save();
+            res.status(200).json({ success: true });
         }
-        catch (error) {
-            res.status(500).json({ message: "some error occurred", success: false });
+        else {
+            res.status(200).json({ message: "Card not found!", success: false });
         }
-    });
-});
+    }
+    catch (error) {
+        res.status(500).json({ message: "some error occurred", success: false });
+    }
+}));
 app.get('/auth/google', passport_1.default.authenticate('google', {
     scope: ['profile', 'email']
     // scope:['openid','profile', 'email'] 
@@ -439,7 +424,7 @@ app.get("/getuser", (req, res) => {
         res.status(200).json(null);
     }
 });
-app.post('/auth/logout', function (req, res, next) {
+app.post('/auth/logout', (req, res, next) => {
     req.logout(function (err) {
         if (err) {
             return next(err);
@@ -552,7 +537,7 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
             },
         });
         // send mail with defined transport object
-        let info = yield transporter.sendMail({
+        yield transporter.sendMail({
             from: process.env.EMAIL_ADDRESS,
             to: req.body.email,
             subject: "OTP for your account on decker.vercel.app",
@@ -632,7 +617,7 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
             },
         });
         // send mail with defined transport object
-        let info = yield transporter.sendMail({
+        yield transporter.sendMail({
             from: process.env.EMAIL_ADDRESS,
             to: req.body.email,
             subject: "OTP for your account on decker.vercel.app to reset the password",
@@ -731,7 +716,7 @@ app.post("/generateaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, 
             },
         });
         // send mail with defined transport object
-        let info = yield transporter.sendMail({
+        yield transporter.sendMail({
             from: process.env.EMAIL_ADDRESS,
             to: req.body.email,
             subject: " OTP for your account on decker.vercel.app to delete your account",
