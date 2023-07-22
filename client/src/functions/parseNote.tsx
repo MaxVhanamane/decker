@@ -36,10 +36,18 @@ const parseNote = (noteString: string) => {
         key={shortid.generate()}
         language="javascript"
         wrapLongLines={true}
-        style={localStorage.getItem("theme") === "dark" ? coldarkDark : prism}
+        style={
+          localStorage.getItem("theme") === "dark" ||
+          localStorage.getItem("theme") === null
+            ? coldarkDark
+            : prism
+        }
         customStyle={{
           backgroundColor: `${
-            localStorage.getItem("theme") === "dark" ? "rgb(1, 22, 39)" : "auto"
+            localStorage.getItem("theme") === "dark" ||
+            localStorage.getItem("theme") === null
+              ? "rgb(1, 22, 39)"
+              : "auto"
           }`,
         }}
       >

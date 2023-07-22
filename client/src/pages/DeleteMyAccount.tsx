@@ -182,9 +182,9 @@ export default function DeleteMyAccount() {
 
   return (
     <>
-      <section className="absolute top-0 left-0 w-full h-full">
+      <section className="absolute top-0 left-0 w-full h-full ">
         {localStorage.getItem("userInfo") != null ? (
-          <div className=" py-12 px-2 h-full">
+          <div className=" py-12 px-2 h-full mx-3">
             <div className="flex justify-center items-center flex-wrap h-full  text-gray-800">
               <div className="w-full md:w-6/12">
                 <div className="block   rounded-lg shadow-2xl bg-white dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
@@ -208,7 +208,7 @@ export default function DeleteMyAccount() {
                           </h2>
 
                           {showVerifyOTPButton && (
-                            <h4 className="text-md font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50 text-justify">
+                            <h4 className="text-md  mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50 text-justify">
                               Are you sure you want to delete your account? This
                               action is permanent and cannot be undone. All of
                               your decks and cards inside them will be deleted,

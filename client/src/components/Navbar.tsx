@@ -77,7 +77,14 @@ const Navbar: FC = () => {
               className="w-7 h-7 object-contain"
               alt="decker logo"
             />
-            <span className="h-8 w-auto text-gray-700 dark:text-sky-50 font-bold text-xl">
+            <span
+              className={`h-8 w-auto   ${
+                localStorage.getItem("theme") === "dark" ||
+                localStorage.getItem("theme") === null
+                  ? "text-gray-50"
+                  : "text-gray-700"
+              } font-bold text-xl`}
+            >
               <span className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300">
                 D
               </span>
@@ -123,9 +130,9 @@ const Navbar: FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-4 items-center justify-center ">
+        <div className="flex gap-3 items-center justify-center ">
           {userInfo?.email && (
-            <>
+            <div className="flex items-center justify-center">
               <SearchBar />
               <button
                 onClick={() => {
@@ -149,11 +156,11 @@ const Navbar: FC = () => {
                   } cursor-pointer transition-opacity lg:duration-[1200ms]  mr-2 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] px-2  w-9 h-9`}
                 />
               </button>
-            </>
+            </div>
           )}
           <div>
             <ul className="flex items-center justify-center gap-3">
-              <li className=" text-2xl mr-2">
+              <li className=" text-2xl mr-2 w-9 h-9 flex items-center justify-center p-[1.2rem]">
                 <ThemeToggler />
               </li>
 

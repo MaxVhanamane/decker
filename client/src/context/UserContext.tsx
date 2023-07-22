@@ -123,21 +123,20 @@ function UserContextProvider({ children }: UserContextProvider) {
       localStorage.getItem("theme") === "dark" ||
       localStorage.getItem("theme") === null
     ) {
+      document.documentElement.style.backgroundColor = "#0c1221";
       document.documentElement.classList.add("dark");
       document.body.classList.add("bg-[#0c1221]");
-      document.documentElement.classList.add("bg-[#0c1221]");
     } else {
+      document.documentElement.style.backgroundColor = "#ffffff";
+
       document.documentElement.classList.remove("dark");
       document.body.classList.remove("bg-[#0c1221]");
-      document.documentElement.classList.remove("bg-[#0c1221]");
-    }
-    // To avoid white or dark screen flicker, I have added the "hidden" class to the <html> tag and remove it once all the necessary classes are set.
-    if (document.body.classList.contains("hidden")) {
-      document.body.classList.remove("hidden");
+      document.documentElement.style.display = "";
     }
   }, [theme]);
 
   //If the user changes the theme preference directly from localStorage or tampers with the userInfo, we will listen for that change and take appropriate action accordingly.
+
   useEffect(() => {
     // If the user changes the information stored in localStorage, we will log them out.
     const handleLogout = async () => {

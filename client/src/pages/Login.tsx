@@ -101,7 +101,7 @@ export default function Login() {
       <section className="absolute top-0 left-0 w-full h-full bg-white dark:bg-[#0c1221]">
         {userInformation === null ? (
           <div className=" py-12 px-6 h-full">
-            <div className="flex justify-center items-center flex-wrap h-full g-6 ">
+            <div className="flex justify-center items-center flex-wrap h-full ">
               <div className="xl:w-6/12">
                 <div className="block   rounded-lg shadow-2xl bg-white dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500 ">
                   <div className="flex justify-center items-center g-0">

@@ -106,7 +106,7 @@ export default defineConfig(({ command, mode }) => {
             "type": "image/png"
           }
         ],
-        "start_url": "/login",
+        "start_url": "/",
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#ffffff"

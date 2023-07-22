@@ -10,7 +10,9 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
-
+      screens: {
+        'xs': '370px'
+      },
       keyframes: {
 
         rotate: {
