@@ -96,7 +96,7 @@ export default function ChangePassword() {
           <div className=" py-12 px-6 h-full">
             <div className="flex justify-center items-center flex-wrap h-full  text-gray-800">
               <div className="xl:w-6/12">
-                <div className="block bg-white shadow-lg rounded-lg dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
+                <div className="block bg-white shadow-lg rounded-lg dark:bg-slate-950 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
                   <div className="flex justify-center items-center g-0">
                     <div className=" px-4 md:px-0">
                       <div className="md:p-12 p-4 md:mx-6">
@@ -125,7 +125,7 @@ export default function ChangePassword() {
                             <input
                               onChange={handleChange}
                               type="password"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
                               id="password"
                               name="password"
                               value={password}
@@ -137,7 +137,7 @@ export default function ChangePassword() {
                             <input
                               onChange={handleChange}
                               type="password"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
                               id="confirmpassword"
                               name="confirmPass"
                               value={confirmPass}

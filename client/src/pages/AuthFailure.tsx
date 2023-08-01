@@ -20,7 +20,7 @@ const AuthFailure: FC = () => {
   }, [userInfo]);
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center dark:bg-[#0c1221] bg-white  gap-4 -z-10 ">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center dark:bg-slate-950 bg-white  gap-4 -z-10 ">
       <div className="flex items-center justify-center flex-col ">
         <img
           src={

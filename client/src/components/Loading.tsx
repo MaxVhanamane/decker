@@ -4,7 +4,7 @@ export default function Loading() {
       className={` absolute top-0 left-0  w-full h-full flex items-center justify-center ${
         localStorage.getItem("theme") === "dark" ||
         localStorage.getItem("theme") === null
-          ? "bg-[#0c1221]"
+          ? "dark:bg-slate-950"
           : "bg-white"
       }`}
     >

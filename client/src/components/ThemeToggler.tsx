@@ -13,7 +13,7 @@ const ThemeToggler: FC = () => {
     <>
       {theme ? (
         <div>
-          {theme === "light" ? (
+          {theme === "dark" ? (
             <svg
               onClick={handleClick}
               viewBox="0 0 24 24"

@@ -123,14 +123,14 @@ function UserContextProvider({ children }: UserContextProvider) {
       localStorage.getItem("theme") === "dark" ||
       localStorage.getItem("theme") === null
     ) {
-      document.documentElement.style.backgroundColor = "#0c1221";
+      document.documentElement.style.backgroundColor = "#020617";
       document.documentElement.classList.add("dark");
-      document.body.classList.add("bg-[#0c1221]");
+      document.body.classList.add("bg-slate-950");
     } else {
       document.documentElement.style.backgroundColor = "#ffffff";
 
       document.documentElement.classList.remove("dark");
-      document.body.classList.remove("bg-[#0c1221]");
+      document.body.classList.remove("bg-slate-950");
       document.documentElement.style.display = "";
     }
   }, [theme]);

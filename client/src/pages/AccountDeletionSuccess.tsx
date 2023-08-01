@@ -7,25 +7,22 @@ export default function AccountDeletionSuccess() {
   const location = useLocation();
   const accountDeletedSuccessfully = location.state?.accountDeletedSuccessfully;
   useEffect(() => {
-    let timeout:NodeJS.Timeout
+    let timeout: NodeJS.Timeout;
     // These if-else conditions are used to prevent the user from accessing this page directly via the URL.
-    if(accountDeletedSuccessfully){
-     timeout=setTimeout(() => {
+    if (accountDeletedSuccessfully) {
+      timeout = setTimeout(() => {
         navigate("/login", { replace: true });
       }, 5000);
-    }
-    else if(localStorage.getItem("userInfo")){
+    } else if (localStorage.getItem("userInfo")) {
       navigate("/", { replace: true });
-    }
-    else{
+    } else {
       navigate("/login", { replace: true });
-
     }
     // Clean up the timeout when the component unmounts
     return () => clearTimeout(timeout);
   }, []);
-  return accountDeletedSuccessfully?(
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-[#0c1221] bg-white -z-10">
+  return accountDeletedSuccessfully ? (
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-950 bg-white -z-10">
       <div className="flex items-center justify-center rounded-full bg-green-700 text-white ">
         <p className="text-4xl">
           <TiTick />
@@ -41,5 +38,5 @@ export default function AccountDeletionSuccess() {
         Redirecting to the Login page......
       </p>
     </div>
-  ):null;
+  ) : null;
 }

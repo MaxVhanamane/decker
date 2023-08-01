@@ -943,7 +943,7 @@ const Cards: FC = () => {
                   expandTextarea
                     ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
                     : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center"
-                } transition-[border-radius]  h-10 px-3 py-2  pb-2 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-[#0c1221] dark:text-gray-50 z-10 `}
+                } transition-[border-radius]  h-10 px-3 py-2  pb-2 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-950 dark:text-gray-50 z-10 `}
                 placeholder={`${expandTextarea ? "Title" : "Add a note"} `}
               />
               <textarea
@@ -951,7 +951,7 @@ const Cards: FC = () => {
                   expandTextarea
                     ? " py-2 border-b-2 rounded-t-0 opacity-100"
                     : "py-0 border-b-2"
-                } lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-[#0c1221] dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
+                } lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-950 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
@@ -1022,7 +1022,7 @@ const Cards: FC = () => {
       </div>
 
       {openModal ? (
-        <div className="w-screen z-[90] bg-white dark:bg-[#0c1221] fixed inset-0 flex items-center justify-center ">
+        <div className="w-screen z-[90] bg-white dark:bg-slate-950 fixed inset-0 flex items-center justify-center ">
           <div className="  shadow w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%] dark:bg-slate-800 bg-teal-500 flex flex-col items-center justify-center md:rounded-md">
             {/* modal head  */}
 
@@ -1116,7 +1116,7 @@ const Cards: FC = () => {
       ) : null}
 
       {showFullScreen && (
-        <article className="fixed inset-0 overflow-y-auto bg-white  dark:bg-[#0c1221]  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
+        <article className="fixed inset-0 overflow-y-auto bg-white  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
           <div className="mt-2 lg:mt-4 relative w-full">
             <div className="mt-12">
               {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words. */}
@@ -1128,7 +1128,7 @@ const Cards: FC = () => {
                 {parseNote(fullScreenCardData?.note)}
               </div>
             </div>
-            <div className="fixed top-0 lg:py-[0.85rem] py-[0.80rem] dark:bg-[#0c1221] border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+            <div className="fixed top-0 lg:py-[0.85rem] py-[0.80rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
               <div>
                 <button
                   onClick={() => {

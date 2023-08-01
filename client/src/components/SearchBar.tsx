@@ -39,7 +39,7 @@ const SearchBar: FC = () => {
       <div
         className={`lg:relative ${
           showSearchBar ? "w-72 right-1/2" : "w-0 right-0"
-        } overflow-hidden transition-all duration-500 lg:duration-700  lg:right-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-white dark:bg-[#0c1221] rounded-md `}
+        } overflow-hidden transition-all duration-500 lg:duration-700  lg:right-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-white dark:bg-slate-950 rounded-md `}
       >
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
           <AiOutlineSearch className="dark:text-white text-gray-700 text-lg" />

@@ -4,11 +4,6 @@ import { UserContext } from "../context/UserContext";
 const ThemeColorUpdater: React.FC = () => {
   const { theme } = useContext(UserContext);
 
-  const themeColor = useMemo(
-    () => (theme === "dark" ? "#1e293b" : "#f3f4f6"),
-    [theme]
-  );
-
   useEffect(() => {
     // Update the meta tag
     const metaTag = document.querySelector(
@@ -17,9 +12,10 @@ const ThemeColorUpdater: React.FC = () => {
 
     //  update the meta tag only if it exists
     if (metaTag) {
+      const themeColor = theme === "dark" ? "#0f172a" : "#f3f4f6";
       metaTag.setAttribute("content", themeColor);
     }
-  }, [themeColor]);
+  }, [theme]);
 
   return null;
 };

@@ -78,7 +78,7 @@ const parseNote = (noteString: string) => {
         finalResult.push(text.substring(index, startIndex));
         finalResult.push(
           <strong
-            className="font-bold dark:text-cyan-500  text-sky-600 "
+            className="font-bold dark:text-sky-400  text-sky-600 "
             key={shortid.generate()}
           >
             {boldText}

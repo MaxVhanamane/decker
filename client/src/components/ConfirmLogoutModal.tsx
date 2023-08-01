@@ -51,10 +51,10 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
       tabIndex={-1}
       className={`fixed ${
         showLogoutModal ? "block" : "hidden"
-      } z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-[#0c1221] lg:backdrop-blur-none lg:bg-white`}
+      } z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-950 lg:backdrop-blur-none lg:bg-white`}
     >
       <div className="relative w-full h-full flex items-center justify-center  ">
-        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-[#0c1221] ring-1 ring-sky-500  ">
+        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-950 ring-1 ring-sky-500  ">
           <div className="p-6 text-center">
             <svg
               aria-hidden="true"

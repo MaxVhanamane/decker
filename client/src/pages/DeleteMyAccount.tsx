@@ -187,7 +187,7 @@ export default function DeleteMyAccount() {
           <div className=" py-12 px-2 h-full mx-3">
             <div className="flex justify-center items-center flex-wrap h-full  text-gray-800">
               <div className="w-full md:w-6/12">
-                <div className="block   rounded-lg shadow-2xl bg-white dark:bg-[#0c1221] dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
+                <div className="block   rounded-lg shadow-2xl bg-white dark:bg-slate-950 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
                   <div className="flex justify-center items-center ">
                     <div className=" px-4 md:px-0">
                       <div className="md:p-12 p-4 md:mx-6">
@@ -231,7 +231,7 @@ export default function DeleteMyAccount() {
                               <input
                                 onChange={handleChange}
                                 type="email"
-                                className=" block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50 dark:focus:bg-[#0c1221]"
+                                className=" block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50 dark:focus:dark:bg-slate-950"
                                 id="email"
                                 name="email"
                                 value={email}
@@ -253,7 +253,6 @@ export default function DeleteMyAccount() {
                                     onExpired={handleCaptchaExpired}
                                     size="normal"
                                     theme={theme === "dark" ? "dark" : "light"}
-                                    className="mb-1"
                                   />
                                 </div>
                               ) : (
@@ -324,7 +323,7 @@ export default function DeleteMyAccount() {
                               <input
                                 onChange={handleChange}
                                 type="text"
-                                className=" block md:w-1/2 w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-[#0c1221] dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                                className=" block md:w-1/2 w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
                                 id="otp"
                                 name="otp"
                                 value={otp}
