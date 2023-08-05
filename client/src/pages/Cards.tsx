@@ -1,4 +1,4 @@
-import {
+import React, {
   ChangeEvent,
   FormEvent,
   useState,
@@ -20,17 +20,14 @@ import { UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
-import parseNote from "../functions/parseNote";
 import { AlertData, AxiosErrorType } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
-
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiCodeCurly, BiEdit } from "react-icons/bi";
-import { AiOutlineBold } from "react-icons/ai";
+import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { GoEyeClosed } from "react-icons/go";
-import shortid from "shortid";
 
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
@@ -40,7 +37,11 @@ import CardItems from "../components/CardItems";
 import SessionExpired from "../components/Session";
 import ConfirmCloseCard from "../components/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
+import ErrorDisplay from "../components/ErrorDisplay";
 
+import shortid from "shortid";
+import { BsTypeUnderline } from "react-icons/bs";
+import parseNote from "../functions/parseNote";
 // types
 // let oldContent:string //this  works
 type ContentType = {
@@ -122,7 +123,6 @@ const Cards: FC = () => {
 
   // Other
   const navigate = useNavigate();
-  const url = window.location.pathname.split("/").pop();
   // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
 
@@ -545,28 +545,30 @@ const Cards: FC = () => {
       let newNote: string;
       let currentSelectionStart: number;
       let currentSelectionEnd: number;
-      // check which button is clicked using name property so that we can add our bold string (**Bold text**) to correct textarea
+      // check which button is clicked using name property so that we can add our bold string (**Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**) to correct textarea
       if (e.currentTarget.name === "addBoldTextToAddCard") {
         // textareaRef?.current?.selectionStart will give us the cursor position. we will add our bold string to that cursor position.
         // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
         const selectionStart = textareaRef?.current?.selectionStart || 0;
-        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the bold string (**Bold text**) in the middle of the note
-        // like this `${note.substring(0, selectionStart)} **Bold text** ${note.substring(selectionEnd)}`;
+        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the bold string (**Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**) in the middle of the note
+        // like this `${note.substring(0, selectionStart)} **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.** ${note.substring(selectionEnd)}`;
         const selectionEnd = textareaRef?.current?.selectionEnd || 0;
-        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add **Bold text**.
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**.
         // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
         if (selectionEnd - selectionStart === 0) {
           newNote = `${note.substring(
             0,
             selectionStart
-          )} **Bold text** ${note.substring(selectionEnd)}`;
-          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of **Bold text**
-          // so that once user clicks on B(i.e add Bold Text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "Bold Text" string manually I can start typing directly.
-          // added 3 and 9  so that i can select only "Bold Text" not the whole string with backticks \`\`\`**Bold text**\`\`\`
+          )} **Put your text inside double asterisks like this (e.g. **your content**) to make it bold** ${note.substring(
+            selectionEnd
+          )}`;
+          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**
+          // so that once user clicks on B (Bold text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "put your text inside ** to make it bold. eg. **your content**" string manually I can start typing directly.
+          // added 3 and 9  so that i can select only "put your text inside ** to make it bold. eg. **your content**" not the whole string with asterisks like this **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**
           // I have used these variables in setTimeout for auto selection.
           currentSelectionStart =
             (textareaRef?.current?.selectionStart || 0) + 3;
-          currentSelectionEnd = currentSelectionStart + 9;
+          currentSelectionEnd = currentSelectionStart + 87;
           setNote(newNote);
           setTimeout(() => {
             textareaRef?.current?.focus();
@@ -612,16 +614,18 @@ const Cards: FC = () => {
       } else if (e.currentTarget.name === "addBoldTextToEditCard") {
         const selectionStart = editTextareaRef?.current?.selectionStart || 0;
         const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
-        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, **Bold text** will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
+        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.** will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
         // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
         if (selectionEnd - selectionStart === 0) {
           newNote = `${editContent.note.substring(
             0,
             selectionStart
-          )} **Bold text** ${editContent.note.substring(selectionEnd)}`;
+          )} **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.** ${editContent.note.substring(
+            selectionEnd
+          )}`;
           currentSelectionStart =
             (editTextareaRef?.current?.selectionStart || 0) + 3;
-          currentSelectionEnd = currentSelectionStart + 9;
+          currentSelectionEnd = currentSelectionStart + 87;
           setEditContent({ ...editContent, note: newNote });
 
           setTimeout(() => {
@@ -684,6 +688,215 @@ const Cards: FC = () => {
     [note, setNote, editContent, setEditContent]
   );
 
+  const addUnderlineText = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      let newNote: string;
+      let currentSelectionStart: number;
+      let currentSelectionEnd: number;
+      // check which button is clicked using name property so that we can add our underline string (_Put your text inside single underscore (e.g. _your content_) to underline it._) to the correct textarea
+      if (e.currentTarget.name === "addUnderlineTextToAddCard") {
+        // textareaRef?.current?.selectionStart will give us the cursor position. we will add our underline string to that cursor position.
+        // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
+        const selectionStart = textareaRef?.current?.selectionStart || 0;
+        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the underline string (_Put your text inside single underscore (e.g. _your content_) to underline it._) in the middle of the note
+        // like this `${note.substring(0, selectionStart)} _Put your text inside single underscore (e.g. _your content_) to underline it._ ${note.substring(selectionEnd)}`;
+        const selectionEnd = textareaRef?.current?.selectionEnd || 0;
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add _Put your text inside single underscore (e.g. _your content_) to underline it._
+        // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will underline the selected text.
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${note.substring(
+            0,
+            selectionStart
+          )} _Put your text inside single underscore (e.g. _your content_) to underline it._ ${note.substring(
+            selectionEnd
+          )}`;
+          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of _Put your text inside single underscore (e.g. _your content_) to underline it._
+          // so that once user clicks on U (Underline text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "_Put your text inside single underscore (e.g. _your content_) to underline it._" string manually I can start typing directly.
+          // added 2 and 77  so that I can select only "Put your text inside single underscore (e.g. _your content_) to underline it." not the whole string with underscores like this _Put your text inside single underscore (e.g. _your content_) to underline it._
+          // I have used these variables in setTimeout for auto selection.
+          currentSelectionStart =
+            (textareaRef?.current?.selectionStart || 0) + 2;
+          currentSelectionEnd = currentSelectionStart + 77;
+          setNote(newNote);
+          setTimeout(() => {
+            textareaRef?.current?.focus();
+            textareaRef?.current?.setSelectionRange(
+              currentSelectionStart,
+              currentSelectionEnd
+            );
+          }, 0);
+        }
+        // If user has selected some text then we don't need to auto select the newly added text. we will just underline the selected text.
+        // or if it is already underlined then we will make it normal text.
+        else {
+          // Check if the selected text is already underlined. If it has "_" on both sides (e.g. _text_), it is already underlined and will be converted to normal text. If it has no "_" on both sides, it is normal text and will be converted to underlined text.
+          // get the selected text
+          let selectedContent = note.substring(selectionStart, selectionEnd);
+          //expectedSubstring is used to compare text in if statement.
+          const expectedSubstring = `_${selectedContent}_`;
+          // selectionStart will give us selected text's index. if we do -1 then we get text with _. and we will use startingIndex+expectedSubstring.length to get the complete selected text with _.
+          const startingIndex = selectionStart - 1;
+          const extractedSubstring = note.substring(
+            startingIndex,
+            startingIndex + expectedSubstring.length
+          );
+          // if extractedSubstring === expectedSubstring is true it means the text is already underlined and will be converted to normal text.
+          if (extractedSubstring === expectedSubstring) {
+            // suppose I have a string that looks like this data="My name _is_ Max"
+            //  before variable will give us "My name" and after variable will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
+            const before = note.slice(0, startingIndex);
+            const after = note.slice(startingIndex + expectedSubstring.length);
+
+            newNote = before + selectedContent + after;
+            setNote(newNote);
+          }
+          // if extractedSubstring === expectedSubstring is false means text is not underlined then we will underline it by adding _
+          else {
+            newNote = `${note.substring(
+              0,
+              selectionStart
+            )}_${selectedContent}_${note.substring(selectionEnd)}`;
+            setNote(newNote);
+          }
+        }
+      } else if (e.currentTarget.name === "addUnderlineTextToEditCard") {
+        const selectionStart = editTextareaRef?.current?.selectionStart || 0;
+        const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
+        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, _Put your text inside single underscore (e.g. _your content_) to underline it._ will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
+        // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will underline the selected text.
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${editContent.note.substring(
+            0,
+            selectionStart
+          )} _Put your text inside single underscore (e.g. _your content_) to underline it._ ${editContent.note.substring(
+            selectionEnd
+          )}`;
+          currentSelectionStart =
+            (editTextareaRef?.current?.selectionStart || 0) + 2;
+          currentSelectionEnd = currentSelectionStart + 77;
+          setEditContent({ ...editContent, note: newNote });
+
+          setTimeout(() => {
+            // When I add Underline string in editTextArea it was scrolling to the top automatically.
+            // To avoid that we will get the scrollPosition using editTextareaRef?.current?.scrollTop
+            // Then later we will use that so that when I add code string it stays where it was before.
+            const scrollTop = editTextareaRef?.current?.scrollTop || 0;
+            if (editTextareaRef?.current) {
+              editTextareaRef?.current?.focus();
+              editTextareaRef?.current?.setSelectionRange(
+                currentSelectionStart,
+                currentSelectionEnd
+              );
+              editTextareaRef.current.scrollTop = scrollTop;
+            }
+          }, 0);
+        }
+        // If user has selected some text then we don't need to auto select the newly added text. we will just underline the selected text.
+        // or if it is already underlined then we will make it normal text.
+        else {
+          // Check if the selected text is already underlined. If it has "_" on both sides (e.g. _text_), it is already underlined text and will be converted to normal text. If it has no "_" on both sides, it is normal text and will be converted to underlined text.
+          // get the selected text
+          let selectedContent = editContent.note.substring(
+            selectionStart,
+            selectionEnd
+          );
+          //expectedSubstring is used to compare text in if statement.
+          const expectedSubstring = `_${selectedContent}_`;
+          // selectionStart will give us selected text's index. if we do -1 then we get text with underscore(_). and we will use startingIndex+expectedSubstring.length to get the complete selected text with underscore(_).
+          const startingIndex = selectionStart - 1;
+          const extractedSubstring = editContent.note.substring(
+            startingIndex,
+            startingIndex + expectedSubstring.length
+          );
+          // if extractedSubstring === expectedSubstring is true it means the text is already underlined and will be converted to normal text.
+          if (extractedSubstring === expectedSubstring) {
+            // suppose I have a string that looks like this data="My name _is_ Max"
+            //  before variable will give us "My name" and after variable will give us "Max".then we will add normal text in between(we can get the normal text using selectedContent variable).
+            const before = editContent.note.slice(0, startingIndex);
+            const after = editContent.note.slice(
+              startingIndex + expectedSubstring.length
+            );
+
+            newNote = before + selectedContent + after;
+            setEditContent({ ...editContent, note: newNote });
+          }
+          // if extractedSubstring === expectedSubstring is false means text is not underlined then we will underline it by adding _
+          else {
+            newNote = `${editContent.note.substring(
+              0,
+              selectionStart
+            )}_${selectedContent}_${editContent.note.substring(selectionEnd)}`;
+            setEditContent({ ...editContent, note: newNote });
+          }
+        }
+      }
+    },
+    [note, setNote, editContent, setEditContent]
+  );
+
+  const addLink = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      let newNote: string;
+      let currentSelectionStart: number;
+      let currentSelectionEnd: number;
+
+      if (e.currentTarget.name === "addLinkToAddCard") {
+        const selectionStart = textareaRef?.current?.selectionStart || 0;
+
+        const selectionEnd = textareaRef?.current?.selectionEnd || 0;
+
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${note.substring(
+            0,
+            selectionStart
+          )} [link name](put your link URL in this bracket) ${note.substring(
+            selectionEnd
+          )}`;
+
+          currentSelectionStart =
+            (textareaRef?.current?.selectionStart || 0) + 2;
+          currentSelectionEnd = currentSelectionStart + 9;
+          setNote(newNote);
+          setTimeout(() => {
+            textareaRef?.current?.focus();
+            textareaRef?.current?.setSelectionRange(
+              currentSelectionStart,
+              currentSelectionEnd
+            );
+          }, 0);
+        }
+      } else if (e.currentTarget.name === "addLinkToEditCard") {
+        const selectionStart = editTextareaRef?.current?.selectionStart || 0;
+        const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
+
+        if (selectionEnd - selectionStart === 0) {
+          newNote = `${editContent.note.substring(
+            0,
+            selectionStart
+          )} [link name](put your link URL in this bracket)
+          \ ${editContent.note.substring(selectionEnd)}`;
+          currentSelectionStart =
+            (editTextareaRef?.current?.selectionStart || 0) + 2;
+          currentSelectionEnd = currentSelectionStart + 9;
+          setEditContent({ ...editContent, note: newNote });
+
+          setTimeout(() => {
+            const scrollTop = editTextareaRef?.current?.scrollTop || 0;
+            if (editTextareaRef?.current) {
+              editTextareaRef?.current?.focus();
+              editTextareaRef?.current?.setSelectionRange(
+                currentSelectionStart,
+                currentSelectionEnd
+              );
+              editTextareaRef.current.scrollTop = scrollTop;
+            }
+          }, 0);
+        }
+      }
+    },
+    [note, setNote, editContent, setEditContent]
+  );
+
   const increaseTextAreaHeight = () => {
     const textarea = textareaRef.current;
     const maxHeightForTextArea =
@@ -715,84 +928,24 @@ const Cards: FC = () => {
   }
 
   if (isError) {
-    const axiosError = error as AxiosErrorType;
-    if (axiosError?.message?.includes("Network Error")) {
-      return (
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4">
-          <img
-            src={`${
-              theme === "dark"
-                ? "/illustrations/no_internet_dark.svg"
-                : "/illustrations/no_internet_light.svg"
-            }`}
-            alt="No internet"
-            className="w-28 h-28 "
-          />
-          <p className="font-semibold text-md"> No internet connection.</p>
-          <button
-            onClick={() => navigate("/")}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-            type="button"
-            aria-label="Home"
-          >
-            Home
-          </button>
-        </div>
-      );
-    } else if (axiosError?.response?.status === 500) {
-      return (
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
-          <img
-            src={`${
-              theme === "dark"
-                ? "/illustrations/server_down_dark.svg"
-                : "/illustrations/server_down_light.svg"
-            }`}
-            alt="Server down"
-            className="w-40 h-36"
-          />
-          <div className="font-semibold text-md">
-            <p> An error occurred on the server.</p>
-            <p> Please try again later.</p>
-          </div>
-          <button
-            onClick={() => navigate("/")}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-            type="button"
-            aria-label="Home"
-          >
-            Home
-          </button>
-        </div>
-      );
-    } else {
-      const errorMessage =
-        axiosError?.response?.data?.message ||
-        "An error occurred. Please try again later.";
-      return (
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
-          <img
-            src={`${
-              theme === "dark"
-                ? "/illustrations/error_dark.svg"
-                : "/illustrations/error_light.svg"
-            }`}
-            alt="Error"
-            className="w-40 h-40 "
-          />
-          <p className="font-semibold text-md"> {errorMessage}</p>
-          <button
-            onClick={() => navigate("/")}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-            type="button"
-            aria-label="Home"
-          >
-            Home
-          </button>
-        </div>
-      );
-    }
+    return (
+      <ErrorDisplay
+        theme={theme}
+        isError={isError}
+        error={error as AxiosErrorType}
+      >
+        <button
+          onClick={() => navigate("/")}
+          className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+          type="button"
+          aria-label="Home"
+        >
+          Home
+        </button>
+      </ErrorDisplay>
+    );
   }
+
   return (
     <>
       <Helmet>
@@ -869,6 +1022,15 @@ const Cards: FC = () => {
               >
                 <div className={`flex gap-2`}>
                   <button
+                    title="Add a link"
+                    className="dark:text-gray-200 dark:hover:text-gray-400   text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
+                    type="button"
+                    name="addLinkToAddCard"
+                    onClick={(e) => addLink(e)}
+                  >
+                    <AiOutlineLink />
+                  </button>
+                  <button
                     title="Add code sample"
                     className="dark:text-gray-200 dark:hover:text-gray-400   text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
                     type="button"
@@ -876,6 +1038,15 @@ const Cards: FC = () => {
                     onClick={(e) => addCodeBlock(e)}
                   >
                     <BiCodeCurly />
+                  </button>
+                  <button
+                    name="addUnderlineTextToAddCard"
+                    title="Bold text"
+                    className="dark:text-gray-200 dark:hover:text-gray-400  text-gray-500 hover:text-gray-900 text-xl transition-all duration-300 "
+                    type="button"
+                    onClick={(e) => addUnderlineText(e)}
+                  >
+                    <BsTypeUnderline />
                   </button>
                   <button
                     name="addBoldTextToAddCard"
@@ -886,6 +1057,7 @@ const Cards: FC = () => {
                   >
                     <AiOutlineBold />
                   </button>
+
                   <button
                     title="Contract Text Area"
                     className="text-orange-500 hover:text-orange-600 text-xl transition-all duration-300"
@@ -1003,14 +1175,14 @@ const Cards: FC = () => {
             />
             <p className="p-1 mt-1 text-md">
               Looks like you haven't added any cards yet.
-            </p>{" "}
+            </p>
             <p className="text-md">
               Click the 'Add a note' button to get started.
             </p>
             {!expandTextarea && (
               <button
                 onClick={() => setExpandTextArea(true)}
-                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded-md  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
                 type="button"
                 aria-label="Add a note"
               >
@@ -1035,6 +1207,16 @@ const Cards: FC = () => {
                 </div>
                 <div className="flex items-center justify-center gap-4  px-2 py-1  ">
                   <button
+                    title="Add a link"
+                    className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1 text-xl  transition-all duration-150"
+                    type="button"
+                    name="addLinkToEditCard"
+                    onClick={(e) => addLink(e)}
+                  >
+                    {" "}
+                    <AiOutlineLink />
+                  </button>
+                  <button
                     title="Add code sample"
                     className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1 text-xl  transition-all duration-150"
                     type="button"
@@ -1042,6 +1224,15 @@ const Cards: FC = () => {
                     onClick={(e) => addCodeBlock(e)}
                   >
                     <BiCodeCurly />
+                  </button>
+                  <button
+                    name="addUnderlineTextToEditCard"
+                    title="Bold text"
+                    className="dark:text-gray-200  dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-150 "
+                    type="button"
+                    onClick={(e) => addUnderlineText(e)}
+                  >
+                    <BsTypeUnderline />
                   </button>
                   <button
                     name="addBoldTextToEditCard"
@@ -1124,11 +1315,11 @@ const Cards: FC = () => {
               <p className="text-justify mb-5 mt-5 text-lg font-bold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100">
                 {fullScreenCardData?.title}
               </p>
-              <div className="text-justify  mb-10 break-words break-normal -ml-1 whitespace-pre-wrap text-gray-800 dark:text-slate-200">
-                {parseNote(fullScreenCardData?.note)}
+              <div className="text-justify mb-10 break-words break-normal -ml-1 whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+                {parseNote(fullScreenCardData.note)}
               </div>
             </div>
-            <div className="fixed top-0 lg:py-[0.85rem] py-[0.80rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+            <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
               <div>
                 <button
                   onClick={() => {

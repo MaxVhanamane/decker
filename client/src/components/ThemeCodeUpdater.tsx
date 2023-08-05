@@ -2,7 +2,7 @@ import React, { useEffect, useContext, useMemo } from "react";
 import { UserContext } from "../context/UserContext";
 
 const ThemeColorUpdater: React.FC = () => {
-  const { theme } = useContext(UserContext);
+  const { theme, userInfo } = useContext(UserContext);
 
   useEffect(() => {
     // Update the meta tag
@@ -15,7 +15,7 @@ const ThemeColorUpdater: React.FC = () => {
       const themeColor = theme === "dark" ? "#0f172a" : "#f3f4f6";
       metaTag.setAttribute("content", themeColor);
     }
-  }, [theme]);
+  }, [theme, userInfo]);
 
   return null;
 };

@@ -74,7 +74,9 @@ const Navbar: FC = () => {
                   ? "/decker_logo_dark.png"
                   : "/decker_logo_light.png"
               }`}
-              className="w-7 h-7 object-contain"
+              className={`w-7 h-7 object-contain ${
+                !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
+              }`}
               alt="decker logo"
             />
             <span
@@ -83,7 +85,9 @@ const Navbar: FC = () => {
                 localStorage.getItem("theme") === null
                   ? "text-gray-50"
                   : "text-gray-700"
-              } font-bold text-xl`}
+              } font-bold text-xl ${
+                !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
+              }`}
             >
               <span className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300">
                 D

@@ -25,6 +25,7 @@ import SessionExpired from "../components/Session";
 import { UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
 import useGetDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
+import ErrorDisplay from "../components/ErrorDisplay";
 type PropType = {
   undoDeck: DeckTypeWithIndex | null;
   handleUndoDeck: (deck: DeckTypeWithIndex | null) => void;
@@ -162,83 +163,22 @@ function Deck({
   }
 
   if (isError) {
-    const axiosError = error as AxiosErrorType;
-    if (axiosError?.message?.includes("Network Error")) {
-      return (
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4">
-          <img
-            src={`${
-              theme === "dark"
-                ? "/illustrations/no_internet_dark.svg"
-                : "/illustrations/no_internet_light.svg"
-            }`}
-            alt="No internet "
-            className="w-28 h-28 "
-          />
-          <p className="font-semibold text-md"> No internet connection.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-            type="button"
-            aria-label="Refresh"
-          >
-            Refresh
-          </button>
-        </div>
-      );
-    } else if (axiosError?.response?.status === 500) {
-      return (
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
-          <img
-            src={`${
-              theme === "dark"
-                ? "/illustrations/server_down_dark.svg"
-                : "/illustrations/server_down_light.svg"
-            }`}
-            alt="Server down "
-            className=" w-40 h-36 "
-          />
-          <div className="font-semibold text-md">
-            <p> An error occurred on the server.</p>
-            <p> Please try again later.</p>
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out   "
-            type="button"
-            aria-label="Refresh"
-          >
-            Refresh
-          </button>
-        </div>
-      );
-    } else {
-      const errorMessage =
-        axiosError?.response?.data?.message ||
-        "An error occurred. Please try again later.";
-      return (
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2">
-          <img
-            src={`${
-              theme === "dark"
-                ? "/illustrations/error_dark.svg"
-                : "/illustrations/error_light.svg"
-            }`}
-            alt="Error "
-            className=" w-40 h-40 "
-          />
-          <p className="font-semibold text-md"> {errorMessage}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out "
-            type="button"
-            aria-label="Refresh"
-          >
-            Refresh
-          </button>
-        </div>
-      );
-    }
+    return (
+      <ErrorDisplay
+        theme={theme}
+        isError={isError}
+        error={error as AxiosErrorType}
+      >
+        <button
+          onClick={() => window.location.reload()}
+          className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out "
+          type="button"
+          aria-label="Refresh"
+        >
+          Refresh
+        </button>
+      </ErrorDisplay>
+    );
   }
 
   if (isLoading) {
@@ -254,7 +194,7 @@ function Deck({
           content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."
         />
       </Helmet>
-      <div className="flex flex-col gap-2 mt-8 mb-24 lg:mx-32 ">
+      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-32 ">
         {
           <div
             ref={undoButtonRef}
@@ -379,7 +319,7 @@ function Deck({
                                     " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
                                   } 
         text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.8rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
+                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
                      transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
@@ -492,7 +432,7 @@ function Deck({
                                     " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
                                   } 
         text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.8rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
+                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
                      transition-[background-color,border-color] duration-100   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 after:rounded-sm z-30 ${
                        deck.isProcessing
                          ? "cursor-not-allowed"

@@ -35,11 +35,11 @@ const SearchBar: FC = () => {
   };
 
   return (
-    <div className={` bg-slate-800 fixed top-14 lg:relative lg:top-auto`}>
+    <div className={` bg-slate-950 fixed top-14 lg:relative lg:top-auto`}>
       <div
         className={`lg:relative ${
           showSearchBar ? "w-72 right-1/2" : "w-0 right-0"
-        } overflow-hidden transition-all duration-500 lg:duration-700  lg:right-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-white dark:bg-slate-950 rounded-md `}
+        } overflow-hidden transition-all duration-500 lg:duration-700  lg:right-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-white dark:bg-slate-950  `}
       >
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
           <AiOutlineSearch className="dark:text-white text-gray-700 text-lg" />
@@ -50,7 +50,7 @@ const SearchBar: FC = () => {
           onChange={handleInputChange}
           type="text"
           id="simple-search"
-          className="bg-gray-50 dark:bg-gray-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm rounded-md  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300  "
+          className="bg-gray-50 dark:bg-gray-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300 rounded-md "
           placeholder="Search for decks and cards"
           autoComplete="off"
           required
@@ -62,13 +62,13 @@ const SearchBar: FC = () => {
             }}
             className={`text-gray-400 dark:text-gray-400 ${
               showSearchBar ? "opactiy-100" : "opacity-0"
-            } cursor-pointer transition-opacity duration-700`}
+            } cursor-pointer transition-opacity duration-700 text-xl`}
           />
         </div>
       </div>
       <div
         className={`fixed  ${
-          showSearchBar ? "left-0" : "left-full"
+          showSearchBar ? "left-0 " : "left-full"
         } transition-all duration-500 lg:duration-700 `}
       >
         {showSearchBar && (

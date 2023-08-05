@@ -14,12 +14,9 @@ import useDeleteDeck from "./hooks/useDeleteDeck";
 import Loading from "./components/Loading";
 import AuthSuccess from "./pages/AuthSuccess";
 import ShowAlert from "./components/ShowAlert";
-import Cards from "./pages/Cards";
 import Deck from "./pages/Deck";
 import PrivateRoutes from "./components/PrivateRoutes";
 import Login from "./pages/Login";
-import SignUp from "./pages/Signup";
-import VerifyEmail from "./pages/VerifyEmail";
 import { AlertContext } from "./context/AlertContext";
 import { OfflineContext } from "./context/OfflineContext";
 // Lazy load the components
@@ -28,6 +25,9 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const SessionExpired = lazy(() => import("./pages/SessionExpired"));
 const DeleteMyAccount = lazy(() => import("./pages/DeleteMyAccount"));
+const SignUp = lazy(() => import("./pages/Signup"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const Cards = lazy(() => import("./pages/Cards"));
 const AccountDeletionSuccess = lazy(
   () => import("./pages/AccountDeletionSuccess")
 );
@@ -175,8 +175,22 @@ function App() {
                 />
               }
             />
-            <Route path="/cards/:deck_id" element={<Cards />} />
-            <Route path="/cards/:deck_id/:search_index" element={<Cards />} />
+            <Route
+              path="/cards/:deck_id"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <Cards />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/cards/:deck_id/:search_index"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <Cards />
+                </Suspense>
+              }
+            />
             <Route
               path="/account/deletemyaccount"
               element={
@@ -187,7 +201,14 @@ function App() {
             />
           </Route>
 
-          <Route path="/signup" element={<SignUp />} />
+          <Route
+            path="/signup"
+            element={
+              <Suspense fallback={<Loading />}>
+                <SignUp />
+              </Suspense>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route
             path="/sessionexpired"
@@ -229,7 +250,14 @@ function App() {
               </Suspense>
             }
           />
-          <Route path="/verifyemail" element={<VerifyEmail />} />
+          <Route
+            path="/verifyemail"
+            element={
+              <Suspense fallback={<Loading />}>
+                <VerifyEmail />
+              </Suspense>
+            }
+          />
           <Route path="/auth/success" element={<AuthSuccess />} />
           <Route
             path="*"
