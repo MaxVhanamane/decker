@@ -42,6 +42,7 @@ import ErrorDisplay from "../components/ErrorDisplay";
 import shortid from "shortid";
 import { BsTypeUnderline } from "react-icons/bs";
 import parseNote from "../functions/parseNote";
+import { FaExpand } from "react-icons/fa";
 // types
 // let oldContent:string //this  works
 type ContentType = {
@@ -242,8 +243,7 @@ const Cards: FC = () => {
 
     if (textareaRef?.current) {
       const textarea = textareaRef.current;
-      const maxHeightForTextArea =
-        window.innerHeight - (window.innerHeight * 35) / 100;
+      const maxHeightForTextArea = (window.innerHeight * 70) / 100; //giving 60 percent of screen height to the textarea.
       if (textarea.scrollHeight === 24) {
         return setHeight(80);
       }
@@ -253,19 +253,66 @@ const Cards: FC = () => {
         maxHeightForTextArea > textarea.scrollHeight
       ) {
         // adding an extra 40+ to avoid weird bug. if I don't add this, then if you hit enter then while adding height it moves the content inside textarea which looks weird.
-        setHeight((preViousHight) => {
-          if (
-            textarea.scrollHeight > textarea.clientHeight &&
-            maxHeightForTextArea > preViousHight
-          )
-            return preViousHight + 120;
-          else {
-            return preViousHight;
+        setHeight((previousHeight) => {
+          if (maxHeightForTextArea - previousHeight > 120) {
+            return maxHeightForTextArea > previousHeight
+              ? previousHeight + 120
+              : previousHeight;
+          } else {
+            return parseFloat(
+              (previousHeight + maxHeightForTextArea - previousHeight).toFixed(
+                2
+              )
+            );
           }
         });
       }
     }
   }, [note]);
+
+  const increaseTextAreaHeight = () => {
+    const textarea = textareaRef.current;
+    const maxHeightForTextArea = (window.innerHeight * 70) / 100;
+    if (maxHeightForTextArea > textarea!.clientHeight) {
+      setHeight((previousHeight) => {
+        if (maxHeightForTextArea - previousHeight > 120) {
+          return maxHeightForTextArea > previousHeight
+            ? previousHeight + 120
+            : previousHeight;
+        } else {
+          return parseFloat(
+            (previousHeight + maxHeightForTextArea - previousHeight).toFixed(2)
+          );
+        }
+      });
+    }
+  };
+  const decreaseTextAreaHeight = () => {
+    if (height <= 80) {
+      setHeight(80);
+    } else {
+      setHeight((previousHeight) => {
+        if (height - 120 > 0) {
+          return previousHeight - 120;
+        } else {
+          return 80;
+        }
+      });
+    }
+  };
+
+  const adjustTextareaHeightOnPasteAndExpand = () => {
+    const textarea = textareaRef.current;
+
+    const maxHeightForTextArea = (window.innerHeight * 70) / 100;
+    if (maxHeightForTextArea > textarea!.clientHeight) {
+      setHeight((previousHeight) => {
+        return maxHeightForTextArea > previousHeight
+          ? maxHeightForTextArea
+          : previousHeight;
+      });
+    }
+  };
 
   // onClick handlers
   const handleSubmit = async (e: FormEvent) => {
@@ -897,26 +944,6 @@ const Cards: FC = () => {
     [note, setNote, editContent, setEditContent]
   );
 
-  const increaseTextAreaHeight = () => {
-    const textarea = textareaRef.current;
-    const maxHeightForTextArea =
-      window.innerHeight - (window.innerHeight * 40) / 100;
-    if (maxHeightForTextArea > textarea!.clientHeight) {
-      setHeight((previousHeight) => {
-        return maxHeightForTextArea > previousHeight
-          ? previousHeight + 120
-          : previousHeight;
-      });
-    }
-  };
-  const decreaseTextAreaHeight = () => {
-    if (height <= 80) {
-      setHeight(80);
-    } else {
-      setHeight((previousHeight) => previousHeight - 120);
-    }
-  };
-
   if (isLoading) {
     return <Loading />;
   }
@@ -1041,7 +1068,7 @@ const Cards: FC = () => {
                   </button>
                   <button
                     name="addUnderlineTextToAddCard"
-                    title="Bold text"
+                    title="Underline text"
                     className="dark:text-gray-200 dark:hover:text-gray-400  text-gray-500 hover:text-gray-900 text-xl transition-all duration-300 "
                     type="button"
                     onClick={(e) => addUnderlineText(e)}
@@ -1059,7 +1086,7 @@ const Cards: FC = () => {
                   </button>
 
                   <button
-                    title="Contract Text Area"
+                    title="Decrease TextArea Height"
                     className="text-orange-500 hover:text-orange-600 text-xl transition-all duration-300"
                     type="button"
                     onClick={decreaseTextAreaHeight}
@@ -1067,7 +1094,7 @@ const Cards: FC = () => {
                     <FiMinusSquare />
                   </button>
                   <button
-                    title="Expand Text Area"
+                    title="Increase TextArea Height"
                     className="text-green-500 hover:text-green-600  text-xl transition-all duration-300"
                     type="button"
                     onClick={increaseTextAreaHeight}
@@ -1075,8 +1102,16 @@ const Cards: FC = () => {
                     <FiPlusSquare />
                   </button>
                   <button
+                    title="Expand TextArea Fully"
+                    className="text-green-500 hover:text-green-600  text-md transition-all duration-300 ml-6"
+                    type="button"
+                    onClick={adjustTextareaHeightOnPasteAndExpand}
+                  >
+                    <FaExpand />
+                  </button>
+                  <button
                     title="Close"
-                    className="text-red-500 hover:text-red-600  text-[1.2rem] transition-all duration-300 ml-5"
+                    className="text-red-500 hover:text-red-600  text-[1.2rem] transition-all duration-300 ml-1"
                     type="button"
                     onClick={() => {
                       if (title.trim().length > 0 || note.trim().length > 0) {
@@ -1132,6 +1167,7 @@ const Cards: FC = () => {
                   height: expandTextarea ? height + "px" : "0",
                 }}
                 value={note}
+                onPaste={adjustTextareaHeightOnPasteAndExpand}
                 placeholder="Note"
               ></textarea>
             </div>
@@ -1227,7 +1263,7 @@ const Cards: FC = () => {
                   </button>
                   <button
                     name="addUnderlineTextToEditCard"
-                    title="Bold text"
+                    title="Underline text"
                     className="dark:text-gray-200  dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-150 "
                     type="button"
                     onClick={(e) => addUnderlineText(e)}
@@ -1348,6 +1384,7 @@ const Cards: FC = () => {
                   }}
                   className=" text-xl rounded px-1  text-center text-gray-50 cursor-pointer bg-red-500"
                   aria-label="Back"
+                  title="Back"
                 >
                   <IoIosArrowRoundBack />
                 </button>
@@ -1364,6 +1401,7 @@ const Cards: FC = () => {
                   type="button"
                   className="text-red-500 text-xl outline-none px-1  text-center hover:scale-95 "
                   aria-label="Delete Card"
+                  title="Delete Card"
                 >
                   <MdOutlineDeleteOutline />
                 </button>
@@ -1375,6 +1413,7 @@ const Cards: FC = () => {
                   type="button"
                   className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-400"
                   aria-label="Edit Card"
+                  title="Edit Card"
                 >
                   <BiEdit />
                 </button>

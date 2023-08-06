@@ -266,7 +266,7 @@ function Deck({
             </label>
             <input
               ref={inputRefElement}
-              className=" dark:bg-slate-950 dark:border-sky-400 dark:text-white lg:w-96 w-80 py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
+              className=" dark:bg-slate-950 dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
             />
@@ -319,7 +319,7 @@ function Deck({
                                     " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
                                   } 
         text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
+                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
                      transition-[background-color,border-color] duration-100  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}

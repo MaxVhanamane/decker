@@ -92,12 +92,20 @@ const parseNote = (noteString: string) => {
           rel="noopener noreferrer"
           key={shortid.generate()}
         >
-          <span className="dark:text-gray-50 text-gray-800">
-            {linkName === "link name" ? "Link -" : `${linkName}- `}
-          </span>
-          <span className="underline underline-offset-2 text-blue-600">
-            {href}
-          </span>
+          <p className="text-start">
+            <span
+              className="dark:text-gray-50 text-gray-800 cursor-text"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              {linkName === "link name" ? "Link- " : `${linkName}- `}
+            </span>
+            <span className="underline underline-offset-2 text-blue-600">
+              {href}
+            </span>
+          </p>
         </a>
       );
     } else if (boldText !== undefined) {
