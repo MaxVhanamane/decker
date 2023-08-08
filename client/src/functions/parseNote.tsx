@@ -65,9 +65,10 @@ const parseNote = (noteString: string) => {
             backgroundColor: `${
               localStorage.getItem("theme") === "dark" ||
               localStorage.getItem("theme") === null
-                ? "rgb(1, 22, 39)"
+                ? "#0f172a"
                 : "auto"
             }`,
+            borderRadius: 10,
           }}
         >
           {codeBlock}
@@ -92,7 +93,7 @@ const parseNote = (noteString: string) => {
           rel="noopener noreferrer"
           key={shortid.generate()}
         >
-          <p className="text-start">
+          <p className="text-start line-clamp-1 text-blue-600">
             <span
               className="dark:text-gray-50 text-gray-800 cursor-text"
               onClick={(e) => {

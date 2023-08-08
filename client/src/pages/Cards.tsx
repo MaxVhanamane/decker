@@ -23,6 +23,7 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData, AxiosErrorType } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
 import { MdOutlineDeleteOutline } from "react-icons/md";
+import { TbBulbFilled } from "react-icons/tb";
 import { BiCodeCurly, BiEdit } from "react-icons/bi";
 import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
 import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
@@ -40,9 +41,10 @@ import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
 
 import shortid from "shortid";
-import { BsTypeUnderline } from "react-icons/bs";
+import { BsChevronExpand, BsTypeUnderline } from "react-icons/bs";
 import parseNote from "../functions/parseNote";
 import { FaExpand } from "react-icons/fa";
+import Tips from "../components/Tips";
 // types
 // let oldContent:string //this  works
 type ContentType = {
@@ -83,6 +85,7 @@ const Cards: FC = () => {
   const { isOnline } = useContext(OfflineContext);
   const [note, setNote] = useState<string>("");
   const [title, setTitle] = useState<string>("");
+  const [showTips, setShowTips] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [height, setHeight] = useState(80);
@@ -184,6 +187,11 @@ const Cards: FC = () => {
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
   const handleBrowsersBackButton = useCallback(
     function (event: PopStateEvent) {
+      if (showTips) {
+        event.preventDefault();
+        setShowTips(false);
+        return;
+      }
       if (openModal || showFullScreen) {
         event.preventDefault();
         openModal ? setOpenModal(false) : setShowFullScreen(false);
@@ -192,7 +200,7 @@ const Cards: FC = () => {
         navigate("/");
       }
     },
-    [openModal, showFullScreen]
+    [openModal, showFullScreen, showTips]
   );
 
   // Here we will check if user has used browser's back button if he uses browsers back button to go back then
@@ -206,7 +214,7 @@ const Cards: FC = () => {
     return () => {
       window.removeEventListener("popstate", handleBrowsersBackButton);
     };
-  }, [openModal, showFullScreen]);
+  }, [openModal, showFullScreen, showTips]);
 
   // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
   useEffect(() => {
@@ -292,7 +300,7 @@ const Cards: FC = () => {
       setHeight(80);
     } else {
       setHeight((previousHeight) => {
-        if (height - 120 > 0) {
+        if (previousHeight - 120 > 80) {
           return previousHeight - 120;
         } else {
           return 80;
@@ -592,30 +600,28 @@ const Cards: FC = () => {
       let newNote: string;
       let currentSelectionStart: number;
       let currentSelectionEnd: number;
-      // check which button is clicked using name property so that we can add our bold string (**Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**) to correct textarea
+      // check which button is clicked using name property so that we can add our bold string (**Bold text.**) to correct textarea
       if (e.currentTarget.name === "addBoldTextToAddCard") {
         // textareaRef?.current?.selectionStart will give us the cursor position. we will add our bold string to that cursor position.
         // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
         const selectionStart = textareaRef?.current?.selectionStart || 0;
-        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the bold string (**Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**) in the middle of the note
-        // like this `${note.substring(0, selectionStart)} **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.** ${note.substring(selectionEnd)}`;
+        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the bold string (**Bold text.**) in the middle of the note
+        // like this `${note.substring(0, selectionStart)} **Bold text.** ${note.substring(selectionEnd)}`;
         const selectionEnd = textareaRef?.current?.selectionEnd || 0;
-        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**.
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add **Bold text.**.
         // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
         if (selectionEnd - selectionStart === 0) {
           newNote = `${note.substring(
             0,
             selectionStart
-          )} **Put your text inside double asterisks like this (e.g. **your content**) to make it bold** ${note.substring(
-            selectionEnd
-          )}`;
-          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**
+          )} **Bold text** ${note.substring(selectionEnd)}`;
+          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of **Bold text.**
           // so that once user clicks on B (Bold text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "put your text inside ** to make it bold. eg. **your content**" string manually I can start typing directly.
-          // added 3 and 9  so that i can select only "put your text inside ** to make it bold. eg. **your content**" not the whole string with asterisks like this **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.**
+          // added 3 and 9  so that i can select only "put your text inside ** to make it bold. eg. **your content**" not the whole string with asterisks like this **Bold text.**
           // I have used these variables in setTimeout for auto selection.
           currentSelectionStart =
             (textareaRef?.current?.selectionStart || 0) + 3;
-          currentSelectionEnd = currentSelectionStart + 87;
+          currentSelectionEnd = currentSelectionStart + 9;
           setNote(newNote);
           setTimeout(() => {
             textareaRef?.current?.focus();
@@ -661,18 +667,16 @@ const Cards: FC = () => {
       } else if (e.currentTarget.name === "addBoldTextToEditCard") {
         const selectionStart = editTextareaRef?.current?.selectionStart || 0;
         const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
-        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.** will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
+        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, **Bold text.** will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
         // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will make the selected text bold.
         if (selectionEnd - selectionStart === 0) {
           newNote = `${editContent.note.substring(
             0,
             selectionStart
-          )} **Put your text inside double asterisks like this (e.g. **your content**) to make it bold.** ${editContent.note.substring(
-            selectionEnd
-          )}`;
+          )} **Bold text** ${editContent.note.substring(selectionEnd)}`;
           currentSelectionStart =
             (editTextareaRef?.current?.selectionStart || 0) + 3;
-          currentSelectionEnd = currentSelectionStart + 87;
+          currentSelectionEnd = currentSelectionStart + 9;
           setEditContent({ ...editContent, note: newNote });
 
           setTimeout(() => {
@@ -740,30 +744,28 @@ const Cards: FC = () => {
       let newNote: string;
       let currentSelectionStart: number;
       let currentSelectionEnd: number;
-      // check which button is clicked using name property so that we can add our underline string (_Put your text inside single underscore (e.g. _your content_) to underline it._) to the correct textarea
+      // check which button is clicked using name property so that we can add our underline string (_Underlined text_) to the correct textarea
       if (e.currentTarget.name === "addUnderlineTextToAddCard") {
         // textareaRef?.current?.selectionStart will give us the cursor position. we will add our underline string to that cursor position.
         // it will assign 0 to selectionStart if textareaRef?.current?.selectionStart is undefined
         const selectionStart = textareaRef?.current?.selectionStart || 0;
-        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the underline string (_Put your text inside single underscore (e.g. _your content_) to underline it._) in the middle of the note
-        // like this `${note.substring(0, selectionStart)} _Put your text inside single underscore (e.g. _your content_) to underline it._ ${note.substring(selectionEnd)}`;
+        // textareaRef?.current?.selectionEnd we need this to get remaining string if we add the underline string (_Underlined text_) in the middle of the note
+        // like this `${note.substring(0, selectionStart)} _Underlined text_ ${note.substring(selectionEnd)}`;
         const selectionEnd = textareaRef?.current?.selectionEnd || 0;
-        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add _Put your text inside single underscore (e.g. _your content_) to underline it._
+        // if user has not selected any text then selectionEnd-selectionStart will be 0. Then we will add _Underlined text_
         // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will underline the selected text.
         if (selectionEnd - selectionStart === 0) {
           newNote = `${note.substring(
             0,
             selectionStart
-          )} _Put your text inside single underscore (e.g. _your content_) to underline it._ ${note.substring(
-            selectionEnd
-          )}`;
-          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of _Put your text inside single underscore (e.g. _your content_) to underline it._
-          // so that once user clicks on U (Underline text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "_Put your text inside single underscore (e.g. _your content_) to underline it._" string manually I can start typing directly.
-          // added 2 and 77  so that I can select only "Put your text inside single underscore (e.g. _your content_) to underline it." not the whole string with underscores like this _Put your text inside single underscore (e.g. _your content_) to underline it._
+          )} _Underlined text_ ${note.substring(selectionEnd)}`;
+          // Now we need currentSelectionStart and currentSelectionEnd variables to store the position of _Underlined text_
+          // so that once user clicks on U (Underline text button) the text that it adds will be automatically selected. if we automatically select the newly added text then we don't have to remove "_Underlined text_" string manually I can start typing directly.
+          // added 2 and 15  so that I can select only "Underlined text" not the whole string with underscores like this _Underlined text_
           // I have used these variables in setTimeout for auto selection.
           currentSelectionStart =
             (textareaRef?.current?.selectionStart || 0) + 2;
-          currentSelectionEnd = currentSelectionStart + 77;
+          currentSelectionEnd = currentSelectionStart + 15;
           setNote(newNote);
           setTimeout(() => {
             textareaRef?.current?.focus();
@@ -809,18 +811,16 @@ const Cards: FC = () => {
       } else if (e.currentTarget.name === "addUnderlineTextToEditCard") {
         const selectionStart = editTextareaRef?.current?.selectionStart || 0;
         const selectionEnd = editTextareaRef?.current?.selectionEnd || 0;
-        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, _Put your text inside single underscore (e.g. _your content_) to underline it._ will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
+        // If the user hasn't selected any text, selectionEnd - selectionStart will equal 0. In that case, _Underlined text_ will be added at the cursor's position. selectionStart will give us cursor position(it is like index).
         // if selectionEnd-selectionStart is greater than 0 it means user has selected some text then we will underline the selected text.
         if (selectionEnd - selectionStart === 0) {
           newNote = `${editContent.note.substring(
             0,
             selectionStart
-          )} _Put your text inside single underscore (e.g. _your content_) to underline it._ ${editContent.note.substring(
-            selectionEnd
-          )}`;
+          )} _Underlined text_ ${editContent.note.substring(selectionEnd)}`;
           currentSelectionStart =
             (editTextareaRef?.current?.selectionStart || 0) + 2;
-          currentSelectionEnd = currentSelectionStart + 77;
+          currentSelectionEnd = currentSelectionStart + 15;
           setEditContent({ ...editContent, note: newNote });
 
           setTimeout(() => {
@@ -901,8 +901,8 @@ const Cards: FC = () => {
           )}`;
 
           currentSelectionStart =
-            (textareaRef?.current?.selectionStart || 0) + 2;
-          currentSelectionEnd = currentSelectionStart + 9;
+            (textareaRef?.current?.selectionStart || 0) + 13;
+          currentSelectionEnd = currentSelectionStart + 33;
           setNote(newNote);
           setTimeout(() => {
             textareaRef?.current?.focus();
@@ -923,8 +923,8 @@ const Cards: FC = () => {
           )} [link name](put your link URL in this bracket)
           \ ${editContent.note.substring(selectionEnd)}`;
           currentSelectionStart =
-            (editTextareaRef?.current?.selectionStart || 0) + 2;
-          currentSelectionEnd = currentSelectionStart + 9;
+            (editTextareaRef?.current?.selectionStart || 0) + 13;
+          currentSelectionEnd = currentSelectionStart + 33;
           setEditContent({ ...editContent, note: newNote });
 
           setTimeout(() => {
@@ -971,6 +971,10 @@ const Cards: FC = () => {
         </button>
       </ErrorDisplay>
     );
+  }
+
+  if (showTips) {
+    return <Tips setShowTips={setShowTips} />;
   }
 
   return (
@@ -1084,6 +1088,15 @@ const Cards: FC = () => {
                   >
                     <AiOutlineBold />
                   </button>
+                  <button
+                    title="Tips"
+                    className="text-yellow-400 hover:text-yellow-500  text-xl transition-all duration-300"
+                    type="button"
+                    name="tips"
+                    onClick={() => setShowTips(true)}
+                  >
+                    <TbBulbFilled />
+                  </button>
 
                   <button
                     title="Decrease TextArea Height"
@@ -1129,30 +1142,41 @@ const Cards: FC = () => {
                   </button>
                 </div>
               </div>
-
-              <input
-                ref={inputElementRef}
-                onClick={() => setExpandTextArea(true)}
-                type="text"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setTitle(e.target.value);
-                }}
-                //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input
-                //field typically triggers form submission by default. Afterwards, we will shift the focus from the input field to the textarea.
-                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    textareaRef.current?.focus();
-                  }
-                }}
-                value={title}
-                className={`${
-                  expandTextarea
-                    ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
-                    : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center"
-                } transition-[border-radius]  h-10 px-3 py-2  pb-2 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw]  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-950 dark:text-gray-50 z-10 `}
-                placeholder={`${expandTextarea ? "Title" : "Add a note"} `}
-              />
+              <div className="h-10 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw] z-10 relative">
+                <input
+                  ref={inputElementRef}
+                  onClick={() => setExpandTextArea(true)}
+                  type="text"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setTitle(e.target.value);
+                  }}
+                  //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input
+                  //field typically triggers form submission by default. Afterwards, we will shift the focus from the input field to the textarea.
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      textareaRef.current?.focus();
+                    }
+                  }}
+                  value={title}
+                  className={`${
+                    expandTextarea
+                      ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
+                      : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center cursor-pointer"
+                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-950 dark:text-gray-50 z-10 `}
+                  placeholder={`${
+                    expandTextarea ? "Title" : "Craft an Elegant Note"
+                  } `}
+                />
+                {!expandTextarea && (
+                  <div className="absolute  top-1/2 -translate-y-1/2 right-8 cursor-pointer  ">
+                    <BsChevronExpand
+                      onClick={() => setExpandTextArea(true)}
+                      className="text-gray-100 "
+                    />
+                  </div>
+                )}
+              </div>
               <textarea
                 className={` ${
                   expandTextarea
@@ -1199,7 +1223,7 @@ const Cards: FC = () => {
             data={data}
           />
         ) : !expandTextarea ? (
-          <div className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full">
+          <div className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full bg-slate-950">
             <img
               src={`${
                 theme === "dark"
@@ -1207,22 +1231,22 @@ const Cards: FC = () => {
                   : "/illustrations/no_cards_found_light.svg"
               }`}
               alt="No cards found"
-              className="lg:w-32 lg:h-32 w-36 h-36 "
+              className="lg:w-32 lg:h-32 w-32 h-32 "
             />
             <p className="p-1 mt-1 text-md">
               Looks like you haven't added any cards yet.
             </p>
             <p className="text-md">
-              Click the 'Add a note' button to get started.
+              Click the 'Craft an Elegant Note' button to get started.
             </p>
             {!expandTextarea && (
               <button
                 onClick={() => setExpandTextArea(true)}
-                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded-md  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+                className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded-md  active:shadow-lg text-gray-50   w-fit px-2  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
                 type="button"
-                aria-label="Add a note"
+                aria-label="Craft an Elegant Note"
               >
-                Add a note
+                Craft an Elegant Note
               </button>
             )}
           </div>
@@ -1351,7 +1375,7 @@ const Cards: FC = () => {
               <p className="text-justify mb-5 mt-5 text-lg font-bold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100">
                 {fullScreenCardData?.title}
               </p>
-              <div className="text-justify mb-10 break-words break-normal -ml-1 whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+              <div className="text-justify mb-16 break-words break-normal -ml-1 whitespace-pre-wrap text-gray-800 dark:text-gray-200">
                 {parseNote(fullScreenCardData.note)}
               </div>
             </div>
