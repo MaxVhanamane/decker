@@ -973,10 +973,6 @@ const Cards: FC = () => {
     );
   }
 
-  if (showTips) {
-    return <Tips setShowTips={setShowTips} />;
-  }
-
   return (
     <>
       <Helmet>
@@ -991,6 +987,7 @@ const Cards: FC = () => {
         message="Drag and drop the card here to delete it."
         showPopUp={showPopUp}
       />
+      {showTips && <Tips setShowTips={setShowTips} />}
 
       <Droppable droppableId="cardDeleteArea">
         {(provided, snapshot) => {

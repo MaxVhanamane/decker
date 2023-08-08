@@ -16,12 +16,12 @@ const Tips = ({ setShowTips }: propTypes) => {
         theme === "dark" || theme === null ? "dark:bg-slate-950" : "bg-white"
       }`}
     >
-      <div className=" absolute top-20 md:top-24 md:w-[90%]  lg:w-1/2 h-screen ">
-        <h1 className="font bold text-xl mb-4">
+      <div className=" absolute top-20 md:top-24 md:w-[90%]  lg:w-1/2 h-screen  ">
+        <h1 className="font bold text-xl mb-6 lg:mb-8">
           Tips on How to Make Your Card Look Beautiful
         </h1>
 
-        <ol className="list-inside list-decimal flex gap-3 flex-col text-start  m-4">
+        <ol className="list-inside list-decimal flex gap-3 flex-col text-justify  m-4">
           <li>
             To make your text bold, enclose it with double asterisks like this
             (e.g. **your content**).
@@ -68,19 +68,19 @@ const Tips = ({ setShowTips }: propTypes) => {
             </SyntaxHighlighter>
           </li>
         </ol>
-        <div className="text-start m-4 pb-16">
+        <div className=" m-4 pb-16 text-justify">
           <strong className="font-bold  text-yellow-500 mr-1">Note:</strong>
           <span>
             Remember, the outermost syntax takes precedence when styles are
             combined. Avoid combining styles for clarity.
           </span>
           <p className="mt-1">Examples:</p>
-          <ul className="list-disc list-inside text-start mt-2 ">
+          <ul className="list-disc list-inside  mt-2 ">
             <li> _ **hello**_ will result in underlined text.</li>
             <li> **_hello_** will result in bold text.</li>
             <li> ```**hello**``` will result in a code block.</li>
           </ul>
-          <p className="mt-4  text-justify ">
+          <p className="mt-4  ">
             You can achieve the desired effects using
             <u className="underline decoration-pink-500 text-gray-800 dark:text-gray-200 mr-1 ml-1">
               the provided buttons,

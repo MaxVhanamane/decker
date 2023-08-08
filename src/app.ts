@@ -88,7 +88,7 @@ app.use(session({
     httpOnly: true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite: "none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
     secure: true,      // it allows only https requests. you can only send these cookies to https sites
-    maxAge: 1000 * 60 * 60 * 24 * 7  //cookie expires in 7 days
+    maxAge: 1000 * 60 * 60 * 24 * 10  //cookie expires in 10 days
   }
 }))
 
