@@ -1,7 +1,7 @@
 import { Dispatch, MouseEvent, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { UserContext } from "../context/UserContext";
-import { searchContext } from "../context/SearchContext";
+import { UserContext } from "../../context/UserContext";
+import { searchContext } from "../../context/SearchContext";
 interface IProp {
   deck_id: string;
   indexOfCardForDeletion: number;

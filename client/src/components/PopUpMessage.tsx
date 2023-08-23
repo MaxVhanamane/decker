@@ -1,4 +1,4 @@
-import { FC, RefObject } from "react";
+import { FC, RefObject, memo } from "react";
 
 type Prop = {
   message: string;
@@ -17,4 +17,4 @@ const PopUpMessage: FC<Prop> = ({ message, showPopUp }) => {
   );
 };
 
-export default PopUpMessage;
+export default memo(PopUpMessage);

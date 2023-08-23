@@ -22,29 +22,29 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData, AxiosErrorType } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
-import { MdOutlineDeleteOutline } from "react-icons/md";
 import { TbBulbFilled } from "react-icons/tb";
 import { BiCodeCurly, BiEdit } from "react-icons/bi";
 import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
-import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
-import { IoIosArrowRoundBack } from "react-icons/io";
+import { FiCheck, FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { GoEyeClosed } from "react-icons/go";
 
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
-import ThemeToggler from "../components/ThemeToggler";
-import ConfirmDeleteModalForCard from "./../components/ConfirmDeleteModalForCard";
-import CardItems from "../components/CardItems";
+import ConfirmDeleteModalForCard from "../components/card/ConfirmDeleteModalForCard";
+import CardItems from "../components/card/CardItems";
 import SessionExpired from "../components/Session";
-import ConfirmCloseCard from "../components/ConfirmCloseCard";
+import ConfirmCloseCard from "../components/card/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
 
 import shortid from "shortid";
 import { BsChevronExpand, BsTypeUnderline } from "react-icons/bs";
-import parseNote from "../functions/parseNote";
 import { FaExpand } from "react-icons/fa";
-import Tips from "../components/Tips";
+import Tips from "../components/card/Tips";
+import FullScreenCardView from "../components/card/FullScreenCardView";
+import { TiTick } from "react-icons/ti";
+import { IoMdClose } from "react-icons/io";
+import EditCard from "../components/card/EditCard";
 // types
 // let oldContent:string //this  works
 type ContentType = {
@@ -418,15 +418,17 @@ const Cards: FC = () => {
     }
   };
 
-  const handleChange = (
-    e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    if (e.target.name === "title") {
-      setEditContent({ ...editContent, title: e.target.value });
-    } else if (e.target.name === "note") {
-      setEditContent({ ...editContent, note: e.target.value });
-    }
-  };
+  // Memoized handleChange function
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setEditContent((prevContent) => ({
+        ...prevContent,
+        [name]: value,
+      }));
+    },
+    []
+  );
 
   const handlePopUp = () => {
     if (showPopUp.current?.classList.contains("scale-0")) {
@@ -1220,7 +1222,7 @@ const Cards: FC = () => {
             data={data}
           />
         ) : !expandTextarea ? (
-          <div className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full bg-slate-950">
+          <div className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-bold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full ">
             <img
               src={`${
                 theme === "dark"
@@ -1251,98 +1253,17 @@ const Cards: FC = () => {
       </div>
 
       {openModal ? (
-        <div className="w-screen z-[90] bg-white dark:bg-slate-950 fixed inset-0 flex items-center justify-center ">
-          <div className="  shadow w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%] dark:bg-slate-800 bg-teal-500 flex flex-col items-center justify-center md:rounded-md">
-            {/* modal head  */}
-
-            <div className="w-full ">
-              <div className=" flex item-center justify-between  pr-4 gap-2 ">
-                <div>
-                  <h2 className="py-2 px-4 text-left text-white font-bold ">
-                    Edit Card
-                  </h2>
-                </div>
-                <div className="flex items-center justify-center gap-4  px-2 py-1  ">
-                  <button
-                    title="Add a link"
-                    className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1 text-xl  transition-all duration-150"
-                    type="button"
-                    name="addLinkToEditCard"
-                    onClick={(e) => addLink(e)}
-                  >
-                    {" "}
-                    <AiOutlineLink />
-                  </button>
-                  <button
-                    title="Add code sample"
-                    className="dark:text-gray-200   dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1 text-xl  transition-all duration-150"
-                    type="button"
-                    name="addCodeSnippetToEditCard"
-                    onClick={(e) => addCodeBlock(e)}
-                  >
-                    <BiCodeCurly />
-                  </button>
-                  <button
-                    name="addUnderlineTextToEditCard"
-                    title="Underline text"
-                    className="dark:text-gray-200  dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-150 "
-                    type="button"
-                    onClick={(e) => addUnderlineText(e)}
-                  >
-                    <BsTypeUnderline />
-                  </button>
-                  <button
-                    name="addBoldTextToEditCard"
-                    title="Bold text"
-                    className="dark:text-gray-200  dark:hover:bg-gray-600 hover:bg-teal-600 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-gray-50 hover:text-gray-200 transition-all duration-150 "
-                    type="button"
-                    onClick={(e) => addBoldText(e)}
-                  >
-                    <AiOutlineBold />
-                  </button>
-                </div>
-              </div>
-            </div>
-            {/* modal content  */}
-            <div className=" px-2 py-2  w-full border-b border-t border-gray-50/80 dark:border-gray-50/30 flex flex-col items-center justify-center ">
-              <input
-                value={editContent.title}
-                onChange={handleChange}
-                name="title"
-                className="px-2 py-2 w-full outline-none rounded-t-md  font-semibold text-gray-800 dark:bg-[#011627] dark:text-gray-50 "
-                placeholder="Title"
-              />
-              <textarea
-                value={editContent.note}
-                onChange={handleChange}
-                name="note"
-                className="px-2 py-2 w-full outline-none text-gray-800 rounded-b-md   dark:bg-[#011627] dark:text-gray-50 h-[75vh] resize-none "
-                placeholder="Note"
-                ref={editTextareaRef}
-              ></textarea>
-            </div>
-
-            {/* modal footer  */}
-            <div className="flex items-center justify-end  space-x-2 my-3 mr-8 w-full  ">
-              <button
-                onClick={handleSave}
-                className="px-2 py-1 bg-blue-700 hover:bg-blue-800  rounded outline-none text-white mx-4 transition-all duration-300"
-                aria-label="Save"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setOpenModal(false);
-                }}
-                className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white transition-all duration-300"
-                aria-label="Cancel"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditCard
+          setOpenModal={setOpenModal}
+          addLink={addLink}
+          addCodeBlock={addCodeBlock}
+          addBoldText={addBoldText}
+          addUnderlineText={addUnderlineText}
+          editContent={editContent}
+          handleChange={handleChange}
+          handleSave={handleSave}
+          ref={editTextareaRef}
+        />
       ) : null}
 
       <ConfirmDeleteModalForCard
@@ -1364,84 +1285,14 @@ const Cards: FC = () => {
       ) : null}
 
       {showFullScreen && (
-        <article className="fixed inset-0 overflow-y-auto bg-white  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center   ">
-          <div className="mt-2 lg:mt-4 relative w-full">
-            <div className="mt-12">
-              {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words. */}
-              {/* whitespace-pre-line to keep the new lines and spaces as it is */}
-              <p className="text-justify mb-5 mt-5 text-lg font-bold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100">
-                {fullScreenCardData?.title}
-              </p>
-              <div className="text-justify mb-16 break-words break-normal -ml-1 whitespace-pre-wrap text-gray-800 dark:text-gray-200">
-                {parseNote(fullScreenCardData.note)}
-              </div>
-            </div>
-            <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
-              <div>
-                <button
-                  onClick={() => {
-                    // "If the 'search_index' is available, we will handle the back button differently.
-                    //  we will not convert the 'search_index' to a number because the index could be 0. If we convert 0 to a number and use it in the 'if' statement, it will evaluate to false. However, if we treat it as a string, it will evaluate to true
-                    if (search_index) {
-                      // If the 'search_index' is present and the user clicks on the back button, we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
-                      if (location.state?.from === "/") {
-                        navigate("/");
-                      } else {
-                        // if user is on /cards/ReactJs(deck_id) and opens searchbar and searches something and opens card and closes when he closes the card I am navigating him to /cards/ReactJs(deck_id) but while navigating If I don't send deck as state value I will not see any cards that is why I am sending this data to avoid no cards found error. This value  location?.state?.deckInfo I set this value in searchResult component.
-                        navigate(location.state?.from, {
-                          state: {
-                            deck: location?.state?.deckInfo
-                              ? location?.state?.deckInfo
-                              : null,
-                          },
-                        });
-                        setShowFullScreen(false);
-                      }
-                    }
-                    //"If the 'search_index' is undefined, it means that we did not arrive at this page from a search result, and instead opened it from the cards page. Therefore, we will simply close the fullscreen display.
-                    else {
-                      setShowFullScreen(false);
-                    }
-                  }}
-                  className=" text-xl rounded px-1  text-center text-gray-50 cursor-pointer bg-red-500"
-                  aria-label="Back"
-                  title="Back"
-                >
-                  <IoIosArrowRoundBack />
-                </button>
-              </div>
-              <div className="flex items-center justify-center gap-2 ">
-                <div>
-                  <ThemeToggler />
-                </div>
-
-                <button
-                  onClick={() => {
-                    handleDelete(fullScreenCardData?.cardIndex!);
-                  }}
-                  type="button"
-                  className="text-red-500 text-xl outline-none px-1  text-center hover:scale-95 "
-                  aria-label="Delete Card"
-                  title="Delete Card"
-                >
-                  <MdOutlineDeleteOutline />
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleEdit(fullScreenCardData);
-                  }}
-                  type="button"
-                  className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-400"
-                  aria-label="Edit Card"
-                  title="Edit Card"
-                >
-                  <BiEdit />
-                </button>
-              </div>
-            </div>
-          </div>
-        </article>
+        <FullScreenCardView
+          fullScreenCardData={fullScreenCardData}
+          search_index={search_index}
+          location={location}
+          setShowFullScreen={setShowFullScreen}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
       )}
     </>
   );

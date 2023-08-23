@@ -21,7 +21,7 @@ const Tips = ({ setShowTips }: propTypes) => {
           Tips on How to Make Your Card Look Beautiful
         </h1>
 
-        <ol className="list-inside list-decimal flex gap-3 flex-col text-justify  m-4">
+        <ol className="list-inside list-decimal flex gap-3 flex-col text-left  m-4">
           <li>
             To make your text bold, enclose it with double asterisks like this
             (e.g. **your content**).
@@ -45,8 +45,7 @@ const Tips = ({ setShowTips }: propTypes) => {
           <li>
             When inserting an external link, follow this format: [link
             name](actual link). You are welcome to assign any name to your link,
-            for example, [myLink], but ensure the actual link is accurate
-            (https://example.com).
+            for example, [myLink], but ensure the actual link is accurate (https://example.com).
           </li>
           <li>
             To style your code blocks elegantly, wrap the code within triple
@@ -68,7 +67,7 @@ const Tips = ({ setShowTips }: propTypes) => {
             </SyntaxHighlighter>
           </li>
         </ol>
-        <div className=" m-4 pb-16 text-justify">
+        <div className=" m-4 pb-16 text-left">
           <strong className="font-bold  text-yellow-500 mr-1">Note:</strong>
           <span>
             Remember, the outermost syntax takes precedence when styles are

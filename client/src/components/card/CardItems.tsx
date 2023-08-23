@@ -4,11 +4,11 @@ import { MdOutlineDeleteOutline } from "react-icons/md";
 import { useParams } from "react-router-dom";
 import { useRef, memo } from "react";
 import { BiEdit } from "react-icons/bi";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../../context/UserContext";
 import { useContext } from "react";
-import { AlertContext } from "../context/AlertContext";
-import { OfflineContext } from "../context/OfflineContext";
-import { AlertData } from "../types/types";
+import { AlertContext } from "../../context/AlertContext";
+import { OfflineContext } from "../../context/OfflineContext";
+import { AlertData } from "../../types/types";
 
 type CardType = {
   title: string;

@@ -136,6 +136,7 @@ function App() {
       }
       let deleteIndex = result.source.index;
       let moveIndex = result.destination.index;
+      if(deleteIndex===moveIndex) return
       const receivedData = result.draggableId.split("-");
       const id = receivedData[0];
       let data = {

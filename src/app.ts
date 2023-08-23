@@ -27,7 +27,7 @@ let PORT: number = 5000
 const app = express()
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
-app.use(express.json())
+app.use(express.json({limit: '5mb'}))
 
 // next two middlewares are for debugging
 // Log incoming requests
@@ -484,7 +484,13 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, asy
 
     }
   }
-  catch (error) {
+  catch (error:any) {
+  
+    if (error.name === 'VersionError') {
+      // Handle VersionError here
+     return res.status(429).json({ message: "VersionError", success: false })
+      // ... Your handling logic ...
+    }
     res.status(500).json({ message: "some error occurred", success: false })
   }
 })

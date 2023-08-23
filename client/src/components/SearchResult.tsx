@@ -235,24 +235,25 @@ const SearchResult: FC<IProp> = ({
 
   return (
     <>
-      <div className="border-t dark:border-slate-300/10 dark:text-white text-gray-800 fixed top-0 mt-12 h-[5.5rem] flex items-end justify-center w-full bg-white dark:bg-slate-950 z-50 lg:hidden font-bold ">
+      <div className="border-t dark:border-slate-300/10 dark:text-white text-gray-800 fixed top-0 mt-12 h-[6rem] flex items-end justify-center w-full bg-white dark:bg-slate-950 z-50 lg:hidden font-bold ">
         {searchQuery.length > 0 &&
           (foundDecks.length > 0 || foundCards.length > 0) && (
-            <p className="absolute bottom-2">Search Result</p>
+            <div className="absolute bottom-4">{foundDecks.length+foundCards.length>1?<p>Search Results <span className="font-extralight text-xs">(about {foundDecks.length+foundCards.length} results)</span></p> :<p>Search Result</p>}</div>
           )}
       </div>
       <div className="fixed lg:top-[3.42rem] top-12 overflow-scroll h-screen bg-white  dark:bg-slate-950 w-full    ">
-        <div className="hidden bg-white border-t border-slate-900/10 dark:border-slate-300/10 fixed lg:top-[3.35rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-950 z-50">
+        <div className="hidden bg-white border-t border-slate-900/10 dark:border-slate-300/10 fixed lg:top-[3.35rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-950 z-50 pb-4 pt-3">
           {searchQuery.length > 0 &&
             (foundDecks.length > 0 || foundCards.length > 0) && (
-              <p className="mt-2 font-bold">Search Result</p>
+              <div className="mt-2 font-bold">
+                {foundDecks.length+foundCards.length>1?<p>Search Results <span className="font-extralight text-xs">(about {foundDecks.length+foundCards.length} results)</span></p> :<p>Search Result</p>}</div>
             )}
         </div>
         {(searchQuery.length > 0 && foundDecks.length > 0) ||
         foundCards.length > 0 ? (
           <div>
             {foundDecks?.filter((deck) => deck.pinned === true).length > 0 && (
-              <div className="mt-24 lg:mt-12 lg:mb-10 mx-1">
+              <div className="mt-24 lg:mt-16 lg:mb-10 mx-1">
                 <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
                   Pinned Decks
                 </p>
