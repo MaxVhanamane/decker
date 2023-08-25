@@ -18,6 +18,7 @@ import AccountDeletionOTP from "./models/accountdeletionotps";
 const LocalStrategy = passportLocal.Strategy
 const MongoDBStore = require('connect-mongodb-session')(session);
 const GoogleStrategy = require("passport-google-oauth20")
+const compression = require('compression');
 config()
 
 
@@ -25,6 +26,7 @@ config()
 let PORT: number = 5000
 
 const app = express()
+app.use(compression());
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express.json({limit: '5mb'}))
@@ -464,15 +466,13 @@ app.delete('/card/:id/:index', fetchUserDetails, async (req: Request, res: Respo
 
 
 
-app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, async (req: Request, res: Response) => {
+app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, async (req: Request, res: Response) => {
   try {
 
     const deck = await DeckModal.findById(req.params.id)
 
     if (deck) {
-      // deck.cards.splice(parseInt(req.params.index), 1);
-      // let newArray = await deck.save()
-      // res.json({ cards: newArray, success: true })
+
       let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
       deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move)
       await deck.save()
@@ -485,15 +485,14 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, asy
     }
   }
   catch (error:any) {
-  
+  console.log(error)
     if (error.name === 'VersionError') {
-      // Handle VersionError here
      return res.status(429).json({ message: "VersionError", success: false })
-      // ... Your handling logic ...
     }
     res.status(500).json({ message: "some error occurred", success: false })
   }
 })
+
 
 
 

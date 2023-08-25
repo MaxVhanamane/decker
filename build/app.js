@@ -52,12 +52,14 @@ const accountdeletionotps_1 = __importDefault(require("./models/accountdeletiono
 const LocalStrategy = passport_local_1.default.Strategy;
 const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
 const GoogleStrategy = require("passport-google-oauth20");
+const compression = require('compression');
 (0, dotenv_1.config)();
 let PORT = 5000;
 const app = (0, express_1.default)();
+app.use(compression());
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
-app.use(express_1.default.json());
+app.use(express_1.default.json({ limit: '5mb' }));
 // To store sessions in mongodb
 const store = new MongoDBStore({
     uri: process.env.MONGO_URI,
@@ -85,7 +87,7 @@ app.use((0, express_session_1.default)({
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7 //cookie expires in 7 days
+        maxAge: 1000 * 60 * 60 * 24 * 10 //cookie expires in 10 days
     }
 }));
 // using passport to handle login
@@ -391,13 +393,10 @@ app.delete('/card/:id/:index', fetchUserDetails, (req, res) => __awaiter(void 0,
         res.status(500).json({ message: "some error occurred", success: false });
     }
 }));
-app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const deck = yield deck_1.default.findById(req.params.id);
         if (deck) {
-            // deck.cards.splice(parseInt(req.params.index), 1);
-            // let newArray = await deck.save()
-            // res.json({ cards: newArray, success: true })
             let element_to_move = deck.cards.splice(parseInt(req.params.deleteIndex), 1)[0];
             deck.cards.splice(parseInt(req.params.moveIndex), 0, element_to_move);
             yield deck.save();
@@ -408,6 +407,10 @@ app.put('/card/changepostion/:id/:deleteIndex/:moveIndex', fetchUserDetails, (re
         }
     }
     catch (error) {
+        console.log(error);
+        if (error.name === 'VersionError') {
+            return res.status(429).json({ message: "VersionError", success: false });
+        }
         res.status(500).json({ message: "some error occurred", success: false });
     }
 }));

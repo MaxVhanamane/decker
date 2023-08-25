@@ -19,14 +19,14 @@ type OldData = {
 const moveCard = async (data: Data) => {
   try {
     const res = await request.put(
-      `/card/changepostion/${data.deck_id}/${data.deleteIndex}/${data.moveIndex}`
+      `/card/changeposition/${data.deck_id}/${data.deleteIndex}/${data.moveIndex}`
     );
     return res.data;
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
     if ((error as AxiosErrorType)?.response?.status === 429) {
       if((error as AxiosErrorType)?.response?.data?.message==="VersionError"){
-        throw new Error("Too many requests. Please try again later.");
+        throw new Error("Too many requests. Please try again!");
   
         }
     }
@@ -44,6 +44,7 @@ const moveCard = async (data: Data) => {
 const useMoveCard = () => {
   const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
+
   return useMutation(moveCard, {
     onMutate: async (data: Data) => {
       await queryClient.cancelQueries(["cards", data.deck_id]);

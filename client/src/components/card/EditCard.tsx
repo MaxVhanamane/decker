@@ -9,14 +9,15 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
+import { AiOutlineBold, AiOutlineCloseCircle, AiOutlineLink } from "react-icons/ai";
 import { BiCodeCurly } from "react-icons/bi";
-import { BsTypeUnderline } from "react-icons/bs";
+import { BsCheckLg, BsTypeUnderline } from "react-icons/bs";
 import { FiCheck } from "react-icons/fi";
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
 import { IoMdClose } from "react-icons/io";
 import { AlertContext } from "../../context/AlertContext";
 import { AlertData } from "../../types/types";
+import { MdOutlineClose } from "react-icons/md";
 
 type ContentType = {
   title: string;
@@ -164,18 +165,18 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     }, []);
 
     return (
-      <div className="w-screen z-[90] bg-white dark:bg-slate-950 fixed inset-0 flex items-center justify-center ">
-        <div className="  shadow w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%] dark:bg-slate-800 bg-gray-600 flex flex-col items-center justify-center md:rounded-md ">
-          {/* modal head  */}
+      <div className="w-screen z-[90] dark:bg-slate-800 bg-gray-600 dark:md:bg-slate-950 md:bg-white fixed inset-0 flex items-center justify-center ">
+        <div className=" w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%]   md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
 
-          <div className="w-full mt-1  py-[0.28rem] ">
-            <div className=" flex item-center justify-between  pr-4 gap-2 ">
-              <div>
-                <h2 className="py-2 px-4 text-left text-white font-semibold ">
-                  Edit Card
+          <div className="w-full  h-[3.4rem] dark:bg-slate-800 bg-gray-600  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-300/50 dark:border-gray-300/10 dark:md:bg-slate-950 md:bg-white">
+          <div>
+                <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-800 text-white font-semibold ">
+                  Edit <span className="hidden md:inline">Card</span>
                 </h2>
               </div>
-              <div className="flex items-center justify-center gap-4  px-2 py-1  ">
+             
+              <div className="flex items-center justify-center   px-2 py-1 pr-4 ">
+              <div className="flex items-center justify-center gap-3  ">
                 <button
                   title="Add a link"
                   className="dark:text-blue-600   dark:hover:text-gray-300 text-blue-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1 text-xl  transition-all duration-150"
@@ -212,28 +213,53 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 >
                   <AiOutlineBold />
                 </button>
+               </div>
+               <div className="border h-4 mx-3 border-gray-50/20 "></div>
+                <div className="flex items-center justify-center gap-3  ">
+                <button
+                  name="Close"
+                  title="Close"
+                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-red-500 hover:text-gray-200 transition-all duration-150 "
+                  type="button"
+                  onClick={() => {
+                    setOpenModal(false);
+                  }}
+                >
+                  <MdOutlineClose />
+                </button>
+                <button
+                  name="Save"
+                  title="Save"
+                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
+                  type="button"
+                  onClick={handleSave}
+                >
+                  <BsCheckLg />
+                </button>
+                </div>
               </div>
-            </div>
           </div>
-          {/* modal content  */}
-          <div className=" px-2 py-1  w-full border-b border-t border-gray-50/80 dark:border-gray-50/20 flex flex-col items-center justify-center ">
+          <div className=" px-2 py-1  w-full mt-[3.4rem] dark:md:bg-gray-800 md:bg-teal-600 md:p-2 md:rounded-md">
+            <div className="w-full flex flex-col items-center justify-center ">
+              <div className="w-full h-16">
             <textarea
               value={editContent.title}
               onChange={handleChange}
               name="title"
-              className="px-2 py-[0.36rem] w-full outline-none rounded-t-md   font-semibold text-gray-800 bg-gray-100 dark:bg-[#011627] dark:text-gray-50 resize-none border-none"
+              className="px-2 py-[0.36rem] w-full outline-none rounded-t-md   font-semibold text-gray-800 bg-gray-50 dark:bg-[#011627] dark:text-gray-50 resize-none border-none h-full"
               placeholder="Title"
               rows={2}
             />
-            <div className="dark:bg-[#011627] bg-gray-100 w-full flex items-end justify-center pb-2">
+            </div>
+            <div className="dark:bg-[#011627] bg-gray-50 w-full flex items-end justify-center pb-2">
               <hr className="w-32 border-t-0 border-b dark:border-gray-200 border-gray-700  " />
             </div>
-            <div className="w-full relative">
+            <div className="w-full relative h-[78vh] lg:h-[78vh]  ">
               <textarea
                 value={editContent.note}
                 onChange={handleChange}
                 name="note"
-                className="px-2 py-2 pb-20 w-full outline-none text-gray-800 rounded-b-md bg-gray-100  dark:bg-[#011627] dark:text-gray-50 h-[72vh] resize-none "
+                className="px-2 py-2 pb-16 w-full outline-none text-gray-800 rounded-b-md bg-gray-50  dark:bg-[#011627] dark:text-gray-50 resize-none h-full"
                 placeholder="Note"
                 ref={editTextareaRef}
               ></textarea>
@@ -254,27 +280,10 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 </button>
               )}
             </div>
+            </div>
           </div>
 
-          {/* modal footer  */}
-          <div className="flex items-center justify-end  space-x-2 my-2 mr-8 w-full  ">
-            <button
-              onClick={handleSave}
-              className="px-2 py-[0.20rem] rounded-md outline-none text-white mx-4 transition-all duration-300 order-2 flex items-center justify-center gap-1 shadow-inner  shadow-blue-500 hover:shadow-blue-600  bg-blue-700 hover:bg-blue-800"
-              aria-label="Save"
-            >
-              Save <FiCheck />
-            </button>
-            <button
-              onClick={() => {
-                setOpenModal(false);
-              }}
-              className="px-2 py-[0.20rem]  shadow-inner shadow-red-400 bg-red-600  hover:bg-red-700 outline-none rounded-md text-white transition-all duration-300 order-1 flex items-center justify-center gap-1"
-              aria-label="Cancel"
-            >
-              Close <IoMdClose />
-            </button>
-          </div>
+         
         </div>
       </div>
     );

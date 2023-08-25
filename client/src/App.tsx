@@ -19,6 +19,7 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import Login from "./pages/Login";
 import { AlertContext } from "./context/AlertContext";
 import { OfflineContext } from "./context/OfflineContext";
+import useGetCards from "./hooks/useGetCards";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));

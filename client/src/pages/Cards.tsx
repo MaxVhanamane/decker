@@ -91,6 +91,8 @@ const Cards: FC = () => {
   const [height, setHeight] = useState(80);
   const [expandTextarea, setExpandTextArea] = useState(false);
   const [checkClose, setCheckClose] = useState(false);
+  const [startAnimation, setStartAnimation] = useState(true);
+
   const [showConfirmCloseCardModal, setShowConfirmCloseCardModal] =
     useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
@@ -194,13 +196,13 @@ const Cards: FC = () => {
       }
       if (openModal || showFullScreen) {
         event.preventDefault();
-        openModal ? setOpenModal(false) : setShowFullScreen(false);
+        openModal ? setOpenModal(false) : setStartAnimation(false);
       } else {
         event.preventDefault();
         navigate("/");
       }
     },
-    [openModal, showFullScreen, showTips]
+    [openModal, showFullScreen, showTips, startAnimation]
   );
 
   // Here we will check if user has used browser's back button if he uses browsers back button to go back then
@@ -1292,6 +1294,8 @@ const Cards: FC = () => {
           setShowFullScreen={setShowFullScreen}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
+          startAnimation={startAnimation}
+          setStartAnimation={setStartAnimation}
         />
       )}
     </>
