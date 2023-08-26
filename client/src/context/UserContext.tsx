@@ -127,7 +127,7 @@ function UserContextProvider({ children }: UserContextProvider) {
       document.documentElement.classList.add("dark");
       document.body.classList.add("bg-slate-950");
     } else {
-      document.documentElement.style.backgroundColor = "#ffffff";
+      document.documentElement.style.backgroundColor = "#fcfefc";
 
       document.documentElement.classList.remove("dark");
       document.body.classList.remove("bg-slate-950");

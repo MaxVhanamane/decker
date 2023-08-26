@@ -108,8 +108,8 @@ export default defineConfig(({ command, mode }) => {
         ],
         "start_url": "/",
         "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#ffffff"
+        "background_color": "#fcfefc",
+        "theme_color": "#fcfefc"
       }
 
     }),],

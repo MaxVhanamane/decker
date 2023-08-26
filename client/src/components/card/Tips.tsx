@@ -12,8 +12,8 @@ const theme = localStorage.getItem("theme");
 const Tips = ({ setShowTips }: propTypes) => {
   return (
     <div
-      className={` fixed inset-0 overflow-y-auto bg-white  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800   ${
-        theme === "dark" || theme === null ? "dark:bg-slate-950" : "bg-white"
+      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800   ${
+        theme === "dark" || theme === null ? "dark:bg-slate-950" : "bg-[#fcfefc]"
       }`}
     >
       <div className=" absolute top-20 md:top-24 md:w-[90%]  lg:w-1/2 h-screen  ">
@@ -92,7 +92,7 @@ const Tips = ({ setShowTips }: propTypes) => {
           </p>
         </div>
 
-        <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+        <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
           <div>
             <button
               onClick={() => setShowTips(false)}

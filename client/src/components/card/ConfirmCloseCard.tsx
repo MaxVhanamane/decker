@@ -37,10 +37,10 @@ const ConfirmCloseCard: FC<ConfirmCloseCardProps> = ({
       tabIndex={-1}
       className={`fixed ${
         showConfirmCloseCardModal ? "block" : "hidden"
-      } z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-950 lg:backdrop-blur-none lg:bg-white`}
+      } z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-950 lg:backdrop-blur-none lg:bg-[#fcfefc]`}
     >
       <div className="relative w-full h-full flex items-center justify-center  ">
-        <div className="relative bg-white rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-950 ring-1 ring-sky-500  ">
+        <div className="relative bg-[#fcfefc] rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-950 ring-1 ring-sky-500  ">
           <div className="p-6 text-center">
             <svg
               aria-hidden="true"
@@ -76,7 +76,7 @@ const ConfirmCloseCard: FC<ConfirmCloseCardProps> = ({
               onClick={getUserConfirmation}
               data-modal-toggle="popup-modal"
               type="button"
-              className="text-gray-500 bg-white hover:bg-gray-100  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none"
+              className="text-gray-500 bg-[#fcfefc] hover:bg-gray-100  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none"
             >
               No, cancel
             </button>

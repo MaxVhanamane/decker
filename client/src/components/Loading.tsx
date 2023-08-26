@@ -1,11 +1,11 @@
 export default function Loading() {
   return (
     <div
-      className={` absolute top-0 left-0  w-full h-full flex items-center justify-center dark:bg-red-400 ${
+      className={` absolute top-0 left-0  w-full h-full flex items-center justify-center   ${
         localStorage.getItem("theme") === "dark" ||
         localStorage.getItem("theme") === null
           ? "dark:bg-slate-950"
-          : "bg-white"
+          : "bg-[#fcfefc]"
       }`}
     >
       <img

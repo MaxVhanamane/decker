@@ -156,10 +156,14 @@ const FullScreenCardView = ({
     }
   }, []);
 
+
   return (
     <>
       <article
         onAnimationEnd={() => {
+          if(location.state?.from === "/" && !startAnimation){
+            navigate("/");
+          }
           if (!showScrollButtons) {
             setShowScrollButtons(true);
           }
@@ -167,7 +171,7 @@ const FullScreenCardView = ({
             setShowFullScreen(false), setStartAnimation(true);
           }
         }}
-        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-white  dark:bg-slate-950   flex  flex-col z-[80] items-center ${
+        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950   flex  flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight lg:animate-none  "
             : " animate-translateFromRightToLeft lg:animate-opacity scale-0 lg:duration-0"
@@ -215,7 +219,7 @@ const FullScreenCardView = ({
               {parsingError}
             </div>
           )}
-          <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-white px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+          <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
             <div>
               <button
                 onClick={() => {
@@ -224,7 +228,8 @@ const FullScreenCardView = ({
                   if (search_index) {
                     // If the 'search_index' is present and the user clicks on the back button, we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
                     if (location.state?.from === "/") {
-                      navigate("/");
+                       setStartAnimation(false);
+                      setShowScrollButtons(false);
                     } else {
                       // if user is on /cards/ReactJs(deck_id) and opens searchbar and searches something and opens card and closes when he closes the card I am navigating him to /cards/ReactJs(deck_id) but while navigating If I don't send deck as state value I will not see any cards that is why I am sending this data to avoid no cards found error. This value  location?.state?.deckInfo I set this value in searchResult component.
                       navigate(location.state?.from, {

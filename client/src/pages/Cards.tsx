@@ -23,9 +23,9 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData, AxiosErrorType } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
 import { TbBulbFilled } from "react-icons/tb";
-import { BiCodeCurly, BiEdit } from "react-icons/bi";
+import { BiCodeCurly } from "react-icons/bi";
 import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
-import { FiCheck, FiMinusSquare, FiPlusSquare } from "react-icons/fi";
+import {  FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { GoEyeClosed } from "react-icons/go";
 
 import Loading from "../components/Loading";
@@ -42,8 +42,7 @@ import { BsChevronExpand, BsTypeUnderline } from "react-icons/bs";
 import { FaExpand } from "react-icons/fa";
 import Tips from "../components/card/Tips";
 import FullScreenCardView from "../components/card/FullScreenCardView";
-import { TiTick } from "react-icons/ti";
-import { IoMdClose } from "react-icons/io";
+
 import EditCard from "../components/card/EditCard";
 // types
 // let oldContent:string //this  works
@@ -189,16 +188,24 @@ const Cards: FC = () => {
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
   const handleBrowsersBackButton = useCallback(
     function (event: PopStateEvent) {
+      event.preventDefault();
       if (showTips) {
-        event.preventDefault();
+       
         setShowTips(false);
         return;
       }
+      if(search_index){
+        navigate(location.state?.from, {
+          state: {
+            deck: location?.state?.deckInfo
+              ? location?.state?.deckInfo
+              : null,
+          },
+        });
+      }
       if (openModal || showFullScreen) {
-        event.preventDefault();
         openModal ? setOpenModal(false) : setStartAnimation(false);
       } else {
-        event.preventDefault();
         navigate("/");
       }
     },
@@ -211,12 +218,16 @@ const Cards: FC = () => {
 
   useEffect(() => {
     // This is how you detect if the browser's back button is clicked or not.
-    window.history.pushState(null, "", document.URL);
+    if(location?.state?.from!=="/"){
+  //We will not clear the history if a user performs a search on the home screen and clicks on a result. This is because if we clear the history, clicking the browser's back button would not lead back to the home screen. Instead, the user would be taken to the current URL, which requires specific data to render and could result in an error.
+
+         window.history.pushState(null, "", document.URL);
+    }
     window.addEventListener("popstate", handleBrowsersBackButton);
     return () => {
       window.removeEventListener("popstate", handleBrowsersBackButton);
     };
-  }, [openModal, showFullScreen, showTips]);
+  }, [openModal, showFullScreen, showTips,startAnimation]);
 
   // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
   useEffect(() => {
@@ -1164,7 +1175,7 @@ const Cards: FC = () => {
                     expandTextarea
                       ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
                       : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center cursor-pointer"
-                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-white  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-950 dark:text-gray-50 z-10 `}
+                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-950 dark:text-gray-50 z-10 `}
                   placeholder={`${
                     expandTextarea ? "Title" : "Craft an Elegant Note"
                   } `}
@@ -1173,7 +1184,7 @@ const Cards: FC = () => {
                   <div className="absolute  top-1/2 -translate-y-1/2 right-8 cursor-pointer  ">
                     <BsChevronExpand
                       onClick={() => setExpandTextArea(true)}
-                      className="text-gray-100 "
+                      className="dark:text-gray-100 text-teal-600 "
                     />
                   </div>
                 )}
@@ -1183,7 +1194,7 @@ const Cards: FC = () => {
                   expandTextarea
                     ? " py-2 border-b-2 rounded-t-0 opacity-100"
                     : "py-0 border-b-2"
-                } lg:w-[40vw]  md:w-[70vw] bg-white w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-950 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
+                } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-950 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}

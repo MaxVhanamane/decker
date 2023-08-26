@@ -165,12 +165,12 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     }, []);
 
     return (
-      <div className="w-screen z-[90] dark:bg-slate-800 bg-gray-600 dark:md:bg-slate-950 md:bg-white fixed inset-0 flex items-center justify-center ">
+      <div className="w-screen z-[90] dark:bg-slate-800 bg-slate-300 dark:md:bg-slate-950 md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center ">
         <div className=" w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%]   md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
 
-          <div className="w-full  h-[3.4rem] dark:bg-slate-800 bg-gray-600  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-300/50 dark:border-gray-300/10 dark:md:bg-slate-950 md:bg-white">
+          <div className="w-full  h-[3.4rem] dark:bg-slate-800 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10 dark:md:bg-slate-950 md:bg-[#fcfefc]">
           <div>
-                <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-800 text-white font-semibold ">
+                <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-600 text-gray-700 font-semibold ">
                   Edit <span className="hidden md:inline">Card</span>
                 </h2>
               </div>
@@ -179,7 +179,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
               <div className="flex items-center justify-center gap-3  ">
                 <button
                   title="Add a link"
-                  className="dark:text-blue-600   dark:hover:text-gray-300 text-blue-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1 text-xl  transition-all duration-150"
+                  className="dark:text-blue-600   dark:hover:text-gray-300 text-blue-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-150"
                   type="button"
                   name="addLinkToEditCard"
                   onClick={(e) => addLink(e)}
@@ -188,7 +188,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 </button>
                 <button
                   title="Add code sample"
-                  className="dark:text-green-600   dark:hover:text-gray-300 text-green-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1 text-xl  transition-all duration-150"
+                  className="dark:text-green-600   dark:hover:text-gray-300 text-green-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-150"
                   type="button"
                   name="addCodeSnippetToEditCard"
                   onClick={(e) => addCodeBlock(e)}
@@ -198,7 +198,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="addUnderlineTextToEditCard"
                   title="Underline text"
-                  className="dark:text-pink-600  dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-pink-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-pink-600  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-pink-500 hover:text-gray-200 transition-all duration-150 "
                   type="button"
                   onClick={(e) => addUnderlineText(e)}
                 >
@@ -207,19 +207,19 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="addBoldTextToEditCard"
                   title="Bold text"
-                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
                   type="button"
                   onClick={(e) => addBoldText(e)}
                 >
                   <AiOutlineBold />
                 </button>
                </div>
-               <div className="border h-4 mx-3 border-gray-50/20 "></div>
+               <div className="border h-4 mx-3 dark:border-gray-50/20 border-gray-500/40 "></div>
                 <div className="flex items-center justify-center gap-3  ">
                 <button
                   name="Close"
                   title="Close"
-                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-red-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-red-500 hover:text-gray-200 transition-all duration-150 "
                   type="button"
                   onClick={() => {
                     setOpenModal(false);
@@ -230,7 +230,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="Save"
                   title="Save"
-                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-500 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
                   type="button"
                   onClick={handleSave}
                 >
@@ -246,13 +246,13 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
               value={editContent.title}
               onChange={handleChange}
               name="title"
-              className="px-2 py-[0.36rem] w-full outline-none rounded-t-md   font-semibold text-gray-800 bg-gray-50 dark:bg-[#011627] dark:text-gray-50 resize-none border-none h-full"
+              className="px-2 py-[0.36rem] w-full outline-none rounded-t-md   font-semibold text-gray-700 bg-gray-50 dark:bg-[#011627] dark:text-gray-50 resize-none border-none h-full"
               placeholder="Title"
               rows={2}
             />
             </div>
             <div className="dark:bg-[#011627] bg-gray-50 w-full flex items-end justify-center pb-2">
-              <hr className="w-32 border-t-0 border-b dark:border-gray-200 border-gray-700  " />
+              <hr className="w-32 border-t-0 border-b dark:border-gray-200 border-gray-500  " />
             </div>
             <div className="w-full relative h-[78vh] lg:h-[78vh]  ">
               <textarea
