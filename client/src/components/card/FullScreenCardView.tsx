@@ -7,7 +7,6 @@ import {
   memo,
   useContext,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -41,6 +40,8 @@ type propTypes = {
   };
   setShowFullScreen: Dispatch<React.SetStateAction<boolean>>;
   setStartAnimation: Dispatch<React.SetStateAction<boolean>>;
+  setShowScrollButtons: Dispatch<React.SetStateAction<boolean>>;
+  showScrollButtons:boolean;
   startAnimation: boolean;
   handleEdit: (cardItem: ContentTypeForEdit) => void;
   handleDelete: (index: number) => void;
@@ -55,6 +56,8 @@ const FullScreenCardView = ({
   handleEdit,
   startAnimation,
   setStartAnimation,
+  showScrollButtons,
+  setShowScrollButtons
 }: propTypes) => {
   const { theme } = useContext(UserContext);
   const navigate = useNavigate();
@@ -62,12 +65,11 @@ const FullScreenCardView = ({
   const topElementRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
-    useState(true);
+    useState(false);
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
   const [parsedNote, setParsedNote] = useState<React.ReactNode[] | null>(null);
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
-  const [showScrollButtons, setShowScrollButtons] = useState(false);
 
   useEffect(() => {
     const parseNoteAndSetCache = async () => {
@@ -132,18 +134,7 @@ const FullScreenCardView = ({
     }
   };
 
-  useEffect(() => {
-    const isScrollable =
-      divRef.current!.scrollHeight > divRef.current!.clientHeight;
 
-    if (!isScrollable) {
-      setShowScrollToBottomButton(false);
-      setShowScrollToTopButton(false);
-    } else {
-      setShowScrollToBottomButton(true);
-      setShowScrollToTopButton(false);
-    }
-  }, [fullScreenCardData.note, parsedNote]);
 
   useEffect(() => {
     if (divRef.current) {
@@ -156,21 +147,32 @@ const FullScreenCardView = ({
     }
   }, []);
 
+  const handleOnAnimationEnd=()=>{
+    if(location.state?.from === "/" && !startAnimation){
+      navigate("/");
+    }
+    if (!showScrollButtons) {
+      setShowScrollButtons(true);
+    }
+    if (!startAnimation) {
+      setShowFullScreen(false), setStartAnimation(true);
+    }
+    const isScrollable =
+    divRef.current!.scrollHeight > divRef.current!.clientHeight;
+
+  if (!isScrollable) {
+    setShowScrollToBottomButton(false);
+    setShowScrollToTopButton(false);
+  } else {
+    setShowScrollToBottomButton(true);
+    setShowScrollToTopButton(false);
+  }
+  }
 
   return (
     <>
       <article
-        onAnimationEnd={() => {
-          if(location.state?.from === "/" && !startAnimation){
-            navigate("/");
-          }
-          if (!showScrollButtons) {
-            setShowScrollButtons(true);
-          }
-          if (!startAnimation) {
-            setShowFullScreen(false), setStartAnimation(true);
-          }
-        }}
+        onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950   flex  flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight lg:animate-none  "
@@ -288,11 +290,11 @@ const FullScreenCardView = ({
           </div>
         </div>
       </article>
-      {showScrollButtons && (
-        <div className="fixed lg:right-8 lg:bottom-16 bottom-6 right-4 z-[80]">
+      {showScrollButtons && (showScrollToBottomButton ||  showScrollToTopButton) &&(
+        <div className="fixed lg:right-8 lg:bottom-16 bottom-6 right-4 z-[80] animate-opacity">
           {showScrollToBottomButton && parsedNote && (
             <button
-              className=" fixed lg:right-8 lg:bottom-16 bottom-6 right-4 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400  "
+              className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400  "
               onClick={handleScrollToTheBottom}
             >
               <HiOutlineArrowSmDown />
@@ -300,7 +302,7 @@ const FullScreenCardView = ({
           )}
           {showScrollToTopButton && (
             <button
-              className=" fixed lg:right-8 lg:bottom-16 bottom-6 right-4 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
+              className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
               onClick={handleScrollToTop}
             >
               <HiOutlineArrowSmUp />

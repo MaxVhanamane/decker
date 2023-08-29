@@ -91,7 +91,7 @@ const Cards: FC = () => {
   const [expandTextarea, setExpandTextArea] = useState(false);
   const [checkClose, setCheckClose] = useState(false);
   const [startAnimation, setStartAnimation] = useState(true);
-
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [showConfirmCloseCardModal, setShowConfirmCloseCardModal] =
     useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
@@ -204,7 +204,13 @@ const Cards: FC = () => {
         });
       }
       if (openModal || showFullScreen) {
-        openModal ? setOpenModal(false) : setStartAnimation(false);
+        if(openModal){
+          setOpenModal(false)
+        }
+        else{
+          setStartAnimation(false);
+          setShowScrollButtons(false)
+        }
       } else {
         navigate("/");
       }
@@ -1307,6 +1313,8 @@ const Cards: FC = () => {
           handleDelete={handleDelete}
           startAnimation={startAnimation}
           setStartAnimation={setStartAnimation}
+          setShowScrollButtons={setShowScrollButtons}
+          showScrollButtons={showScrollButtons}
         />
       )}
     </>

@@ -259,7 +259,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 value={editContent.note}
                 onChange={handleChange}
                 name="note"
-                className="px-2 py-2 pb-16 w-full outline-none text-gray-800 rounded-b-md bg-gray-50  dark:bg-[#011627] dark:text-gray-50 resize-none h-full"
+                className="px-2 py-2 pb-32 w-full outline-none text-gray-800 rounded-b-md bg-gray-50  dark:bg-[#011627] dark:text-gray-50 resize-none h-full"
                 placeholder="Note"
                 ref={editTextareaRef}
               ></textarea>
