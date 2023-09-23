@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useMemo } from "react";
+import React, { useEffect, useContext } from "react";
 import { UserContext } from "../context/UserContext";
 
 const ThemeColorUpdater: React.FC = () => {

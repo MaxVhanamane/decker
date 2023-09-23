@@ -12,7 +12,9 @@ const getDecks = async (
   queryClient: any // Update the type of queryClient
 ): Promise<DeckTypeValue | undefined> => {
   // If the search bar is open and the user opens the search results (e.g., any card) and reads it, and then closes it, if the user has opened the search bar on the home page, and when the user closes it by hitting the back button, they will be navigated to "/", which will trigger the execution of the useGetDecks() function. To avoid unnecessary network requests, I will serve the cached data in this case.
-  if (!showSearchBar) {
+  // We will also check the following condition (cachedDecks === undefined) to ensure that the data is available in the cache. If it is not available, we will then proceed to refetch the data.
+  const cachedDecks = queryClient.getQueryData("decks");
+  if (!showSearchBar || cachedDecks === undefined) {
     try {
       const decks = await request.get(`/decks`);
       return decks.data;
@@ -26,14 +28,13 @@ const getDecks = async (
       throw error;
     }
   }
-  return queryClient.getQueryData("decks");
+  return cachedDecks;
 };
 
 export default function useGetDecks() {
   const { setAlert } = useContext(AlertContext);
   const { showSearchBar } = useContext(searchContext);
   const queryClient = useQueryClient(); // Remove the type argument <unknown>
-
   return useQuery(
     "decks",
     () => {
@@ -43,7 +44,6 @@ export default function useGetDecks() {
       refetchOnWindowFocus: false, // Don't refetch on window focus
       refetchOnReconnect: true, // Refetch on network reconnect
       retry: 0, // no retry on network errors
-
       onError: (error) => {
         const message =
           (error as Error).message === "Network Error"

@@ -6,7 +6,9 @@ import { AlertContext } from "../context/AlertContext";
 
 interface IProp {
   openEditDeckModal: boolean;
+  animateCloseEditDeckModal: boolean;
   setOpenEditDeckModal: Dispatch<React.SetStateAction<boolean>>;
+  setAnimateCloseEditDeckModal: Dispatch<React.SetStateAction<boolean>>;
   editData: {
     deck_id: string;
     title: string;
@@ -24,6 +26,8 @@ const EditModalForDeck = ({
   setOpenEditDeckModal,
   editData,
   setEditData,
+  setAnimateCloseEditDeckModal,
+  animateCloseEditDeckModal,
 }: IProp) => {
   const [newTitle, setNewTitle] = useState(editData.title);
   const { mutate: editDeck, isError: isEditError } = useEditDeck();
@@ -44,14 +48,26 @@ const EditModalForDeck = ({
     }
     const data = { deck_id: editData.deck_id, newTitle };
     editDeck(data);
-    setOpenEditDeckModal(false);
+    setAnimateCloseEditDeckModal(true);
     setEditData((prev) => ({ ...prev, deck_id: "", title: "" }));
   };
 
   return (
     <>
       {openEditDeckModal ? (
-        <div className="w-full h-screen  backdrop-blur-xl  fixed inset-0 flex items-center justify-center z-[990]">
+        <div
+          onAnimationEnd={() => {
+            if (animateCloseEditDeckModal) {
+              setAnimateCloseEditDeckModal(false);
+              setOpenEditDeckModal(false);
+            }
+          }}
+          className={`w-full h-screen  backdrop-blur-xl  fixed inset-0 flex items-center justify-center z-[999] transition-opacity duration-300 ${
+            animateCloseEditDeckModal
+              ? "animate-opacityFadeOut opacity-0"
+              : "animate-[opacity_0.2s_linear_1]"
+          }`}
+        >
           <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/3">
             {/* modal head  */}
             <div className="w-full  border-b border-gray-50 dark:border-gray-50/50">
@@ -85,7 +101,7 @@ const EditModalForDeck = ({
                 </button>
                 <button
                   onClick={() => {
-                    setOpenEditDeckModal(false);
+                    setAnimateCloseEditDeckModal(true);
                   }}
                   className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white"
                   aria-label="Cancel"

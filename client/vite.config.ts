@@ -109,7 +109,7 @@ export default defineConfig(({ command, mode }) => {
         "start_url": "/",
         "display": "standalone",
         "background_color": "#fcfefc",
-        "theme_color": "#fcfefc"
+        "theme_color": "#fcfefc",
       }
 
     }),],

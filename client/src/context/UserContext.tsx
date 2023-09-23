@@ -34,6 +34,9 @@ interface ContexType {
   deleteConfirmationModalForCard: RefObject<HTMLDivElement>;
   divRefForUserSettings: RefObject<HTMLDivElement>;
   indexOfCardForDeletion: number | null;
+  showInstallAppButton: boolean;
+  setShowInstallAppButton: Dispatch<React.SetStateAction<boolean>>;
+  handleShowUserInfomation: () => void;
 }
 export const UserContext = createContext<ContexType>({
   userInfo: {
@@ -50,6 +53,9 @@ export const UserContext = createContext<ContexType>({
   divRefForUserSettings: { current: null } as RefObject<HTMLDivElement>,
   setIndexOfCardForDeletion: () => {},
   indexOfCardForDeletion: null,
+  showInstallAppButton: false,
+  setShowInstallAppButton: () => {},
+  handleShowUserInfomation: () => {},
 });
 
 function UserContextProvider({ children }: UserContextProvider) {
@@ -58,6 +64,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   const location = useLocation();
   const deleteConfirmationModalForCard = useRef<HTMLDivElement>(null);
   const divRefForUserSettings = useRef<HTMLDivElement>(null);
+  const [showInstallAppButton, setShowInstallAppButton] = useState(false);
   const pathNames = [
     "/signup",
     "/verifyemail",
@@ -206,6 +213,14 @@ function UserContextProvider({ children }: UserContextProvider) {
     };
   }, [userInfo]);
 
+  const handleShowUserInfomation = () => {
+    if (divRefForUserSettings.current?.classList.contains("scale-100")) {
+      divRefForUserSettings.current?.classList.remove("scale-100");
+      divRefForUserSettings.current?.classList.add("scale-0");
+      divRefForUserSettings.current?.classList.add("hidden");
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -217,6 +232,9 @@ function UserContextProvider({ children }: UserContextProvider) {
         indexOfCardForDeletion,
         setIndexOfCardForDeletion,
         divRefForUserSettings,
+        showInstallAppButton,
+        setShowInstallAppButton,
+        handleShowUserInfomation,
       }}
     >
       {children}

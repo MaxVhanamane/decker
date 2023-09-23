@@ -1,26 +1,45 @@
-import { FC, memo, useState, useContext } from "react";
+import { FC, memo, useState, useContext, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { AlertData } from "../types/types";
 import { FaUserCircle } from "react-icons/fa";
-import { RiCloseFill } from "react-icons/ri";
+import { RiCloseFill, RiLogoutCircleRLine } from "react-icons/ri";
 import ThemeToggler from "./ThemeToggler";
 import SearchBar from "./SearchBar";
-import { HiOutlineSearch } from "react-icons/hi";
-import { AiOutlineWarning } from "react-icons/ai";
+import { HiOutlineHome, HiOutlineSearch } from "react-icons/hi";
+import { AiOutlineDelete } from "react-icons/ai";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertContext } from "../context/AlertContext";
 import { searchContext } from "../context/SearchContext";
+import { MdInstallDesktop, MdInstallMobile } from "react-icons/md";
+
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: ReadonlyArray<string>;
+  prompt(): Promise<void>;
+}
+
 const Navbar: FC = () => {
-  const { divRefForUserSettings, userInfo } = useContext(UserContext);
-  const { showSearchBar, setShowSearchBar } = useContext(searchContext);
+  const {
+    divRefForUserSettings,
+    userInfo,
+    showInstallAppButton,
+    setShowInstallAppButton,
+  } = useContext(UserContext);
+  const { showSearchBar, setShowSearchBar, setOpenSearchBar } =
+    useContext(searchContext);
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
-
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   const handleShowUserInfomation = () => {
     if (divRefForUserSettings.current?.classList.contains("scale-0")) {
       divRefForUserSettings.current?.classList.add("!block");
@@ -30,8 +49,6 @@ const Navbar: FC = () => {
       divRefForUserSettings.current?.classList.remove("scale-100");
       divRefForUserSettings.current?.classList.add("scale-0");
       divRefForUserSettings.current?.classList.add("hidden");
-
-      // divRefForUserSettings.current?.classList.add("md:block")
     }
   };
 
@@ -43,6 +60,44 @@ const Navbar: FC = () => {
     "/login",
     "/accountdeletionsuccess",
   ];
+
+  useEffect(() => {
+    let deferredPrompt: any;
+
+    const beforeInstallHandler = (e: Event) => {
+      const event = e as BeforeInstallPromptEvent;
+      if (event) {
+        if (pathNames.includes(location.pathname)) {
+          // "Storing the showInstallAppButton value in local storage and using it on the Auth Success page to set the showInstallAppButton global state is necessary. This is because, when a user is on the login page and we set setShowInstallAppButton(true), this state will lose its value if the user uses Google Login. Google Login redirects the user to an external URL, and when they return to the app after logging in, the showInstallAppButton state will revert to its default value, which is false. Consequently, the 'Install Decker App' button won't be displayed because the beforeinstallprompt event only fires once when the app loads. To prevent this, we save the value in local storage and use it on the Auth Success page, removing it from there afterward. We've used an if condition to set the value in local storage to avoid unnecessary updates when the user refreshes the page while logged in, triggering the beforeinstallprompt event." I have placed setShowInstallAppButton(true) outside the if statement because if the user refreshes the page on the home screen, it will set the value, and I will see the 'Install Decker App' button; otherwise, I won't see that button.
+          localStorage.setItem("showInstallAppButton", JSON.stringify(true));
+        }
+        setShowInstallAppButton(true);
+      }
+
+      deferredPrompt = event;
+    };
+
+    const installApp = document.getElementById("install-button");
+
+    const clickHandler = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          deferredPrompt = null;
+        }
+      }
+    };
+
+    window.addEventListener("beforeinstallprompt", beforeInstallHandler);
+    installApp?.addEventListener("click", clickHandler);
+
+    // Remove event listeners when the component unmounts
+    return () => {
+      window.removeEventListener("beforeinstallprompt", beforeInstallHandler);
+      installApp?.removeEventListener("click", clickHandler);
+    };
+  }, []);
 
   return (
     <>
@@ -57,13 +112,17 @@ const Navbar: FC = () => {
         <div className="flex items-center justify-center flex-row gap-8">
           <div
             onClick={() => {
-              if (showSearchBar) setShowSearchBar(false);
+              if (showSearchBar) {
+                setOpenSearchBar(false);
+              }
               if (
                 divRefForUserSettings.current?.classList.contains("scale-100")
               ) {
                 handleShowUserInfomation();
               }
-              if (!pathNames.includes(location.pathname)) navigate("/");
+              if (!pathNames.includes(location.pathname)) {
+                navigate("/");
+              }
             }}
             className="flex items-center justify-center rounded px-2 gap-2"
           >
@@ -116,7 +175,7 @@ const Navbar: FC = () => {
                   <li
                     className="dark:text-gray-50 text-gray-600 cursor-pointer  font-semibold transition-all duration-150 dark:hover:bg-gray-700 hover:bg-gray-100 hover:rounded-full p-[0.4rem] px-2"
                     onClick={() => {
-                      if (showSearchBar) setShowSearchBar(false);
+                      if (showSearchBar) setOpenSearchBar(false);
                       if (
                         divRefForUserSettings.current?.classList.contains(
                           "scale-100"
@@ -191,11 +250,6 @@ const Navbar: FC = () => {
             </ul>
           </div>
         </div>
-
-        {/* <div className='flex items-center justify-center text-xl '>
-      <span className='text-white'><RxHamburgerMenu/></span>
-   
-      </div> */}
       </nav>
 
       <div
@@ -251,24 +305,34 @@ const Navbar: FC = () => {
               className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 transition-[color] duration-300 cursor-pointer  mt-3"
               aria-label="Delete My Account"
             >
-              Delete My Account
-              <AiOutlineWarning
-                onClick={(e) => e.stopPropagation()}
-                className="text-yellow-400 cursor-text"
-              />
+              <AiOutlineDelete /> Delete My Account
+            </button>
+
+            <button
+              id="install-button"
+              className={` ${
+                showInstallAppButton
+                  ? "flex items-center justify-center gap-2"
+                  : "hidden"
+              } font-semibold  rounded text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 cursor-pointer `}
+              aria-label="install app button"
+            >
+              <MdInstallMobile className="lg:hidden dark:text-gray-50 dark:hover:text-gray-300  text-gray-500 hover:text-gray-600 " />{" "}
+              <MdInstallDesktop className="hidden lg:block text-lg" /> Install
+              Decker
             </button>
 
             {userInfo?.email && location.pathname.split("/")[1] == "cards" ? (
               <button
                 onClick={() => {
-                  if (showSearchBar) setShowSearchBar(false);
+                  if (showSearchBar) setOpenSearchBar(false);
                   navigate("/");
                   handleShowUserInfomation();
                 }}
-                className="md:hidden font-semibold  rounded text-center text-white cursor-pointer"
+                className="md:hidden font-semibold  rounded text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 cursor-pointer flex items-center justify-center gap-2"
                 aria-label="Home"
               >
-                Home
+                <HiOutlineHome /> Home
               </button>
             ) : null}
 
@@ -286,9 +350,10 @@ const Navbar: FC = () => {
                   }));
                 }
               }}
-              className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer   pb-2"
+              className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer   pb-2 flex items-center justify-center gap-2"
               aria-label="Logout"
             >
+              <RiLogoutCircleRLine />
               Logout
             </button>
           </div>

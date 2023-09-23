@@ -1,19 +1,38 @@
-import { Dispatch, memo } from "react";
-import { IoIosArrowRoundBack } from "react-icons/io";
+import { Dispatch, memo, useContext } from "react";
+import { IoIosArrowRoundUp, IoIosArrowRoundBack } from "react-icons/io";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { prism } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { UserContext } from "../../context/UserContext";
 
 interface propTypes {
   setShowTips: Dispatch<React.SetStateAction<boolean>>;
+  closeTipsModal: boolean;
+  setCloseTipsModal: Dispatch<React.SetStateAction<boolean>>;
 }
-const theme = localStorage.getItem("theme");
+const Tips = ({
+  setShowTips,
+  closeTipsModal,
+  setCloseTipsModal,
+}: propTypes) => {
+  const { theme } = useContext(UserContext);
 
-const Tips = ({ setShowTips }: propTypes) => {
   return (
     <div
-      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800   ${
-        theme === "dark" || theme === null ? "dark:bg-slate-950" : "bg-[#fcfefc]"
+      onAnimationEnd={() => {
+        if (closeTipsModal) {
+          setShowTips(false);
+          setCloseTipsModal(false);
+        }
+      }}
+      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800 ${
+        closeTipsModal
+          ? "animate-translateFromBottomToTop scale-0 lg:animate-opacityFadeOut lg:opacity-0 lg:scale-100"
+          : "animate-translateFromTopToBottom  lg:animate-quickOpacity "
+      }   ${
+        theme === "dark" || theme === null
+          ? "dark:bg-slate-950"
+          : "bg-[#fcfefc]"
       }`}
     >
       <div className=" absolute top-20 md:top-24 md:w-[90%]  lg:w-1/2 h-screen  ">
@@ -45,7 +64,8 @@ const Tips = ({ setShowTips }: propTypes) => {
           <li>
             When inserting an external link, follow this format: [link
             name](actual link). You are welcome to assign any name to your link,
-            for example, [myLink], but ensure the actual link is accurate (https://example.com).
+            for example, [myLink], but ensure the actual link is accurate
+            (https://example.com).
           </li>
           <li>
             To style your code blocks elegantly, wrap the code within triple
@@ -95,12 +115,13 @@ const Tips = ({ setShowTips }: propTypes) => {
         <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
           <div>
             <button
-              onClick={() => setShowTips(false)}
-              className=" text-xl rounded px-1  text-center text-gray-50 cursor-pointer bg-red-500"
+              onClick={() => setCloseTipsModal(true)}
+              className=" text-xl rounded lg:px-1  text-center text-gray-50 cursor-pointer bg-red-500"
               aria-label="Back"
               title="Back"
             >
-              <IoIosArrowRoundBack />
+              <IoIosArrowRoundUp className="lg:hidden" />
+              <IoIosArrowRoundBack className="hidden lg:block" />
             </button>
           </div>
         </div>

@@ -19,7 +19,6 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import Login from "./pages/Login";
 import { AlertContext } from "./context/AlertContext";
 import { OfflineContext } from "./context/OfflineContext";
-import useGetCards from "./hooks/useGetCards";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -29,6 +28,9 @@ const DeleteMyAccount = lazy(() => import("./pages/DeleteMyAccount"));
 const SignUp = lazy(() => import("./pages/Signup"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Cards = lazy(() => import("./pages/Cards"));
+const SearchResultCardFullScreenView = lazy(
+  () => import("./pages/SearchResultCardFullScreenView")
+);
 const AccountDeletionSuccess = lazy(
   () => import("./pages/AccountDeletionSuccess")
 );
@@ -137,7 +139,7 @@ function App() {
       }
       let deleteIndex = result.source.index;
       let moveIndex = result.destination.index;
-      if(deleteIndex===moveIndex) return
+      if (deleteIndex === moveIndex) return;
       const receivedData = result.draggableId.split("-");
       const id = receivedData[0];
       let data = {
@@ -186,10 +188,10 @@ function App() {
               }
             />
             <Route
-              path="/cards/:deck_id/:search_index"
+              path="/search/result/:deck_id/:search_index"
               element={
                 <Suspense fallback={<Loading />}>
-                  <Cards />
+                  <SearchResultCardFullScreenView />
                 </Suspense>
               }
             />

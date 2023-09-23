@@ -29,7 +29,7 @@ const app = express()
 app.use(compression());
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
-app.use(express.json({limit: '5mb'}))
+app.use(express.json({ limit: '5mb' }))
 
 // next two middlewares are for debugging
 // Log incoming requests
@@ -484,10 +484,10 @@ app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, as
 
     }
   }
-  catch (error:any) {
-  console.log(error)
+  catch (error: any) {
+    console.log(error)
     if (error.name === 'VersionError') {
-     return res.status(429).json({ message: "VersionError", success: false })
+      return res.status(429).json({ message: "VersionError", success: false })
     }
     res.status(500).json({ message: "some error occurred", success: false })
   }
@@ -970,21 +970,21 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
 // with different value of cardId
 // forEach() function does not work well with asynchronous operations like deck.save().
 // Doesn't Work properly
-  // const decks = await DeckModal.find({});
-  // decks.forEach((deck) => {
-  //   deck.cards = deck.cards.map((card) => ({
-  //     ...card,
-  //     cardId: uuidv4(),
-  //   }));
-  //   await deck.save();
-  // });
+// const decks = await DeckModal.find({});
+// decks.forEach((deck) => {
+//   deck.cards = deck.cards.map((card) => ({
+//     ...card,
+//     cardId: uuidv4(),
+//   }));
+//   await deck.save();
+// });
 
-  // Works properly
-  // const decks = await DeckModal.find({});
-  // for (const deck of decks) {
-  //   deck.cards = deck.cards.map((card) => ({
-  //     ...card,
-  //     cardId: uuidv4(),
-  //   }));
-  //   await deck.save();
-  // }
+// Works properly
+// const decks = await DeckModal.find({});
+// for (const deck of decks) {
+//   deck.cards = deck.cards.map((card) => ({
+//     ...card,
+//     cardId: uuidv4(),
+//   }));
+//   await deck.save();
+// }

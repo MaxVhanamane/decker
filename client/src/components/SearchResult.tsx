@@ -17,8 +17,9 @@ import { UserContext } from "../context/UserContext";
 import useGetDecksAndCards from "../hooks/useGetDecksAndCards";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, DeckAndCardType } from "../types/types";
+import { AlertData } from "../types/types";
 import Loading from "./Loading";
+import { searchContext } from "../context/SearchContext";
 
 let timer: any;
 
@@ -57,7 +58,6 @@ const SearchResult: FC<IProp> = ({
   const [foundCards, setFoundCards] = useState<SearchResultCardsType[]>([]);
   const [foundDecks, setFoundDecks] = useState<SearchResultDeckType[]>([]);
   const { data, isError, error, isLoading } = useGetDecksAndCards();
-
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
   const {
     mutate: pinDeck,
@@ -65,24 +65,16 @@ const SearchResult: FC<IProp> = ({
     isError: isPinError,
     isLoading: isPinning,
   } = usePinDeck();
-  const [deckInfo, setDeckInfo] = useState<DeckAndCardType | null>();
-  const [openEditDeckModal, setOpenEditDeckModal] = useState(false);
   const location = useLocation();
-  useEffect(() => {
-    const regex = /\/cards\/.*/;
-    const deck_id_value = location.pathname.split("/")[2];
-    if (regex.test(location.pathname)) {
-      const filteredDeck = data?.filter((deck) => {
-        if (deck._id === deck_id_value) {
-          return deck;
-        }
-      });
-      setDeckInfo(filteredDeck?.[0]);
-    } else {
-      setDeckInfo(null);
-    }
-  }, []);
-  const { theme } = useContext(UserContext);
+  const {
+    animateCloseEditDeckModalInSearchResult,
+    setAnimateCloseEditDeckModalInSearchResult,
+    openEditDeckModalForSearchResult,
+    setOpenEditDeckModalForSearchResult,
+  } = useContext(searchContext);
+
+  const { theme, divRefForUserSettings, handleShowUserInfomation } =
+    useContext(UserContext);
   // Here, we will add all the cards from all the decks in a single array by including some additional properties that we require later
   const allCards = useMemo(() => {
     if (!data) {
@@ -112,21 +104,23 @@ const SearchResult: FC<IProp> = ({
   }, [data]);
 
   //Cards code
-  const filterCards = useCallback(() => {
-    // const allCards =  data?.flatMap(deck => deck.cards.map((card,index) => ({ ...card, deck_id: deck._id,cardIndex:index})))
-    // const allDecks =  data?.map((data)=>{return {deck_id:data._id,title:data.title,pinned:data.pinned}})
+  const filterDecksAndCards = useCallback(() => {
+    if (isLoading) {
+      return;
+    }
+    setShowResult(false);
     // we will filter all the cards that matches the search query
     const filteredCards = allCards
       ? allCards.filter(
-          (obj) =>
-            obj.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            obj.title.toLowerCase().includes(searchQuery.toLowerCase())
+          (card) =>
+            card.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            card.title.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : [];
     // we will filter all the decks that matches the search query
     const filteredDecks = allDecks
-      ? allDecks.filter((obj) => {
-          return obj.title.toLowerCase().includes(searchQuery.toLowerCase());
+      ? allDecks.filter((deck) => {
+          return deck.title.toLowerCase().includes(searchQuery.toLowerCase());
         })
       : [];
     setFoundDecks(filteredDecks);
@@ -138,7 +132,7 @@ const SearchResult: FC<IProp> = ({
     if (searchQuery.length > 0) {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        filterCards();
+        filterDecksAndCards();
       }, 500);
     } else {
       clearTimeout(timer);
@@ -146,7 +140,7 @@ const SearchResult: FC<IProp> = ({
       setFoundCards([]);
       setShowResult(false);
     }
-  }, [searchQuery, filterCards, data]);
+  }, [searchQuery, filterDecksAndCards, data]);
 
   const handleEditDeck = (deck_id: string, title: string) => {
     if (!isOnline) {
@@ -160,7 +154,7 @@ const SearchResult: FC<IProp> = ({
       return;
     }
     setEditData({ ...editData, deck_id, title });
-    setOpenEditDeckModal(true);
+    setOpenEditDeckModalForSearchResult(true);
   };
 
   //   const regex = new RegExp((${searchQuery}), "gi");, "gi" are flags that modify the behavior of the regular expression.
@@ -173,26 +167,31 @@ const SearchResult: FC<IProp> = ({
       /[.*+?^${}()|[\]\\]/g,
       "\\$&"
     );
+
+    // Create a regular expression to match the search query.
     const regex = new RegExp(`(${escapedSearchQuery})`, "gi");
-    const foundString = text.split(regex);
-    return (
-      <>
-        {foundString.map((part, index) =>
-          // regex.test(part) checks if it matches the searchQuery if it does it returns true. if it is true then we will add background color to
-          // that string. if it returns false then we will return the string as it is.
-          regex.test(part) ? (
-            <span
-              key={index}
-              className={`${theme == "dark" ? "bg-red-500" : "bg-yellow-300"}`}
-            >
-              {part}
-            </span>
-          ) : (
-            part
-          )
-        )}
-      </>
-    );
+
+    // Split the text using the regular expression and keep track of the first match.
+    let isFirstMatch = false;
+    const foundString = text.split(regex).map((part, index) => {
+      // Check if the current part matches the search query.
+      if (regex.test(part) && !isFirstMatch) {
+        isFirstMatch = true;
+        // Highlight the first occurrence.
+        return (
+          <span
+            key={index}
+            className={`${theme === "dark" ? "bg-red-500" : "bg-yellow-300"}`}
+          >
+            {part}
+          </span>
+        );
+      } else {
+        return part;
+      }
+    });
+
+    return <>{foundString}</>;
   }
 
   const handlePin = async (id: string, pinned: boolean) => {
@@ -224,36 +223,62 @@ const SearchResult: FC<IProp> = ({
     }
 
     setFoundDecks(finalData);
-    // This is react query function to pin or unpin decks
 
     pinDeck({ id, pinned: !pinned });
   };
 
-  if (isLoading) {
-    <Loading />;
+  if (isLoading && searchQuery.length > 0) {
+    return (
+      <div className="fixed w-screen h-screen flex items-center justify-center dark:bg-slate-950  text-gray-200   top-[3.45rem] ">
+        <div className="absolute top-1/2 -translate-y-[calc(50%+3.45rem)] w-52 h-52">
+          <Loading />
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="border-t dark:border-slate-300/10 dark:text-white text-gray-800 fixed top-0 mt-12 h-[6rem] flex items-end justify-center w-full bg-[#fcfefc] dark:bg-slate-950 z-50 lg:hidden font-bold ">
+      <div className=" dark:text-white text-gray-800 fixed top-[6.5rem] h-12 flex items-start justify-center w-full bg-[#fcfefc] dark:bg-slate-950 z-50 lg:hidden font-bold pt-2 ">
         {searchQuery.length > 0 &&
           (foundDecks.length > 0 || foundCards.length > 0) && (
-            <div className="absolute bottom-4">{foundDecks.length+foundCards.length>1?<p>Search Results <span className="font-extralight text-xs">(about {foundDecks.length+foundCards.length} results)</span></p> :<p>Search Result</p>}</div>
+            <div className="">
+              {foundDecks.length + foundCards.length > 1 ? (
+                <p>
+                  Search Results{" "}
+                  <span className="font-extralight text-xs">
+                    (about {foundDecks.length + foundCards.length} results)
+                  </span>
+                </p>
+              ) : (
+                <p>Search Result</p>
+              )}
+            </div>
           )}
       </div>
-      <div className="fixed lg:top-[3.42rem] top-12 overflow-scroll h-screen bg-[#fcfefc]  dark:bg-slate-950 w-full    ">
-        <div className="hidden bg-[#fcfefc] border-t border-slate-900/10 dark:border-slate-300/10 fixed lg:top-[3.35rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-950 z-50 pb-4 pt-3">
+      <div className="fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-screen bg-[#fcfefc]  dark:bg-slate-950 w-full    ">
+        <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-950 z-50 pb-4 pt-3">
           {searchQuery.length > 0 &&
             (foundDecks.length > 0 || foundCards.length > 0) && (
               <div className="mt-2 font-bold">
-                {foundDecks.length+foundCards.length>1?<p>Search Results <span className="font-extralight text-xs">(about {foundDecks.length+foundCards.length} results)</span></p> :<p>Search Result</p>}</div>
+                {foundDecks.length + foundCards.length > 1 ? (
+                  <p>
+                    Search Results{" "}
+                    <span className="font-extralight text-xs">
+                      (about {foundDecks.length + foundCards.length} results)
+                    </span>
+                  </p>
+                ) : (
+                  <p>Search Result</p>
+                )}
+              </div>
             )}
         </div>
         {(searchQuery.length > 0 && foundDecks.length > 0) ||
         foundCards.length > 0 ? (
           <div>
             {foundDecks?.filter((deck) => deck.pinned === true).length > 0 && (
-              <div className="mt-24 lg:mt-16 lg:mb-10 mx-1">
+              <div className="lg:mt-16 lg:mb-10 mx-1">
                 <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
                   Pinned Decks
                 </p>
@@ -271,6 +296,13 @@ const SearchResult: FC<IProp> = ({
                               <button
                                 onClick={() => {
                                   handleEditDeck(deck.deck_id, deck.title);
+                                  if (
+                                    divRefForUserSettings.current?.classList.contains(
+                                      "scale-100"
+                                    )
+                                  ) {
+                                    handleShowUserInfomation();
+                                  }
                                 }}
                                 type="button"
                                 className="text-lg outline-none rounded-tr px-1 text-center hover:scale-95 text-sky-600 dark:text-sky-400"
@@ -281,6 +313,13 @@ const SearchResult: FC<IProp> = ({
                               <button
                                 onClick={() => {
                                   handlePin(deck.deck_id, deck.pinned);
+                                  if (
+                                    divRefForUserSettings.current?.classList.contains(
+                                      "scale-100"
+                                    )
+                                  ) {
+                                    handleShowUserInfomation();
+                                  }
                                 }}
                                 type="button"
                                 className="outline-none rounded-tr text-sm px-1 text-center text-red-500 hover:scale-95"
@@ -290,7 +329,10 @@ const SearchResult: FC<IProp> = ({
                               </button>
                             </div>
                             <Link
-                              onClick={() => setShowSearchBar(false)}
+                              onClick={() => {
+                                setShowSearchBar(false);
+                                handleShowUserInfomation();
+                              }}
                               to={`cards/${deck.deck_id}`}
                               state={{ deck }}
                             >
@@ -335,6 +377,13 @@ const SearchResult: FC<IProp> = ({
                               <button
                                 onClick={() => {
                                   handleEditDeck(deck.deck_id, deck.title);
+                                  if (
+                                    divRefForUserSettings.current?.classList.contains(
+                                      "scale-100"
+                                    )
+                                  ) {
+                                    handleShowUserInfomation();
+                                  }
                                 }}
                                 type="button"
                                 className="text-lg outline-none rounded-tr px-1 text-center hover:scale-95 text-sky-600 dark:text-sky-400"
@@ -345,6 +394,13 @@ const SearchResult: FC<IProp> = ({
                               <button
                                 onClick={() => {
                                   handlePin(deck.deck_id, deck.pinned);
+                                  if (
+                                    divRefForUserSettings.current?.classList.contains(
+                                      "scale-100"
+                                    )
+                                  ) {
+                                    handleShowUserInfomation();
+                                  }
                                 }}
                                 type="button"
                                 className="outline-none rounded-tr text-sm px-1 text-center text-red-500 hover:scale-95"
@@ -354,7 +410,10 @@ const SearchResult: FC<IProp> = ({
                               </button>
                             </div>
                             <Link
-                              onClick={() => setShowSearchBar(false)}
+                              onClick={() => {
+                                setShowSearchBar(false),
+                                  handleShowUserInfomation();
+                              }}
                               to={`cards/${deck.deck_id}`}
                               state={{ deck }}
                             >
@@ -374,15 +433,6 @@ const SearchResult: FC<IProp> = ({
               </div>
             )}
 
-            {openEditDeckModal ? (
-              <EditModalForDeck
-                openEditDeckModal={openEditDeckModal}
-                setOpenEditDeckModal={setOpenEditDeckModal}
-                editData={editData}
-                setEditData={setEditData}
-              />
-            ) : null}
-
             {/* CARD  */}
 
             {foundCards.length > 0 && (
@@ -398,9 +448,10 @@ const SearchResult: FC<IProp> = ({
             <div className="flex flex-row flex-wrap justify-center items-center  mx-2 lg:mx-52 mb-48 gap-4">
               {foundCards?.map((card, index) => (
                 <Link
+                  onClick={handleShowUserInfomation}
                   key={index}
-                  to={`cards/${card.deck_id}/${card.cardIndex}`}
-                  state={{ from: location.pathname, card, deckInfo }}
+                  to={`/search/result/${card.deck_id}/${card.cardIndex}`}
+                  state={{ from: location.pathname, card }}
                 >
                   <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8.8rem] lg:h-40 text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group">
                     <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">
@@ -423,12 +474,11 @@ const SearchResult: FC<IProp> = ({
           <div
             className={`flex items-center justify-center z-50 w-screen h-full text-md font-semibold`}
           >
-            {" "}
             {showResult &&
             searchQuery.length > 0 &&
-            foundDecks.length <= 0 &&
-            foundCards.length <= 0 ? (
-              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-12">
+            foundDecks.length === 0 &&
+            foundCards.length === 0 ? (
+              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem]">
                 <img
                   src={`${
                     theme === "dark"
@@ -443,7 +493,7 @@ const SearchResult: FC<IProp> = ({
                 </p>
               </div>
             ) : (
-              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-12 gap-2">
+              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem] gap-2">
                 <img
                   src={`${
                     theme === "dark"
@@ -462,6 +512,18 @@ const SearchResult: FC<IProp> = ({
           </div>
         )}
       </div>
+      {openEditDeckModalForSearchResult ? (
+        <EditModalForDeck
+          openEditDeckModal={openEditDeckModalForSearchResult}
+          setOpenEditDeckModal={setOpenEditDeckModalForSearchResult}
+          editData={editData}
+          setEditData={setEditData}
+          setAnimateCloseEditDeckModal={
+            setAnimateCloseEditDeckModalInSearchResult
+          }
+          animateCloseEditDeckModal={animateCloseEditDeckModalInSearchResult}
+        />
+      ) : null}
     </>
   );
 };

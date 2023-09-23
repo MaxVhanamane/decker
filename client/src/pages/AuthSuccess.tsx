@@ -4,8 +4,9 @@ import { TiTick } from "react-icons/ti";
 import { request } from "../utils/axios-utils";
 import { userData } from "../types/types";
 import { UserContext } from "../context/UserContext";
+
 export default function AuthSuccess() {
-  const { setUserInfo } = useContext(UserContext);
+  const { setUserInfo, setShowInstallAppButton } = useContext(UserContext);
   const navigate = useNavigate();
   const getUser = async (): Promise<userData> => {
     const userData = await request.get("/getuser");
@@ -18,6 +19,14 @@ export default function AuthSuccess() {
     }
     return user;
   };
+
+  useEffect(() => {
+    if (localStorage.getItem("showInstallAppButton")) {
+      localStorage.removeItem("showInstallAppButton");
+      setShowInstallAppButton(true);
+    }
+  }, []);
+
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     (async () => {

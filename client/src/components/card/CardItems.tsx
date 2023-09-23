@@ -22,7 +22,8 @@ const CardItems = ({
   handleShowFullScreen,
   data,
 }: any) => {
-  const { divRefForUserSettings } = useContext(UserContext);
+  const { divRefForUserSettings, handleShowUserInfomation } =
+    useContext(UserContext);
   const { deck_id } = useParams();
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const { setAlert } = useContext(AlertContext);
@@ -33,7 +34,7 @@ const CardItems = ({
       {(provided, snapshot) => {
         return (
           <div
-            className="flex flex-row flex-wrap gap-4 justify-center items-center  mx-2 lg:mx-52 mb-48  "
+            className="flex flex-row flex-wrap gap-4 justify-center items-center  mx-2 lg:mx-52 mb-48 animate-opacity_page_transition  "
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
@@ -64,15 +65,7 @@ const CardItems = ({
                                 "scale-100"
                               )
                             ) {
-                              divRefForUserSettings.current?.classList.remove(
-                                "scale-100"
-                              );
-                              divRefForUserSettings.current?.classList.add(
-                                "scale-0"
-                              );
-                              divRefForUserSettings.current?.classList.add(
-                                "hidden"
-                              );
+                              handleShowUserInfomation();
                             }
                             handleShowFullScreen({
                               ...card,
@@ -82,7 +75,7 @@ const CardItems = ({
                           }}
                           className={`relative border   ${
                             snapshot.isDragging
-                              ? "shadow-2xl ring-1 ring-violet-600 shadow-violet-600 border-violet-600  animate-pulse dark:bg-slate-950 bg-[#fcfefc]"
+                              ? "shadow-2xl ring-1 ring-cyan-500 shadow-cyan-500 border-cyan-500  animate-pulse dark:bg-slate-950 bg-[#fcfefc]"
                               : "border-gray-400 "
                           } ${
                             snapshot.draggingOver === "cardDeleteArea"
@@ -107,6 +100,13 @@ const CardItems = ({
                                   return;
                                 }
                                 handleDelete(index);
+                                if (
+                                  divRefForUserSettings.current?.classList.contains(
+                                    "scale-100"
+                                  )
+                                ) {
+                                  handleShowUserInfomation();
+                                }
                               }}
                               type="button"
                               className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center  lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 hover:text-red-600 "
@@ -123,6 +123,13 @@ const CardItems = ({
                                     _id: deck_id!,
                                     cardIndex: index,
                                   });
+                                if (
+                                  divRefForUserSettings.current?.classList.contains(
+                                    "scale-100"
+                                  )
+                                ) {
+                                  handleShowUserInfomation();
+                                }
                               }}
                               type="button"
                               className="text-blue-500 dark:hover:text-sky-600 hover:text-blue-600 text-lg outline-none rounded-tr px-1  text-center dark:text-sky-400 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500"

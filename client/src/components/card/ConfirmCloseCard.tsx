@@ -2,11 +2,11 @@ import { FC, MouseEvent, Dispatch } from "react";
 
 interface ConfirmCloseCardProps {
   setShowConfirmCloseCardModal: Dispatch<React.SetStateAction<boolean>>;
-  setExpandTextArea: Dispatch<React.SetStateAction<boolean>>;
-  setCheckClose: Dispatch<React.SetStateAction<boolean>>;
+  setExpandTextArea?: Dispatch<React.SetStateAction<boolean>>;
+  setCheckClose?: Dispatch<React.SetStateAction<boolean>>;
   setNote: Dispatch<React.SetStateAction<string>>;
   setTitle: Dispatch<React.SetStateAction<string>>;
-  setHeight: Dispatch<React.SetStateAction<number>>;
+  setHeight?: Dispatch<React.SetStateAction<number>>;
   showConfirmCloseCardModal: boolean;
 }
 
@@ -24,7 +24,17 @@ const ConfirmCloseCard: FC<ConfirmCloseCardProps> = ({
   ) => {
     if ((e.target as HTMLButtonElement).id === "yesbutton") {
       setShowConfirmCloseCardModal(false);
-      setExpandTextArea(false), setCheckClose(true), setHeight(80);
+      if (setCheckClose) {
+        setCheckClose(true);
+      }
+
+      if (setExpandTextArea) {
+        setExpandTextArea(false);
+      }
+
+      if (setHeight) {
+        setHeight(80);
+      }
       setNote("");
       setTitle("");
     } else {

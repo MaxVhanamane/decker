@@ -25,7 +25,7 @@ import { Droppable } from "react-beautiful-dnd";
 import { TbBulbFilled } from "react-icons/tb";
 import { BiCodeCurly } from "react-icons/bi";
 import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
-import {  FiMinusSquare, FiPlusSquare } from "react-icons/fi";
+import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { GoEyeClosed } from "react-icons/go";
 
 import Loading from "../components/Loading";
@@ -44,6 +44,7 @@ import Tips from "../components/card/Tips";
 import FullScreenCardView from "../components/card/FullScreenCardView";
 
 import EditCard from "../components/card/EditCard";
+import { searchContext } from "../context/SearchContext";
 // types
 // let oldContent:string //this  works
 type ContentType = {
@@ -76,10 +77,18 @@ const Cards: FC = () => {
   // States
   const { setAlert } = useContext(AlertContext);
   const {
+    showSearchBar,
+    setOpenSearchBar,
+    openEditDeckModalForSearchResult,
+    setAnimateCloseEditDeckModalInSearchResult,
+  } = useContext(searchContext);
+  const {
     indexOfCardForDeletion,
     setIndexOfCardForDeletion,
     deleteConfirmationModalForCard,
     theme,
+    divRefForUserSettings,
+    handleShowUserInfomation,
   } = useContext(UserContext);
   const { isOnline } = useContext(OfflineContext);
   const [note, setNote] = useState<string>("");
@@ -94,6 +103,9 @@ const Cards: FC = () => {
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [showConfirmCloseCardModal, setShowConfirmCloseCardModal] =
     useState(false);
+  const [closeTipsModal, setCloseTipsModal] = useState(false);
+  const [closeEditModal, setCloseEditModal] = useState(false);
+
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen>({
       title: "",
@@ -101,13 +113,12 @@ const Cards: FC = () => {
       _id: "",
       cardIndex: null,
     });
-  const { deck_id, search_index = null } = useParams();
+  const { deck_id } = useParams();
 
   const location = useLocation();
 
   const { data, isError, error, isLoading } = useGetCards(
     deck_id!,
-    search_index,
     location?.state?.deck
   );
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
@@ -189,33 +200,41 @@ const Cards: FC = () => {
   const handleBrowsersBackButton = useCallback(
     function (event: PopStateEvent) {
       event.preventDefault();
-      if (showTips) {
-       
-        setShowTips(false);
+      if (openEditDeckModalForSearchResult) {
+        setAnimateCloseEditDeckModalInSearchResult(true);
         return;
       }
-      if(search_index){
-        navigate(location.state?.from, {
-          state: {
-            deck: location?.state?.deckInfo
-              ? location?.state?.deckInfo
-              : null,
-          },
-        });
-      }
-      if (openModal || showFullScreen) {
-        if(openModal){
-          setOpenModal(false)
+      if (showSearchBar && !showFullScreen) {
+        if (divRefForUserSettings.current?.classList.contains("scale-100")) {
+          handleShowUserInfomation();
         }
-        else{
+        setOpenSearchBar(false);
+        return;
+      }
+      if (showTips) {
+        setCloseTipsModal(true);
+        return;
+      }
+
+      if (openModal || showFullScreen) {
+        if (openModal) {
+          setCloseEditModal(true);
+        } else {
           setStartAnimation(false);
-          setShowScrollButtons(false)
+          setShowScrollButtons(false);
         }
       } else {
         navigate("/");
       }
     },
-    [openModal, showFullScreen, showTips, startAnimation]
+    [
+      openModal,
+      showFullScreen,
+      showTips,
+      startAnimation,
+      showSearchBar,
+      openEditDeckModalForSearchResult,
+    ]
   );
 
   // Here we will check if user has used browser's back button if he uses browsers back button to go back then
@@ -224,45 +243,24 @@ const Cards: FC = () => {
 
   useEffect(() => {
     // This is how you detect if the browser's back button is clicked or not.
-    if(location?.state?.from!=="/"){
-  //We will not clear the history if a user performs a search on the home screen and clicks on a result. This is because if we clear the history, clicking the browser's back button would not lead back to the home screen. Instead, the user would be taken to the current URL, which requires specific data to render and could result in an error.
+    if (location?.state?.from !== "/") {
+      //We will not clear the history if a user performs a search on the home screen and clicks on a result. This is because if we clear the history, clicking the browser's back button would not lead back to the home screen. Instead, the user would be taken to the current URL, which requires specific data to render and could result in an error.
 
-         window.history.pushState(null, "", document.URL);
+      window.history.pushState(null, "", document.URL);
     }
     window.addEventListener("popstate", handleBrowsersBackButton);
     return () => {
       window.removeEventListener("popstate", handleBrowsersBackButton);
     };
-  }, [openModal, showFullScreen, showTips,startAnimation]);
+  }, [
+    openModal,
+    showFullScreen,
+    showTips,
+    startAnimation,
+    showSearchBar,
+    openEditDeckModalForSearchResult,
+  ]);
 
-  // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
-  useEffect(() => {
-    // First, we will check if the 'search_index' parameter is present in the URL. If it is, it means that we have arrived at this page from a search result.
-
-    if (search_index) {
-      // we need this info when we show the card in full screen
-      let cardInfo: ContentType = {
-        title: "",
-        note: "",
-        _id: "",
-      };
-
-      if (location.state.card !== undefined) {
-        // The 'data' state contains the deck along with its cards. We can use the 'search_index' to retrieve the specific card that we want to display in fullscreen mode
-        // here we will set the values for cardInfo object that we created above.
-        cardInfo.title = location.state.card.title;
-        cardInfo.note = location.state.card.note;
-        cardInfo._id = location.state.card.deck_id;
-      }
-      // here we will create all the data that is needed to show it in full screen
-      let cardDetails = {
-        ...cardInfo,
-        cardIndex: location.state.card.cardIndex,
-      };
-      setFullScreenCardData(cardDetails);
-      setShowFullScreen(true);
-    }
-  }, [location, search_index]);
   useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
 
@@ -425,7 +423,7 @@ const Cards: FC = () => {
     };
     if (editContent.title.length > 0 || editContent.note.length > 0) {
       editCard(data);
-      setOpenModal(false);
+      setCloseEditModal(true);
       setFullScreenCardData({ ...editContent });
     } else {
       setAlert((preval: AlertData) => ({
@@ -1008,7 +1006,13 @@ const Cards: FC = () => {
         message="Drag and drop the card here to delete it."
         showPopUp={showPopUp}
       />
-      {showTips && <Tips setShowTips={setShowTips} />}
+      {showTips && (
+        <Tips
+          setShowTips={setShowTips}
+          closeTipsModal={closeTipsModal}
+          setCloseTipsModal={setCloseTipsModal}
+        />
+      )}
 
       <Droppable droppableId="cardDeleteArea">
         {(provided, snapshot) => {
@@ -1016,7 +1020,7 @@ const Cards: FC = () => {
             <div
               className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2 z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${
                 snapshot.isDraggingOver
-                  ? "ring-1 ring-red-500 shadow-md shadow-red-500"
+                  ? "ring-1 ring-red-500 shadow-md shadow-red-500 z-[5001]"
                   : "ring-1 dark:ring-sky-500/40 ring-teal-500/40"
               }`}
               ref={provided.innerRef}
@@ -1282,6 +1286,9 @@ const Cards: FC = () => {
           handleChange={handleChange}
           handleSave={handleSave}
           ref={editTextareaRef}
+          openModal={openModal}
+          setCloseEditModal={setCloseEditModal}
+          closeEditModal={closeEditModal}
         />
       ) : null}
 
@@ -1306,7 +1313,6 @@ const Cards: FC = () => {
       {showFullScreen && (
         <FullScreenCardView
           fullScreenCardData={fullScreenCardData}
-          search_index={search_index}
           location={location}
           setShowFullScreen={setShowFullScreen}
           handleEdit={handleEdit}

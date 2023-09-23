@@ -77,11 +77,12 @@ const useDeleteCard = () => {
           autoHideDuration: 7000,
         }));
       }
-      queryClient.invalidateQueries(["cards", data.deck_id]);
       // If the search bar is open, it means that the user has deleted the card after searching. As I am using the "decks" query for searching, I need updated data, so I will invalidate the query and retrieve fresh data.
       if (showSearchBar) {
         queryClient.invalidateQueries("decks-and-cards");
       }
+
+      queryClient.invalidateQueries(["cards", data.deck_id]);
     },
   });
 };

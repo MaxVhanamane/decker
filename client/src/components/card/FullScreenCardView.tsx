@@ -2,18 +2,12 @@ import { IoIosArrowRoundBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
-import {
-  Dispatch,
-  memo,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Dispatch, memo, useContext, useEffect, useRef, useState } from "react";
 import parseNote from "../../functions/parseNote";
 import ThemeToggler from "../ThemeToggler";
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
 import { UserContext } from "../../context/UserContext";
+import { searchContext } from "../../context/SearchContext";
 
 type ContentType = {
   title: string;
@@ -31,7 +25,7 @@ type ContentTypeForEdit = ContentType & {
 
 type propTypes = {
   fullScreenCardData: ContentForFullScreen;
-  search_index: string | null;
+  search_index?: string | null;
   location: {
     pathname: string;
     search: string;
@@ -41,7 +35,7 @@ type propTypes = {
   setShowFullScreen: Dispatch<React.SetStateAction<boolean>>;
   setStartAnimation: Dispatch<React.SetStateAction<boolean>>;
   setShowScrollButtons: Dispatch<React.SetStateAction<boolean>>;
-  showScrollButtons:boolean;
+  showScrollButtons: boolean;
   startAnimation: boolean;
   handleEdit: (cardItem: ContentTypeForEdit) => void;
   handleDelete: (index: number) => void;
@@ -50,14 +44,13 @@ type propTypes = {
 const FullScreenCardView = ({
   fullScreenCardData,
   search_index,
-  location,
   setShowFullScreen,
   handleDelete,
   handleEdit,
   startAnimation,
   setStartAnimation,
   showScrollButtons,
-  setShowScrollButtons
+  setShowScrollButtons,
 }: propTypes) => {
   const { theme } = useContext(UserContext);
   const navigate = useNavigate();
@@ -70,7 +63,7 @@ const FullScreenCardView = ({
   const [parsedNote, setParsedNote] = useState<React.ReactNode[] | null>(null);
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
-
+  const { cardInfo, setCardInfo } = useContext(searchContext);
   useEffect(() => {
     const parseNoteAndSetCache = async () => {
       try {
@@ -134,8 +127,6 @@ const FullScreenCardView = ({
     }
   };
 
-
-
   useEffect(() => {
     if (divRef.current) {
       divRef.current.addEventListener("scroll", handleScroll, true);
@@ -147,9 +138,16 @@ const FullScreenCardView = ({
     }
   }, []);
 
-  const handleOnAnimationEnd=()=>{
-    if(location.state?.from === "/" && !startAnimation){
-      navigate("/");
+  const handleOnAnimationEnd = () => {
+    if (search_index && !startAnimation) {
+      setCardInfo({
+        title: "",
+        note: "",
+        _id: "",
+        cardIndex: null,
+        from: "",
+      });
+      navigate(cardInfo?.from, { replace: true });
     }
     if (!showScrollButtons) {
       setShowScrollButtons(true);
@@ -158,16 +156,16 @@ const FullScreenCardView = ({
       setShowFullScreen(false), setStartAnimation(true);
     }
     const isScrollable =
-    divRef.current!.scrollHeight > divRef.current!.clientHeight;
+      divRef.current!.scrollHeight > divRef.current!.clientHeight;
 
-  if (!isScrollable) {
-    setShowScrollToBottomButton(false);
-    setShowScrollToTopButton(false);
-  } else {
-    setShowScrollToBottomButton(true);
-    setShowScrollToTopButton(false);
-  }
-  }
+    if (!isScrollable) {
+      setShowScrollToBottomButton(false);
+      setShowScrollToTopButton(false);
+    } else {
+      setShowScrollToBottomButton(true);
+      setShowScrollToTopButton(false);
+    }
+  };
 
   return (
     <>
@@ -175,8 +173,8 @@ const FullScreenCardView = ({
         onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950   flex  flex-col z-[80] items-center ${
           startAnimation
-            ? "animate-translateFromLeftToRight lg:animate-none  "
-            : " animate-translateFromRightToLeft lg:animate-opacity scale-0 lg:duration-0"
+            ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
+            : "animate-translateFromRightToLeft lg:animate-opacityFadeOut lg:opacity-0 scale-0 lg:scale-100 "
         } `}
       >
         <div
@@ -190,14 +188,14 @@ const FullScreenCardView = ({
               {/* whitespace-pre-line to keep the new lines and spaces as it is */}
               <p
                 className={`text-left mb-5 mt-5 text-lg font-bold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100 ${
-                  parsedNote && "animate-opacity"
+                  parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 }`}
               >
                 {fullScreenCardData?.title}
               </p>
               <div
                 className={`text-left mb-16 break-words break-normal  -ml-1 whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
-                  parsedNote && "animate-opacity"
+                  parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 } `}
               >
                 {parsedNote}
@@ -207,7 +205,7 @@ const FullScreenCardView = ({
           ) : !parsingError ? (
             <div
               className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-gray-800 dark:text-gray-200 ${
-                !parsedNote && "animate-opacity"
+                !parsedNote && "animate-opacityFadeIn "
               }`}
             >
               Loading...
@@ -215,7 +213,7 @@ const FullScreenCardView = ({
           ) : (
             <div
               className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-gray-800 dark:text-gray-200 ${
-                !parsedNote && "animate-opacity"
+                !parsedNote && "animate-opacityFadeIn"
               } w-full`}
             >
               {parsingError}
@@ -225,31 +223,8 @@ const FullScreenCardView = ({
             <div>
               <button
                 onClick={() => {
-                  // "If the 'search_index' is available, we will handle the back button differently.
-                  //  we will not convert the 'search_index' to a number because the index could be 0. If we convert 0 to a number and use it in the 'if' statement, it will evaluate to false. However, if we treat it as a string, it will evaluate to true
-                  if (search_index) {
-                    // If the 'search_index' is present and the user clicks on the back button, we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
-                    if (location.state?.from === "/") {
-                       setStartAnimation(false);
-                      setShowScrollButtons(false);
-                    } else {
-                      // if user is on /cards/ReactJs(deck_id) and opens searchbar and searches something and opens card and closes when he closes the card I am navigating him to /cards/ReactJs(deck_id) but while navigating If I don't send deck as state value I will not see any cards that is why I am sending this data to avoid no cards found error. This value  location?.state?.deckInfo I set this value in searchResult component.
-                      navigate(location.state?.from, {
-                        state: {
-                          deck: location?.state?.deckInfo
-                            ? location?.state?.deckInfo
-                            : null,
-                        },
-                      });
-                      setStartAnimation(false);
-                      setShowScrollButtons(false);
-                    }
-                  }
-                  //"If the 'search_index' is undefined, it means that we did not arrive at this page from a search result, and instead opened it from the cards page. Therefore, we will simply close the fullscreen display.
-                  else {
-                    setStartAnimation(false);
-                    setShowScrollButtons(false);
-                  }
+                  setStartAnimation(false);
+                  setShowScrollButtons(false);
                 }}
                 className=" text-xl rounded px-1  text-center text-gray-50 cursor-pointer bg-red-500"
                 aria-label="Back"
@@ -290,26 +265,27 @@ const FullScreenCardView = ({
           </div>
         </div>
       </article>
-      {showScrollButtons && (showScrollToBottomButton ||  showScrollToTopButton) &&(
-        <div className="fixed lg:right-8 lg:bottom-16 bottom-6 right-4 z-[80] animate-opacity">
-          {showScrollToBottomButton && parsedNote && (
-            <button
-              className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400  "
-              onClick={handleScrollToTheBottom}
-            >
-              <HiOutlineArrowSmDown />
-            </button>
-          )}
-          {showScrollToTopButton && (
-            <button
-              className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
-              onClick={handleScrollToTop}
-            >
-              <HiOutlineArrowSmUp />
-            </button>
-          )}
-        </div>
-      )}
+      {showScrollButtons &&
+        (showScrollToBottomButton || showScrollToTopButton) && (
+          <div className="fixed lg:right-8 lg:bottom-16 bottom-6 right-4 z-[80] animate-opacityFadeIn">
+            {showScrollToBottomButton && parsedNote && (
+              <button
+                className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400  "
+                onClick={handleScrollToTheBottom}
+              >
+                <HiOutlineArrowSmDown />
+              </button>
+            )}
+            {showScrollToTopButton && (
+              <button
+                className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
+                onClick={handleScrollToTop}
+              >
+                <HiOutlineArrowSmUp />
+              </button>
+            )}
+          </div>
+        )}
     </>
   );
 };
