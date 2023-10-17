@@ -40,7 +40,7 @@ const ThemeToggler: FC = () => {
           ) : (
             <RiSunFill
               onClick={handleClick}
-              className="text-sky-400 cursor-pointer  hover:rotate-90 hover:text-yellow-400  transition-[transform] duration-300"
+              className="text-sky-400 cursor-pointer  hover:text-yellow-400  transition-all duration-300 text-lg"
             />
           )}
         </div>

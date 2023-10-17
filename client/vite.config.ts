@@ -55,9 +55,23 @@ export default defineConfig(({ command, mode }) => {
           },
           {
             urlPattern: new RegExp(`${API_URL}/decks-and-cards$`),
-            handler: 'NetworkFirst', // Caching strategy for /cards/deck_id
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'search-cache',
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // cache expiration time
+              },
+              cacheableResponse: {
+                statuses: [200],
+              },
+            },
+          },
+          {
+            urlPattern: new RegExp(`${API_URL}/getuser$`),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'auth-cache',
               expiration: {
                 maxEntries: 500,
                 maxAgeSeconds: 60 * 60 * 24 * 7, // cache expiration time
@@ -83,7 +97,7 @@ export default defineConfig(({ command, mode }) => {
             "src": "/favicons/android-chrome-512x512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "maskable"
           },
           {
             "src": "/favicons/android-chrome-192x192.png",
@@ -110,6 +124,7 @@ export default defineConfig(({ command, mode }) => {
         "display": "standalone",
         "background_color": "#fcfefc",
         "theme_color": "#fcfefc",
+
       }
 
     }),],

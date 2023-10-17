@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { TiTick } from "react-icons/ti";
 import { useLocation } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
 export default function AccountDeletionSuccess() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userInfo } = useContext(UserContext);
   const accountDeletedSuccessfully = location.state?.accountDeletedSuccessfully;
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -13,7 +15,7 @@ export default function AccountDeletionSuccess() {
       timeout = setTimeout(() => {
         navigate("/login", { replace: true });
       }, 5000);
-    } else if (localStorage.getItem("userInfo")) {
+    } else if (userInfo) {
       navigate("/", { replace: true });
     } else {
       navigate("/login", { replace: true });
@@ -21,6 +23,7 @@ export default function AccountDeletionSuccess() {
     // Clean up the timeout when the component unmounts
     return () => clearTimeout(timeout);
   }, []);
+
   return accountDeletedSuccessfully ? (
     <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-950 bg-[#fcfefc] -z-10">
       <div className="flex items-center justify-center rounded-full bg-green-700 text-white ">
@@ -29,7 +32,7 @@ export default function AccountDeletionSuccess() {
         </p>
       </div>
       <div className=" text-gray-800 p-4 rounded-lg dark:text-gray-50">
-        <p className="text-xl font-bold">
+        <p className="text-xl font-semibold">
           Your account has been successfully deleted. You will now be redirected
           to the login page
         </p>

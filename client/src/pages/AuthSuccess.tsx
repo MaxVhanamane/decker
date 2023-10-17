@@ -11,13 +11,8 @@ export default function AuthSuccess() {
   const getUser = async (): Promise<userData> => {
     const userData = await request.get("/getuser");
     setUserInfo(userData.data);
-    localStorage.setItem("userInfo", JSON.stringify(userData.data));
-    const userInfo = localStorage.getItem("userInfo");
-    let user;
-    if (userInfo) {
-      user = JSON.parse(userInfo);
-    }
-    return user;
+
+    return userData.data;
   };
 
   useEffect(() => {

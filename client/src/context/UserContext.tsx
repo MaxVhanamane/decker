@@ -6,10 +6,26 @@ import {
   Dispatch,
   useRef,
   RefObject,
+  useCallback,
 } from "react";
 import { request } from "../utils/axios-utils";
 import { userData } from "../types/types";
 import { useLocation, useNavigate } from "react-router-dom";
+
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: ReadonlyArray<string>;
+  prompt(): Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+}
 
 type UserContextProvider = {
   children: ReactNode;
@@ -35,8 +51,13 @@ interface ContexType {
   divRefForUserSettings: RefObject<HTMLDivElement>;
   indexOfCardForDeletion: number | null;
   showInstallAppButton: boolean;
+  showLogoutModal: boolean;
+  isAuthenticating: boolean;
   setShowInstallAppButton: Dispatch<React.SetStateAction<boolean>>;
+  setIsAuthenticating: Dispatch<React.SetStateAction<boolean>>;
+  setShowLogoutModal: Dispatch<React.SetStateAction<boolean>>;
   handleShowUserInfomation: () => void;
+  handleInstallApp: () => void;
 }
 export const UserContext = createContext<ContexType>({
   userInfo: {
@@ -44,6 +65,7 @@ export const UserContext = createContext<ContexType>({
     profile_picture: "",
     email: "",
   },
+  showLogoutModal: false,
   setUserInfo: () => {},
   theme: null,
   setTheme: () => {},
@@ -55,7 +77,11 @@ export const UserContext = createContext<ContexType>({
   indexOfCardForDeletion: null,
   showInstallAppButton: false,
   setShowInstallAppButton: () => {},
+  setShowLogoutModal: () => {},
+  isAuthenticating: true,
+  setIsAuthenticating: () => {},
   handleShowUserInfomation: () => {},
+  handleInstallApp: () => {},
 });
 
 function UserContextProvider({ children }: UserContextProvider) {
@@ -65,6 +91,10 @@ function UserContextProvider({ children }: UserContextProvider) {
   const deleteConfirmationModalForCard = useRef<HTMLDivElement>(null);
   const divRefForUserSettings = useRef<HTMLDivElement>(null);
   const [showInstallAppButton, setShowInstallAppButton] = useState(false);
+  const [beforeInstallHandlerRun, setBeforeInstallHandlerRun] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const pathNames = [
     "/signup",
     "/verifyemail",
@@ -78,32 +108,57 @@ function UserContextProvider({ children }: UserContextProvider) {
   const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
     number | null
   >(null);
-  const getUser = async (): Promise<any> => {
-    const userInfo = localStorage.getItem("userInfo");
-    if (!userInfo) {
-      // User is visiting the website for the first time or not logged in
-      if (pathNames.includes(location.pathname)) {
-        navigate(location.pathname);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
+
+  useEffect(() => {
+    const beforeInstallHandler = (e: Event) => {
+      const event = e as BeforeInstallPromptEvent;
+      if (event) {
+        // "Storing the showInstallAppButton value in local storage and using it on the Auth Success page to set the showInstallAppButton global state is necessary. This is because, when a user is on the login page and we set setShowInstallAppButton(true), this state will lose its value if the user uses Google Login. Google Login redirects the user to an external URL, and when they return to the app after logging in, the showInstallAppButton state will revert to its default value, which is false. Consequently, the 'Install Decker App' button won't be displayed because the beforeinstallprompt event only fires once when the app loads. To prevent this, we save the value in local storage and use it on the Auth Success page, removing it from there afterward. We've used an if condition to set the value in local storage to avoid unnecessary updates when the user refreshes the page while logged in, triggering the beforeinstallprompt event."
+
+        localStorage.setItem("showInstallAppButton", JSON.stringify(true));
+        setDeferredPrompt(event);
+        setShowInstallAppButton(true);
+        setBeforeInstallHandlerRun(true);
       }
-      if (authPaths.includes(location.pathname)) {
-        navigate(location.pathname);
-      } else {
-        navigate("/login"); // Redirect to the login page
+    };
+
+    window.addEventListener("beforeinstallprompt", beforeInstallHandler);
+
+    // Remove event listeners when the component unmounts
+    return () => {
+      window.removeEventListener("beforeinstallprompt", beforeInstallHandler);
+    };
+  }, [setShowInstallAppButton, setBeforeInstallHandlerRun]);
+
+  const handleInstallApp = useCallback(async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+        setShowInstallAppButton(false);
       }
-      return null;
     }
-    const data = await request.get("/getuser");
-    if (data.data) {
-      localStorage.setItem("userInfo", JSON.stringify(data.data));
-      setUserInfo(data.data);
-    } else if (pathNames.includes(location.pathname)) {
-      navigate(location.pathname);
-    } else if (authPaths.includes(location.pathname)) {
+  }, [deferredPrompt, setDeferredPrompt, setShowInstallAppButton]);
+
+  const getUser = async (): Promise<any> => {
+    try {
+      const data = await request.get("/getuser");
+      if (data.data) {
+        setUserInfo(data.data);
+      } else if (pathNames.includes(location.pathname)) {
+        navigate(location.pathname);
+      } else if (authPaths.includes(location.pathname)) {
+        navigate("/login");
+      } else {
+        navigate("/login");
+      }
+    } catch {
+      setIsAuthenticating(false);
       navigate("/login");
-    } else {
-      setUserInfo(null);
-      localStorage.removeItem("userInfo");
-      navigate("/sessionexpired");
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
@@ -145,31 +200,6 @@ function UserContextProvider({ children }: UserContextProvider) {
   //If the user changes the theme preference directly from localStorage or tampers with the userInfo, we will listen for that change and take appropriate action accordingly.
 
   useEffect(() => {
-    // If the user changes the information stored in localStorage, we will log them out.
-    const handleLogout = async () => {
-      try {
-        const res = await request.post("/auth/logout");
-        return res;
-      } catch (error) {
-        throw new Error("Logout failed");
-      }
-    };
-
-    const handleLogoutAndRedirect = async () => {
-      try {
-        const res = await handleLogout();
-        if (res.data === "done") {
-          setUserInfo(null);
-          localStorage.removeItem("userInfo");
-          navigate("/login", { replace: true });
-        }
-      } catch (error) {
-        setUserInfo(null);
-        localStorage.removeItem("userInfo");
-        navigate("/login", { replace: true });
-      }
-    };
-
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === "theme") {
         const newTheme = event.newValue;
@@ -184,25 +214,6 @@ function UserContextProvider({ children }: UserContextProvider) {
           // Reset the theme value in localStorage to the default dark theme
           localStorage.setItem("theme", "dark");
         }
-      } else if (event.key === "userInfo") {
-        const userInfoFromLocalStorage = localStorage.getItem("userInfo");
-        let localUserInfo;
-
-        try {
-          localUserInfo = userInfoFromLocalStorage
-            ? JSON.parse(userInfoFromLocalStorage)
-            : null;
-        } catch {
-          handleLogoutAndRedirect();
-          return;
-        }
-        if (
-          userInfo?.email !== localUserInfo.name ||
-          userInfo?.email !== localUserInfo.email ||
-          userInfo?.profile_picture !== localUserInfo.profile_picture
-        ) {
-          handleLogoutAndRedirect();
-        }
       }
     };
 
@@ -211,7 +222,13 @@ function UserContextProvider({ children }: UserContextProvider) {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [userInfo]);
+  }, []);
+
+  useEffect(() => {
+    if (beforeInstallHandlerRun && userInfo && !isAuthenticating) {
+      localStorage.removeItem("showInstallAppButton");
+    }
+  }, [beforeInstallHandlerRun, userInfo, isAuthenticating]);
 
   const handleShowUserInfomation = () => {
     if (divRefForUserSettings.current?.classList.contains("scale-100")) {
@@ -235,6 +252,11 @@ function UserContextProvider({ children }: UserContextProvider) {
         showInstallAppButton,
         setShowInstallAppButton,
         handleShowUserInfomation,
+        isAuthenticating,
+        setIsAuthenticating,
+        handleInstallApp,
+        showLogoutModal,
+        setShowLogoutModal,
       }}
     >
       {children}
@@ -243,5 +265,3 @@ function UserContextProvider({ children }: UserContextProvider) {
 }
 
 export default UserContextProvider;
-
-// bg-[#0D1017]

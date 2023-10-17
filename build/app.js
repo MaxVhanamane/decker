@@ -87,29 +87,29 @@ app.use((0, express_session_1.default)({
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 10 //cookie expires in 10 days
+        maxAge: 1000 * 60 * 60 * 24 * 15 //cookie expires in 15 days
     }
 }));
 // using passport to handle login
 app.use(passport_1.default.initialize());
+// allow passport to use "express-session".
 app.use(passport_1.default.session());
 // local strategy 
 passport_1.default.use(new LocalStrategy({ usernameField: "email" }, 
 // here in function username and password are equal to req.body.username and req.body.password. passport automatically does that for you.
 function (username, password, done) {
-    user_1.default.findOne({ email: username }, function (err, user) {
-        if (err) {
-            return done(err);
-        } // If there is error we will return an error to done function.
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = yield user_1.default.findOne({ email: username });
+        // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
         if (!user) {
-            return done(new mongoose_1.Error("User with this email doesn't exist!"));
-        } // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
+            done(new mongoose_1.Error("User with this email doesn't exist!"));
+        }
         // check if user is registered with Google Auth
-        if (!user.password) {
-            return done(new mongoose_1.Error("You cannot log in with local credentials because you registered with Google Auth."));
+        if (!(user === null || user === void 0 ? void 0 : user.password)) {
+            done(new mongoose_1.Error("You cannot log in with local credentials because you registered with Google Auth."));
         }
         // If we reach this line it means we found the user now let's compare the passoword.
-        bcryptjs_1.default.compare(password, user.password, (err, result) => {
+        bcryptjs_1.default.compare(password, user === null || user === void 0 ? void 0 : user.password, (err, result) => {
             if (err)
                 throw err; // If some error occures while decrypting we will throw an error. very less likely but still...
             if (result === true) {
@@ -128,8 +128,8 @@ passport_1.default.use(new GoogleStrategy({
     clientSecret: process.env.CLIENT_SECRET,
 }, (accessToken, refreshToken, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    // This function run on successfull authentication 
-    //extracting required user information from the profile that is given by goolge
+    // This function runs upon successful authentication.
+    //extracting required user information from the profile that is given by google
     const userInfo = {
         email: (profile === null || profile === void 0 ? void 0 : profile.emails) ? (_a = profile === null || profile === void 0 ? void 0 : profile.emails[0]) === null || _a === void 0 ? void 0 : _a.value : "",
         profile_picture: (profile === null || profile === void 0 ? void 0 : profile.photos) ? (_b = profile === null || profile === void 0 ? void 0 : profile.photos[0]) === null || _b === void 0 ? void 0 : _b.value : "",
@@ -150,19 +150,19 @@ passport_1.default.use(new GoogleStrategy({
         return done(error);
     }
 })));
-// serializeUser to store only id in session
+// serializeUser to store only id in session. (This runs only once during authentication)
 passport_1.default.serializeUser((user, done) => {
     return done(null, user === null || user === void 0 ? void 0 : user._id);
 });
-// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
+// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object. (This runs on every request)
 passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const doc = yield user_1.default.findById(id);
-        if (doc) {
+        const UserDetails = yield user_1.default.findById(id);
+        if (UserDetails) {
             const userInfo = {
-                username: doc.username,
-                email: doc.email,
-                profile_picture: doc.profile_picture,
+                username: UserDetails.username,
+                email: UserDetails.email,
+                profile_picture: UserDetails.profile_picture,
             };
             done(null, userInfo);
         }
@@ -407,7 +407,6 @@ app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, (r
         }
     }
     catch (error) {
-        console.log(error);
         if (error.name === 'VersionError') {
             return res.status(429).json({ message: "VersionError", success: false });
         }
@@ -562,11 +561,11 @@ app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function*
                 res.status(200).json({ success: true, message: "OTP verification successful!" });
             }
             else {
-                res.status(200).json({ success: false, message: "OTP has expired!" });
+                res.status(200).json({ success: false, message: "Your OTP has expired! Please request a new one to continue." });
             }
         }
         else {
-            res.status(200).json({ success: false, message: "OTP verification failed!" });
+            res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
         }
     }
     else {
@@ -642,11 +641,11 @@ app.post("/verifyforgotpasswordotp", (req, res) => __awaiter(void 0, void 0, voi
                 res.status(200).json({ success: true, message: "OTP verification successful!" });
             }
             else {
-                res.status(200).json({ success: false, message: "OTP has expired!" });
+                res.status(200).json({ success: false, message: "Your OTP has expired! Please request a new one to continue." });
             }
         }
         else {
-            res.status(200).json({ success: false, message: "OTP verification failed!" });
+            res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
         }
     }
     else {
@@ -672,7 +671,7 @@ app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(200).json({ success: false, message: "You are unauthorized!" });
     }
 }));
-app.post("/generateaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/generateaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let user = yield accountdeletionotps_1.default.findOne({ email: req.body.email });
         let mainUser = yield user_1.default.findOne({ email: req.body.email });
@@ -731,7 +730,7 @@ app.post("/generateaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, 
         res.status(500).json({ success: false, message: "Some error occurred please try again later!" });
     }
 }));
-app.post("/verifyaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/verifyaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let user = yield accountdeletionotps_1.default.findOne({ email: req.body.email });
     if (user) {
         // Check If the otp is expired or not.
@@ -741,11 +740,11 @@ app.post("/verifyaccountdeletionotp", (req, res) => __awaiter(void 0, void 0, vo
                 res.status(200).json({ success: true, message: "OTP verification successful!" });
             }
             else {
-                res.status(200).json({ success: false, message: "OTP has expired!" });
+                res.status(200).json({ success: false, message: "Your OTP has expired! Please request a new one to continue." });
             }
         }
         else {
-            res.status(200).json({ success: false, message: "OTP verification failed!" });
+            res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
         }
     }
     else {

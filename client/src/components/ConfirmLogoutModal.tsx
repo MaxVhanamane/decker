@@ -28,7 +28,6 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
       if (res.data === "done") {
         handleShowUserInfomation();
         setUserInfo(null);
-        localStorage.removeItem("userInfo");
         navigate("/login", { replace: true });
         setShowLogoutModal(false);
       } else {
@@ -42,6 +41,7 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
         setShowLogoutModal(false);
       }
     } else {
+      navigate(-1);
       setShowLogoutModal(false);
     }
   };

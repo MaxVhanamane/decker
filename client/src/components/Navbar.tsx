@@ -1,8 +1,8 @@
-import { FC, memo, useState, useContext, useEffect } from "react";
+import { FC, memo, useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { AlertData } from "../types/types";
-import { FaUserCircle } from "react-icons/fa";
+import { FaRegUser } from "react-icons/fa";
 import { RiCloseFill, RiLogoutCircleRLine } from "react-icons/ri";
 import ThemeToggler from "./ThemeToggler";
 import SearchBar from "./SearchBar";
@@ -14,23 +14,14 @@ import { AlertContext } from "../context/AlertContext";
 import { searchContext } from "../context/SearchContext";
 import { MdInstallDesktop, MdInstallMobile } from "react-icons/md";
 
-declare global {
-  interface WindowEventMap {
-    beforeinstallprompt: BeforeInstallPromptEvent;
-  }
-}
-
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: ReadonlyArray<string>;
-  prompt(): Promise<void>;
-}
-
 const Navbar: FC = () => {
   const {
     divRefForUserSettings,
     userInfo,
     showInstallAppButton,
-    setShowInstallAppButton,
+    handleInstallApp,
+    showLogoutModal,
+    setShowLogoutModal,
   } = useContext(UserContext);
   const { showSearchBar, setShowSearchBar, setOpenSearchBar } =
     useContext(searchContext);
@@ -38,9 +29,12 @@ const Navbar: FC = () => {
   const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const [imageError, setImageError] = useState(false);
   const handleShowUserInfomation = () => {
+    if (showLogoutModal) {
+      divRefForUserSettings.current?.classList.add("transition-none");
+    }
     if (divRefForUserSettings.current?.classList.contains("scale-0")) {
       divRefForUserSettings.current?.classList.add("!block");
       divRefForUserSettings.current?.classList.remove("scale-0");
@@ -61,44 +55,6 @@ const Navbar: FC = () => {
     "/accountdeletionsuccess",
   ];
 
-  useEffect(() => {
-    let deferredPrompt: any;
-
-    const beforeInstallHandler = (e: Event) => {
-      const event = e as BeforeInstallPromptEvent;
-      if (event) {
-        if (pathNames.includes(location.pathname)) {
-          // "Storing the showInstallAppButton value in local storage and using it on the Auth Success page to set the showInstallAppButton global state is necessary. This is because, when a user is on the login page and we set setShowInstallAppButton(true), this state will lose its value if the user uses Google Login. Google Login redirects the user to an external URL, and when they return to the app after logging in, the showInstallAppButton state will revert to its default value, which is false. Consequently, the 'Install Decker App' button won't be displayed because the beforeinstallprompt event only fires once when the app loads. To prevent this, we save the value in local storage and use it on the Auth Success page, removing it from there afterward. We've used an if condition to set the value in local storage to avoid unnecessary updates when the user refreshes the page while logged in, triggering the beforeinstallprompt event." I have placed setShowInstallAppButton(true) outside the if statement because if the user refreshes the page on the home screen, it will set the value, and I will see the 'Install Decker App' button; otherwise, I won't see that button.
-          localStorage.setItem("showInstallAppButton", JSON.stringify(true));
-        }
-        setShowInstallAppButton(true);
-      }
-
-      deferredPrompt = event;
-    };
-
-    const installApp = document.getElementById("install-button");
-
-    const clickHandler = async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === "accepted") {
-          deferredPrompt = null;
-        }
-      }
-    };
-
-    window.addEventListener("beforeinstallprompt", beforeInstallHandler);
-    installApp?.addEventListener("click", clickHandler);
-
-    // Remove event listeners when the component unmounts
-    return () => {
-      window.removeEventListener("beforeinstallprompt", beforeInstallHandler);
-      installApp?.removeEventListener("click", clickHandler);
-    };
-  }, []);
-
   return (
     <>
       <nav
@@ -113,7 +69,7 @@ const Navbar: FC = () => {
           <div
             onClick={() => {
               if (showSearchBar) {
-                setOpenSearchBar(false);
+                return;
               }
               if (
                 divRefForUserSettings.current?.classList.contains("scale-100")
@@ -121,7 +77,12 @@ const Navbar: FC = () => {
                 handleShowUserInfomation();
               }
               if (!pathNames.includes(location.pathname)) {
-                navigate("/");
+                if (location.pathname === "/") {
+                  navigate("/", { replace: true });
+                  return;
+                } else {
+                  navigate("/");
+                }
               }
             }}
             className="flex items-center justify-center rounded px-2 gap-2"
@@ -234,16 +195,20 @@ const Navbar: FC = () => {
                   }}
                   className=" cursor-pointer   mr-1  rounded-full flex gap-2 px-2 items-center"
                 >
-                  {" "}
-                  {userInfo?.profile_picture ? (
+                  {userInfo?.profile_picture && !imageError ? (
                     <img
+                      onError={() => {
+                        setImageError(true);
+                      }}
                       className="rounded-full w-8 h-8 "
                       src={userInfo?.profile_picture}
                       alt="profile"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <FaUserCircle className="w-8 h-8 dark:text-sky-500 text-gray-600 " />
+                    <div className="rounded-full bg-gradient-to-tr from-teal-600 to-green-700 dark:from-sky-700 dark:to-green-700 w-8 h-8 flex items-center justify-center">
+                      <FaRegUser className=" text-lg text-gray-50" />
+                    </div>
                   )}
                 </li>
               ) : null}
@@ -309,7 +274,7 @@ const Navbar: FC = () => {
             </button>
 
             <button
-              id="install-button"
+              onClick={handleInstallApp}
               className={` ${
                 showInstallAppButton
                   ? "flex items-center justify-center gap-2"
@@ -317,7 +282,7 @@ const Navbar: FC = () => {
               } font-semibold  rounded text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 cursor-pointer `}
               aria-label="install app button"
             >
-              <MdInstallMobile className="lg:hidden dark:text-gray-50 dark:hover:text-gray-300  text-gray-500 hover:text-gray-600 " />{" "}
+              <MdInstallMobile className="lg:hidden dark:text-gray-50 dark:hover:text-gray-300  text-gray-500 hover:text-gray-600 " />
               <MdInstallDesktop className="hidden lg:block text-lg" /> Install
               Decker
             </button>
@@ -340,6 +305,7 @@ const Navbar: FC = () => {
               onClick={() => {
                 if (isOnline) {
                   setShowLogoutModal(true);
+                  navigate(location.pathname);
                 } else {
                   setAlert((preval: AlertData) => ({
                     ...preval,

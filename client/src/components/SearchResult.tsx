@@ -160,39 +160,43 @@ const SearchResult: FC<IProp> = ({
   //   const regex = new RegExp((${searchQuery}), "gi");, "gi" are flags that modify the behavior of the regular expression.
   // The g flag stands for "global" and tells the regular expression to match all occurrences of the search query in the input text, not just the first one.
   // The i flag stands for "case-insensitive" and tells the regular expression to ignore the case of the search query when matching against the input text.
-  function highlightText(text: string, searchQuery: string) {
-    // here we will escape special characters because they have some meaning in regular expression.
-    // for eg. if you put "/" in search string ("react/") this will throw an error so we will escape "/" and then search it.
-    const escapedSearchQuery = searchQuery.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      "\\$&"
-    );
 
-    // Create a regular expression to match the search query.
-    const regex = new RegExp(`(${escapedSearchQuery})`, "gi");
+  const highlightText = useCallback(
+    (text: string, searchQuery: string) => {
+      // here we will escape special characters because they have some meaning in regular expression.
+      // for eg. if you put "/" in search string ("react/") this will throw an error so we will escape "/" and then search it.
+      const escapedSearchQuery = searchQuery.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
 
-    // Split the text using the regular expression and keep track of the first match.
-    let isFirstMatch = false;
-    const foundString = text.split(regex).map((part, index) => {
-      // Check if the current part matches the search query.
-      if (regex.test(part) && !isFirstMatch) {
-        isFirstMatch = true;
-        // Highlight the first occurrence.
-        return (
-          <span
-            key={index}
-            className={`${theme === "dark" ? "bg-red-500" : "bg-yellow-300"}`}
-          >
-            {part}
-          </span>
-        );
-      } else {
-        return part;
-      }
-    });
+      // Create a regular expression to match the search query.
+      const regex = new RegExp(`(${escapedSearchQuery})`, "gi");
 
-    return <>{foundString}</>;
-  }
+      // Split the text using the regular expression and keep track of the first match.
+      let isFirstMatch = false;
+      const foundString = text.split(regex).map((part, index) => {
+        // Check if the current part matches the search query.
+        if (regex.test(part) && !isFirstMatch) {
+          isFirstMatch = true;
+          // Highlight the first occurrence.
+          return (
+            <span
+              key={index}
+              className={`${theme === "dark" ? "bg-red-500" : "bg-yellow-300"}`}
+            >
+              {part}
+            </span>
+          );
+        } else {
+          return part;
+        }
+      });
+
+      return <>{foundString}</>;
+    },
+    [theme]
+  );
 
   const handlePin = async (id: string, pinned: boolean) => {
     // This code is for optimistic updates. as I am updating data in useEffect it takes a little time to show pinned or unpinned changes.
@@ -278,7 +282,7 @@ const SearchResult: FC<IProp> = ({
         foundCards.length > 0 ? (
           <div>
             {foundDecks?.filter((deck) => deck.pinned === true).length > 0 && (
-              <div className="lg:mt-16 lg:mb-10 mx-1">
+              <div className="lg:mt-16 lg:mb-10 mx-1 animate-quickOpacity">
                 <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
                   Pinned Decks
                 </p>
@@ -335,6 +339,7 @@ const SearchResult: FC<IProp> = ({
                               }}
                               to={`cards/${deck.deck_id}`}
                               state={{ deck }}
+                              replace={true}
                             >
                               <p
                                 className=" break-all font-semibold  line-clamp-1 h-7 text-center  "
@@ -358,7 +363,7 @@ const SearchResult: FC<IProp> = ({
                   foundDecks?.filter((deck) => deck.pinned === true).length > 0
                     ? "mt-12"
                     : "mt-24 "
-                } mx-1 lg:mb-10`}
+                } mx-1 lg:mb-10 animate-quickOpacity`}
               >
                 <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
                   Other Decks
@@ -416,6 +421,7 @@ const SearchResult: FC<IProp> = ({
                               }}
                               to={`cards/${deck.deck_id}`}
                               state={{ deck }}
+                              replace={true}
                             >
                               <p
                                 className=" break-all font-semibold  line-clamp-1 h-7 text-center  "
@@ -438,18 +444,20 @@ const SearchResult: FC<IProp> = ({
             {foundCards.length > 0 && (
               <p
                 className={`text-left text-md font-semibold text-gray-800 dark:text-gray-50 mx-5 mb-4 ${
-                  foundDecks.length > 0 ? "mt-12" : "mt-[5.5rem]"
+                  foundDecks.length > 0
+                    ? "mt-14"
+                    : "mt-[1.3rem] lg:mt-[5.5rem] "
                 }`}
               >
                 Cards
               </p>
             )}
 
-            <div className="flex flex-row flex-wrap justify-center items-center  mx-2 lg:mx-52 mb-48 gap-4">
+            <div className="flex flex-row flex-wrap justify-center items-center  mx-2 lg:mx-52 mb-48 gap-4 animate-quickOpacity">
               {foundCards?.map((card, index) => (
                 <Link
                   onClick={handleShowUserInfomation}
-                  key={index}
+                  key={card.cardId}
                   to={`/search/result/${card.deck_id}/${card.cardIndex}`}
                   state={{ from: location.pathname, card }}
                 >

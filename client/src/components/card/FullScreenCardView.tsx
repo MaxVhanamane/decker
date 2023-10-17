@@ -1,5 +1,5 @@
-import { IoIosArrowRoundBack } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
+import { IoIosArrowBack } from "react-icons/io";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
 import { Dispatch, memo, useContext, useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ type ContentType = {
   title: string;
   note: string;
   _id: string;
+  cardId: string;
 };
 
 type ContentForFullScreen = ContentType & {
@@ -64,6 +65,7 @@ const FullScreenCardView = ({
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
   const { cardInfo, setCardInfo } = useContext(searchContext);
+  const location = useLocation();
   useEffect(() => {
     const parseNoteAndSetCache = async () => {
       try {
@@ -146,7 +148,9 @@ const FullScreenCardView = ({
         _id: "",
         cardIndex: null,
         from: "",
+        cardId: "",
       });
+      navigate(-1);
       navigate(cardInfo?.from, { replace: true });
     }
     if (!showScrollButtons) {
@@ -187,7 +191,7 @@ const FullScreenCardView = ({
               {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words. */}
               {/* whitespace-pre-line to keep the new lines and spaces as it is */}
               <p
-                className={`text-left mb-5 mt-5 text-lg font-bold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100 ${
+                className={`text-left mb-5 mt-5 text-md font-semibold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100 ${
                   parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 }`}
               >
@@ -219,18 +223,21 @@ const FullScreenCardView = ({
               {parsingError}
             </div>
           )}
-          <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+          <div className="fixed top-0  py-[0.95rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
             <div>
               <button
                 onClick={() => {
                   setStartAnimation(false);
                   setShowScrollButtons(false);
+                  if (location?.state?.isBackButtonNotClicked) {
+                    navigate(-1);
+                  }
                 }}
-                className=" text-xl rounded px-1  text-center text-gray-50 cursor-pointer bg-red-500"
+                className=" text-xl rounded pl-1  text-center dark:text-gray-200 text-gray-500  cursor-pointer flex items-center justify-center "
                 aria-label="Back"
                 title="Back"
               >
-                <IoIosArrowRoundBack />
+                <IoIosArrowBack /> <p className="text-xs   ">Back</p>
               </button>
             </div>
             <div className="flex items-center justify-center gap-2 ">
@@ -243,7 +250,7 @@ const FullScreenCardView = ({
                   handleDelete(fullScreenCardData?.cardIndex!);
                 }}
                 type="button"
-                className="text-red-500 text-xl outline-none px-1  text-center hover:scale-95 "
+                className="text-red-600 text-xl outline-none px-1  text-center hover:scale-95 "
                 aria-label="Delete Card"
                 title="Delete Card"
               >
@@ -255,7 +262,7 @@ const FullScreenCardView = ({
                   handleEdit(fullScreenCardData);
                 }}
                 type="button"
-                className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-400"
+                className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-500"
                 aria-label="Edit Card"
                 title="Edit Card"
               >

@@ -44,10 +44,12 @@ const useDeleteCard = () => {
   return useMutation(deleteCard, {
     onMutate: async (data: PayloadType) => {
       await queryClient.cancelQueries(["cards", data.deck_id]);
+      await queryClient.cancelQueries(["decks-and-cards"]);
       const previousQueryData: CardDataType[] = queryClient.getQueryData([
         "cards",
         data.deck_id,
       ])!;
+
       queryClient.setQueryData<OldData | undefined>(
         ["cards", data.deck_id],
         (oldQueryData) => {
@@ -55,6 +57,29 @@ const useDeleteCard = () => {
             const newArray = [...oldQueryData?.cards];
             newArray.splice(data.index, 1);
             return { ...oldQueryData, cards: newArray };
+          }
+        }
+      );
+      const allDecksAndCards = queryClient.getQueryData("decks-and-cards");
+      queryClient.setQueryData<any>(
+        ["decks-and-cards"],
+        (oldQueryData: any) => {
+          if (oldQueryData) {
+            const newArr = JSON.parse(JSON.stringify(oldQueryData));
+
+            const modifiedData = newArr.map((obj: any) => {
+              if (obj._id === data.deck_id) {
+                const updatedCards = [...obj.cards]; // Create a new reference for obj.cards
+                updatedCards.splice(data.index, 1);
+
+                // Return a new object with the updated cards
+                return { ...obj, cards: updatedCards };
+              } else {
+                return obj;
+              }
+            });
+
+            return modifiedData;
           }
         }
       );
@@ -78,9 +103,6 @@ const useDeleteCard = () => {
         }));
       }
       // If the search bar is open, it means that the user has deleted the card after searching. As I am using the "decks" query for searching, I need updated data, so I will invalidate the query and retrieve fresh data.
-      if (showSearchBar) {
-        queryClient.invalidateQueries("decks-and-cards");
-      }
 
       queryClient.invalidateQueries(["cards", data.deck_id]);
     },

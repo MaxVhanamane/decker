@@ -29,7 +29,7 @@ hljs.registerLanguage("csharp", csharp);
 
 const parseNote = (noteString: string) => {
   return new Promise<React.ReactNode[]>((resolve, reject) => {
-    setTimeout(()=>{
+    setTimeout(() => {
       try {
         // Regular expression to match code blocks, underlined text, links, and bold text
         const combinedRegex =
@@ -37,7 +37,7 @@ const parseNote = (noteString: string) => {
         let currentIndex = 0;
         let result: React.ReactNode[] = [];
         let match;
-  
+
         while ((match = combinedRegex.exec(noteString)) !== null) {
           const codeBlock = match[1]; // Extract the code block captured by group 1
           const underlineText = match[2]; // Extract the underlined text captured by group 2
@@ -46,9 +46,9 @@ const parseNote = (noteString: string) => {
           const boldText = match[5]; // Extract the bold text captured by group 5
           const startIndex = match.index; // Starting index of the matched text
           const endIndex = startIndex + match[0].length; // Ending index of the matched text
-  
+
           result.push(noteString.substring(currentIndex, startIndex)); // Push the normal text before the matched part
-  
+
           if (codeBlock !== undefined) {
             const detectedLanguage = detectLanguage(codeBlock);
             const language = detectedLanguage || "javascript";
@@ -116,24 +116,23 @@ const parseNote = (noteString: string) => {
             // If bold text is matched
             result.push(
               <strong
-                className="font-bold dark:text-sky-400  text-sky-600 "
+                className="font-semibold dark:text-sky-400  text-sky-600 "
                 key={shortid.generate()}
               >
                 {boldText}
               </strong>
             );
           }
-  
+
           currentIndex = endIndex;
         }
-  
+
         result.push(noteString.substring(currentIndex)); // Push the remaining normal text after the last match
         resolve(result);
       } catch (error) {
         reject(error);
       }
-    },0)
-    
+    }, 0);
   });
 };
 

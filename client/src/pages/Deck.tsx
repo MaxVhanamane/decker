@@ -7,7 +7,7 @@ import {
   memo,
   useEffect,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { BsPin } from "react-icons/bs";
 import { BsFillPinFill } from "react-icons/bs";
@@ -19,7 +19,12 @@ import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from "react-icons/bi";
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
-import { AlertData, AxiosErrorType, DeckTypeWithIndex } from ".././types/types";
+import {
+  AlertData,
+  AxiosErrorType,
+  DeckType,
+  DeckTypeWithIndex,
+} from ".././types/types";
 import useUndoDeck from "./../hooks/useUndoDeck";
 import { Helmet } from "react-helmet";
 import SessionExpired from "../components/Session";
@@ -46,12 +51,23 @@ function Deck({
   const inputRefElement = useRef<HTMLInputElement>(null);
   const { data: allDecks, error, isError, isLoading } = useGetDecks();
   const navigate = useNavigate();
+  const location = useLocation();
   const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
-  const { mutate: addDeck, isLoading: isCreatingDeck } = useCreateDeck();
+  const {
+    mutate: addDeck,
+    isLoading: isCreatingDeck,
+    isSuccess: isDeckAdded,
+    data: addedDeckInfo,
+  } = useCreateDeck();
   // Calling decks-and-cards to cache the data so that users can search offline.
   useGetDecksAndCardsCache();
-  const { theme, handleShowUserInfomation, divRefForUserSettings } =
-    useContext(UserContext);
+  const {
+    theme,
+    handleShowUserInfomation,
+    divRefForUserSettings,
+    showLogoutModal,
+    setShowLogoutModal,
+  } = useContext(UserContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
   const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
     useState(false);
@@ -68,15 +84,23 @@ function Deck({
   const { isOnline } = useContext(OfflineContext);
   // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
   const showPopUp = useRef<HTMLDivElement | null>(null);
+  const shouldPu = useRef<boolean>(false);
 
   const {
     showSearchBar,
     setOpenSearchBar,
     setAnimateCloseEditDeckModalInSearchResult,
     openEditDeckModalForSearchResult,
+    cardDeleted,
+    setCardDeleted,
   } = useContext(searchContext);
-
+  const [wasSearchBarInitiallyTrue, setWasSearchBarInitiallyTrue] =
+    useState(showSearchBar);
   const handleBrowsersBackButton = (e: any) => {
+    if (showLogoutModal) {
+      setShowLogoutModal(false);
+      return;
+    }
     if (openEditDeckModal) {
       setAnimateCloseEditDeckModal(true);
     }
@@ -93,19 +117,52 @@ function Deck({
   };
 
   useEffect(() => {
-    if (showSearchBar) {
-      window.history.pushState(null, "", "/");
-      window.history.replaceState(null, "", "/");
+    if (cardDeleted) {
+      setCardDeleted(false);
     }
-    if (openEditDeckModal || openEditDeckModalForSearchResult) {
-      window.history.pushState(null, "", "");
+  }, []);
+
+  useEffect(() => {
+    const shouldPushState = showSearchBar || openEditDeckModal;
+    openEditDeckModalForSearchResult;
+    if (shouldPushState && !shouldPu.current) {
+      if (!wasSearchBarInitiallyTrue) {
+        window.history.pushState(
+          { isBackButtonNotClicked: true },
+          "",
+          document.URL
+        );
+      } else {
+        setWasSearchBarInitiallyTrue(false);
+      }
+    } else if (location?.state?.isBackButtonNotClicked) {
+      navigate(-1);
+    }
+
+    const variableArray = [
+      openEditDeckModal,
+      showSearchBar,
+      openEditDeckModalForSearchResult,
+    ];
+    const trueCount = variableArray.filter((variable) => variable).length;
+
+    if (trueCount >= 2) {
+      shouldPu.current = true;
+    } else {
+      shouldPu.current = false;
     }
 
     window.addEventListener("popstate", handleBrowsersBackButton);
+
     return () => {
       window.removeEventListener("popstate", handleBrowsersBackButton);
     };
-  }, [openEditDeckModal, showSearchBar, openEditDeckModalForSearchResult]);
+  }, [
+    openEditDeckModal,
+    showSearchBar,
+    openEditDeckModalForSearchResult,
+    showLogoutModal,
+  ]);
 
   const handleSubmit = async (e: FormEvent) => {
     //If I don't use trim(), user can create the deck using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str.
@@ -135,6 +192,39 @@ function Deck({
       }));
     }
   };
+
+  useEffect(() => {
+    // Find the element you want to scroll to
+    const elementToScrollTo = document.getElementById(`${addedDeckInfo?._id}`);
+
+    // Calculate an offset to control the scrolling position
+    const yOffset = -200; // Adjust this value as needed
+
+    // Scroll to the element if found
+    if (elementToScrollTo) {
+      setTimeout(() => {
+        elementToScrollTo.classList.add(
+          "animate-[pulse_1s_ease-in-out_2]",
+          "shadow-md",
+          "shadow-violet-700",
+          "border-violet-700"
+        );
+      }, 100);
+
+      const y = elementToScrollTo.getBoundingClientRect().top + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+
+      // Remove the classes after the animation has completed
+      elementToScrollTo.addEventListener("animationend", () => {
+        elementToScrollTo.classList.remove(
+          "animate-[pulse_1s_ease-in-out_2]",
+          "shadow-md",
+          "shadow-violet-700",
+          "border-violet-700"
+        );
+      });
+    }
+  }, [addedDeckInfo]);
 
   const handlePin = async (id: string, pinned: boolean) => {
     if (!isOnline) {
@@ -460,7 +550,7 @@ function Deck({
                     {...provided.droppableProps}
                   >
                     {allDecks
-                      ?.filter((deck) => deck.pinned === false)
+                      ?.filter((deck: DeckType) => deck.pinned === false)
                       .map((deck, index) => {
                         return (
                           <Draggable
@@ -472,6 +562,7 @@ function Deck({
                             {(provided, snapshot) => {
                               return (
                                 <div
+                                  id={deck._id}
                                   className={`relative border  ${
                                     snapshot.isDragging
                                       ? " border-lime-500 animate-pulse  shadow-2xl shadow-lime-500 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-lime-500 before:to-lime-500 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-lime-500 text-lime-500 before:!opacity-100 "
@@ -487,7 +578,7 @@ function Deck({
                        deck.isProcessing
                          ? "cursor-not-allowed"
                          : "dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-900  hover:before:opacity-100"
-                     } `}
+                     }  `}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
@@ -614,7 +705,7 @@ function Deck({
         ) : null}
 
         {allDecks?.length === 0 && (
-          <div className="fixed w-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center justify-center  flex-col">
+          <div className="fixed w-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center justify-center  flex-col pt-[3.45rem]">
             <img
               src={`${
                 theme === "dark"
@@ -622,7 +713,7 @@ function Deck({
                   : "/illustrations/no_decks_found_light.svg"
               }`}
               alt="No decks found"
-              className="w-56 h-40 "
+              className="w-56 h-44 lg:w-64 lg:h-52"
             />
             <p className="pb-1  text-md font-bold dark:text-gray-50 text-gray-800">
               Looks like you haven't added any decks yet.

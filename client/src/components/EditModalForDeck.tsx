@@ -3,6 +3,7 @@ import useEditDeck from "../hooks/useEditDeck";
 import { OfflineContext } from "../context/OfflineContext";
 import { AlertData } from "../types/types";
 import { AlertContext } from "../context/AlertContext";
+import { useNavigate } from "react-router-dom";
 
 interface IProp {
   openEditDeckModal: boolean;
@@ -33,7 +34,7 @@ const EditModalForDeck = ({
   const { mutate: editDeck, isError: isEditError } = useEditDeck();
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
-
+  const navigate = useNavigate();
   const handleSave = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isOnline) {
@@ -46,6 +47,7 @@ const EditModalForDeck = ({
       }));
       return;
     }
+    navigate(-1);
     const data = { deck_id: editData.deck_id, newTitle };
     editDeck(data);
     setAnimateCloseEditDeckModal(true);
@@ -64,8 +66,8 @@ const EditModalForDeck = ({
           }}
           className={`w-full h-screen  backdrop-blur-xl  fixed inset-0 flex items-center justify-center z-[999] transition-opacity duration-300 ${
             animateCloseEditDeckModal
-              ? "animate-opacityFadeOut opacity-0"
-              : "animate-[opacity_0.2s_linear_1]"
+              ? "animate-[opacityFadeOut_0.15s_linear_1] opacity-0"
+              : "animate-[opacity_0.15s_linear_1]"
           }`}
         >
           <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/3">
@@ -101,6 +103,7 @@ const EditModalForDeck = ({
                 </button>
                 <button
                   onClick={() => {
+                    navigate(-1);
                     setAnimateCloseEditDeckModal(true);
                   }}
                   className="px-2 py-1 bg-red-600 hover:bg-red-700 outline-none rounded text-white"

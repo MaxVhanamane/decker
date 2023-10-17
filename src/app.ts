@@ -90,37 +90,41 @@ app.use(session({
     httpOnly: true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite: "none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
     secure: true,      // it allows only https requests. you can only send these cookies to https sites
-    maxAge: 1000 * 60 * 60 * 24 * 10  //cookie expires in 10 days
+    maxAge: 1000 * 60 * 60 * 24 * 15  //cookie expires in 15 days
+
   }
 }))
 
 // using passport to handle login
 app.use(passport.initialize())
+// allow passport to use "express-session".
 app.use(passport.session())
 
 // local strategy 
 passport.use(new LocalStrategy(
   { usernameField: "email" },
   // here in function username and password are equal to req.body.username and req.body.password. passport automatically does that for you.
-  function (username, password, done) {
-    User.findOne({ email: username }, function (err: Error, user: UserDetails) {
-      if (err) { return done(err); }  // If there is error we will return an error to done function.
-      if (!user) { return done(new Error("User with this email doesn't exist!")); } // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
-      // check if user is registered with Google Auth
-      if (!user.password) {
-        return done(new Error("You cannot log in with local credentials because you registered with Google Auth."));
+  async function (username, password, done) {
+    const user = await User.findOne({ email: username });
+    // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
+    if (!user) {
+      done(new Error("User with this email doesn't exist!"));
+    }
+    // check if user is registered with Google Auth
+
+    if (!user?.password) {
+      done(new Error("You cannot log in with local credentials because you registered with Google Auth."));
+    }
+    // If we reach this line it means we found the user now let's compare the passoword.
+    bcrypt.compare(password, user?.password!, (err, result) => {
+      if (err) throw err // If some error occures while decrypting we will throw an error. very less likely but still...
+      if (result === true) {
+        return done(null, user!) // If password matches we will send the user
       }
-      // If we reach this line it means we found the user now let's compare the passoword.
-      bcrypt.compare(password, user.password!, (err, result) => {
-        if (err) throw err // If some error occures while decrypting we will throw an error. very less likely but still...
-        if (result === true) {
-          return done(null, user) // If password matches we will send the user
-        }
-        else {
-          return done(new Error("Incorrect password!")) // If password doesn't match then we will throw an error.we can receive this error using error.message in login route.
-        }
-      })
-    });
+      else {
+        return done(new Error("Incorrect password!")) // If password doesn't match then we will throw an error.we can receive this error using error.message in login route.
+      }
+    })
   }
 ));
 
@@ -134,8 +138,8 @@ passport.use(
       clientSecret: process.env.CLIENT_SECRET,
     },
     async (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => {
-      // This function run on successfull authentication 
-      //extracting required user information from the profile that is given by goolge
+      // This function runs upon successful authentication.
+      //extracting required user information from the profile that is given by google
       const userInfo: UserDetails = {
         email: profile?.emails ? profile?.emails[0]?.value : "",
         profile_picture: profile?.photos ? profile?.photos[0]?.value : "",
@@ -164,21 +168,21 @@ passport.use(
 );
 
 
-// serializeUser to store only id in session
+// serializeUser to store only id in session. (This runs only once during authentication)
 passport.serializeUser((user: any, done) => {
   return done(null, user?._id)
 })
 
-// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object
+// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object. (This runs on every request)
 passport.deserializeUser(async (id: string, done: (err: any, user?: UserDetails | null) => void) => {
   try {
-    const doc: UserDetails | null = await User.findById(id);
+    const UserDetails: UserDetails | null = await User.findById(id);
 
-    if (doc) {
+    if (UserDetails) {
       const userInfo: UserDetails = {
-        username: doc.username,
-        email: doc.email,
-        profile_picture: doc.profile_picture,
+        username: UserDetails.username,
+        email: UserDetails.email,
+        profile_picture: UserDetails.profile_picture,
       };
       done(null, userInfo);
     } else {
@@ -485,7 +489,6 @@ app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, as
     }
   }
   catch (error: any) {
-    console.log(error)
     if (error.name === 'VersionError') {
       return res.status(429).json({ message: "VersionError", success: false })
     }
@@ -682,11 +685,11 @@ app.post("/verifyotp", async (req: Request, res: Response) => {
         res.status(200).json({ success: true, message: "OTP verification successful!" })
       }
       else {
-        res.status(200).json({ success: false, message: "OTP has expired!" })
+        res.status(200).json({ success: false, message: "Your OTP has expired! Please request a new one to continue." })
       }
     }
     else {
-      res.status(200).json({ success: false, message: "OTP verification failed!" })
+      res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." })
 
     }
 
@@ -784,11 +787,11 @@ app.post("/verifyforgotpasswordotp", async (req: Request, res: Response) => {
         res.status(200).json({ success: true, message: "OTP verification successful!" })
       }
       else {
-        res.status(200).json({ success: false, message: "OTP has expired!" })
+        res.status(200).json({ success: false, message: "Your OTP has expired! Please request a new one to continue." })
       }
     }
     else {
-      res.status(200).json({ success: false, message: "OTP verification failed!" })
+      res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." })
 
     }
 
@@ -821,7 +824,7 @@ app.post("/changepassword", async (req: Request, res: Response) => {
 
 })
 
-app.post("/generateaccountdeletionotp", async (req: Request, res: Response) => {
+app.post("/generateaccountdeletionotp", fetchUserDetails, async (req: Request, res: Response) => {
 
   try {
     let user = await AccountDeletionOTP.findOne({ email: req.body.email })
@@ -894,7 +897,7 @@ app.post("/generateaccountdeletionotp", async (req: Request, res: Response) => {
 })
 
 
-app.post("/verifyaccountdeletionotp", async (req: Request, res: Response) => {
+app.post("/verifyaccountdeletionotp", fetchUserDetails, async (req: Request, res: Response) => {
 
   let user = await AccountDeletionOTP.findOne({ email: req.body.email })
   if (user) {
@@ -905,11 +908,11 @@ app.post("/verifyaccountdeletionotp", async (req: Request, res: Response) => {
         res.status(200).json({ success: true, message: "OTP verification successful!" })
       }
       else {
-        res.status(200).json({ success: false, message: "OTP has expired!" })
+        res.status(200).json({ success: false, message: "Your OTP has expired! Please request a new one to continue." })
       }
     }
     else {
-      res.status(200).json({ success: false, message: "OTP verification failed!" })
+      res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." })
 
     }
 

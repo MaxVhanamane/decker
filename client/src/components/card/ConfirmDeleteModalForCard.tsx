@@ -1,23 +1,28 @@
-import { Dispatch, MouseEvent, useContext } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Dispatch, MouseEvent, memo, useContext } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../../context/UserContext";
 import { searchContext } from "../../context/SearchContext";
 interface IProp {
-  deck_id: string;
   indexOfCardForDeletion: number;
   deleteCardItem: (payload: { deck_id: string; index: number }) => void;
   setShowFullScreen?: Dispatch<React.SetStateAction<boolean>>;
+  setIsConfirmDeleteModalOpen: Dispatch<React.SetStateAction<boolean>>;
+  setWasDeleteModalOpen: Dispatch<React.SetStateAction<boolean>>;
+  showFullScreen: boolean;
 }
 const ConfirmDeleteModalForCard = ({
-  deck_id,
   indexOfCardForDeletion,
   deleteCardItem,
   setShowFullScreen,
+  setIsConfirmDeleteModalOpen,
+  setWasDeleteModalOpen,
+  showFullScreen,
 }: IProp) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { deleteConfirmationModalForCard } = useContext(UserContext);
   const { showSearchBar } = useContext(searchContext);
+  const { deck_id } = useParams();
   const getUserConfirmation = (
     e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
   ) => {
@@ -25,19 +30,33 @@ const ConfirmDeleteModalForCard = ({
     if ((e.target as HTMLButtonElement).id === "yesbutton") {
       deleteCardItem(payload);
       deleteConfirmationModalForCard?.current?.classList.add("hidden");
+      setIsConfirmDeleteModalOpen(false);
+      //  As setShowFullScreen is an optional prop that is why I have put in a If statement to avoid ts error.
       if (setShowFullScreen) {
         setShowFullScreen(false);
       }
+      // This is for when user opens card and deletes it from there
+      if (showFullScreen && !showSearchBar) {
+        // When a user opens the card in full screen, I push a new entry into the browser stack. Then, when the user clicks on the delete button, I push another entry into the browser stack. When the user deletes that card, I have to remove those two pushed entries. To remove them, I use two navigate(-1) calls.
+        navigate(-1);
+        navigate(-1);
+      }
+      // This is for when user deletes card from /cards page and he uses delete button from thier and he is not looking the card in fullscreen
+      if (!showFullScreen) {
+        navigate(-1);
+      }
+      // This is for when user deletes card when searchbar is open
       if (showSearchBar) {
         // If the showSearchBar is true and the user clicks on the delete button, after deleting we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
-        if (location.state?.from === "/") {
-          navigate("/");
-        } else {
-          navigate(location.state?.from);
-        }
+        navigate(location.pathname, { state: { deleted: true } });
       }
     } else {
       deleteConfirmationModalForCard?.current?.classList.add("hidden");
+      setIsConfirmDeleteModalOpen(false);
+      setWasDeleteModalOpen(true);
+      if (location?.state?.isBackButtonNotClicked) {
+        navigate(-1);
+      }
     }
   };
 
@@ -46,7 +65,7 @@ const ConfirmDeleteModalForCard = ({
       ref={deleteConfirmationModalForCard}
       id="popup-modal"
       tabIndex={-1}
-      className="fixed hidden z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-950 lg:backdrop-blur-none lg:bg-[#fcfefc]"
+      className="fixed hidden z-[90] p-4 overflow-x-hidden overflow-y-auto inset-0 backdrop-blur-xl dark:lg:bg-slate-950 lg:backdrop-blur-none lg:bg-[#fcfefc] "
     >
       <div className="relative w-full h-full flex items-center justify-center  ">
         <div className="relative bg-[#fcfefc] rounded-lg shadow-md dark:shadow-md shadow-teal-500 dark:shadow-sky-500 dark:bg-slate-950 ring-1 ring-sky-500  ">
@@ -96,4 +115,4 @@ const ConfirmDeleteModalForCard = ({
   );
 };
 
-export default ConfirmDeleteModalForCard;
+export default memo(ConfirmDeleteModalForCard);

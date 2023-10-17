@@ -1,5 +1,5 @@
 import { useContext, useRef, useState, lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { AlertData, DeckTypeWithIndex } from "./types/types";
 import useMoveCard from "./hooks/useMoveCard";
 import { UserContext } from "./context/UserContext";
@@ -19,6 +19,7 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import Login from "./pages/Login";
 import { AlertContext } from "./context/AlertContext";
 import { OfflineContext } from "./context/OfflineContext";
+import CheckAuth from "./components/CheckAuth";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -44,17 +45,20 @@ function App() {
   if ("serviceWorker" in navigator) {
     useRegisterSW();
   }
-
   const [undoDeck, setUndoDeck] = useState<DeckTypeWithIndex | null>(null);
   const { theme } = useContext(UserContext);
   const { mutate: deleteOneDeck, isError: deleteDeckMutationError } =
     useDeleteDeck();
-  const { deleteConfirmationModalForCard, setIndexOfCardForDeletion } =
-    useContext(UserContext);
+  const {
+    deleteConfirmationModalForCard,
+    setIndexOfCardForDeletion,
+    userInfo,
+  } = useContext(UserContext);
   const { mutate: moveCard } = useMoveCard();
   const undoButtonRef = useRef<HTMLDivElement | null>(null);
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
+  const navigate = useNavigate();
 
   const handlePopupForUndoButton = () => {
     if (undoButtonRef.current?.classList.contains("scale-0")) {
@@ -119,6 +123,7 @@ function App() {
         }));
         return;
       }
+
       let cardToDeleteIndex = result.source.index;
       setIndexOfCardForDeletion(cardToDeleteIndex);
       if (
@@ -126,6 +131,7 @@ function App() {
       ) {
         deleteConfirmationModalForCard?.current?.classList.remove("hidden");
       }
+      navigate(location.pathname, { state: { isBackButtonNotClicked: true } });
     } else if (result.destination?.droppableId == "cardDropableArea") {
       if (!isOnline) {
         setAlert((preval: AlertData) => ({
@@ -205,39 +211,51 @@ function App() {
             />
           </Route>
 
-          <Route
-            path="/signup"
-            element={
-              <Suspense fallback={<Loading />}>
-                <SignUp />
-              </Suspense>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/sessionexpired"
-            element={
-              <Suspense fallback={<Loading />}>
-                <SessionExpired />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/forgotpassword"
-            element={
-              <Suspense fallback={<Loading />}>
-                <ForgotPassword />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/changepassword"
-            element={
-              <Suspense fallback={<Loading />}>
-                <ChangePassword />
-              </Suspense>
-            }
-          />
+          <Route element={<CheckAuth />}>
+            <Route
+              path="/signup"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <SignUp />
+                </Suspense>
+              }
+            />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/sessionexpired"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <SessionExpired />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/forgotpassword"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <ForgotPassword />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/changepassword"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <ChangePassword />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/verifyemail"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <VerifyEmail />
+                </Suspense>
+              }
+            />
+          </Route>
+
           <Route
             path="/auth/failure"
             element={
@@ -254,14 +272,7 @@ function App() {
               </Suspense>
             }
           />
-          <Route
-            path="/verifyemail"
-            element={
-              <Suspense fallback={<Loading />}>
-                <VerifyEmail />
-              </Suspense>
-            }
-          />
+
           <Route path="/auth/success" element={<AuthSuccess />} />
           <Route
             path="*"

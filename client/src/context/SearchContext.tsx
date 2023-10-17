@@ -6,9 +6,11 @@ type cardInfo = {
   note: string;
   _id: string;
   from: string;
+  cardId: string;
 };
 interface ContexType {
   showSearchBar: boolean;
+  cardDeleted: boolean;
   setShowSearchBar: Dispatch<React.SetStateAction<boolean>>;
   openEditDeckModalForSearchResult: boolean;
   setOpenEditDeckModalForSearchResult: Dispatch<React.SetStateAction<boolean>>;
@@ -20,6 +22,7 @@ interface ContexType {
   >;
   cardInfo: cardInfo;
   setCardInfo: Dispatch<React.SetStateAction<cardInfo>>;
+  setCardDeleted: Dispatch<React.SetStateAction<boolean>>;
 }
 
 type SearchContextProvider = {
@@ -28,6 +31,7 @@ type SearchContextProvider = {
 
 export const searchContext = createContext<ContexType>({
   showSearchBar: false,
+  cardDeleted: false,
   setShowSearchBar: () => {},
   animateCloseEditDeckModalInSearchResult: false,
   setAnimateCloseEditDeckModalInSearchResult: () => {},
@@ -35,12 +39,14 @@ export const searchContext = createContext<ContexType>({
   setOpenEditDeckModalForSearchResult: () => {},
   openSearchBar: false,
   setOpenSearchBar: () => {},
+  setCardDeleted: () => {},
   cardInfo: {
     cardIndex: null,
     title: "",
     note: "",
     _id: "",
     from: "",
+    cardId: "",
   },
   setCardInfo: () => {},
 });
@@ -48,12 +54,14 @@ export const searchContext = createContext<ContexType>({
 const SearchProvider = ({ children }: SearchContextProvider) => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [openSearchBar, setOpenSearchBar] = useState(false);
+  const [cardDeleted, setCardDeleted] = useState(false);
   const [cardInfo, setCardInfo] = useState<cardInfo>({
     cardIndex: null,
     title: "",
     note: "",
     _id: "",
     from: "",
+    cardId: "",
   });
   const [
     animateCloseEditDeckModalInSearchResult,
@@ -76,6 +84,8 @@ const SearchProvider = ({ children }: SearchContextProvider) => {
         setAnimateCloseEditDeckModalInSearchResult,
         openEditDeckModalForSearchResult,
         setOpenEditDeckModalForSearchResult,
+        cardDeleted,
+        setCardDeleted,
       }}
     >
       {children}

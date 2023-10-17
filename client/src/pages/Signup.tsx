@@ -31,14 +31,6 @@ export default function SignUp() {
     }
   }, [userInfo?.email]);
 
-  const userFromLocalStorage = localStorage.getItem("userInfo");
-  let userInformation;
-  if (userFromLocalStorage) {
-    userInformation = JSON.parse(userFromLocalStorage);
-  } else {
-    userInformation = null;
-  }
-
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "username") {
       setUsername(e.target.value);
@@ -111,110 +103,108 @@ export default function SignUp() {
       <Helmet>
         <title>Decker-Signup</title>
       </Helmet>
-      <section className="h-screen">
-        {userInformation === null ? (
-          <div className=" py-12 px-6 h-full">
-            <div className="flex justify-center items-center flex-wrap h-full  text-gray-800">
-              <div className="xl:w-6/12">
-                <div className="block bg-[#fcfefc] shadow-lg rounded-lg dark:bg-slate-950 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
-                  <div className="flex justify-center items-center g-0">
-                    <div className=" px-4 md:px-0">
-                      <div className="md:p-12 p-4 md:mx-6">
-                        <div className="flex items-center justify-center flex-col rounded-full">
-                          <img
-                            src={`${
-                              localStorage.getItem("theme") === "dark" ||
-                              localStorage.getItem("theme") === null
-                                ? "/decker_logo_dark.png"
-                                : "/decker_logo_light.png"
-                            }`}
-                            className="w-7 h-7 object-contain"
-                            alt="decker logo"
-                          />
+      <section className="">
+        <div className=" absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 h-full w-full pt-[3.45rem]">
+          <div className="flex justify-center items-center flex-wrap h-full  text-gray-800">
+            <div className="xl:w-6/12">
+              <div className="block bg-[#fcfefc] shadow-lg rounded-lg dark:bg-slate-950 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
+                <div className="flex justify-center items-center g-0">
+                  <div className=" px-4 md:px-0">
+                    <div className="md:p-12 p-4 md:mx-6">
+                      <div className="flex items-center justify-center flex-col rounded-full">
+                        <img
+                          src={`${
+                            localStorage.getItem("theme") === "dark" ||
+                            localStorage.getItem("theme") === null
+                              ? "/decker_logo_dark.png"
+                              : "/decker_logo_light.png"
+                          }`}
+                          className="w-7 h-7 object-contain"
+                          alt="decker logo"
+                        />
 
-                          <h2 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
-                            Decker
-                          </h2>
+                        <h2 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
+                          Decker
+                        </h2>
 
-                          <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">
-                            Sign up for an account
-                          </h4>
-                        </div>
-                        <form onSubmit={handleSignup}>
-                          {/* <p className="mb-4">Please login to your account</p> */}
-                          <div className="mb-4">
-                            <input
-                              onChange={handleChange}
-                              type="text"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
-                              id="username"
-                              name="username"
-                              value={username}
-                              placeholder="Username"
-                              required
-                              autoComplete="username"
-                            />
-                          </div>
-
-                          <div className="mb-4">
-                            <input
-                              onChange={handleChange}
-                              type="password"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
-                              id="password"
-                              name="password"
-                              value={password}
-                              placeholder="Password"
-                              required
-                              autoComplete="new-password"
-                            />
-                          </div>
-                          <div className="mb-4">
-                            <input
-                              onChange={handleChange}
-                              type="password"
-                              className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
-                              id="confirmpassword"
-                              name="confirmPass"
-                              value={confirmPass}
-                              placeholder="Confirm password"
-                              required
-                              autoComplete="new-password"
-                            />
-                          </div>
-                          <div className="text-center pt-1 mb-5 pb-1">
-                            <button
-                              className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
-                              type="submit"
-                              aria-label="Sign Up"
-                              disabled={isSigninigUp}
-                            >
-                              Sign Up
-                            </button>
-                          </div>
-                          <div className="flex items-center justify-between pb-6">
-                            <p className="text-gray-800 dark:text-gray-50 mr-2">
-                              Have an account?
-                            </p>
-                            <Link to="/login">
-                              <button
-                                type="button"
-                                className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-700 dark:border-sky-500 dark:text-sky-500 font-medium text-sm leading-tight  rounded hover:border-teal-500 hover:text-teal-600 dark:hover:text-sky-600 dark:hover:border-sky-400 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
-                                aria-label="Login"
-                              >
-                                Login
-                              </button>
-                            </Link>
-                          </div>
-                        </form>
+                        <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">
+                          Sign up for an account
+                        </h4>
                       </div>
+                      <form onSubmit={handleSignup}>
+                        {/* <p className="mb-4">Please login to your account</p> */}
+                        <div className="mb-4">
+                          <input
+                            onChange={handleChange}
+                            type="text"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                            id="username"
+                            name="username"
+                            value={username}
+                            placeholder="Username"
+                            required
+                            autoComplete="username"
+                          />
+                        </div>
+
+                        <div className="mb-4">
+                          <input
+                            onChange={handleChange}
+                            type="password"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                            id="password"
+                            name="password"
+                            value={password}
+                            placeholder="Password"
+                            required
+                            autoComplete="new-password"
+                          />
+                        </div>
+                        <div className="mb-4">
+                          <input
+                            onChange={handleChange}
+                            type="password"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-950 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                            id="confirmpassword"
+                            name="confirmPass"
+                            value={confirmPass}
+                            placeholder="Confirm password"
+                            required
+                            autoComplete="new-password"
+                          />
+                        </div>
+                        <div className="text-center pt-1 mb-5 pb-1">
+                          <button
+                            className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
+                            type="submit"
+                            aria-label="Sign Up"
+                            disabled={isSigninigUp}
+                          >
+                            Sign Up
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between pb-6">
+                          <p className="text-gray-800 dark:text-gray-50 mr-2">
+                            Have an account?
+                          </p>
+                          <Link to="/login">
+                            <button
+                              type="button"
+                              className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-700 dark:border-sky-500 dark:text-sky-500 font-medium text-sm leading-tight  rounded hover:border-teal-500 hover:text-teal-600 dark:hover:text-sky-600 dark:hover:border-sky-400 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
+                              aria-label="Login"
+                            >
+                              Login
+                            </button>
+                          </Link>
+                        </div>
+                      </form>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        ) : null}
+        </div>
       </section>
     </>
   );

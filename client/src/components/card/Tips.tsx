@@ -1,5 +1,5 @@
 import { Dispatch, memo, useContext } from "react";
-import { IoIosArrowRoundUp, IoIosArrowRoundBack } from "react-icons/io";
+import { IoIosArrowUp, IoIosArrowBack } from "react-icons/io";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { prism } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -112,16 +112,17 @@ const Tips = ({
           </p>
         </div>
 
-        <div className="fixed top-0  py-[0.875rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+        <div className="fixed top-0  py-[1.07rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
           <div>
             <button
               onClick={() => setCloseTipsModal(true)}
-              className=" text-xl rounded lg:px-1  text-center text-gray-50 cursor-pointer bg-red-500"
+              className=" text-xl rounded lg:px-1  text-center dark:text-gray-200 text-gray-500 cursor-pointer flex items-center justify-center"
               aria-label="Back"
               title="Back"
             >
-              <IoIosArrowRoundUp className="lg:hidden" />
-              <IoIosArrowRoundBack className="hidden lg:block" />
+              <IoIosArrowUp className="lg:hidden" />
+              <IoIosArrowBack className="hidden lg:block" />
+              <p className="text-xs  hidden lg:block ">Back</p>
             </button>
           </div>
         </div>

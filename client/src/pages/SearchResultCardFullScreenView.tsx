@@ -19,7 +19,6 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 
 import ConfirmDeleteModalForCard from "../components/card/ConfirmDeleteModalForCard";
-import ConfirmCloseCard from "../components/card/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
 import FullScreenCardView from "../components/card/FullScreenCardView";
 
@@ -31,22 +30,31 @@ type ContentType = {
   title: string;
   note: string;
   _id: string;
+  cardId: string;
 };
 
 type ContentTypeForEdit = ContentType & {
   cardIndex: number | null;
+  from?: "";
 };
 
 type ContentForFullScreen = ContentType & {
   cardIndex: number | null;
 };
+let wasDeleteModalOpen2: boolean;
 
 // Component
 const SearchResultCardFullScreenView: FC = () => {
   // States
   const { setAlert } = useContext(AlertContext);
-  const { showSearchBar, setOpenSearchBar, cardInfo, setCardInfo } =
-    useContext(searchContext);
+  const {
+    showSearchBar,
+    setOpenSearchBar,
+    cardInfo,
+    setCardInfo,
+    setCardDeleted,
+    cardDeleted,
+  } = useContext(searchContext);
   const {
     indexOfCardForDeletion,
     setIndexOfCardForDeletion,
@@ -54,17 +62,15 @@ const SearchResultCardFullScreenView: FC = () => {
   } = useContext(UserContext);
   const { isOnline } = useContext(OfflineContext);
   const [note, setNote] = useState<string>("");
-  const [title, setTitle] = useState<string>("");
   const [openModal, setOpenModal] = useState(false);
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [startAnimation, setStartAnimation] = useState(true);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
-  const [showConfirmCloseCardModal, setShowConfirmCloseCardModal] =
-    useState(false);
   const [closeEditModal, setCloseEditModal] = useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen>(cardInfo);
-
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
+    useState(false);
   const { deck_id, search_index = null } = useParams();
   const location = useLocation();
 
@@ -73,6 +79,7 @@ const SearchResultCardFullScreenView: FC = () => {
     note: "",
     _id: "",
     cardIndex: null,
+    cardId: "",
   });
   const { mutate: editCard } = useEditCard();
   const { mutate: deleteCardItem } = useDeleteCard();
@@ -80,40 +87,27 @@ const SearchResultCardFullScreenView: FC = () => {
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const shouldPu = useRef<boolean>(false);
+  const [wasDeleteModalOpen, setWasDeleteModalOpen] = useState(false);
+  wasDeleteModalOpen2 = wasDeleteModalOpen;
+
   // Other
   const navigate = useNavigate();
 
-  // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
-  // redirecting him to home page. if there is no modal open then we will navigate him to home page.
-  const handleBrowsersBackButton = useCallback(
-    function (event: PopStateEvent) {
-      event.preventDefault();
-      if (showSearchBar && !showFullScreen) {
-        setOpenSearchBar(false);
-        return;
-      }
-
-      if (search_index) {
-        if (openModal) {
-          setCloseEditModal(true);
-        } else {
-          setStartAnimation(false);
-          setShowScrollButtons(false);
-        }
-      }
-    },
-    [openModal, showFullScreen, startAnimation, showSearchBar]
-  );
-
   useEffect(() => {
-    // Using popstate event we can detect if the browser's back button is clicked or not.
-
-    window.history.pushState(null, "", document.URL);
-    window.addEventListener("popstate", handleBrowsersBackButton);
-    return () => {
-      window.removeEventListener("popstate", handleBrowsersBackButton);
-    };
-  }, [openModal, showFullScreen, startAnimation, showSearchBar]);
+    if (location?.state?.deleted) {
+      setCardDeleted(true);
+      navigate(-1);
+      navigate(-1);
+      navigate(-1);
+      if (location.state?.from === "/") {
+        navigate("/", { state: { deleted: true } });
+      } else {
+        navigate(location.state?.from, { state: { deleted: true } });
+      }
+      return;
+    }
+  }, [location]);
 
   // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
   useEffect(() => {
@@ -129,6 +123,7 @@ const SearchResultCardFullScreenView: FC = () => {
         title: "",
         note: "",
         _id: "",
+        cardId: "",
       };
 
       if (
@@ -140,6 +135,8 @@ const SearchResultCardFullScreenView: FC = () => {
         cardInformation.title = location?.state?.card?.title;
         cardInformation.note = location?.state?.card?.note;
         cardInformation._id = location?.state?.card?.deck_id;
+        cardInformation.cardId = location?.state?.card?.cardId;
+
         // here we will create all the data that is needed to show it in full screen
         let cardDetails: ContentForFullScreen = {
           ...cardInformation,
@@ -163,38 +160,103 @@ const SearchResultCardFullScreenView: FC = () => {
     setFullScreenCardData(cardInfo);
   }, [cardInfo]);
 
-  const handleDelete = useCallback((index: number) => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
-    setIndexOfCardForDeletion(index);
-    // This will take confirmation of user by showing him a modal.
-    if (deleteConfirmationModalForCard?.current?.classList.contains("hidden")) {
-      deleteConfirmationModalForCard?.current?.classList.remove("hidden");
-    }
-  }, []);
+  // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
+  // redirecting him to home page. if there is no modal open then we will navigate him to home page.
+  const handleBrowsersBackButton = useCallback(
+    function (event: PopStateEvent) {
+      event.preventDefault();
+      if (
+        !deleteConfirmationModalForCard?.current?.classList.contains("hidden")
+      ) {
+        setIsConfirmDeleteModalOpen(false);
+        deleteConfirmationModalForCard?.current?.classList.add("hidden");
+        return;
+      }
 
-  const handleEdit = useCallback((cardItem: ContentTypeForEdit) => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
+      if (search_index) {
+        if (openModal) {
+          setCloseEditModal(true);
+        } else {
+          if (wasDeleteModalOpen2) {
+            setWasDeleteModalOpen(false);
+            return;
+          }
+          setStartAnimation(false);
+          setShowScrollButtons(false);
+        }
+      }
+    },
+    [openModal]
+  );
+
+  useEffect(() => {
+    if (cardDeleted) {
       return;
     }
-    setEditContent(cardItem);
-    setOpenModal(true);
-  }, []);
+    const shouldPushState =
+      openModal || isConfirmDeleteModalOpen || showFullScreen;
+
+    if (shouldPushState && !shouldPu.current) {
+      const url = new URL(document.URL);
+      const absolutePath = url.pathname;
+      navigate(absolutePath, { state: { isBackButtonNotClicked: true } });
+    }
+    const variableArray = [openModal, isConfirmDeleteModalOpen, showFullScreen];
+    const trueCount = variableArray.filter((variable) => variable).length;
+
+    if (trueCount >= 2) {
+      shouldPu.current = true;
+    } else {
+      shouldPu.current = false;
+    }
+
+    window.addEventListener("popstate", handleBrowsersBackButton);
+    return () => {
+      window.removeEventListener("popstate", handleBrowsersBackButton);
+    };
+  }, [openModal, isConfirmDeleteModalOpen, showFullScreen]);
+
+  const handleDelete = useCallback(
+    (index: number) => {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
+      setIndexOfCardForDeletion(index);
+      // This will take confirmation of user by showing him a modal.
+      if (
+        deleteConfirmationModalForCard?.current?.classList.contains("hidden")
+      ) {
+        setIsConfirmDeleteModalOpen(true);
+        deleteConfirmationModalForCard?.current?.classList.remove("hidden");
+      }
+    },
+    [isOnline]
+  );
+
+  const handleEdit = useCallback(
+    (cardItem: ContentTypeForEdit) => {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
+      setEditContent(cardItem);
+      setOpenModal(true);
+    },
+    [isOnline]
+  );
 
   const handleSave = () => {
     if (!isOnline) {
@@ -205,13 +267,16 @@ const SearchResultCardFullScreenView: FC = () => {
         message: "No internet connection",
         autoHideDuration: 5000,
       }));
+      navigate(-1);
       return;
     }
+    const { from, ...editContentData } = editContent;
     let data = {
       deck_id: deck_id!,
-      newContent: editContent,
+      newContent: editContentData,
       index: editContent.cardIndex!,
     };
+
     if (editContent.title.length > 0 || editContent.note.length > 0) {
       editCard(data);
       setCloseEditModal(true);
@@ -224,6 +289,7 @@ const SearchResultCardFullScreenView: FC = () => {
         message: "Title or note should contain one or more characters!",
       }));
     }
+    navigate(-1);
   };
 
   // Memoized handleChange function
@@ -733,6 +799,14 @@ const SearchResultCardFullScreenView: FC = () => {
     [note, setNote, editContent, setEditContent]
   );
 
+  if (cardDeleted) {
+    return (
+      <div className="z-[90] flex items-center justify-center fixed top-[3.45rem] h-full left-1/2 -translate-x-1/2 text-white bg-slate-950 w-full">
+        <p className="-translate-y-[3.45rem]">Deleting...</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -762,10 +836,12 @@ const SearchResultCardFullScreenView: FC = () => {
       ) : null}
 
       <ConfirmDeleteModalForCard
-        deck_id={deck_id!}
         indexOfCardForDeletion={indexOfCardForDeletion!}
         deleteCardItem={deleteCardItem}
         setShowFullScreen={setShowFullScreen}
+        setIsConfirmDeleteModalOpen={setIsConfirmDeleteModalOpen}
+        setWasDeleteModalOpen={setWasDeleteModalOpen}
+        showFullScreen={showFullScreen}
       />
 
       {showFullScreen && (

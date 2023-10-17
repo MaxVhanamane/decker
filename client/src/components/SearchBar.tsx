@@ -1,19 +1,26 @@
-import { FC, useContext, useEffect, useRef, useState } from "react";
+import {
+  FC,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import SearchResult from "./SearchResult";
 import { RiCloseFill } from "react-icons/ri";
 import { searchContext } from "../context/SearchContext";
+import { useNavigate } from "react-router-dom";
 
 const SearchBar: FC = () => {
   const { showSearchBar, setShowSearchBar, setOpenSearchBar, openSearchBar } =
     useContext(searchContext);
   const searchBarRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-
+  const [inputValue, setInputValue] = useState<string>("");
+  const [isPending, startTransition] = useTransition();
+  const navigate = useNavigate();
   useEffect(() => {
-    if (searchBarRef.current && showSearchBar) {
-      searchBarRef.current.focus();
-    }
     if (!openSearchBar && showSearchBar) {
       setOpenSearchBar(true);
     }
@@ -24,27 +31,41 @@ const SearchBar: FC = () => {
 
   const handleInputChange = (event: any) => {
     const { value } = event.target;
-    setSearchQuery(value);
+    setInputValue(value);
+    startTransition(() => {
+      setSearchQuery(value);
+    });
   };
+  useEffect(() => {
+    if (!showSearchBar) {
+      setInputValue("");
+      setSearchQuery("");
+    }
+  }, [showSearchBar]);
 
   return (
     <div className={` bg-slate-950 fixed top-16 lg:relative lg:top-auto`}>
       <div
+        onTransitionEnd={() => {
+          if (searchBarRef.current && showSearchBar) {
+            searchBarRef.current.focus();
+          }
+        }}
         className={`lg:relative lg:right-auto lg:translate-x-0 fixed w-full bg-[#fcfefc] dark:bg-slate-950 h-32 lg:h-auto top-[3.45rem] lg:top-auto transition-all duration-500 lg:duration-700  ${
           openSearchBar ? "left-0 lg:left-auto" : "left-full lg:left-auto"
         }`}
       >
         <div
-          className={`lg:relative ${
+          className={`lg:relative transform-gpu ${
             openSearchBar ? "w-72 right-1/2" : "w-0 right-0"
-          } overflow-hidden transition-all duration-500 lg:duration-700  lg:right-auto top-[3.85rem] lg:top-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-[#fcfefc] dark:bg-slate-950  `}
+          } overflow-hidden  transition-all duration-500 lg:duration-700  lg:right-auto top-[3.85rem] lg:top-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-[#fcfefc] dark:bg-slate-950  `}
         >
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <AiOutlineSearch className="dark:text-white text-gray-700 text-lg" />
           </div>
           <input
             ref={searchBarRef}
-            value={searchQuery}
+            value={inputValue}
             onChange={handleInputChange}
             type="text"
             id="simple-search"
@@ -56,6 +77,7 @@ const SearchBar: FC = () => {
           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
             <RiCloseFill
               onClick={() => {
+                navigate(-1);
                 setOpenSearchBar(false);
               }}
               className={`text-gray-400 dark:text-gray-400 ${

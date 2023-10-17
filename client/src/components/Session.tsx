@@ -41,7 +41,6 @@ const Session = () => {
         <div className="mt-5 flex items-center justify-end gap-3 sm:mt-4">
           <button
             onClick={() => {
-              localStorage.removeItem("userInfo");
               setUserInfo(null);
               Navigate("/login", { replace: true });
             }}

@@ -136,6 +136,38 @@ module.exports = {
           },
 
         },
+        opacityFadeOutAndSlide: {
+          "0%": {
+            "opacity": "1",
+          },
+
+          "50%": {
+            "opacity": "0",
+
+          },
+          "100%": {
+            "left": "100%",
+            "opacity": "0",
+
+          },
+
+        },
+        opacityFadeInAndSlide: {
+          "0%": {
+            "opacity": "0",
+          },
+
+          "50%": {
+            "opacity": "1",
+
+          },
+          "100%": {
+            "left": "0px",
+            "opacity": "1",
+
+          },
+
+        },
 
       },
 
@@ -153,6 +185,8 @@ module.exports = {
         quickOpacity: "opacity 0.3s linear 1",
         opacity_page_transition: "opacity 0.2s linear 1",
         opacityFadeOut: "opacityFadeOut 0.25s linear 1",
+        opacityFadeOutAndSlide: "opacityFadeOutAndSlide 0.25s linear 1",
+        opacityFadeInAndSlide: "opacityFadeInAndSlide 0.25s linear 1",
 
       },
 
