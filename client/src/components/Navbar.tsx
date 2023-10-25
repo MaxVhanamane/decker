@@ -22,6 +22,7 @@ const Navbar: FC = () => {
     handleInstallApp,
     showLogoutModal,
     setShowLogoutModal,
+    isAuthenticating,
   } = useContext(UserContext);
   const { showSearchBar, setShowSearchBar, setOpenSearchBar } =
     useContext(searchContext);
@@ -184,9 +185,11 @@ const Navbar: FC = () => {
           )}
           <div>
             <ul className="flex items-center justify-center gap-3">
-              <li className=" text-2xl mr-2 w-9 h-9 flex items-center justify-center p-[1.2rem]">
-                <ThemeToggler />
-              </li>
+              {!isAuthenticating && (
+                <li className=" text-2xl mr-2 w-9 h-9 flex items-center justify-center p-[1.2rem]">
+                  <ThemeToggler />
+                </li>
+              )}
 
               {userInfo?.email ? (
                 <li
