@@ -16,7 +16,6 @@ const Tips = ({
   setCloseTipsModal,
 }: propTypes) => {
   const { theme } = useContext(UserContext);
-
   return (
     <div
       onAnimationEnd={() => {

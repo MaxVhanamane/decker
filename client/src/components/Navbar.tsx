@@ -64,7 +64,7 @@ const Navbar: FC = () => {
           localStorage.getItem("theme") === null
             ? "dark:bg-slate-950"
             : "bg-[#fcfefc]"
-        } border-slate-900/10 dark: dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60]`}
+        } border-slate-900/10 dark: dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] h-[3.45rem]`}
       >
         <div className="flex items-center justify-center flex-row gap-8">
           <div

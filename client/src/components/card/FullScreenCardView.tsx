@@ -182,7 +182,7 @@ const FullScreenCardView = ({
         } `}
       >
         <div
-          className={`mt-2 lg:mt-4  w-full overflow-auto p-4 lg:px-96  `}
+          className={`mt-2 lg:mt-4  w-full overflow-auto p-3 lg:px-96  `}
           ref={divRef}
         >
           <div ref={topElementRef} />
@@ -191,14 +191,14 @@ const FullScreenCardView = ({
               {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words. */}
               {/* whitespace-pre-line to keep the new lines and spaces as it is */}
               <p
-                className={`text-left mb-5 mt-5 text-md font-semibold break-words break-normal -ml-1 whitespace-pre-line text-gray-800 dark:text-slate-100 ${
+                className={`text-left mb-5 mt-5 text-md font-semibold break-words break-normal  whitespace-pre-line text-gray-800 dark:text-slate-100 ${
                   parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 }`}
               >
                 {fullScreenCardData?.title}
               </p>
               <div
-                className={`text-left mb-16 break-words break-normal  -ml-1 whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
+                className={`text-left mb-16 break-words break-normal   whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
                   parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 } `}
               >
@@ -233,11 +233,11 @@ const FullScreenCardView = ({
                     navigate(-1);
                   }
                 }}
-                className=" text-xl rounded pl-1  text-center dark:text-gray-200 text-gray-500  cursor-pointer flex items-center justify-center "
+                className=" text-xl rounded pl-1  text-center dark:text-gray-300 dark:hover:text-gray-200 transition-colors duration-200 text-gray-500 hover:text-gray-700  cursor-pointer flex items-center justify-center "
                 aria-label="Back"
                 title="Back"
               >
-                <IoIosArrowBack /> <p className="text-xs   ">Back</p>
+                <IoIosArrowBack /> <p className="text-xs">Back</p>
               </button>
             </div>
             <div className="flex items-center justify-center gap-2 ">
@@ -250,7 +250,7 @@ const FullScreenCardView = ({
                   handleDelete(fullScreenCardData?.cardIndex!);
                 }}
                 type="button"
-                className="text-red-600 text-xl outline-none px-1  text-center hover:scale-95 "
+                className="text-gray-400 hover:text-gray-500 text-xl outline-none px-1  text-center hover:scale-95 transition-all duration-200 dark:hover:text-gray-300 "
                 aria-label="Delete Card"
                 title="Delete Card"
               >
@@ -262,7 +262,7 @@ const FullScreenCardView = ({
                   handleEdit(fullScreenCardData);
                 }}
                 type="button"
-                className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-500"
+                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-xl outline-none  px-1 transition-all duration-200   text-center hover:scale-95  "
                 aria-label="Edit Card"
                 title="Edit Card"
               >

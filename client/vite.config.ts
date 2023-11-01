@@ -124,6 +124,7 @@ export default defineConfig(({ command, mode }) => {
         "display": "standalone",
         "background_color": "#fcfefc",
         "theme_color": "#fcfefc",
+        screenshots: [{ src: "/screenshots/decker_cards_page.webp", form_factor: "narrow", sizes: "462x822", "type": "image/png", label: "cards page", }, { src: "/screenshots/fullscreen_card_view.webp", form_factor: "narrow", sizes: "462x820", "type": "image/png", label: "fullscreen card view", }, , { src: "/screenshots/windows_cards_page.webp", form_factor: "wide", sizes: "1920x933", "type": "image/png", label: "cards page ", }, { src: "/screenshots/windows_full_screen_view.webp", form_factor: "wide", sizes: "1920x936", "type": "image/png", label: "fullscreen card view", }],
 
       }
 

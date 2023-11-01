@@ -21,7 +21,7 @@ export default function ProtectedRoutes() {
           alt="Authenticating"
         />
         <div className=" flex items-center justify-center gap-2 ">
-          <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-sky-500 border-t-teal-500 animate-spin"></span>
+          <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
           <p className="dark:text-gray-200 text-gray-600">Authenticating...</p>
         </div>
       </div>

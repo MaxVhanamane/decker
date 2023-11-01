@@ -367,7 +367,7 @@ const Cards: FC = () => {
     }
   }, [note]);
 
-  const increaseTextAreaHeight = () => {
+  const increaseTextAreaHeight = useCallback(() => {
     const textarea = textareaRef.current;
     const maxHeightForTextArea = (window.innerHeight * 70) / 100;
     if (maxHeightForTextArea > textarea!.clientHeight) {
@@ -383,8 +383,9 @@ const Cards: FC = () => {
         }
       });
     }
-  };
-  const decreaseTextAreaHeight = () => {
+  }, []);
+
+  const decreaseTextAreaHeight = useCallback(() => {
     if (height <= 80) {
       setHeight(80);
     } else {
@@ -396,9 +397,9 @@ const Cards: FC = () => {
         }
       });
     }
-  };
+  }, [height]);
 
-  const adjustTextareaHeightOnPasteAndExpand = () => {
+  const adjustTextareaHeightOnPasteAndExpand = useCallback(() => {
     const textarea = textareaRef.current;
 
     const maxHeightForTextArea = (window.innerHeight * 70) / 100;
@@ -409,7 +410,7 @@ const Cards: FC = () => {
           : previousHeight;
       });
     }
-  };
+  }, []);
 
   // onClick handlers
   const handleSubmit = async (e: FormEvent) => {
@@ -1144,7 +1145,7 @@ const Cards: FC = () => {
         <div
           className={`${
             expandTextarea ? "mt-4" : "mt-2"
-          } w-full px-4  mx-auto transition-all duration-1000 `}
+          } w-full px-4  mx-auto transition-all duration-1000  `}
         >
           <form
             onSubmit={handleSubmit}
