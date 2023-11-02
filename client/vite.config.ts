@@ -102,7 +102,8 @@ export default defineConfig(({ command, mode }) => {
           {
             "src": "/favicons/android-chrome-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+
           },
           {
             "src": "/favicons/apple-touch-icon.png",
@@ -122,11 +123,10 @@ export default defineConfig(({ command, mode }) => {
         ],
         "start_url": "/",
         "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#ffffff",
-        screenshots: [{ src: "/screenshots/decker_cards_page.png", form_factor: "narrow", sizes: "462x822", "type": "image/png", label: "cards page" }, { src: "/screenshots/fullscreen_card_view.png", form_factor: "narrow", sizes: "462x820", "type": "image/png", label: "fullscreen card view" }, , { src: "/screenshots/windows_cards_page.png", form_factor: "wide", sizes: "1920x933", "type": "image/png", label: "cards page " }, { src: "/screenshots/windows_full_screen_view.png", form_factor: "wide", sizes: "1920x936", "type": "image/png", label: "fullscreen card view" }],
-
+        "background_color": "#fcfefc",
+        "theme_color": "#fcfefc",
       }
+
 
     }),],
   }
