@@ -454,13 +454,15 @@ function Deck({
                                   } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
-                     transition-[background-color,border-color] duration-150  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30 `}
+                     transition-[background-color,border-color] duration-150  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
                                 >
                                   <div className="z-40 w-full">
-                                    <div className="absolute bottom-0 right-0 ">
+                                    <div className="absolute bottom-0 right-0">
+                                      {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
+
                                       <button
                                         onClick={() => {
                                           handleEditDeck(deck._id, deck.title);
@@ -473,7 +475,7 @@ function Deck({
                                           }
                                         }}
                                         type="button"
-                                        className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                                        className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
                                         aria-label="Edit Deck"
                                       >
                                         <BiEdit />
@@ -490,7 +492,7 @@ function Deck({
                                           }
                                         }}
                                         type="button"
-                                        className="  outline-none   rounded-tr text-sm px-1  text-center  text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 hover:scale-95"
+                                        className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95"
                                         aria-label="Pin Deck"
                                       >
                                         <BsFillPinFill className="text-[0.9rem]" />
@@ -575,7 +577,7 @@ function Deck({
                      transition-[background-color,border-color] duration-150   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 after:rounded-sm z-30 ${
                        deck.isProcessing
                          ? "cursor-not-allowed"
-                         : "dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-900  hover:before:opacity-100 "
+                         : "dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-900  hover:before:opacity-100"
                      }  `}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
@@ -599,7 +601,7 @@ function Deck({
                                             }
                                           }}
                                           type="button"
-                                          className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                                          className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
                                           aria-label="Edit Deck"
                                         >
                                           <BiEdit />
@@ -617,7 +619,7 @@ function Deck({
                                             }
                                           }}
                                           type="button"
-                                          className="  outline-none   rounded-tr text-sm px-1  text-center  text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 hover:scale-95"
+                                          className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"
                                           aria-label="Pin Deck"
                                         >
                                           <BsPin className="text-[0.9rem]" />

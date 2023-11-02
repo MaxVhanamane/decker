@@ -109,7 +109,7 @@ const CardItems = ({
                                 }
                               }}
                               type="button"
-                              className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-lg outline-none  rounded-tr  px-1  text-center  lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500  "
+                              className="text-red-500 text-lg outline-none  rounded-tr  px-1  text-center  lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 hover:text-red-600 "
                               aria-label="Delete Card"
                             >
                               <MdOutlineDeleteOutline />
@@ -132,7 +132,7 @@ const CardItems = ({
                                 }
                               }}
                               type="button"
-                              className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-lg outline-none rounded-tr px-1  text-center  lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500"
+                              className="text-blue-500 dark:hover:text-sky-600 hover:text-blue-600 text-lg outline-none rounded-tr px-1  text-center dark:text-sky-400 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500"
                               aria-label="Edit Card"
                             >
                               <BiEdit />

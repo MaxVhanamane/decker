@@ -91,7 +91,7 @@ export default defineConfig(({ command, mode }) => {
       manifest: {
         "name": "Decker",
         "short_name": "Decker",
-        "description": "Decker is a versatile web application designed to simplify the process of creating and managing decks. Each deck in Decker represents a collection of cards that can contain various types of content, including code blocks and formatted text. With Decker, you can effortlessly create decks and populate them with multiple cards. The cards within a deck offer flexibility for organizing information, such as code snippets, text with rich formatting, and more. One of the key features of Decker is its intuitive drag-and-drop functionality. You can easily rearrange the order of cards within a deck by dragging and dropping them into the desired position. Additionally, Decker allows you to delete individual cards/decks, enabling seamless content management.",
+        "description": "Decker is a versatile web application designed to simplify the process of creating and managing decks. Each deck in Decker represents a collection of cards that can contain various types of content, including code blocks and formatted text. With Decker, you can effortlessly create decks and populate them with multiple cards. The cards within a deck offer flexibility for organizing information, such as code snippets, text with rich formatting, and more. One of the key features of Decker is its intuitive drag-and-drop functionality. You can easily rearrange the order of cards within a deck by dragging and dropping them into the desired position. Additionally, Decker allows you to edit, delete individual cards/decks, enabling seamless content management. It works offline, ensuring access to your content even when you're not connected to the internet.",
         "icons": [
           {
             "src": "/favicons/android-chrome-512x512.png",
@@ -124,7 +124,7 @@ export default defineConfig(({ command, mode }) => {
         "display": "standalone",
         "background_color": "#fcfefc",
         "theme_color": "#fcfefc",
-        screenshots: [{ src: "/screenshots/decker_cards_page.webp", form_factor: "narrow", sizes: "462x822", "type": "image/png", label: "cards page", }, { src: "/screenshots/fullscreen_card_view.webp", form_factor: "narrow", sizes: "462x820", "type": "image/png", label: "fullscreen card view", }, , { src: "/screenshots/windows_cards_page.webp", form_factor: "wide", sizes: "1920x933", "type": "image/png", label: "cards page ", }, { src: "/screenshots/windows_full_screen_view.webp", form_factor: "wide", sizes: "1920x936", "type": "image/png", label: "fullscreen card view", }],
+        screenshots: [{ src: "/screenshots/decker_cards_page.png", form_factor: "narrow", sizes: "462x822", "type": "image/png", label: "cards page" }, { src: "/screenshots/fullscreen_card_view.png", form_factor: "narrow", sizes: "462x820", "type": "image/png", label: "fullscreen card view" }, , { src: "/screenshots/windows_cards_page.png", form_factor: "wide", sizes: "1920x933", "type": "image/png", label: "cards page " }, { src: "/screenshots/windows_full_screen_view.png", form_factor: "wide", sizes: "1920x936", "type": "image/png", label: "fullscreen card view" }],
 
       }
 
