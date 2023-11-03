@@ -5,24 +5,24 @@ declare const User: mongoose.Model<{
 } & {
     email: string;
     username: string;
-    profile_picture?: string | undefined;
-    password?: string | undefined;
+    profile_picture?: string | null | undefined;
+    password?: string | null | undefined;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
     email: string;
     username: string;
-    profile_picture?: string | undefined;
-    password?: string | undefined;
+    profile_picture?: string | null | undefined;
+    password?: string | null | undefined;
 }> & {
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
     email: string;
     username: string;
-    profile_picture?: string | undefined;
-    password?: string | undefined;
+    profile_picture?: string | null | undefined;
+    password?: string | null | undefined;
 } & {
     _id: mongoose.Types.ObjectId;
 }, mongoose.Schema<any, mongoose.Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
@@ -33,25 +33,25 @@ declare const User: mongoose.Model<{
 } & {
     email: string;
     username: string;
-    profile_picture?: string | undefined;
-    password?: string | undefined;
-}, mongoose.Document<unknown, {}, {
+    profile_picture?: string | null | undefined;
+    password?: string | null | undefined;
+}, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
     email: string;
     username: string;
-    profile_picture?: string | undefined;
-    password?: string | undefined;
+    profile_picture?: string | null | undefined;
+    password?: string | null | undefined;
+}>> & mongoose.FlatRecord<{
+    createdAt: NativeDate;
+    updatedAt: NativeDate;
+} & {
+    email: string;
+    username: string;
+    profile_picture?: string | null | undefined;
+    password?: string | null | undefined;
 }> & {
-    createdAt: NativeDate;
-    updatedAt: NativeDate;
-} & {
-    email: string;
-    username: string;
-    profile_picture?: string | undefined;
-    password?: string | undefined;
-} & {
     _id: mongoose.Types.ObjectId;
 }>>;
 export default User;

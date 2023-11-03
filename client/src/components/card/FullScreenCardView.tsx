@@ -182,7 +182,7 @@ const FullScreenCardView = ({
         } `}
       >
         <div
-          className={`mt-2 lg:mt-1  w-full overflow-auto p-[0.9rem] md:p-14 lg:px-96  `}
+          className={`mt-2 lg:mt-1  w-full overflow-auto p-[0.95rem] md:p-14 lg:px-96  `}
           ref={divRef}
         >
           <div ref={topElementRef} />
@@ -191,7 +191,11 @@ const FullScreenCardView = ({
               {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words.(now it's removed) */}
               {/* whitespace-pre-line to keep the new lines and spaces as it is */}
               <p
-                className={`text-left mb-5 mt-5    text-lg lg:text-xl  break-words break-normal  whitespace-pre-line text-gray-800 dark:text-slate-100 ${
+                className={`text-left mb-5 mt-5  ${
+                  fullScreenCardData?.title.length < 50
+                    ? "font-semibold"
+                    : "font-normal"
+                }  text-lg  lg:text-xl  break-words break-normal  whitespace-pre-line text-gray-800 dark:text-slate-100 ${
                   parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 }`}
               >

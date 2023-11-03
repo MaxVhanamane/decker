@@ -52,7 +52,7 @@ declare global {
     }
     interface User {
       email: string;
-      profile_picture?: string | undefined;
+      profile_picture?: string | undefined | null;
       username: string;
     }
   }

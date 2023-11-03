@@ -5,39 +5,39 @@ declare const DeckModal: mongoose.Model<{
 } & {
     cards: {
         cardId: string;
-        title?: string | undefined;
-        note?: string | undefined;
+        title?: string | null | undefined;
+        note?: string | null | undefined;
     }[];
     pinned: boolean;
-    title?: string | undefined;
-    date?: Date | undefined;
-    email?: mongoose.Types.ObjectId | undefined;
+    title?: string | null | undefined;
+    date?: Date | null | undefined;
+    email?: mongoose.Types.ObjectId | null | undefined;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
     cards: {
         cardId: string;
-        title?: string | undefined;
-        note?: string | undefined;
+        title?: string | null | undefined;
+        note?: string | null | undefined;
     }[];
     pinned: boolean;
-    title?: string | undefined;
-    date?: Date | undefined;
-    email?: mongoose.Types.ObjectId | undefined;
+    title?: string | null | undefined;
+    date?: Date | null | undefined;
+    email?: mongoose.Types.ObjectId | null | undefined;
 }> & {
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
     cards: {
         cardId: string;
-        title?: string | undefined;
-        note?: string | undefined;
+        title?: string | null | undefined;
+        note?: string | null | undefined;
     }[];
     pinned: boolean;
-    title?: string | undefined;
-    date?: Date | undefined;
-    email?: mongoose.Types.ObjectId | undefined;
+    title?: string | null | undefined;
+    date?: Date | null | undefined;
+    email?: mongoose.Types.ObjectId | null | undefined;
 } & {
     _id: mongoose.Types.ObjectId;
 }, mongoose.Schema<any, mongoose.Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
@@ -48,40 +48,40 @@ declare const DeckModal: mongoose.Model<{
 } & {
     cards: {
         cardId: string;
-        title?: string | undefined;
-        note?: string | undefined;
+        title?: string | null | undefined;
+        note?: string | null | undefined;
     }[];
     pinned: boolean;
-    title?: string | undefined;
-    date?: Date | undefined;
-    email?: mongoose.Types.ObjectId | undefined;
-}, mongoose.Document<unknown, {}, {
+    title?: string | null | undefined;
+    date?: Date | null | undefined;
+    email?: mongoose.Types.ObjectId | null | undefined;
+}, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
     cards: {
         cardId: string;
-        title?: string | undefined;
-        note?: string | undefined;
+        title?: string | null | undefined;
+        note?: string | null | undefined;
     }[];
     pinned: boolean;
-    title?: string | undefined;
-    date?: Date | undefined;
-    email?: mongoose.Types.ObjectId | undefined;
+    title?: string | null | undefined;
+    date?: Date | null | undefined;
+    email?: mongoose.Types.ObjectId | null | undefined;
+}>> & mongoose.FlatRecord<{
+    createdAt: NativeDate;
+    updatedAt: NativeDate;
+} & {
+    cards: {
+        cardId: string;
+        title?: string | null | undefined;
+        note?: string | null | undefined;
+    }[];
+    pinned: boolean;
+    title?: string | null | undefined;
+    date?: Date | null | undefined;
+    email?: mongoose.Types.ObjectId | null | undefined;
 }> & {
-    createdAt: NativeDate;
-    updatedAt: NativeDate;
-} & {
-    cards: {
-        cardId: string;
-        title?: string | undefined;
-        note?: string | undefined;
-    }[];
-    pinned: boolean;
-    title?: string | undefined;
-    date?: Date | undefined;
-    email?: mongoose.Types.ObjectId | undefined;
-} & {
     _id: mongoose.Types.ObjectId;
 }>>;
 export default DeckModal;
