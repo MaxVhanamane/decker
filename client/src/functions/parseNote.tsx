@@ -81,7 +81,7 @@ const parseNote = (noteString: string) => {
             // If underlined text is matched
             result.push(
               <u
-                className="underline decoration-pink-500 text-gray-800 dark:text-gray-200"
+                className="underline decoration-teal-500 text-gray-800 dark:text-gray-200"
                 key={shortid.generate()}
               >
                 {underlineText}

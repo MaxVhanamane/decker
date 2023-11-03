@@ -94,6 +94,12 @@ export default defineConfig(({ command, mode }) => {
         "description": "Decker is a versatile web application designed to simplify the process of creating and managing decks. Each deck in Decker represents a collection of cards that can contain various types of content, including code blocks and formatted text. With Decker, you can effortlessly create decks and populate them with multiple cards. The cards within a deck offer flexibility for organizing information, such as code snippets, text with rich formatting, and more. One of the key features of Decker is its intuitive drag-and-drop functionality. You can easily rearrange the order of cards within a deck by dragging and dropping them into the desired position. Additionally, Decker allows you to edit, delete individual cards/decks, enabling seamless content management. It works offline, ensuring access to your content even when you're not connected to the internet.",
         "icons": [
           {
+            "src": "/favicons/android-chrome-transparent-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+          },
+          {
             "src": "/favicons/android-chrome-512x512.png",
             "sizes": "512x512",
             "type": "image/png",
