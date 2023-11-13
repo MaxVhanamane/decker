@@ -157,12 +157,6 @@ function App() {
     }
   };
 
-  // Initially when page loads there is no theme value set it will be null but when useEffect mounts it sets the theme value according to systems
-  // theme value. but before useEffect mounts It shows light theme. If users system is set to dark mode. then he will see light mode for a second when page loads. to avoid that we will wait for theme value to set first then will render the Ui.
-  if (!theme) {
-    return <Loading />;
-  }
-
   return (
     <>
       <DragDropContext
@@ -210,7 +204,7 @@ function App() {
               }
             />
           </Route>
-
+          {/*Added the <CheckAuth /> component to prevent flickering when a user visits these pages while logged in. */}
           <Route element={<CheckAuth />}>
             <Route
               path="/signup"

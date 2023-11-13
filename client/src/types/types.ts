@@ -65,3 +65,32 @@ export type AxiosErrorType = {
     status: number;
   };
 };
+
+export type SearchResultCardsType = {
+  deck_id: string;
+  title: string;
+  note: string;
+  cardIndex: number;
+  cardId: string;
+  _id: string;
+  deckTitle: string;
+};
+
+export type SearchResultDeckType = {
+  deck_id: string;
+  title: string;
+  pinned: boolean;
+};
+
+//cards
+export type ContentType = {
+  title: string;
+  note: string;
+  _id: string;
+  cardId: string;
+};
+
+
+export type ContentTypeForEdit = ContentType & {
+  cardIndex: number | null;
+}

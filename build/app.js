@@ -31,6 +31,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -49,8 +60,9 @@ const verifyemail_1 = __importDefault(require("./models/verifyemail"));
 const forgotpasswordotps_1 = __importDefault(require("./models/forgotpasswordotps"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const accountdeletionotps_1 = __importDefault(require("./models/accountdeletionotps"));
+const cookieParser = require('cookie-parser');
 const LocalStrategy = passport_local_1.default.Strategy;
-const MongoDBStore = require('connect-mongodb-session')(express_session_1.default);
+const connect_mongo_1 = __importDefault(require("connect-mongo"));
 const GoogleStrategy = require("passport-google-oauth20");
 const compression = require('compression');
 (0, dotenv_1.config)();
@@ -60,17 +72,6 @@ app.use(compression());
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express_1.default.json({ limit: '5mb' }));
-// To store sessions in mongodb
-const store = new MongoDBStore({
-    uri: process.env.MONGO_URI,
-    collection: 'mysessions',
-    //The clearInterval option in express-session is used to specify how often expired sessions should be cleared from the session store, and the value you specify is in seconds. So, if you set the value to 3600, expired sessions will be removed from the store every 60 minutes.
-    clearInterval: 3600
-});
-// Catch errors
-store.on('error', function (error) {
-    console.log(error);
-});
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use((0, cors_1.default)({ origin: process.env.ORIGIN, credentials: true }));
@@ -78,25 +79,33 @@ app.set('trust proxy', 1);
 // create session
 app.use((0, express_session_1.default)({
     secret: process.env.SESSION_SECRET,
-    resave: true,
+    resave: false,
     saveUninitialized: true,
-    store: store,
+    store: connect_mongo_1.default.create({
+        mongoUrl: process.env.MONGO_URI,
+        autoRemove: "interval",
+        autoRemoveInterval: 60,
+        collectionName: "sessions"
+    }),
     // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
     // uncomment it while deploying
     cookie: {
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 25 //cookie expires in 15 days
+        maxAge: 1000 * 60 * 60 * 24 * 14 //cookie expires in 14 days
     }
 }));
+app.use(cookieParser());
 // using passport to handle login
 app.use(passport_1.default.initialize());
 // allow passport to use "express-session".
 app.use(passport_1.default.session());
 // local strategy 
-passport_1.default.use(new LocalStrategy({ usernameField: "email" }, 
-// here in function username and password are equal to req.body.username and req.body.password. passport automatically does that for you.
+passport_1.default.use(new LocalStrategy(
+//By default, Passport checks for the username in req.body.username. However, if you are sending it with a different name, such as 'email,' you must explicitly define it in the object like this { usernameField: "email" }. Otherwise, Passport will not recognize the username.
+{ usernameField: "email" }, 
+// Passport.js automatically extracts the username and password from req.body and places them into this function.
 function (username, password, done) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield user_1.default.findOne({ email: username });
@@ -152,14 +161,28 @@ passport_1.default.use(new GoogleStrategy({
 })));
 // serializeUser to store only id in session. (This runs only once during authentication)
 passport_1.default.serializeUser((user, done) => {
+    // The function call done(null, user?._id) attaches the user's ID to the session object like this. It automatically stores the information you pass to the done function in a key called 'user' in session.passport.user.
+    //   session: {
+    //   "cookie": {
+    //     "originalMaxAge": 480000,
+    //     "expires": "2023-11-05T15:44:12.151Z",
+    //     "httpOnly": true,
+    //     "path": "/"
+    //   },
+    //   "passport": {
+    //     "user": "63aefb77b11ddfcc0d6361e2"
+    //   }
+    // }
     return done(null, user === null || user === void 0 ? void 0 : user._id);
 });
-// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object. (This runs on every request)
+// deserializeUser extracts user using id given by serializeUser and adds that user to req.user object. (runs on every request for authenticated users).
+//about id parameter deserializeUser function: On subsequent requests from the authenticated user, Passport's session management middleware automatically retrieves the user's session data, including the serialized user ID. When your route handlers are executed, and passport.deserializeUser is called, Passport provides the user's ID as the id parameter, which you can then use to fetch the user's complete information from your database.
 passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const UserDetails = yield user_1.default.findById(id);
         if (UserDetails) {
             const userInfo = {
+                _id: UserDetails._id,
                 username: UserDetails.username,
                 email: UserDetails.email,
                 profile_picture: UserDetails.profile_picture,
@@ -176,18 +199,9 @@ passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 
 }));
 // middleware to get user details
 const fetchUserDetails = function (req, res, next) {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        if (req === null || req === void 0 ? void 0 : req.user) {
-            const email = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.email;
-            try {
-                const user = yield user_1.default.findOne({ email: email });
-                req.userDetails = user;
-                next();
-            }
-            catch (error) {
-                return res.status(500).json({ message: "Internal server error!" });
-            }
+        if (req === null || req === void 0 ? void 0 : req.isAuthenticated()) {
+            next();
         }
         else {
             return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
@@ -196,10 +210,7 @@ const fetchUserDetails = function (req, res, next) {
 };
 mongoose_1.default.set("strictQuery", true);
 // This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
-mongoose_1.default.connect(process.env.MONGO_URI, {
-    useUnifiedTopology: true,
-    useNewUrlParser: true
-})
+mongoose_1.default.connect(process.env.MONGO_URI)
     .then(() => {
     console.log("Connected to mongodb successfully");
     // We will start to listen for request once the DB is connected
@@ -209,15 +220,13 @@ mongoose_1.default.connect(process.env.MONGO_URI, {
 })
     .catch((err) => { console.log(err); });
 // To detect if the user is offline
-app.get('/ping', function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        res.sendStatus(200);
-    });
-});
+// app.get('/ping', async function (req: Request, res: Response) {
+//   res.sendStatus(200)
+// })
 //Deck routes 
-app.get('/decks', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/decks', fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const user = req === null || req === void 0 ? void 0 : req.userDetails;
+        const user = req === null || req === void 0 ? void 0 : req.user;
         // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
         // as there is a relation defined between two collection DeckModal and User 
         // I have to use DeckModal.find({ email: user.id }) not DeckModal.find({ email: user.email })
@@ -236,16 +245,16 @@ app.get('/decks', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void
 }));
 app.get('/decks-and-cards', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const user = req === null || req === void 0 ? void 0 : req.userDetails;
-        const deck = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
-        res.status(200).json(deck);
+        const user = req === null || req === void 0 ? void 0 : req.user;
+        const decks = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
+        res.status(200).json(decks);
     }
     catch (error) {
         res.status(500).json({ message: "Internal server error!" });
     }
 }));
 app.post('/deck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = req.userDetails;
+    const user = req === null || req === void 0 ? void 0 : req.user;
     try {
         const newDeck = new deck_1.default({
             email: user === null || user === void 0 ? void 0 : user._id,
@@ -418,9 +427,10 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     // scope:['openid','profile', 'email'] 
 }));
 app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL}/auth/success` }));
-app.get("/getuser", (req, res) => {
+app.get("/getuser", fetchUserDetails, (req, res) => {
     if (req.user) {
-        res.status(200).json(req.user); // here we get user in req.user because passports deserialize function attaches it automatically
+        const _a = req.user, { _id } = _a, userInfo = __rest(_a, ["_id"]);
+        res.status(200).json(userInfo); // here we get user in req.user because passports deserialize function attaches it automatically
     }
     else {
         res.status(200).json(null);

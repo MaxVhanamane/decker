@@ -75,7 +75,7 @@ const CardItems = ({
                           }}
                           className={`relative border   ${
                             snapshot.isDragging
-                              ? "shadow-2xl ring-1 ring-cyan-500 shadow-cyan-500 border-cyan-500  animate-pulse dark:bg-slate-950 bg-[#fcfefc]"
+                              ? "shadow-2xl ring-1 ring-cyan-500 shadow-cyan-500 border-cyan-500  animate-pulse dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent bg-[#fcfefc]"
                               : "border-gray-400 "
                           } ${
                             snapshot.draggingOver === "cardDeleteArea"

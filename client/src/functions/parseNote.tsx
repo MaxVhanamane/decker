@@ -65,10 +65,10 @@ const parseNote = (noteString: string) => {
                     : prism
                 }
                 customStyle={{
-                  backgroundColor: `${
+                  backgroundImage: `${
                     localStorage.getItem("theme") === "dark" ||
                     localStorage.getItem("theme") === null
-                      ? "#0f172a"
+                      ? "linear-gradient(to right,#0f172a,#1e293b)"
                       : "auto"
                   }`,
                   borderRadius: 10,
@@ -81,7 +81,7 @@ const parseNote = (noteString: string) => {
             // If underlined text is matched
             result.push(
               <u
-                className="underline decoration-pink-500 text-gray-800 dark:text-gray-200"
+                className="underline dark:decoration-teal-400 decoration-sky-500 text-gray-800 dark:text-gray-200"
                 key={shortid.generate()}
               >
                 {underlineText}
@@ -116,7 +116,7 @@ const parseNote = (noteString: string) => {
             // If bold text is matched
             result.push(
               <strong
-                className="font-semibold dark:text-teal-500  text-sky-600 "
+                className="font-semibold dark:text-teal-400  text-sky-600 "
                 key={shortid.generate()}
               >
                 {boldText}

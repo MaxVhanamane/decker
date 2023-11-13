@@ -160,7 +160,7 @@ const FullScreenCardView = ({
       setShowFullScreen(false), setStartAnimation(true);
     }
     const isScrollable =
-      divRef.current!.scrollHeight > divRef.current!.clientHeight;
+      divRef.current!.scrollHeight > divRef.current!.clientHeight + 100;
 
     if (!isScrollable) {
       setShowScrollToBottomButton(false);
@@ -175,7 +175,7 @@ const FullScreenCardView = ({
     <>
       <article
         onAnimationEnd={handleOnAnimationEnd}
-        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950   flex  flex-col z-[80] items-center ${
+        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900  dark:bg-transparent   flex  flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
             : "animate-translateFromRightToLeft lg:animate-opacityFadeOut lg:opacity-0 scale-0 lg:scale-100 "
@@ -203,7 +203,7 @@ const FullScreenCardView = ({
               </p>
 
               <div
-                className={`text-left mb-16 break-words break-normal   whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
+                className={`text-left mb-20 lg:mb-16 break-words break-normal   whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
                   parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
                 } `}
               >
@@ -228,7 +228,7 @@ const FullScreenCardView = ({
               {parsingError}
             </div>
           )}
-          <div className="fixed top-0  py-[0.95rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+          <div className="fixed top-0  py-[0.95rem] dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
             <div>
               <button
                 onClick={() => {

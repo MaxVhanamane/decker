@@ -1,9 +1,9 @@
-import { ObjectId } from "mongoose";
+import mongoose from "mongoose";
 export type UserDetails = {
-    _id?: ObjectId;
+    _id?: mongoose.Types.ObjectId;
     username: string;
     email: string;
-    profile_picture: string;
+    profile_picture: string | null | undefined;
     password?: string;
     otp?: number;
 };

@@ -1,12 +1,19 @@
 import { useContext, useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 
 export default function CheckAuth() {
   const navigate = useNavigate();
-  const { userInfo, isAuthenticating } = useContext(UserContext);
-
+  const { userInfo, isAuthenticating, setUserInfo } = useContext(UserContext);
+  const location = useLocation();
   useEffect(() => {
+    if (
+      location?.state?.from === "/cards" ||
+      location?.state?.from === "/decks"
+    ) {
+      setUserInfo(null);
+      return;
+    }
     if (!isAuthenticating && userInfo) {
       navigate("/");
     }

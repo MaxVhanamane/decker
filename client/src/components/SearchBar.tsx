@@ -1,10 +1,11 @@
 import {
+  ChangeEvent,
   FC,
   useContext,
+  useDeferredValue,
   useEffect,
   useRef,
   useState,
-  useTransition,
 } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import SearchResult from "./SearchResult";
@@ -16,9 +17,8 @@ const SearchBar: FC = () => {
   const { showSearchBar, setShowSearchBar, setOpenSearchBar, openSearchBar } =
     useContext(searchContext);
   const searchBarRef = useRef<HTMLInputElement>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [inputValue, setInputValue] = useState<string>("");
-  const [isPending, startTransition] = useTransition();
+  const deferredQuery = useDeferredValue(inputValue);
   const navigate = useNavigate();
   useEffect(() => {
     if (!openSearchBar && showSearchBar) {
@@ -29,36 +29,33 @@ const SearchBar: FC = () => {
     }
   }, [showSearchBar]);
 
-  const handleInputChange = (event: any) => {
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     setInputValue(value);
-    startTransition(() => {
-      setSearchQuery(value);
-    });
   };
   useEffect(() => {
     if (!showSearchBar) {
       setInputValue("");
-      setSearchQuery("");
     }
   }, [showSearchBar]);
-
   return (
-    <div className={` bg-slate-950 fixed top-16 lg:relative lg:top-auto`}>
+    <div
+      className={` dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent fixed top-16 lg:relative lg:top-auto`}
+    >
       <div
         onTransitionEnd={() => {
           if (searchBarRef.current && showSearchBar) {
             searchBarRef.current.focus();
           }
         }}
-        className={`lg:relative lg:right-auto lg:translate-x-0 fixed w-full bg-[#fcfefc] dark:bg-slate-950 h-32 lg:h-auto top-[3.45rem] lg:top-auto transition-all duration-500 lg:duration-700  ${
+        className={`lg:relative lg:right-auto lg:translate-x-0 fixed w-full bg-[#fcfefc] dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent h-32 lg:h-auto top-[3.45rem] lg:top-auto transition-all duration-500 lg:duration-700  ${
           openSearchBar ? "left-0 lg:left-auto" : "left-full lg:left-auto"
         }`}
       >
         <div
           className={`lg:relative transform-gpu ${
             openSearchBar ? "w-72 right-1/2" : "w-0 right-0"
-          } overflow-hidden  transition-all duration-500 lg:duration-700  lg:right-auto top-[3.85rem] lg:top-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-[#fcfefc] dark:bg-slate-950  `}
+          } overflow-hidden  transition-all duration-500 lg:duration-700  lg:right-auto top-[3.85rem] lg:top-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-[#fcfefc] dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent  `}
         >
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <AiOutlineSearch className="dark:text-white text-gray-700 text-lg" />
@@ -69,7 +66,7 @@ const SearchBar: FC = () => {
             onChange={handleInputChange}
             type="text"
             id="simple-search"
-            className="bg-gray-50 dark:bg-gray-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300 rounded-md "
+            className="bg-gray-50 dark:bg-slate-800 border border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white text-sm  block w-full pl-10 p-2 pr-8 dark:placeholder-gray-500   dark:focus:border-gray-100 dark:outline-none outline-gray-300 rounded-md "
             placeholder="Search for decks and cards"
             autoComplete="off"
             required
@@ -91,7 +88,6 @@ const SearchBar: FC = () => {
         onTransitionEnd={() => {
           if (!openSearchBar) {
             setShowSearchBar(false);
-            setSearchQuery("");
           }
         }}
         className={`fixed  ${
@@ -99,11 +95,7 @@ const SearchBar: FC = () => {
         } transition-all duration-500 lg:duration-700  z-[90]`}
       >
         {showSearchBar && (
-          <SearchResult
-            searchQuery={searchQuery}
-            setShowSearchBar={setShowSearchBar}
-            setSearchQuery={setSearchQuery}
-          />
+          <SearchResult searchQuery={deferredQuery} inputValue={inputValue} />
         )}
       </div>
     </div>

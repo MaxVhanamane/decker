@@ -6,7 +6,7 @@ const Session = () => {
   const Navigate = useNavigate();
   const { setUserInfo } = useContext(UserContext);
   return (
-    <div className="fixed top-0 left-0  w-full h-full flex items-center justify-center backdrop-blur-lg z-[70]">
+    <div className="fixed top-0 left-0  w-full h-full flex items-center justify-center backdrop-blur-lg z-[70] animate-opacity_page_transition">
       <div className=" rounded-lg bg-gray-100 px-4 pt-5 pb-4 text-left shadow-xl  dark:bg-slate-800 sm:my-8 sm:w-full sm:p-6 sm:max-w-lg mx-2">
         <div className="flex items-center">
           <div className="mr-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10 bg-yellow-200 dark:bg-yellow-100">

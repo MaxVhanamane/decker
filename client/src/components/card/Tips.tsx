@@ -24,13 +24,13 @@ const Tips = ({
           setCloseTipsModal(false);
         }
       }}
-      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-950  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800 ${
+      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800 ${
         closeTipsModal
           ? "animate-translateFromBottomToTop scale-0 lg:animate-opacityFadeOut lg:opacity-0 lg:scale-100"
           : "animate-translateFromTopToBottom  lg:animate-quickOpacity "
       }   ${
         theme === "dark" || theme === null
-          ? "dark:bg-slate-950"
+          ? "dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent"
           : "bg-[#fcfefc]"
       }`}
     >
@@ -76,8 +76,10 @@ const Tips = ({
               wrapLongLines={true}
               style={theme === "dark" || theme === null ? coldarkDark : prism}
               customStyle={{
-                backgroundColor: `${
-                  theme === "dark" || theme === null ? "#0f172a" : "auto"
+                backgroundImage: `${
+                  theme === "dark" || theme === null
+                    ? "linear-gradient(to right,#0f172a,#1e293b)"
+                    : "auto"
                 }`,
                 borderRadius: 10,
               }}
@@ -111,7 +113,7 @@ const Tips = ({
           </p>
         </div>
 
-        <div className="fixed top-0  py-[1.07rem] dark:bg-slate-950 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+        <div className="fixed top-0  py-[1.07rem] dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc] px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
           <div>
             <button
               onClick={() => setCloseTipsModal(true)}

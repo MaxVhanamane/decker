@@ -222,7 +222,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="addUnderlineTextToEditCard"
                   title="Underline text"
-                  className="dark:text-pink-600  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-pink-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
                   type="button"
                   onClick={(e) => addUnderlineText(e)}
                 >

@@ -145,7 +145,14 @@ function UserContextProvider({ children }: UserContextProvider) {
   const getUser = async (): Promise<any> => {
     try {
       const data = await request.get("/getuser");
-      if (data.data) {
+      if (
+        data?.data?.message ===
+        "Your session has expired. Please log in again to continue."
+      ) {
+        setUserInfo(null);
+        navigate("/login");
+        return;
+      } else if (data.data) {
         setUserInfo(data.data);
       } else if (pathNames.includes(location.pathname)) {
         navigate(location.pathname);
@@ -185,14 +192,27 @@ function UserContextProvider({ children }: UserContextProvider) {
       localStorage.getItem("theme") === "dark" ||
       localStorage.getItem("theme") === null
     ) {
-      document.documentElement.style.backgroundColor = "#020617";
+      document.documentElement.style.backgroundImage =
+        "linear-gradient(to right,#020617,#0f172a)";
       document.documentElement.classList.add("dark");
-      document.body.classList.add("bg-slate-950");
+      document.body.classList.add(
+        "dark:bg-gradient-to-r",
+        "dark:from-slate-950",
+        "dark:to-slate-900",
+        "dark:bg-transparent"
+      );
     } else {
       document.documentElement.style.backgroundColor = "#fcfefc";
+      document.documentElement.style.backgroundImage = "";
 
       document.documentElement.classList.remove("dark");
-      document.body.classList.remove("bg-slate-950");
+      document.body.classList.remove(
+        "dark:bg-gradient-to-r",
+        "dark:from-slate-950",
+        "dark:to-slate-900",
+        "dark:bg-transparent"
+      );
+
       document.documentElement.style.display = "";
     }
   }, [theme]);

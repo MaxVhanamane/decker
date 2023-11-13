@@ -23,6 +23,7 @@ type PromiseData = {
   _id: string;
   cards: { title: string; note: string }[];
   pinned: boolean;
+  message?: string;
 };
 
 const editCard = async (cardData: CardData): Promise<PromiseData> => {

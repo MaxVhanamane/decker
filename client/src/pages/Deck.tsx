@@ -117,6 +117,15 @@ function Deck({
   };
 
   useEffect(() => {
+    if (
+      allDecks?.message ===
+      "Your session has expired. Please log in again to continue."
+    ) {
+      navigate("/sessionexpired", { state: { from: "/decks" } });
+    }
+  }, [allDecks]);
+
+  useEffect(() => {
     if (cardDeleted) {
       setCardDeleted(false);
     }
@@ -270,7 +279,6 @@ function Deck({
       }, 3000);
     }
   };
-
   const handleUndo = () => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
@@ -289,12 +297,6 @@ function Deck({
     // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
     handlePopupForUndoButton();
   };
-  if (
-    allDecks?.message ===
-    "Your session has expired. Please log in again to continue."
-  ) {
-    return <SessionExpired />;
-  }
 
   if (isError) {
     return (
@@ -332,7 +334,7 @@ function Deck({
         {
           <div
             ref={undoButtonRef}
-            className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-950 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
+            className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
           >
             <span className="mr-4">Deck deleted successfully!</span>
             <span
@@ -400,7 +402,7 @@ function Deck({
             </label>
             <input
               ref={inputRefElement}
-              className=" dark:bg-slate-950 dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
+              className=" dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900  dark:lg:from-slate-900 dark:lg:to-slate-900   dark:bg-transparent  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
             />
@@ -414,7 +416,9 @@ function Deck({
           </form>
         </div>
 
-        {allDecks!?.filter((deck) => {
+        {allDecks &&
+        !allDecks.message &&
+        allDecks?.filter((deck) => {
           return deck?.pinned === true;
         }).length > 0 ? (
           <section className="mt-4 lg:mb-10  mx-1  animate-opacity_page_transition">
@@ -529,7 +533,9 @@ function Deck({
           </section>
         ) : null}
 
-        {allDecks!?.filter((deck) => {
+        {allDecks &&
+        !allDecks.message &&
+        allDecks?.filter((deck) => {
           return deck?.pinned === false;
         }).length > 0 ? (
           <section className="mt-4 mb-24  mx-1 animate-opacity_page_transition">

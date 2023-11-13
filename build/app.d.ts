@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { UserDetails } from "./types/UserDetails";
 declare global {
     namespace Express {
@@ -5,6 +6,7 @@ declare global {
             userDetails: UserDetails | null;
         }
         interface User {
+            _id?: mongoose.Types.ObjectId;
             email: string;
             profile_picture?: string | undefined | null;
             username: string;

@@ -801,7 +801,7 @@ const SearchResultCardFullScreenView: FC = () => {
 
   if (cardDeleted) {
     return (
-      <div className="z-[90] flex items-center justify-center fixed top-[3.45rem] h-full left-1/2 -translate-x-1/2 text-white bg-slate-950 w-full">
+      <div className="z-[90] flex items-center justify-center fixed top-[3.45rem] h-full left-1/2 -translate-x-1/2 text-white dark:bg-gradient-to-r dark:from-slate-950   dark:via-slate-800 dark:bg-transparent w-full">
         <p className="-translate-y-[3.45rem]">Deleting...</p>
       </div>
     );
