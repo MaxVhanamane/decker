@@ -62,7 +62,7 @@ const Navbar: FC = () => {
         className={`border-b ${
           localStorage.getItem("theme") === "dark" ||
           localStorage.getItem("theme") === null
-            ? "dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent"
+            ? "bg-slate-900"
             : "bg-[#fcfefc]"
         } border-slate-900/10  dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] h-[3.45rem]`}
       >
@@ -224,7 +224,7 @@ const Navbar: FC = () => {
         ref={divRefForUserSettings}
         className=" fixed transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-[90] "
       >
-        <div className=" ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4 shadow-md dark:shadow-sky-500 shadow-teal-500  bg-[#fcfefc]  rounded-md dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent mx-auto  ">
+        <div className=" ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4 shadow-md dark:shadow-sky-500 shadow-teal-500  bg-[#fcfefc]  rounded-md dark:bg-slate-900 mx-auto  ">
           <button
             onClick={handleShowUserInfomation}
             className="font-semibold absolute top-2 right-1 rounded px-1 text-center dark:text-gray-50  text-gray-700 cursor-pointer "

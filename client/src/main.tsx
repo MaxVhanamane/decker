@@ -30,7 +30,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           </OfflineProvider>
         </BrowserRouter>
 
-        <ReactQueryDevtools initialIsOpen={false} position="bottom-left" />
+        {/* <ReactQueryDevtools initialIsOpen={false} position="bottom-left" /> */}
       </QueryClientProvider>
     </AlertState>
   </>

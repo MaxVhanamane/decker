@@ -68,7 +68,7 @@ const parseNote = (noteString: string) => {
                   backgroundImage: `${
                     localStorage.getItem("theme") === "dark" ||
                     localStorage.getItem("theme") === null
-                      ? "linear-gradient(to right,#0f172a,#1e293b)"
+                      ? "linear-gradient(to right, rgb(2 6 23 / 0.5), rgb(2 6 23 / 0.5))"
                       : "auto"
                   }`,
                   borderRadius: 10,

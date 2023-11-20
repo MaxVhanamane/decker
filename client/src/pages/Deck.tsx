@@ -27,7 +27,6 @@ import {
 } from ".././types/types";
 import useUndoDeck from "./../hooks/useUndoDeck";
 import { Helmet } from "react-helmet";
-import SessionExpired from "../components/Session";
 import { UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
 import useGetDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
@@ -53,6 +52,7 @@ function Deck({
   const navigate = useNavigate();
   const location = useLocation();
   const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
+  // Here in addedDeckInfo, you will receive the data that the server returns after the mutation.
   const {
     mutate: addDeck,
     isLoading: isCreatingDeck,
@@ -84,7 +84,7 @@ function Deck({
   const { isOnline } = useContext(OfflineContext);
   // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
   const showPopUp = useRef<HTMLDivElement | null>(null);
-  const shouldPu = useRef<boolean>(false);
+  const shouldPushStateRef = useRef<boolean>(false);
 
   const {
     showSearchBar,
@@ -96,7 +96,7 @@ function Deck({
   } = useContext(searchContext);
   const [wasSearchBarInitiallyTrue, setWasSearchBarInitiallyTrue] =
     useState(showSearchBar);
-  const handleBrowsersBackButton = (e: any) => {
+  const handleBrowsersBackButton = () => {
     if (showLogoutModal) {
       setShowLogoutModal(false);
       return;
@@ -134,7 +134,7 @@ function Deck({
   useEffect(() => {
     const shouldPushState = showSearchBar || openEditDeckModal;
     openEditDeckModalForSearchResult;
-    if (shouldPushState && !shouldPu.current) {
+    if (shouldPushState && !shouldPushStateRef.current) {
       if (!wasSearchBarInitiallyTrue) {
         window.history.pushState(
           { isBackButtonNotClicked: true },
@@ -156,9 +156,9 @@ function Deck({
     const trueCount = variableArray.filter((variable) => variable).length;
 
     if (trueCount >= 2) {
-      shouldPu.current = true;
+      shouldPushStateRef.current = true;
     } else {
-      shouldPu.current = false;
+      shouldPushStateRef.current = false;
     }
 
     window.addEventListener("popstate", handleBrowsersBackButton);
@@ -207,7 +207,7 @@ function Deck({
     const elementToScrollTo = document.getElementById(`${addedDeckInfo?._id}`);
 
     // Calculate an offset to control the scrolling position
-    const yOffset = -200; // Adjust this value as needed
+    const yOffset = -200;
 
     // Scroll to the element if found
     if (elementToScrollTo) {
@@ -334,7 +334,7 @@ function Deck({
         {
           <div
             ref={undoButtonRef}
-            className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
+            className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
           >
             <span className="mr-4">Deck deleted successfully!</span>
             <span
@@ -402,7 +402,7 @@ function Deck({
             </label>
             <input
               ref={inputRefElement}
-              className=" dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900  dark:lg:from-slate-900 dark:lg:to-slate-900   dark:bg-transparent  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
+              className=" dark:bg-slate-900  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
               type="text"
               id="title"
             />
@@ -458,7 +458,7 @@ function Deck({
                                   } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
-                     transition-[background-color,border-color] duration-150  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-900 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
+                     transition-[border-color] duration-150  dark:hover:bg-slate-800 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-800 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
@@ -580,10 +580,10 @@ function Deck({
                                   } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
-                     transition-[background-color,border-color] duration-150   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 after:rounded-sm z-30 ${
+                     transition-[border-color] duration-150   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 after:rounded-sm z-30 ${
                        deck.isProcessing
                          ? "cursor-not-allowed"
-                         : "dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-900  hover:before:opacity-100"
+                         : "dark:hover:bg-slate-800 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-800  hover:before:opacity-100"
                      }  `}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}

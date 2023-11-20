@@ -135,7 +135,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
 
   if (isLoading && searchQuery?.length > 0) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent  text-gray-200   top-[3.45rem] bg-[#fcfefc]">
+      <div className="fixed inset-0 flex items-center justify-center dark:bg-slate-900  text-gray-200   top-[3.45rem] bg-[#fcfefc]">
         <div className="-mt-[3.45rem]">
           <img
             src={
@@ -155,7 +155,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
 
   return (
     <>
-      <div className=" dark:text-white text-gray-800 fixed top-[6.5rem] h-12 flex items-start justify-center w-full bg-[#fcfefc] dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent z-50 lg:hidden font-bold pt-2 ">
+      <div className=" dark:text-white text-gray-800 fixed top-[6.5rem] h-12 flex items-start justify-center w-full bg-[#fcfefc] dark:bg-slate-900 z-50 lg:hidden font-bold pt-2 ">
         {searchQuery.length > 0 &&
           (foundDecks.length > 0 || foundCards.length > 0) && (
             <div className="">
@@ -173,9 +173,9 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
           )}
       </div>
       <div
-        className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-screen bg-[#fcfefc]  dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent w-full  `}
+        className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-screen bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
       >
-        <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent z-50 pb-4 pt-3">
+        <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-900 z-50 pb-4 pt-3">
           {searchQuery.length > 0 &&
             (foundDecks.length > 0 || foundCards.length > 0) &&
             showResult && (

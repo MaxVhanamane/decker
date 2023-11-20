@@ -142,7 +142,7 @@ function UserContextProvider({ children }: UserContextProvider) {
     }
   }, [deferredPrompt, setDeferredPrompt, setShowInstallAppButton]);
 
-  const getUser = async (): Promise<any> => {
+  const getUser = async (): Promise<void> => {
     try {
       const data = await request.get("/getuser");
       if (
@@ -192,26 +192,14 @@ function UserContextProvider({ children }: UserContextProvider) {
       localStorage.getItem("theme") === "dark" ||
       localStorage.getItem("theme") === null
     ) {
-      document.documentElement.style.backgroundImage =
-        "linear-gradient(to right,#020617,#0f172a)";
+      document.documentElement.style.backgroundColor = "#0f172a";
       document.documentElement.classList.add("dark");
-      document.body.classList.add(
-        "dark:bg-gradient-to-r",
-        "dark:from-slate-950",
-        "dark:to-slate-900",
-        "dark:bg-transparent"
-      );
+      document.body.classList.add("dark:bg-slate-900");
     } else {
       document.documentElement.style.backgroundColor = "#fcfefc";
-      document.documentElement.style.backgroundImage = "";
 
       document.documentElement.classList.remove("dark");
-      document.body.classList.remove(
-        "dark:bg-gradient-to-r",
-        "dark:from-slate-950",
-        "dark:to-slate-900",
-        "dark:bg-transparent"
-      );
+      document.body.classList.remove("dark:bg-slate-900");
 
       document.documentElement.style.display = "";
     }

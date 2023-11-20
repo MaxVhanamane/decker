@@ -27,24 +27,17 @@ import {
   ContentTypeForEdit,
 } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
-import { TbBulbFilled } from "react-icons/tb";
-import { BiCodeCurly } from "react-icons/bi";
-import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
-import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
-import { GoEyeClosed } from "react-icons/go";
 
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
 import ConfirmDeleteModalForCard from "../components/card/ConfirmDeleteModalForCard";
 import CardItems from "../components/card/CardItems";
-import SessionExpired from "../components/Session";
 import ConfirmCloseCard from "../components/card/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
 
 import shortid from "shortid";
-import { BsChevronExpand, BsTypeUnderline } from "react-icons/bs";
-import { FaExpand } from "react-icons/fa";
+import { BsChevronExpand } from "react-icons/bs";
 import Tips from "../components/card/Tips";
 import FullScreenCardView from "../components/card/FullScreenCardView";
 
@@ -54,6 +47,7 @@ import { addCodeBlock } from "../functions/addCodeBlock";
 import { addLink } from "../functions/addLink";
 import { addUnderlineText } from "../functions/addUnderlineText";
 import { addBoldText } from "../functions/addBoldText";
+import CardToolbar from "../components/card/CardToolbar";
 // types
 // let oldContent:string //this  works
 
@@ -420,6 +414,21 @@ const Cards: FC = () => {
     }
   }, []);
 
+  const handleClose = useCallback(() => {
+    if (title.trim().length > 0 || note.trim().length > 0) {
+      setShowConfirmCloseCardModal(true);
+    } else {
+      setExpandTextArea(false);
+      setCheckClose(true);
+      setHeight(80);
+      setNote("");
+      setTitle("");
+      if (data && data?.cards?.length === 0) {
+        setIsTransitioning(true);
+      }
+    }
+  }, [title, note, data]);
+
   // onClick handlers
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -764,141 +773,21 @@ const Cards: FC = () => {
                   expandTextarea
                     ? "h-8 p-1 border-t-2 opacity-100"
                     : "h-8 p-0 translate-y-full border-t-2"
-                } flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] `}
+                } flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] dark:bg-slate-900`}
               >
-                <div className={`flex gap-2`}>
-                  <button
-                    title="Add a link"
-                    className="dark:text-gray-200 dark:hover:text-gray-400   text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
-                    type="button"
-                    name="addLinkToAddCard"
-                    onClick={(e) =>
-                      addLink({
-                        e,
-                        textareaRef,
-                        note,
-                        setNote,
-                        editTextareaRef,
-                        editContent,
-                        setEditContent,
-                      })
-                    }
-                  >
-                    <AiOutlineLink />
-                  </button>
-                  <button
-                    title="Add code sample"
-                    className="dark:text-gray-200 dark:hover:text-gray-400   text-gray-500 hover:text-gray-900 text-xl transition-all duration-300"
-                    type="button"
-                    name="addCodeSnippetToAddCard"
-                    onClick={(e) =>
-                      addCodeBlock({
-                        e,
-                        note,
-                        setNote,
-                        editContent,
-                        setEditContent,
-                        textareaRef,
-                        editTextareaRef,
-                      })
-                    }
-                  >
-                    <BiCodeCurly />
-                  </button>
-                  <button
-                    name="addUnderlineTextToAddCard"
-                    title="Underline text"
-                    className="dark:text-gray-200 dark:hover:text-gray-400  text-gray-500 hover:text-gray-900 text-xl transition-all duration-300 "
-                    type="button"
-                    onClick={(e) =>
-                      addUnderlineText({
-                        e,
-                        textareaRef,
-                        editTextareaRef,
-                        note,
-                        setNote,
-                        editContent,
-                        setEditContent,
-                      })
-                    }
-                  >
-                    <BsTypeUnderline />
-                  </button>
-                  <button
-                    name="addBoldTextToAddCard"
-                    title="Bold text"
-                    className="dark:text-gray-200 dark:hover:text-gray-400  text-gray-500 hover:text-gray-900 text-xl transition-all duration-300 "
-                    type="button"
-                    onClick={(e) =>
-                      addBoldText({
-                        e,
-                        textareaRef,
-                        note,
-                        setNote,
-                        editTextareaRef,
-                        editContent,
-                        setEditContent,
-                      })
-                    }
-                  >
-                    <AiOutlineBold />
-                  </button>
-                  <button
-                    title="Tips"
-                    className="text-yellow-400 hover:text-yellow-500  text-xl transition-all duration-300"
-                    type="button"
-                    name="tips"
-                    onClick={() => setShowTips(true)}
-                  >
-                    <TbBulbFilled />
-                  </button>
-
-                  <button
-                    title="Decrease TextArea Height"
-                    className="text-orange-500 hover:text-orange-600 text-xl transition-all duration-300"
-                    type="button"
-                    onClick={decreaseTextAreaHeight}
-                  >
-                    <FiMinusSquare />
-                  </button>
-                  <button
-                    title="Increase TextArea Height"
-                    className="text-green-500 hover:text-green-600  text-xl transition-all duration-300"
-                    type="button"
-                    onClick={increaseTextAreaHeight}
-                  >
-                    <FiPlusSquare />
-                  </button>
-                  <button
-                    title="Expand TextArea Fully"
-                    className="text-green-500 hover:text-green-600  text-md transition-all duration-300 ml-6"
-                    type="button"
-                    onClick={adjustTextareaHeightOnPasteAndExpand}
-                  >
-                    <FaExpand />
-                  </button>
-                  <button
-                    title="Close"
-                    className="text-red-500 hover:text-red-600  text-[1.2rem] transition-all duration-300 ml-1"
-                    type="button"
-                    onClick={() => {
-                      if (title.trim().length > 0 || note.trim().length > 0) {
-                        setShowConfirmCloseCardModal(true);
-                      } else {
-                        setExpandTextArea(false),
-                          setCheckClose(true),
-                          setHeight(80);
-                        setNote("");
-                        setTitle("");
-                        if (data && data?.cards?.length === 0) {
-                          setIsTransitioning(true);
-                        }
-                      }
-                    }}
-                  >
-                    <GoEyeClosed />
-                  </button>
-                </div>
+                <CardToolbar
+                  addLinkWrapper={addLinkWrapper}
+                  addBoldTextWrapper={addBoldTextWrapper}
+                  addCodeBlockWrapper={addCodeBlockWrapper}
+                  addUnderlineTextWrapper={addUnderlineTextWrapper}
+                  setShowTips={setShowTips}
+                  increaseTextAreaHeight={increaseTextAreaHeight}
+                  decreaseTextAreaHeight={decreaseTextAreaHeight}
+                  adjustTextareaHeightOnPasteAndExpand={
+                    adjustTextareaHeightOnPasteAndExpand
+                  }
+                  handleClose={handleClose}
+                />
               </div>
               <div className="h-10 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw] z-10 relative">
                 <input
@@ -921,7 +810,7 @@ const Cards: FC = () => {
                     expandTextarea
                       ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
                       : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center cursor-pointer"
-                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900   dark:bg-transparent dark:text-gray-50 z-10 `}
+                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-900 dark:text-gray-50 z-10 `}
                   placeholder={`${
                     expandTextarea ? "Title" : "Craft an Elegant Note"
                   } `}
@@ -940,7 +829,7 @@ const Cards: FC = () => {
                   expandTextarea
                     ? " py-2 border-b-2 rounded-t-0 opacity-100"
                     : "py-0 border-b-2"
-                } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
+                } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}

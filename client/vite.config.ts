@@ -91,7 +91,7 @@ export default defineConfig(({ command, mode }) => {
       manifest: {
         "name": "Decker",
         "short_name": "Decker",
-        "description": "Decker is a versatile web application designed to simplify the process of creating and managing decks. Each deck in Decker represents a collection of cards that can contain various types of content, including code blocks and formatted text. With Decker, you can effortlessly create decks and populate them with multiple cards. The cards within a deck offer flexibility for organizing information, such as code snippets, text with rich formatting, and more. One of the key features of Decker is its intuitive drag-and-drop functionality. You can easily rearrange the order of cards within a deck by dragging and dropping them into the desired position. Additionally, Decker allows you to edit, delete individual cards/decks, enabling seamless content management. It works offline, ensuring access to your content even when you're not connected to the internet.",
+        "description": "Decker is a versatile web app for easy creation and management of decks. Decks contain cards with diverse content types like code blocks and formatted text. Enjoy intuitive drag-and-drop functionality for effortless organization of cards/decks. Decker works offline, ensuring access to your content even without an internet connection.",
         "icons": [
           {
             "src": "/favicons/android-chrome-transparent-512x512.png",
@@ -131,6 +131,7 @@ export default defineConfig(({ command, mode }) => {
         "display": "standalone",
         "background_color": "#fcfefc",
         "theme_color": "#fcfefc",
+        screenshots: [{ src: "/screenshots/smallscreen/decker_small_screen_homepage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Home page" }, { src: "/screenshots/smallscreen/decker_small_screen_cardspage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Cards page" }, { src: "/screenshots/smallscreen/decker_small_screen_fullscreen.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Fullscreen card view" }, { src: "/screenshots/largescreen/decker_big_screen_image_e1.png", form_factor: "wide", sizes: "960x466", "type": "image/jpg", label: "Home page " }, { src: "/screenshots/largescreen/decker_big_screen_image_e3.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Cards page" }, { src: "/screenshots/largescreen/decker_big_screen_image_e2.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Fullscreen card view" }],
       }
 
 

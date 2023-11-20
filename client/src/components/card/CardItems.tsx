@@ -8,20 +8,35 @@ import { UserContext } from "../../context/UserContext";
 import { useContext } from "react";
 import { AlertContext } from "../../context/AlertContext";
 import { OfflineContext } from "../../context/OfflineContext";
-import { AlertData } from "../../types/types";
+import {
+  AlertData,
+  ContentType,
+  ContentTypeForEdit,
+  Data,
+} from "../../types/types";
 
-type CardType = {
+type ContentForFullScreen = ContentType & {
+  cardIndex: number | null;
+};
+
+interface DeckResponse {
   title: string;
-  note: string;
-  cardId: string;
-  _id: string;
+  cards: { title: string; note: string; cardId: string; _id: string }[];
+  message: null;
+}
+
+type PropTypes = {
+  handleDelete: (index: number) => void;
+  handleEdit: (cardItem: ContentTypeForEdit) => void;
+  handleShowFullScreen: (card: ContentForFullScreen) => void;
+  data: Data | DeckResponse | null | undefined;
 };
 const CardItems = ({
   handleDelete,
   handleEdit,
   handleShowFullScreen,
   data,
-}: any) => {
+}: PropTypes) => {
   const { divRefForUserSettings, handleShowUserInfomation } =
     useContext(UserContext);
   const { deck_id } = useParams();
@@ -38,7 +53,7 @@ const CardItems = ({
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
-            {data.cards.map((card: CardType, index: number) => {
+            {data?.cards?.map((card, index: number) => {
               return (
                 <Draggable
                   draggableId={`${deck_id!}-${card.cardId}`}
@@ -75,14 +90,14 @@ const CardItems = ({
                           }}
                           className={`relative border   ${
                             snapshot.isDragging
-                              ? "shadow-2xl ring-1 ring-cyan-500 shadow-cyan-500 border-cyan-500  animate-pulse dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent bg-[#fcfefc]"
+                              ? "shadow-2xl ring-1 ring-cyan-500 shadow-cyan-500 border-cyan-500  animate-pulse dark:bg-slate-900 bg-[#fcfefc]"
                               : "border-gray-400 "
                           } ${
                             snapshot.draggingOver === "cardDeleteArea"
                               ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent !ring-red-500"
                               : null
                           }   flex flex-col text-gray-800
-                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
+                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-800/50 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
                         >
                           <div className="absolute bottom-0 right-0 ">
                             {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}

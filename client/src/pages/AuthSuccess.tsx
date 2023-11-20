@@ -39,7 +39,7 @@ export default function AuthSuccess() {
     })();
   }, []);
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent bg-[#fcfefc] -z-10">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-[#fcfefc] -z-10">
       <div className="flex items-center justify-center rounded-full bg-green-700 text-white ">
         <p className="text-4xl">
           <TiTick />

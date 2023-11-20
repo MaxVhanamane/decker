@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "react-query";
+import { QueryClient, useQuery, useQueryClient } from "react-query";
 import { AlertData, AxiosErrorType, DeckType } from "../types/types";
 import { useContext } from "react";
 import { request } from "../utils/axios-utils";
@@ -9,11 +9,13 @@ type DeckTypeValue = DeckType[] & { message?: string };
 
 const getDecks = async (
   showSearchBar: boolean,
-  queryClient: any // Update the type of queryClient
+  queryClient: QueryClient // Update the type of queryClient
 ): Promise<DeckTypeValue | undefined> => {
   // If the search bar is open and the user opens the search results (e.g., any card) and reads it, and then closes it, if the user has opened the search bar on the home page, and when the user closes it by hitting the back button, they will be navigated to "/", which will trigger the execution of the useGetDecks() function. To avoid unnecessary network requests, I will serve the cached data in this case.
   // We will also check the following condition (cachedDecks === undefined) to ensure that the data is available in the cache. If it is not available, we will then proceed to refetch the data.
-  const cachedDecks = queryClient.getQueryData("decks");
+  const cachedDecks = queryClient.getQueryData<DeckTypeValue | undefined>(
+    "decks"
+  );
   if (!showSearchBar || cachedDecks === undefined) {
     try {
       const decks = await request.get(`/decks`);

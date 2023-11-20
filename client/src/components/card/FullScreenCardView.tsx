@@ -8,7 +8,7 @@ import ThemeToggler from "../ThemeToggler";
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
 import { UserContext } from "../../context/UserContext";
 import { searchContext } from "../../context/SearchContext";
-
+import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
 type ContentType = {
   title: string;
   note: string;
@@ -31,7 +31,7 @@ type propTypes = {
     pathname: string;
     search: string;
     hash: string;
-    state: any;
+    state: { isBackButtonNotClicked: boolean };
   };
   setShowFullScreen: Dispatch<React.SetStateAction<boolean>>;
   setStartAnimation: Dispatch<React.SetStateAction<boolean>>;
@@ -65,6 +65,14 @@ const FullScreenCardView = ({
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
   const { cardInfo, setCardInfo } = useContext(searchContext);
+  const storedToggleValue: string | null = localStorage.getItem("toggleColor");
+  const defaultToggleValue: boolean = storedToggleValue
+    ? JSON.parse(storedToggleValue)
+    : true; // Provide a default value in case the stored value is null or undefined
+
+  // Now, defaultToggleValue is of type boolean
+
+  const [toggle, setToggle] = useState(defaultToggleValue);
   const location = useLocation();
   useEffect(() => {
     const parseNoteAndSetCache = async () => {
@@ -175,7 +183,11 @@ const FullScreenCardView = ({
     <>
       <article
         onAnimationEnd={handleOnAnimationEnd}
-        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900  dark:bg-transparent   flex  flex-col z-[80] items-center ${
+        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]   ${
+          toggle
+            ? "bg-gradient-to-r dark:from-slate-950 lg:dark:via-slate-700  dark:via-slate-800 dark:to-slate-900  from-slate-300 via-slate-200 to-slate-100"
+            : ""
+        }   dark:bg-slate-900    flex  flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
             : "animate-translateFromRightToLeft lg:animate-opacityFadeOut lg:opacity-0 scale-0 lg:scale-100 "
@@ -228,7 +240,13 @@ const FullScreenCardView = ({
               {parsingError}
             </div>
           )}
-          <div className="fixed top-0  py-[0.95rem] dark:bg-gradient-to-r dark:from-slate-950   dark:to-slate-900 dark:bg-transparent border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-4 left-0 w-full flex items-center justify-between lg:px-96 ">
+          <div
+            className={`fixed top-0  py-[0.95rem]  ${
+              toggle
+                ? "bg-gradient-to-r dark:from-slate-950 lg:dark:via-slate-700 dark:via-slate-800 dark:to-slate-900  from-slate-300 via-slate-200 to-slate-100"
+                : ""
+            } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-4 left-0 w-full flex items-center justify-between lg:px-96  `}
+          >
             <div>
               <button
                 onClick={() => {
@@ -255,7 +273,7 @@ const FullScreenCardView = ({
                   handleDelete(fullScreenCardData?.cardIndex!);
                 }}
                 type="button"
-                className="text-red-600 text-xl outline-none px-1 transition-all duration-200  text-center hover:scale-95 "
+                className="text-blue-500 dark:text-sky-500 text-xl outline-none px-1 transition-all duration-200  text-center hover:scale-95 "
                 aria-label="Delete Card"
                 title="Delete Card"
               >
@@ -272,6 +290,18 @@ const FullScreenCardView = ({
                 title="Edit Card"
               >
                 <BiEdit />
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem("toggleColor", JSON.stringify(!toggle));
+                  setToggle((pre) => !pre);
+                }}
+                type="button"
+                className="text-blue-500 text-2xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                aria-label="Toggle Colors"
+                title="Toggle Colors"
+              >
+                {toggle ? <LuToggleRight /> : <LuToggleLeft />}
               </button>
             </div>
           </div>

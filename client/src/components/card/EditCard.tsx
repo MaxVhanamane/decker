@@ -185,14 +185,14 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     return (
       <div
         onAnimationEnd={handleOnAnimationEnd}
-        className={`w-screen  z-[90] dark:bg-slate-800 bg-slate-300 dark:md:bg-slate-950 md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center  transition-opacity duration-500   ${
+        className={`w-screen  z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center  transition-opacity duration-500   ${
           closeEditModal
             ? " opacity-0 animate-opacityFadeOut"
             : "animate-[opacity_0.2s_linear_1]"
         } `}
       >
         <div className=" w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%]   md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
-          <div className="w-full  h-[3.4rem] dark:bg-slate-800 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10 dark:md:bg-slate-950 md:bg-[#fcfefc]">
+          <div className="w-full  h-[3.4rem] dark:bg-slate-800 md:dark:bg-slate-900 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10  md:bg-[#fcfefc]">
             <div>
               <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-600 text-gray-700 font-semibold ">
                 Edit <span className="hidden md:inline">Card</span>
@@ -279,7 +279,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
               </div>
             </div>
           </div>
-          <div className=" px-2 py-1  w-full mt-[3.4rem] dark:md:bg-gray-800 md:bg-teal-600 md:p-2 md:rounded-md">
+          <div className=" px-2 py-1  w-full mt-[3.4rem] dark:md:bg-gray-700 md:bg-teal-600 md:p-2 md:rounded-md">
             <div className="w-full flex flex-col items-center justify-center ">
               <div className="w-full h-16">
                 <textarea
