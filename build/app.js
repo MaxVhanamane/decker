@@ -111,11 +111,11 @@ function (username, password, done) {
         const user = yield user_1.default.findOne({ email: username });
         // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
         if (!user) {
-            done(new mongoose_1.Error("User with this email doesn't exist!"));
+            return done(new mongoose_1.Error("User with this email doesn't exist!"));
         }
         // check if user is registered with Google Auth
         if (!(user === null || user === void 0 ? void 0 : user.password)) {
-            done(new mongoose_1.Error("You cannot log in with local credentials because you registered with Google Auth."));
+            return done(new mongoose_1.Error("You can't log in with your username and password; you signed up with Google. Please use the 'Continue with Google' button to log in."));
         }
         // If we reach this line it means we found the user now let's compare the passoword.
         bcryptjs_1.default.compare(password, user === null || user === void 0 ? void 0 : user.password, (err, result) => {

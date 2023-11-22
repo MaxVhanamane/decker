@@ -101,12 +101,13 @@ passport.use(new LocalStrategy(
     const user = await User.findOne({ email: username });
     // If we don't find any user then we will throw an error. we can receive this error using error.message in login route.
     if (!user) {
-      done(new Error("User with this email doesn't exist!"));
+      return done(new Error("User with this email doesn't exist!"));
     }
     // check if user is registered with Google Auth
 
     if (!user?.password) {
-      done(new Error("You cannot log in with local credentials because you registered with Google Auth."));
+      return done(new Error("You can't log in with your username and password; you signed up with Google. Please use the 'Continue with Google' button to log in."));
+
     }
     // If we reach this line it means we found the user now let's compare the passoword.
     bcrypt.compare(password, user?.password!, (err, result) => {

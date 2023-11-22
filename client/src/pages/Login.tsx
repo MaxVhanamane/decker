@@ -50,7 +50,7 @@ export default function Login() {
           severity: "error",
           show: true,
           message: response.data.message,
-          autoHideDuration: 5000,
+          autoHideDuration: 7000,
         }));
       }
     } catch (error) {

@@ -22,7 +22,16 @@ export default function ProtectedRoutes() {
         />
         <div className=" flex items-center justify-center gap-2 ">
           <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
-          <p className="dark:text-gray-200 text-gray-600">Authenticating...</p>
+          <p
+            className={`  ${
+              localStorage.getItem("theme") === "dark" ||
+              localStorage.getItem("theme") === null
+                ? "text-gray-200"
+                : "text-gray-600"
+            }`}
+          >
+            Authenticating...
+          </p>
         </div>
       </div>
     );

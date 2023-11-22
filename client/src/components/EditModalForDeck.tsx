@@ -64,13 +64,13 @@ const EditModalForDeck = ({
               setOpenEditDeckModal(false);
             }
           }}
-          className={`w-full h-screen  backdrop-blur-xl  fixed inset-0 flex items-center justify-center z-[999] transition-opacity duration-300 ${
+          className={`backdrop-blur-xl  fixed inset-0 flex items-center justify-center z-[999] transition-opacity duration-300 ${
             animateCloseEditDeckModal
               ? "animate-[opacityFadeOut_0.15s_linear_1] opacity-0"
               : "animate-[opacity_0.15s_linear_1]"
           }`}
         >
-          <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/3">
+          <div className=" bg-teal-500 dark:bg-slate-700 flex flex-col items-center justify-center rounded-md shadow mx-4 w-[90%] md:w-1/2 lg:w-1/3">
             {/* modal head  */}
             <div className="w-full  border-b border-gray-50 dark:border-gray-50/50">
               <h2 className="py-2 px-4 text-left text-white font-bold ">
