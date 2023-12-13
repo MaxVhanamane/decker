@@ -7,10 +7,12 @@ import {
   useRef,
   RefObject,
   useCallback,
+  useContext,
 } from "react";
-import { request } from "../utils/axios-utils";
-import { userData } from "../types/types";
+import { request } from "../utils/fetch-utils";
+import { AlertData, userData } from "../types/types";
 import { useLocation, useNavigate } from "react-router-dom";
+import { AlertContext } from "./AlertContext";
 
 declare global {
   interface WindowEventMap {
@@ -86,6 +88,7 @@ export const UserContext = createContext<ContexType>({
 
 function UserContextProvider({ children }: UserContextProvider) {
   const [theme, setTheme] = useState<string | null>(null);
+  const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
   const location = useLocation();
   const deleteConfirmationModalForCard = useRef<HTMLDivElement>(null);
@@ -162,6 +165,13 @@ function UserContextProvider({ children }: UserContextProvider) {
         navigate("/login");
       }
     } catch {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "An error occurred. Please try logging in again.",
+        autoHideDuration: 5000,
+      }));
       setIsAuthenticating(false);
       navigate("/login");
     } finally {

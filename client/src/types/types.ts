@@ -54,9 +54,9 @@ export type Data = {
   _id: string;
   title: string;
   cards: { title: string, note: string, cardId: string; _id: string }[];
-} & { message?: string }
+}
 
-export type AxiosErrorType = {
+export type FetchErrorType = {
   message: string;
   response: {
     data: {

@@ -24,7 +24,7 @@ const Tips = ({
           setCloseTipsModal(false);
         }
       }}
-      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-900  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800 ${
+      className={` fixed inset-0 overflow-y-auto bg-[#fcfefc]  dark:bg-slate-900  p-4 lg:px-96 flex  flex-col z-[80] items-center dark:text-gray-200 text-gray-800 translate-z- ${
         closeTipsModal
           ? "animate-translateFromBottomToTop scale-0 lg:animate-opacityFadeOut lg:opacity-0 lg:scale-100"
           : "animate-translateFromTopToBottom  lg:animate-quickOpacity "

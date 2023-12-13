@@ -20,12 +20,7 @@ import { UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
-import {
-  AlertData,
-  AxiosErrorType,
-  ContentType,
-  ContentTypeForEdit,
-} from "../types/types";
+import { AlertData, ContentType, ContentTypeForEdit } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
 
 import Loading from "../components/Loading";
@@ -68,8 +63,17 @@ type PayloadType = {
 
 let wasDeleteModalOpen2: boolean;
 
+interface CardsProps {
+  isMoveCardError: boolean;
+  moveCardError: Error | null;
+  resetMoveCardResponse: () => void;
+}
 // Component
-const Cards: FC = () => {
+const Cards: FC<CardsProps> = ({
+  isMoveCardError,
+  moveCardError,
+  resetMoveCardResponse,
+}) => {
   // States
   const { setAlert } = useContext(AlertContext);
   const {
@@ -124,10 +128,9 @@ const Cards: FC = () => {
 
   const location = useLocation();
 
-  const { data, isError, error, isLoading } = useGetCards(
-    deck_id!,
-    location?.state?.deck
-  );
+  const { data, isError, error, isLoading, fetchStatus, isPaused, status } =
+    useGetCards(deck_id!, location?.state?.deck);
+
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
     note: "",
@@ -135,9 +138,29 @@ const Cards: FC = () => {
     cardIndex: null,
     cardId: "",
   });
-  const { mutate: addCard } = useCreateCard();
-  const { mutate: editCard } = useEditCard();
-  const { mutate: deleteCardItem } = useDeleteCard();
+  const {
+    mutate: addCard,
+    data: createCardResponse,
+    reset: resetCreateCardResponse,
+    isError: isCreateCardError,
+    error: createCardError,
+  } = useCreateCard();
+
+  const {
+    mutate: editCard,
+    data: editCardResponse,
+    reset: resetEditCardResponse,
+    isError: isEditCardError,
+    error: editCardError,
+  } = useEditCard();
+
+  const {
+    mutate: deleteCardItem,
+    data: deleteCardResponse,
+    reset: resetDeleteCardResponse,
+    isError: isDeleteCardError,
+    error: deleteCardError,
+  } = useDeleteCard();
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -154,13 +177,58 @@ const Cards: FC = () => {
   //useEffects
 
   useEffect(() => {
-    if (
-      data?.message ===
-      "Your session has expired. Please log in again to continue."
-    ) {
-      navigate("/sessionexpired", { state: { from: "/cards" } });
+    if (data && "message" in data) {
+      if (
+        data?.message ===
+        "Your session has expired. Please log in again to continue."
+      ) {
+        navigate("/sessionexpired", { state: { from: "/cards" } });
+      }
     }
   }, [data]);
+
+  useEffect(() => {
+    if (isCreateCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: createCardError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetCreateCardResponse();
+    }
+    if (isDeleteCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: deleteCardError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetDeleteCardResponse();
+    }
+    if (isMoveCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: moveCardError?.message!,
+        autoHideDuration: 5000,
+      }));
+      resetMoveCardResponse();
+    }
+    if (isEditCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: editCardError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetEditCardResponse();
+    }
+  }, [isCreateCardError, isDeleteCardError, isMoveCardError, isEditCardError]);
 
   useEffect(() => {
     const isRoundedTopClassPresent =
@@ -423,7 +491,7 @@ const Cards: FC = () => {
       setHeight(80);
       setNote("");
       setTitle("");
-      if (data && data?.cards?.length === 0) {
+      if (data && "cards" in data && data?.cards?.length === 0) {
         setIsTransitioning(true);
       }
     }
@@ -670,12 +738,12 @@ const Cards: FC = () => {
     return <Loading />;
   }
 
-  if (isError) {
+  if (data && "message" in data) {
     return (
       <ErrorDisplay
         theme={theme}
-        isError={isError}
-        error={error as AxiosErrorType}
+        message={data && "message" in data ? data?.message : undefined}
+        status={data && "status" in data ? data?.status : undefined}
       >
         <button
           onClick={() => navigate("/")}
@@ -765,7 +833,7 @@ const Cards: FC = () => {
             <div className="flex flex-col ">
               <div
                 onTransitionEnd={() => {
-                  if (data && data?.cards?.length === 0) {
+                  if (data && "cards" in data && data?.cards?.length === 0) {
                     setIsTransitioning(false);
                   }
                 }}
@@ -857,14 +925,14 @@ const Cards: FC = () => {
               </button>
             </div>
           </form>
-          {data && data?.cards?.length > 0 ? (
+          {data && "cards" in data && data?.cards?.length > 0 ? (
             <h1 className="font-bold text-xl text-gray-800 mb-6 dark:text-gray-50 mt-6">
               {data?.title}
             </h1>
           ) : null}
         </div>
 
-        {data && data?.cards?.length > 0 ? (
+        {data && "cards" in data && data?.cards?.length > 0 ? (
           <CardItems
             handleDelete={handleDelete}
             handleEdit={handleEdit}

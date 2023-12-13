@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
-import { request } from "./../utils/axios-utils";
+import { request } from "../utils/fetch-utils";
 import { UserContext } from "../context/UserContext";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";

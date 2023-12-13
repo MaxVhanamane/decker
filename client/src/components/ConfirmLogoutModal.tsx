@@ -1,6 +1,6 @@
 import { FC, MouseEvent, useContext, Dispatch } from "react";
 import { UserContext } from "../context/UserContext";
-import { request } from "../utils/axios-utils";
+import { request } from "../utils/fetch-utils";
 import { useNavigate } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
@@ -25,7 +25,7 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
   ) => {
     if ((e.target as HTMLButtonElement).id === "yesbutton") {
       const res = await request.post("/auth/logout");
-      if (res.data === "done") {
+      if (res.data.isLogoutSuccessful) {
         setUserInfo(null);
         setShowLogoutModal(false);
         handleShowUserInfomation();

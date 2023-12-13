@@ -1,9 +1,7 @@
-import { request } from "./../utils/axios-utils";
-import { useMutation } from "react-query";
-import { useQueryClient } from "react-query";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
-import { useContext } from "react";
+import { request } from "../utils/fetch-utils";
+import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { CardDataType } from "../types/types";
 
 type PayloadData = {
   deck_id: string;
@@ -24,24 +22,30 @@ const createCard = async (payload: PayloadData) => {
     const data = await request.post(`/card/${payload.deck_id}`, {
       content: payload.content,
     });
-    return data.data;
+
+    if (data?.message) {
+      return { message: data?.message, status: data?.status };
+    } else {
+      return data?.data;
+    }
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    if ((error as AxiosErrorType)?.response?.status === 500) {
-      throw new Error("Internal server error");
-    } else if ((error as Error).message === "Network Error") {
-      throw new Error("Network Error");
-    }
-    throw error;
+    return {
+      message:
+        "An unexpected error occurred while creating the card. Please try again later.",
+      status: 400,
+    };
   }
 };
 
 const useCreateCard = () => {
-  const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
-  return useMutation(createCard, {
+  return useMutation({
+    mutationFn: createCard,
     onMutate: async (data: PayloadData) => {
-      await queryClient.cancelQueries(["cards", data.deck_id]);
+      await queryClient.cancelQueries({
+        queryKey: ["cards", data.deck_id],
+      });
       const previousCardData: CardDataType[] = queryClient.getQueryData([
         "cards",
         data.deck_id,
@@ -62,28 +66,30 @@ const useCreateCard = () => {
       return previousCardData;
     },
 
-    onError: (error, data: PayloadData, context) => {
-      const message =
-        (error as Error).message === "Network Error"
-          ? "No internet connection"
-          : (error as Error).message;
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: (error as AxiosErrorType)?.response?.data.message || message,
-        autoHideDuration: 7000,
-      }));
+    onSuccess: (data) => {
+      if (data && "message" in data) {
+        if (data?.message) {
+          throw new Error(data?.message);
+        } else {
+          throw new Error(
+            "An unexpected error occurred while creating the card. Please try again later."
+          );
+        }
+      }
+    },
 
+    onError: (error, data: PayloadData, context) => {
       queryClient.setQueryData(["cards", data.deck_id], context);
     },
     onSettled: (
-      dataReturnedByTheAxiosRequest,
-      error,
+      _dataReturnedByTheAxiosRequest,
+      _error,
       dataThatWePassed,
-      context
+      _context
     ) => {
-      queryClient.invalidateQueries(["cards", dataThatWePassed.deck_id]);
+      queryClient.invalidateQueries({
+        queryKey: ["cards", dataThatWePassed.deck_id],
+      });
     },
   });
 };

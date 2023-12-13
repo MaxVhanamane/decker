@@ -1,9 +1,7 @@
-import { request } from "./../utils/axios-utils";
-import { useMutation } from "react-query";
-import { useQueryClient } from "react-query";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
-import { useContext } from "react";
+import { request } from "../utils/fetch-utils";
+import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { CardDataType } from "../types/types";
 
 type Data = {
   deleteIndex: number;
@@ -16,38 +14,35 @@ type OldData = {
   title: string;
 };
 
-const moveCard = async (data: Data) => {
+const moveCard = async (inputData: Data) => {
   try {
-    const res = await request.put(
-      `/card/changeposition/${data.deck_id}/${data.deleteIndex}/${data.moveIndex}`
+    const data = await request.put(
+      `/card/changeposition/${inputData.deck_id}/${inputData.deleteIndex}/${inputData.moveIndex}`
     );
-    return res.data;
-  } catch (error) {
-    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    if ((error as AxiosErrorType)?.response?.status === 429) {
-      if (
-        (error as AxiosErrorType)?.response?.data?.message === "VersionError"
-      ) {
-        throw new Error("Too many requests. Please try again!");
-      }
-    }
 
-    if ((error as AxiosErrorType)?.response?.status === 500) {
-      throw new Error("Internal server error");
-    } else if ((error as Error).message === "Network Error") {
-      throw new Error("Network Error");
+    if (data?.message) {
+      return { message: data?.message, status: data?.status };
+    } else {
+      return data?.data;
     }
-    throw error;
+  } catch (error) {
+    return {
+      message:
+        "An unexpected error occurred while moving the card. Please try again later.",
+      status: 400,
+    };
   }
 };
 
 const useMoveCard = () => {
-  const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
 
-  return useMutation(moveCard, {
+  return useMutation({
+    mutationFn: moveCard,
     onMutate: async (data: Data) => {
-      await queryClient.cancelQueries(["cards", data.deck_id]);
+      await queryClient.cancelQueries({
+        queryKey: ["cards", data.deck_id],
+      });
       const previousCardData: CardDataType[] = queryClient.getQueryData([
         "cards",
         data.deck_id,
@@ -66,20 +61,19 @@ const useMoveCard = () => {
 
       return previousCardData;
     },
+    onSuccess: (data) => {
+      if (data && "message" in data) {
+        if (data?.message) {
+          throw new Error(data?.message);
+        } else {
+          throw new Error(
+            "An unexpected error occurred while moving the card. Please try again later."
+          );
+        }
+      }
+    },
 
     onError: (error, data: Data, context) => {
-      const message =
-        (error as Error).message === "Network Error"
-          ? "No internet connection"
-          : (error as Error).message;
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: (error as AxiosErrorType)?.response?.data.message || message,
-        autoHideDuration: 7000,
-      }));
-
       queryClient.setQueryData(["cards", data.deck_id], context);
     },
     onSettled: (
@@ -88,7 +82,9 @@ const useMoveCard = () => {
       dataThatWePassed,
       context
     ) => {
-      queryClient.invalidateQueries(["cards", dataThatWePassed.deck_id]);
+      queryClient.invalidateQueries({
+        queryKey: ["cards", dataThatWePassed.deck_id],
+      });
     },
   });
 };

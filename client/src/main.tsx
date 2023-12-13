@@ -2,8 +2,8 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClientProvider, QueryClient } from "react-query";
-import { ReactQueryDevtools } from "react-query/devtools";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import UserContextProvider from "./context/UserContext";
 import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
@@ -30,7 +30,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           </OfflineProvider>
         </BrowserRouter>
 
-        {/* <ReactQueryDevtools initialIsOpen={false} position="bottom-left" /> */}
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          position="bottom"
+          buttonPosition="bottom-left"
+        />
       </QueryClientProvider>
     </AlertState>
   </>

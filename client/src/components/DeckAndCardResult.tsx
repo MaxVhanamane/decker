@@ -50,7 +50,7 @@ const DeckAndCardResult: FC<PropType> = ({
     mutate: pinDeck,
     error: pinError,
     isError: isPinError,
-    isLoading: isPinning,
+    isPending: isPinning,
   } = usePinDeck();
   const location = useLocation();
 

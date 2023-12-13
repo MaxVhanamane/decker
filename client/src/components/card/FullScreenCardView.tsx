@@ -18,6 +18,7 @@ type ContentType = {
 
 type ContentForFullScreen = ContentType & {
   cardIndex: number | null;
+  from?: string;
 };
 
 type ContentTypeForEdit = ContentType & {
@@ -182,6 +183,10 @@ const FullScreenCardView = ({
   return (
     <>
       <article
+        style={{
+          transform: "translateZ(0)",
+          WebkitTransform: "translateZ(0)",
+        }}
         onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]   ${
           toggle

@@ -1,9 +1,26 @@
 import { useState, Dispatch, useContext, FormEvent } from "react";
-import useEditDeck from "../hooks/useEditDeck";
 import { OfflineContext } from "../context/OfflineContext";
-import { AlertData } from "../types/types";
+import { AlertData, DeckAndCardType, DeckType } from "../types/types";
 import { AlertContext } from "../context/AlertContext";
 import { useNavigate } from "react-router-dom";
+import { UseMutateFunction } from "@tanstack/react-query";
+
+type CardData = {
+  deck_id: string;
+  newTitle: string;
+};
+
+type PromiseData = {
+  title: string;
+  _id: string;
+  cards: { title: string; note: string }[];
+  pinned: boolean;
+};
+
+type ErrorResponse = {
+  message: string;
+  status: number;
+};
 
 interface IProp {
   openEditDeckModal: boolean;
@@ -20,6 +37,15 @@ interface IProp {
       title: string;
     }>
   >;
+  editDeck: UseMutateFunction<
+    PromiseData | ErrorResponse,
+    Error,
+    CardData,
+    {
+      previousQueryData: DeckType[] | undefined;
+      previousQueryDataForSearch: DeckAndCardType[] | undefined;
+    }
+  >;
 }
 
 const EditModalForDeck = ({
@@ -29,12 +55,14 @@ const EditModalForDeck = ({
   setEditData,
   setAnimateCloseEditDeckModal,
   animateCloseEditDeckModal,
+  editDeck,
 }: IProp) => {
   const [newTitle, setNewTitle] = useState(editData.title);
-  const { mutate: editDeck, isError: isEditError } = useEditDeck();
+
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
+
   const handleSave = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isOnline) {

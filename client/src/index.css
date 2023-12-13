@@ -28,6 +28,10 @@
     width: 0px;
   }
 
+  img:-moz-loading {
+    visibility: hidden;
+  }
+
 
 }
 

@@ -19,12 +19,7 @@ import EditModalForDeck from "../components/EditModalForDeck";
 import { BiEdit } from "react-icons/bi";
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
-import {
-  AlertData,
-  AxiosErrorType,
-  DeckType,
-  DeckTypeWithIndex,
-} from ".././types/types";
+import { AlertData, DeckType, DeckTypeWithIndex } from ".././types/types";
 import useUndoDeck from "./../hooks/useUndoDeck";
 import { Helmet } from "react-helmet";
 import { UserContext } from "../context/UserContext";
@@ -32,6 +27,7 @@ import { OfflineContext } from "../context/OfflineContext";
 import useGetDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { searchContext } from "../context/SearchContext";
+import useEditDeck from "../hooks/useEditDeck";
 
 type PropType = {
   undoDeck: DeckTypeWithIndex | null;
@@ -52,12 +48,15 @@ function Deck({
   const navigate = useNavigate();
   const location = useLocation();
   const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
-  // Here in addedDeckInfo, you will receive the data that the server returns after the mutation.
+  // Here in createDeckResponse, you will receive the data that the server returns after the mutation.
   const {
     mutate: addDeck,
-    isLoading: isCreatingDeck,
+    isPending: isCreatingDeck,
     isSuccess: isDeckAdded,
-    data: addedDeckInfo,
+    isError: isCreateDeckError,
+    error: createDeckError,
+    data: createDeckResponse,
+    reset: resetCreateDeckResponse,
   } = useCreateDeck();
   // Calling decks-and-cards to cache the data so that users can search offline.
   useGetDecksAndCardsCache();
@@ -72,14 +71,24 @@ function Deck({
   const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
     useState(false);
   const {
+    mutate: editDeck,
+    isError: isEditDeckError,
+    error: editDeckError,
+    data: editDeckResponse,
+    reset: resetEditDeckResponse,
+  } = useEditDeck();
+  const {
     mutate: pinDeck,
-    error: pinError,
-    isError: isPinError,
+    error: pinDeckError,
+    isError: isPinDeckError,
+    data: pinDeckResponse,
+    reset: resetPinDeckResponse,
   } = usePinDeck();
   const {
     mutate: undoDeckItem,
-    error: undoError,
-    isError: isUndoError,
+    error: undoDeckError,
+    isError: isUndoDeckError,
+    reset: resetUndoDeck,
   } = useUndoDeck();
   const { isOnline } = useContext(OfflineContext);
   // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
@@ -117,13 +126,59 @@ function Deck({
   };
 
   useEffect(() => {
-    if (
-      allDecks?.message ===
-      "Your session has expired. Please log in again to continue."
-    ) {
-      navigate("/sessionexpired", { state: { from: "/decks" } });
+    if (allDecks && "message" in allDecks) {
+      if (
+        allDecks?.message ===
+        "Your session has expired. Please log in again to continue."
+      ) {
+        navigate("/sessionexpired", { state: { from: "/cards" } });
+      }
     }
   }, [allDecks]);
+
+  useEffect(() => {
+    if (isCreateDeckError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: createDeckError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetCreateDeckResponse();
+    }
+    if (isPinDeckError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: pinDeckError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetPinDeckResponse();
+    }
+
+    if (isEditDeckError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: editDeckError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetEditDeckResponse();
+    }
+    if (isUndoDeckError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: undoDeckError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetEditDeckResponse();
+    }
+  }, [isCreateDeckError, isEditDeckError, isPinDeckError, isUndoDeckError]);
 
   useEffect(() => {
     if (cardDeleted) {
@@ -204,7 +259,9 @@ function Deck({
 
   useEffect(() => {
     // Find the element you want to scroll to
-    const elementToScrollTo = document.getElementById(`${addedDeckInfo?._id}`);
+    const elementToScrollTo = document.getElementById(
+      `${createDeckResponse?._id}`
+    );
 
     // Calculate an offset to control the scrolling position
     const yOffset = -200;
@@ -233,7 +290,7 @@ function Deck({
         );
       });
     }
-  }, [addedDeckInfo]);
+  }, [createDeckResponse]);
 
   const handlePin = async (id: string, pinned: boolean) => {
     if (!isOnline) {
@@ -298,12 +355,14 @@ function Deck({
     handlePopupForUndoButton();
   };
 
-  if (isError) {
+  if (allDecks && "message" in allDecks) {
     return (
       <ErrorDisplay
         theme={theme}
-        isError={isError}
-        error={error as AxiosErrorType}
+        message={
+          allDecks && "message" in allDecks ? allDecks?.message : undefined
+        }
+        status={allDecks && "status" in allDecks ? allDecks?.status : undefined}
       >
         <button
           onClick={() => window.location.reload()}
@@ -330,7 +389,7 @@ function Deck({
           content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."
         />
       </Helmet>
-      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-32  ">
+      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14  ">
         {
           <div
             ref={undoButtonRef}
@@ -417,7 +476,7 @@ function Deck({
         </div>
 
         {allDecks &&
-        !allDecks.message &&
+        !("message" in allDecks && allDecks.message) &&
         allDecks?.filter((deck) => {
           return deck?.pinned === true;
         }).length > 0 ? (
@@ -430,7 +489,7 @@ function Deck({
               {(provided) => {
                 return (
                   <div
-                    className=" flex flex-row flex-wrap gap-2  justify-center items-center py-2 px-1 lg:mx-20 "
+                    className=" flex flex-row flex-wrap gap-2  justify-center items-center py-2 px-1 lg:mx-16 "
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
@@ -534,7 +593,7 @@ function Deck({
         ) : null}
 
         {allDecks &&
-        !allDecks.message &&
+        !("message" in allDecks && allDecks.message) &&
         allDecks?.filter((deck) => {
           return deck?.pinned === false;
         }).length > 0 ? (
@@ -551,7 +610,7 @@ function Deck({
               {(provided) => {
                 return (
                   <div
-                    className="  flex flex-row flex-wrap gap-2  justify-center items-center  py-2 px-1 lg:mx-20 "
+                    className="  flex flex-row flex-wrap gap-2  justify-center items-center  py-2 px-1 lg:mx-14 "
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
@@ -707,6 +766,7 @@ function Deck({
             setEditData={setEditData}
             animateCloseEditDeckModal={animateCloseEditDeckModal}
             setAnimateCloseEditDeckModal={setAnimateCloseEditDeckModal}
+            editDeck={editDeck}
           />
         ) : null}
 

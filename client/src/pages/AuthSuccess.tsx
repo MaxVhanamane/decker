@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useContext, useEffect } from "react";
 import { TiTick } from "react-icons/ti";
-import { request } from "../utils/axios-utils";
+import { request } from "../utils/fetch-utils";
 import { userData } from "../types/types";
 import { UserContext } from "../context/UserContext";
 
@@ -39,7 +39,7 @@ export default function AuthSuccess() {
     })();
   }, []);
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-[#fcfefc] -z-10">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-[#fcfefc] ">
       <div className="flex items-center justify-center rounded-full bg-green-700 text-white ">
         <p className="text-4xl">
           <TiTick />

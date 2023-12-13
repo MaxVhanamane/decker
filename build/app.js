@@ -122,7 +122,7 @@ function (username, password, done) {
             if (err)
                 throw err; // If some error occures while decrypting we will throw an error. very less likely but still...
             if (result === true) {
-                return done(null, user); // If password matches we will send the user
+                done(null, user); // If password matches we will send the user
             }
             else {
                 return done(new mongoose_1.Error("Incorrect password!")); // If password doesn't match then we will throw an error.we can receive this error using error.message in login route.
@@ -204,7 +204,7 @@ const fetchUserDetails = function (req, res, next) {
             next();
         }
         else {
-            return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
+            return res.status(401).json({ message: "Your session has expired. Please log in again to continue." });
         }
     });
 };
@@ -265,7 +265,7 @@ app.post('/deck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void
         res.status(201).json({ _id: createdDeck._id, title: createdDeck.title, pinned: createdDeck.pinned });
     }
     catch (error) {
-        res.status(500).json({ message: "Internal server Error!" });
+        res.status(500).json({ message: "An unexpected error occurred while creating the deck. Please try again later." });
     }
 }));
 app.patch('/deck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -275,12 +275,7 @@ app.patch('/deck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, vo
         res.status(200).json(updatedDeck);
     }
     catch (error) {
-        if (error instanceof mongoose_1.Error) {
-            res.status(500).send({ message: error.message, isError: true });
-        }
-        else {
-            res.status(500).json({ message: "Unexpected error", isError: true });
-        }
+        res.status(500).json({ message: "An unexpected error occurred while pinning the deck. Please try again later!", isError: true });
     }
 }));
 app.put('/undodeck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -292,12 +287,7 @@ app.put('/undodeck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, v
         res.status(200).json({ createdDeck, success: true });
     }
     catch (error) {
-        if (error instanceof mongoose_1.Error) {
-            res.status(500).send({ message: error.message, isError: true });
-        }
-        else {
-            res.status(500).json({ message: "Unexpected error", isError: true });
-        }
+        res.status(500).json({ message: "An unexpected error occurred while undoing the deck deletion." });
     }
 }));
 app.put('/deck/editdeck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -306,12 +296,7 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, (req, res) => __awaiter(voi
         res.status(200).json(updatedDeck);
     }
     catch (error) {
-        if (error instanceof mongoose_1.Error) {
-            res.status(500).send({ message: error.message, isError: true });
-        }
-        else {
-            res.status(500).json({ message: "Unexpected error", isError: true });
-        }
+        res.status(500).json({ message: "An unexpected error occurred while saving the edited deck. Please try again later!" });
     }
 }));
 app.delete('/deck/:id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -322,7 +307,7 @@ app.delete('/deck/:id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0
         res.status(200).json({ modifiedDeckInfo, success: true });
     }
     catch (error) {
-        res.status(500).json({ message: "some error occurred! Please try again later!", success: false });
+        res.status(500).json({ message: "An unexpected error occurred while deleting the deck. Please try again later!", success: false });
     }
 }));
 // Card routes
@@ -333,7 +318,7 @@ app.get('/cards/:_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0,
             res.status(200).json({ cards: cards.cards, title: cards.title });
         }
         else {
-            res.status(200).json({ message: "No cards found!" });
+            res.status(404).json({ message: "No cards found!" });
         }
     }
     catch (error) {
@@ -350,14 +335,14 @@ app.post('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, voi
     try {
         const getDeck = yield deck_1.default.findById(req.params.deck_id);
         if (!getDeck) {
-            return res.status(200).json({ message: "No deck found! Please check deck id" });
+            return res.status(400).json({ message: "No deck found! Please check deck id" });
         }
         getDeck.cards.unshift(req.body.content);
         const createdCard = yield getDeck.save();
         res.status(201).json(createdCard);
     }
     catch (error) {
-        res.status(500).json({ message: "Some Error occurred please try again later!" });
+        res.status(500).json({ message: "An unexpected error occurred while creating the card. Please try again later." });
     }
 }));
 //Edit card
@@ -379,11 +364,11 @@ app.patch('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, vo
             res.status(200).json(newCard);
         }
         else {
-            res.status(200).json({ message: "No cards found!" });
+            res.status(400).json({ message: "Card not found!" });
         }
     }
     catch (error) {
-        res.status(500).json({ message: "Internal server Error!" });
+        res.status(500).json({ message: "An unexpected error occurred while saving the edited card. Please try again later!" });
     }
 }));
 app.delete('/card/:id/:index', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -395,11 +380,11 @@ app.delete('/card/:id/:index', fetchUserDetails, (req, res) => __awaiter(void 0,
             res.status(200).json({ cards: newArray, success: true });
         }
         else {
-            res.status(200).json({ message: "Card not found!", success: false });
+            res.status(400).json({ message: "Card not found!", success: false });
         }
     }
     catch (error) {
-        res.status(500).json({ message: "some error occurred", success: false });
+        res.status(500).json({ message: "An unexpected error occurred while deleting the card. Please try again later.", success: false });
     }
 }));
 app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -417,9 +402,9 @@ app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, (r
     }
     catch (error) {
         if (error.name === 'VersionError') {
-            return res.status(429).json({ message: "VersionError", success: false });
+            return res.status(429).json({ message: "Too many requests. Please try again!", success: false });
         }
-        res.status(500).json({ message: "some error occurred", success: false });
+        res.status(500).json({ message: "An unexpected error occurred while moving the card. Please try again later.", success: false });
     }
 }));
 app.get('/auth/google', passport_1.default.authenticate('google', {
@@ -441,13 +426,13 @@ app.post('/auth/logout', (req, res, next) => {
         if (err) {
             return next(err);
         }
-        res.status(200).send('done');
+        res.status(200).json({ isLogoutSuccessful: true });
     });
 });
 app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, email, password, otp } = req === null || req === void 0 ? void 0 : req.body;
     if (!username && !password && !email) {
-        res.status(200).json({ success: false, message: "Please provide name, email and password" });
+        res.status(400).json({ success: false, message: "Please provide name, email and password" });
         return;
     }
     const verifyUser = yield verifyemail_1.default.findOne({ email });
@@ -465,7 +450,7 @@ app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 res.status(201).json({ success: true, message: "Account created successfully." });
             }
             else {
-                res.status(200).json({ success: false, message: "A user with this email address already exists." });
+                res.status(409).json({ success: false, message: "A user with this email address already exists." });
             }
         }
         catch (error) {
@@ -473,7 +458,7 @@ app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
     }
     else {
-        res.status(200).json({ success: false, message: "Invalid Email or OTP" });
+        res.status(400).json({ success: false, message: "Invalid Email or OTP" });
     }
 }));
 app.post('/login', passport_1.default.authenticate('local', { failWithError: true }), (req, res) => {
@@ -527,7 +512,7 @@ app.post("/generateotp", (req, res) => __awaiter(void 0, void 0, void 0, functio
             }
         }
         else {
-            return res.status(200).json({ success: false, message: "User with this email already exists! Please Login or use different email address." });
+            return res.status(409).json({ success: false, message: "User with this email already exists! Please Login or use different email address." });
         }
         let email = `
    <p> Dear User,</p>
@@ -575,11 +560,11 @@ app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function*
             }
         }
         else {
-            res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
+            res.status(400).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
         }
     }
     else {
-        res.status(200).json({ success: false, message: "No user found!" });
+        res.status(404).json({ success: false, message: "No user found!" });
     }
 }));
 // forgot password
@@ -606,7 +591,7 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
             }
         }
         else {
-            return res.status(200).json({ success: false, message: "User with this email doesn't exists! Please create an account first." });
+            return res.status(409).json({ success: false, message: "User with this email doesn't exists! Please create an account first." });
         }
         let email = `
    <p> Dear User,</p>
@@ -655,11 +640,11 @@ app.post("/verifyforgotpasswordotp", (req, res) => __awaiter(void 0, void 0, voi
             }
         }
         else {
-            res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
+            res.status(400).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
         }
     }
     else {
-        res.status(200).json({ success: false, message: "No user found!" });
+        res.status(404).json({ success: false, message: "No user found!" });
     }
 }));
 app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -674,11 +659,11 @@ app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, func
             res.status(200).json({ success: true, message: "Password changed successfully!" });
         }
         catch (err) {
-            res.status(200).json({ success: false, message: "Some error occured, please try again later!" });
+            res.status(500).json({ success: false, message: "Some error occured, please try again later!" });
         }
     }
     else {
-        res.status(200).json({ success: false, message: "You are unauthorized!" });
+        res.status(401).json({ success: false, message: "You are unauthorized!" });
     }
 }));
 app.post("/generateaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -703,7 +688,7 @@ app.post("/generateaccountdeletionotp", fetchUserDetails, (req, res) => __awaite
             }
         }
         else {
-            return res.status(200).json({ success: false, message: "User with this email doesn't exists! Please enter correct email address." });
+            return res.status(404).json({ success: false, message: "User with this email doesn't exists! Please enter correct email address." });
         }
         let email = `
     <p>Dear User,</p>
@@ -754,7 +739,7 @@ app.post("/verifyaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(
             }
         }
         else {
-            res.status(200).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
+            res.status(400).json({ success: false, message: "OTP verification failed! Please check the OTP and try again." });
         }
     }
     else {
@@ -789,7 +774,7 @@ app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 
         }
     }
     else {
-        return res.status(200).json({ message: "Your session has expired. Please log in again to continue." });
+        return res.status(401).json({ message: "Your session has expired. Please log in again to continue." });
     }
 }));
 // to update multiple fields with the same value.

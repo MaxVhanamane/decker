@@ -1,9 +1,8 @@
-import { useMutation, useQueryClient } from "react-query";
-import { request } from "./../utils/axios-utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { request } from "../utils/fetch-utils";
 import { OldData } from "./useDeleteCard";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData, AxiosErrorType, CardDataType } from "../types/types";
-import { useContext } from "react";
+import { CardDataType } from "../types/types";
+import { useContext, useState } from "react";
 import { searchContext } from "../context/SearchContext";
 
 type CardData = {
@@ -23,10 +22,16 @@ type PromiseData = {
   _id: string;
   cards: { title: string; note: string }[];
   pinned: boolean;
-  message?: string;
 };
 
-const editCard = async (cardData: CardData): Promise<PromiseData> => {
+type ErrorResponse = {
+  message: string;
+  status: number;
+};
+
+const editCard = async (
+  cardData: CardData
+): Promise<PromiseData | ErrorResponse> => {
   try {
     const data = await request.patch(`/card/${cardData.deck_id}`, {
       index: cardData.index,
@@ -35,31 +40,33 @@ const editCard = async (cardData: CardData): Promise<PromiseData> => {
         note: cardData.newContent.note,
       },
     });
-
-    return data.data;
-  } catch (error) {
-    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    if ((error as AxiosErrorType)?.response?.status === 500) {
-      throw new Error("Internal server error");
-    } else if ((error as Error).message === "Network Error") {
-      throw new Error("Network Error");
+    if (data?.message) {
+      return { message: data?.message, status: data?.status };
+    } else {
+      return data?.data;
     }
-    throw error;
+  } catch (error) {
+    return {
+      message:
+        "An unexpected error occurred while editing the card. Please try again later.",
+      status: 400,
+    };
   }
 };
 
 const useEditCard = () => {
-  const { showSearchBar } = useContext(searchContext);
-  const { setAlert } = useContext(AlertContext);
+  const { showSearchBar, cardInfo, setCardInfo } = useContext(searchContext);
   const queryClient = useQueryClient();
-  return useMutation(editCard, {
+  return useMutation({
+    mutationFn: editCard,
     onMutate: async (data) => {
-      await queryClient.cancelQueries(["cards", data.deck_id]);
+      await queryClient.cancelQueries({
+        queryKey: ["cards", data.deck_id],
+      });
       const previousQueryData: CardDataType[] = queryClient.getQueryData([
         "cards",
         data.deck_id,
       ])!;
-
       queryClient.setQueryData<OldData | undefined>(
         ["cards", data.deck_id],
         (oldQueryData) => {
@@ -70,30 +77,40 @@ const useEditCard = () => {
           }
         }
       );
+      if (showSearchBar) {
+        setCardInfo({
+          ...cardInfo,
+          title: data?.newContent?.title,
+          note: data?.newContent?.note,
+        });
+      }
       // Return previous data so that if something goes wrong we can use this in onError method
       return previousQueryData;
     },
+    onSuccess: (data) => {
+      if (data && "message" in data) {
+        if (data?.message) {
+          throw new Error(data?.message);
+        } else {
+          throw new Error(
+            "An unexpected error occurred while creating the card. Please try again later."
+          );
+        }
+      }
+    },
+
     // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
     onSettled: (serverData, error, data, context) => {
       if (error) {
         queryClient.setQueryData(["cards", data.deck_id], context);
-        const message =
-          (error as Error).message === "Network Error"
-            ? "No internet connection"
-            : (error as Error).message;
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
-          message: (error as AxiosErrorType)?.response?.data.message || message,
-          autoHideDuration: 7000,
-        }));
       }
       // If the search bar is open, it indicates that the user edited the card from the search result. The search bar is using the 'decks' query as data, so we will invalidate the decks query to keep it updated.
       if (showSearchBar) {
-        queryClient.invalidateQueries("decks-and-cards");
+        queryClient.invalidateQueries({ queryKey: ["decks-and-cards"] });
       }
-      queryClient.invalidateQueries(["cards", data.deck_id]);
+      queryClient.invalidateQueries({
+        queryKey: ["cards", data.deck_id],
+      });
     },
   });
 };

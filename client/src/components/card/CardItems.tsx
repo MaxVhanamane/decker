@@ -22,14 +22,13 @@ type ContentForFullScreen = ContentType & {
 interface DeckResponse {
   title: string;
   cards: { title: string; note: string; cardId: string; _id: string }[];
-  message: null;
 }
 
 type PropTypes = {
   handleDelete: (index: number) => void;
   handleEdit: (cardItem: ContentTypeForEdit) => void;
   handleShowFullScreen: (card: ContentForFullScreen) => void;
-  data: Data | DeckResponse | null | undefined;
+  data: Data | DeckResponse;
 };
 const CardItems = ({
   handleDelete,

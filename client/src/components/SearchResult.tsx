@@ -6,16 +6,21 @@ import {
   useCallback,
   useContext,
   memo,
-  useTransition,
 } from "react";
 
 import EditModalForDeck from "./EditModalForDeck";
 import { UserContext } from "../context/UserContext";
 import useGetDecksAndCards from "../hooks/useGetDecksAndCards";
-import { SearchResultCardsType, SearchResultDeckType } from "../types/types";
+import {
+  AlertData,
+  SearchResultCardsType,
+  SearchResultDeckType,
+} from "../types/types";
 import { searchContext } from "../context/SearchContext";
 import DeckAndCardResult from "./DeckAndCardResult";
 import { useNavigate } from "react-router-dom";
+import useEditDeck from "../hooks/useEditDeck";
+import { AlertContext } from "../context/AlertContext";
 
 let timer: NodeJS.Timeout;
 
@@ -30,14 +35,21 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   const [foundCards, setFoundCards] = useState<SearchResultCardsType[]>([]);
   const [foundDecks, setFoundDecks] = useState<SearchResultDeckType[]>([]);
   const { data, isError, error, isLoading } = useGetDecksAndCards();
+  const { setAlert } = useContext(AlertContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
+  const {
+    mutate: editDeck,
+    isError: isEditDeckError,
+    error: editDeckError,
+    data: editDeckResponse,
+    reset: resetEditDeckResponse,
+  } = useEditDeck();
   const {
     animateCloseEditDeckModalInSearchResult,
     setAnimateCloseEditDeckModalInSearchResult,
     openEditDeckModalForSearchResult,
     setOpenEditDeckModalForSearchResult,
   } = useContext(searchContext);
-  const [isPending, startTransition] = useTransition();
   const { theme, setUserInfo } = useContext(UserContext);
   const navigate = useNavigate();
 
@@ -105,14 +117,29 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   }, [searchQuery, data]);
 
   useEffect(() => {
-    if (
-      data?.message ===
-      "Your session has expired. Please log in again to continue."
-    ) {
-      setUserInfo(null);
-      navigate("/sessionexpired", { replace: true });
+    if (data && "message" in data) {
+      if (
+        data?.message ===
+        "Your session has expired. Please log in again to continue."
+      ) {
+        setUserInfo(null);
+        navigate("/sessionexpired", { replace: true });
+      }
     }
   }, [data]);
+
+  useEffect(() => {
+    if (isEditDeckError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: editDeckError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetEditDeckResponse();
+    }
+  }, [isEditDeckError]);
 
   useEffect(() => {
     if (searchQuery !== inputValue) {
@@ -257,6 +284,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
       {openEditDeckModalForSearchResult ? (
         <EditModalForDeck
           openEditDeckModal={openEditDeckModalForSearchResult}
+          editDeck={editDeck}
           setOpenEditDeckModal={setOpenEditDeckModalForSearchResult}
           editData={editData}
           setEditData={setEditData}
