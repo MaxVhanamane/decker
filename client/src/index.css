@@ -22,6 +22,8 @@
     -webkit-tap-highlight-color: transparent;
     height: 100%;
     width: 100%;
+    position: fixed;
+    overflow: auto;
   }
 
   ::-webkit-scrollbar {

@@ -13,7 +13,8 @@ export default defineConfig(({ command, mode }) => {
 
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true
+        enabled: true,
+        type: "module"
       },
       injectRegister: 'auto',
       // add this to cache all the imports
@@ -77,7 +78,7 @@ export default defineConfig(({ command, mode }) => {
                 maxAgeSeconds: 60 * 60 * 24 * 7, // cache expiration time
               },
               cacheableResponse: {
-                statuses: [200],
+                statuses: [200, 401],
               },
             },
           },

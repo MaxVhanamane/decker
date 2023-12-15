@@ -184,10 +184,6 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
 
     return (
       <div
-        style={{
-          transform: "translateZ(0)",
-          WebkitTransform: "translateZ(0)",
-        }}
         onAnimationEnd={handleOnAnimationEnd}
         className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center  transition-opacity duration-500   ${
           closeEditModal
