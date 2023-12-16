@@ -34,7 +34,6 @@ export const request = {
 
 
             if (!res.ok) {
-                // Handle HTTP error status codes (4xx and 5xx)
                 const errorData = await res.json();
 
                 return { message: errorData.message || "Request failed", status: res?.status };

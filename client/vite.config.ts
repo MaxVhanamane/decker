@@ -13,8 +13,7 @@ export default defineConfig(({ command, mode }) => {
 
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true,
-        type: "module"
+        enabled: true
       },
       injectRegister: 'auto',
       // add this to cache all the imports

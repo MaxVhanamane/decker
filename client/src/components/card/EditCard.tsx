@@ -181,17 +181,36 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
         setCloseEditModal(false);
       }
     };
+    useEffect(() => {
+      const handleResize = () => {
+        document.documentElement.style.setProperty(
+          "--window-height",
+          `${window.innerHeight}px`
+        );
+      };
+
+      // Initial setup
+      handleResize();
+
+      // Add event listener
+      window.addEventListener("resize", handleResize);
+
+      // Cleanup
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }, []);
 
     return (
       <div
         onAnimationEnd={handleOnAnimationEnd}
-        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center  transition-opacity duration-500   ${
+        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
           closeEditModal
             ? " opacity-0 animate-opacityFadeOut"
             : "animate-[opacity_0.2s_linear_1]"
         } `}
       >
-        <div className=" w-screen h-screen md:h-auto lg:w-1/2 md:mx-auto md:w-[90%]   md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
+        <div className=" w-screen   lg:w-1/2 md:mx-auto md:w-[90%]   md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
           <div className="w-full  h-[3.4rem] dark:bg-slate-800 md:dark:bg-slate-900 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10  md:bg-[#fcfefc]">
             <div>
               <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-600 text-gray-700 font-semibold ">
@@ -294,7 +313,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
               <div className="dark:bg-[#011627] bg-gray-50 w-full flex items-end justify-center pb-2">
                 <hr className="w-32 border-t-0 border-b dark:border-gray-200 border-gray-500  " />
               </div>
-              <div className="w-full relative h-[78vh] lg:h-[78vh]  ">
+              <div className="w-full relative h-[calc(var(--window-height)*78/100)]  ">
                 <textarea
                   value={editContent.note}
                   onChange={handleChange}

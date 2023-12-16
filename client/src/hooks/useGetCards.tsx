@@ -1,6 +1,6 @@
 import { request } from "../utils/fetch-utils";
 import { useQuery } from "@tanstack/react-query";
-import { AlertData, FetchErrorType, Data } from "../types/types";
+import { Data } from "../types/types";
 import { useContext } from "react";
 import { AlertContext } from "../context/AlertContext";
 
@@ -49,7 +49,6 @@ const getCards = async (
 };
 
 const useGetCards = (deck_id: string, deck: DeckType | null) => {
-  const { setAlert } = useContext(AlertContext);
   /*We will use a different query key when a search index is present because if we keep the same query key (e.g., ["cards", deck_id]) for every request, it will replace the old cached value with null if search index is present. So, when the user visits the /cards/1234 page, they will initially be served a null value, and then a network request is made to fetch the actual cards. During those 2-3 seconds when the value is null, the user will see a message saying 'Looks like you have not added any cards.' To avoid this, we will create a new query key when a search index is present. Additionally, we will not cache the response when a search index is present using enabled: !search_index because I am returning null, so there is no point in caching it. However, we will cache the response when the user opens the deck from the search results or from the home page because both have the same data, so there is no problem with caching*/
   const queryKey = ["cards", deck_id];
 
@@ -62,7 +61,6 @@ const useGetCards = (deck_id: string, deck: DeckType | null) => {
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: true, // Refetch on network reconnect
     retry: 0, // no retry on network errorMessage
-    networkMode: "offlineFirst",
   });
 };
 
