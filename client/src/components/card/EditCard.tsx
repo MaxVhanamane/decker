@@ -17,6 +17,7 @@ import { AlertContext } from "../../context/AlertContext";
 import { AlertData } from "../../types/types";
 import { MdOutlineClose } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
+import { debounce } from "lodash";
 
 type ContentType = {
   title: string;
@@ -193,7 +194,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
       handleResize();
 
       // Add event listener
-      window.addEventListener("resize", handleResize);
+      window.addEventListener("resize", debounce(handleResize, 500));
 
       // Cleanup
       return () => {
@@ -204,7 +205,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     return (
       <div
         onAnimationEnd={handleOnAnimationEnd}
-        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
+        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] sticky inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
           closeEditModal
             ? " opacity-0 animate-opacityFadeOut"
             : "animate-[opacity_0.2s_linear_1]"

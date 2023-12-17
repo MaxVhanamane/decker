@@ -404,6 +404,14 @@ const Cards: FC<CardsProps> = ({
   ]);
 
   useEffect(() => {
+    if (showFullScreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showFullScreen]);
+
+  useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
 
     // clientHeight is a property of an HTML element that represents the height of an element's content area, including padding but excluding the border, scrollbar or margin. (which means height that is our state and clientHeight are same. as we have added py-2 there is lil difference )
@@ -965,23 +973,6 @@ const Cards: FC<CardsProps> = ({
         ) : null}
       </div>
 
-      {openModal ? (
-        <EditCard
-          setOpenModal={setOpenModal}
-          addLink={addLinkWrapper}
-          addCodeBlock={addCodeBlockWrapper}
-          addBoldText={addBoldTextWrapper}
-          addUnderlineText={addUnderlineTextWrapper}
-          editContent={editContent}
-          handleChange={handleChange}
-          handleSave={handleSave}
-          ref={editTextareaRef}
-          openModal={openModal}
-          setCloseEditModal={setCloseEditModal}
-          closeEditModal={closeEditModal}
-        />
-      ) : null}
-
       <ConfirmDeleteModalForCard
         indexOfCardForDeletion={indexOfCardForDeletion!}
         deleteCardItem={deleteCardItem}
@@ -1015,6 +1006,22 @@ const Cards: FC<CardsProps> = ({
           showScrollButtons={showScrollButtons}
         />
       )}
+      {openModal ? (
+        <EditCard
+          setOpenModal={setOpenModal}
+          addLink={addLinkWrapper}
+          addCodeBlock={addCodeBlockWrapper}
+          addBoldText={addBoldTextWrapper}
+          addUnderlineText={addUnderlineTextWrapper}
+          editContent={editContent}
+          handleChange={handleChange}
+          handleSave={handleSave}
+          ref={editTextareaRef}
+          openModal={openModal}
+          setCloseEditModal={setCloseEditModal}
+          closeEditModal={closeEditModal}
+        />
+      ) : null}
     </>
   );
 };
