@@ -205,7 +205,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     return (
       <div
         onAnimationEnd={handleOnAnimationEnd}
-        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] sticky inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
+        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] sticky top-0 inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
           closeEditModal
             ? " opacity-0 animate-opacityFadeOut"
             : "animate-[opacity_0.2s_linear_1]"
