@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "../utils/fetch-utils";
 import { OldData } from "./useDeleteCard";
 import { CardDataType } from "../types/types";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { searchContext } from "../context/SearchContext";
 
 type CardData = {

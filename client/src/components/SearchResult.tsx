@@ -21,6 +21,7 @@ import DeckAndCardResult from "./DeckAndCardResult";
 import { useNavigate } from "react-router-dom";
 import useEditDeck from "../hooks/useEditDeck";
 import { AlertContext } from "../context/AlertContext";
+import { debounce } from "lodash";
 
 let timer: NodeJS.Timeout;
 
@@ -34,6 +35,8 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   const [showResult, setShowResult] = useState(false);
   const [foundCards, setFoundCards] = useState<SearchResultCardsType[]>([]);
   const [foundDecks, setFoundDecks] = useState<SearchResultDeckType[]>([]);
+  const [foundResults, setFoundResults] = useState(false);
+  const [searching, setSearching] = useState(false);
   const { data, isError, error, isLoading } = useGetDecksAndCards();
   const { setAlert } = useContext(AlertContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
@@ -94,7 +97,8 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
       return;
     }
     setShowResult(false);
-
+    setFoundResults(false);
+    setSearching(true);
     const filteredCards = allCards
       ? allCards?.filter(
           (card) =>
@@ -114,6 +118,11 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
     setFoundDecks(filteredDecks);
     setFoundCards(filteredCards);
     setShowResult(true);
+    setSearching(false);
+
+    if (filteredDecks.length > 0 || filteredCards.length > 0) {
+      setFoundResults(true);
+    }
   }, [searchQuery, data]);
 
   useEffect(() => {
@@ -144,6 +153,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   useEffect(() => {
     if (searchQuery !== inputValue) {
       setShowResult(false);
+      setSearching(true);
     }
     if (searchQuery.length > 0) {
       clearTimeout(timer);
@@ -180,11 +190,32 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
     );
   }
 
+  useEffect(() => {
+    const handleResize = () => {
+      document.documentElement.style.setProperty(
+        "--window-height",
+        `${window.innerHeight}px`
+      );
+    };
+
+    // Initial setup
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", debounce(handleResize, 500));
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <>
       <div className=" dark:text-white text-gray-800 fixed top-[6.5rem] h-12 flex items-start justify-center w-full bg-[#fcfefc] dark:bg-slate-900 z-50 lg:hidden font-bold pt-2 ">
         {searchQuery.length > 0 &&
-          (foundDecks.length > 0 || foundCards.length > 0) && (
+          (foundDecks.length > 0 || foundCards.length > 0) &&
+          showResult && (
             <div className="">
               {foundDecks.length + foundCards.length > 1 ? (
                 <p>
@@ -200,7 +231,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
           )}
       </div>
       <div
-        className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-screen bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
+        className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-[var(--window-height)] bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
       >
         <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-900 z-50 pb-4 pt-3">
           {searchQuery.length > 0 &&
@@ -221,10 +252,40 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
             )}
         </div>
 
+        {searching && searchQuery.length > 0 && (
+          <div className="flex items-center justify-center dark:text-gray-50  fixed top-1/3 lg:top-1/2 left-1/2 -translate-x-1/2 lg:-translate-y-1/2 -translate-y-1/3 gap-2">
+            <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
+            <p>searching...</p>
+          </div>
+        )}
+
+        {!(foundDecks.length > 0 && foundCards.length > 0) &&
+          !searching &&
+          !foundResults &&
+          searchQuery.length > 0 && (
+            <div className="relative flex items-center justify-center flex-col h-[var(--window-height)] lg:top-[-3.42rem] -top-[9rem] ">
+              <img
+                src={`${
+                  theme === "dark"
+                    ? "/illustrations/no_result_found_dark.svg"
+                    : "/illustrations/no_result_found_light.svg"
+                }`}
+                alt="No result found image"
+                className="w-52 h-44 "
+              />
+              <p className="text-gray-800 dark:text-gray-50">
+                No result found!
+              </p>
+            </div>
+          )}
+
         {(searchQuery.length > 0 && foundDecks.length > 0) ||
         foundCards.length > 0 ||
         inputValue.length > 0 ? (
-          searchQuery === inputValue && showResult && inputValue.length > 0 ? (
+          searchQuery === inputValue &&
+          showResult &&
+          inputValue.length > 0 &&
+          foundResults && (
             <DeckAndCardResult
               foundDecks={foundDecks}
               foundCards={foundCards}
@@ -233,51 +294,26 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
               editData={editData}
               searchQuery={searchQuery}
             />
-          ) : (
-            <div className="flex items-center justify-center dark:text-gray-50  fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 gap-2">
-              <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
-              <p>searching...</p>
-            </div>
           )
         ) : (
           <div
             className={`flex items-center justify-center z-50 w-screen h-full text-md font-semibold animate-quickOpacity`}
           >
-            {showResult &&
-            searchQuery.length > 0 &&
-            foundDecks.length === 0 &&
-            foundCards.length === 0 ? (
-              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem]">
-                <img
-                  src={`${
-                    theme === "dark"
-                      ? "/illustrations/no_result_found_dark.svg"
-                      : "/illustrations/no_result_found_light.svg"
-                  }`}
-                  alt="No result found image"
-                  className="w-52 h-44 "
-                />
-                <p className="text-gray-800 dark:text-gray-50">
-                  No result found!
-                </p>
-              </div>
-            ) : (
-              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem] gap-2">
-                <img
-                  src={`${
-                    theme === "dark"
-                      ? "/illustrations/search_dark.svg"
-                      : "/illustrations/search_light.svg"
-                  }`}
-                  alt="Image depicting a person searching through a library of card"
-                  className="lg:w-44 lg:h-44 w-40 h-40  "
-                />
-                <p className=" text-gray-700 dark:text-gray-200 px-2">
-                  Find relevant content across decks and cards. Start typing to
-                  locate.
-                </p>
-              </div>
-            )}
+            <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem] gap-2">
+              <img
+                src={`${
+                  theme === "dark"
+                    ? "/illustrations/search_dark.svg"
+                    : "/illustrations/search_light.svg"
+                }`}
+                alt="Image depicting a person searching through a library of card"
+                className="lg:w-44 lg:h-44 w-40 h-40  "
+              />
+              <p className=" text-gray-700 dark:text-gray-200 px-2">
+                Find relevant content across decks and cards. Start typing to
+                locate.
+              </p>
+            </div>
           </div>
         )}
       </div>

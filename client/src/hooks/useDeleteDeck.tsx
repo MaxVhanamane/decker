@@ -1,12 +1,7 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertContext } from "../context/AlertContext";
-import {
-  AlertData,
-  DeckAndCardType,
-  DeckType,
-  DeckTypeWithIndex,
-} from "../types/types";
+import { DeckAndCardType, DeckType, DeckTypeWithIndex } from "../types/types";
 import { useContext, RefObject } from "react";
 
 type ResponseType = {
@@ -55,7 +50,6 @@ const deleteDeck = async ({
 };
 
 const useDeleteDeck = () => {
-  const { setAlert } = useContext(AlertContext);
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteDeck,

@@ -1,4 +1,4 @@
-import { FC, memo, useState, useContext } from "react";
+import { FC, memo, useState, useContext, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { AlertData } from "../types/types";
@@ -46,6 +46,18 @@ const Navbar: FC = () => {
       divRefForUserSettings.current?.classList.add("hidden");
     }
   };
+
+  useEffect(() => {
+    if (showLogoutModal || showSearchBar) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showLogoutModal, showSearchBar]);
 
   const pathNames = [
     "/signup",
@@ -95,13 +107,13 @@ const Navbar: FC = () => {
                   ? "/decker_logo_dark.png"
                   : "/decker_logo_light.png"
               }`}
-              className={`w-7 h-7 object-contain ${
+              className={`w-7 h-7 object-contain select-none ${
                 !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
               }`}
               alt="decker logo"
             />
             <span
-              className={`h-8 w-auto   ${
+              className={`h-8 w-auto select-none  ${
                 localStorage.getItem("theme") === "dark" ||
                 localStorage.getItem("theme") === null
                   ? "text-gray-50"

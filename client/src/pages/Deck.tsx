@@ -187,6 +187,17 @@ function Deck({
   }, []);
 
   useEffect(() => {
+    if (openEditDeckModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [openEditDeckModal]);
+  useEffect(() => {
     const shouldPushState = showSearchBar || openEditDeckModal;
     openEditDeckModalForSearchResult;
     if (shouldPushState && !shouldPushStateRef.current) {
@@ -389,7 +400,7 @@ function Deck({
           content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."
         />
       </Helmet>
-      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14  ">
+      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14 overflow-auto ">
         {
           <div
             ref={undoButtonRef}

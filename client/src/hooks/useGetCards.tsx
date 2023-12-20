@@ -1,8 +1,6 @@
 import { request } from "../utils/fetch-utils";
 import { useQuery } from "@tanstack/react-query";
 import { Data } from "../types/types";
-import { useContext } from "react";
-import { AlertContext } from "../context/AlertContext";
 
 interface DeckType {
   cards: { title: string; note: string; cardId: string; _id: string }[];

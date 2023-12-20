@@ -404,12 +404,28 @@ const Cards: FC<CardsProps> = ({
   ]);
 
   useEffect(() => {
-    if (showFullScreen || openModal) {
+    if (
+      showFullScreen ||
+      openModal ||
+      showConfirmCloseCardModal ||
+      isConfirmDeleteModalOpen ||
+      showTips
+    ) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
     }
-  }, [showFullScreen, openModal]);
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [
+    showFullScreen,
+    openModal,
+    showConfirmCloseCardModal,
+    isConfirmDeleteModalOpen,
+    showTips,
+  ]);
 
   useEffect(() => {
     //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
