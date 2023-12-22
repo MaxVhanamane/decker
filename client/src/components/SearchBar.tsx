@@ -42,7 +42,7 @@ const SearchBar: FC = () => {
     <div className={` dark:bg-slate-900 fixed top-16 lg:relative lg:top-auto`}>
       <div
         onTransitionEnd={() => {
-          if (searchBarRef.current && showSearchBar) {
+          if (searchBarRef.current && openSearchBar) {
             searchBarRef.current.focus();
           }
         }}

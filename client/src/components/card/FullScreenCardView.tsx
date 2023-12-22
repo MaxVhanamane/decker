@@ -214,9 +214,7 @@ const FullScreenCardView = ({
       <article
         onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]   ${
-          toggle
-            ? "dark:lg:bg-largeBgForDarkMode dark:bg-smallBgForDarkMode bg-lightBg"
-            : ""
+          toggle ? "dark:bg-BgForDarkMode bg-lightBg" : ""
         }   dark:bg-slate-900    flex  flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
@@ -272,9 +270,7 @@ const FullScreenCardView = ({
           )}
           <div
             className={`fixed top-0  py-[0.95rem]  ${
-              toggle
-                ? "dark:lg:bg-largeBgForDarkMode dark:bg-smallBgForDarkMode bg-lightBg"
-                : ""
+              toggle ? "dark:bg-BgForDarkMode bg-lightBg" : ""
             } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-4 left-0 w-full flex items-center justify-between lg:px-96  `}
           >
             <div>
