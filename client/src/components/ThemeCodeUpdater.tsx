@@ -12,7 +12,7 @@ const ThemeColorUpdater: React.FC = () => {
 
     //  update the meta tag only if it exists
     if (metaTag) {
-      const themeColor = theme === "dark" ? "#0f172a" : "#f3f4f6";
+      const themeColor = theme === "dark" ? "#0f172a" : "#fcfefc";
       metaTag.setAttribute("content", themeColor);
     }
   }, [theme, userInfo]);

@@ -394,7 +394,7 @@ function Deck({
   return (
     <>
       <Helmet>
-        <title>Decks</title>
+        <title>{showSearchBar ? "Search Results" : "Decks"}</title>
         <meta
           name="description"
           content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."

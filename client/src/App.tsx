@@ -40,10 +40,11 @@ const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout;
+const isFirefox = /firefox/i.test(navigator.userAgent);
 
 function App() {
   // add this to prompt for a refresh
-  if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator && !isFirefox) {
     useRegisterSW();
   }
   const [undoDeck, setUndoDeck] = useState<DeckTypeWithIndex | null>(null);

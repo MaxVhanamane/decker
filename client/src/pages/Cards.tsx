@@ -784,7 +784,9 @@ const Cards: FC<CardsProps> = ({
   return (
     <>
       <Helmet>
-        <title>Cards</title>
+        <title>
+          {showSearchBar ? "Search Results" : `Cards for ${data?.title}`}
+        </title>
         <meta
           name="description"
           content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."

@@ -6,7 +6,7 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 
 interface ConfirmLogoutModalProps {
-  handleShowUserInfomation: () => void;
+  handleShowUserInfomation: (isLogout: boolean) => void;
   setShowLogoutModal: Dispatch<React.SetStateAction<boolean>>;
   showLogoutModal: boolean;
 }
@@ -25,10 +25,10 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
   ) => {
     if ((e.target as HTMLButtonElement).id === "yesbutton") {
       const res = await request.post("/auth/logout");
-      if (res.data.isLogoutSuccessful) {
+      if (res?.data?.isLogoutSuccessful) {
         setUserInfo(null);
         setShowLogoutModal(false);
-        handleShowUserInfomation();
+        handleShowUserInfomation(true);
         navigate("/login", { replace: true });
       } else {
         setAlert((preval: AlertData) => ({

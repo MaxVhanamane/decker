@@ -126,6 +126,26 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   }, [searchQuery, data]);
 
   useEffect(() => {
+    const handleResize = () => {
+      document.documentElement.style.setProperty(
+        "--window-height",
+        `${window.innerHeight}px`
+      );
+    };
+
+    // Initial setup
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", debounce(handleResize, 500));
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
     if (data && "message" in data) {
       if (
         data?.message ===
@@ -149,6 +169,18 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
       resetEditDeckResponse();
     }
   }, [isEditDeckError]);
+
+  useEffect(() => {
+    if (openEditDeckModalForSearchResult) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [openEditDeckModalForSearchResult]);
 
   useEffect(() => {
     if (searchQuery !== inputValue) {
@@ -189,26 +221,6 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
       </div>
     );
   }
-
-  useEffect(() => {
-    const handleResize = () => {
-      document.documentElement.style.setProperty(
-        "--window-height",
-        `${window.innerHeight}px`
-      );
-    };
-
-    // Initial setup
-    handleResize();
-
-    // Add event listener
-    window.addEventListener("resize", debounce(handleResize, 500));
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
 
   return (
     <>
@@ -263,19 +275,23 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
           !searching &&
           !foundResults &&
           searchQuery.length > 0 && (
-            <div className="relative flex items-center justify-center flex-col h-[var(--window-height)] lg:top-[-3.42rem] -top-[9rem] ">
-              <img
-                src={`${
-                  theme === "dark"
-                    ? "/illustrations/no_result_found_dark.svg"
-                    : "/illustrations/no_result_found_light.svg"
-                }`}
-                alt="No result found image"
-                className="w-52 h-44 "
-              />
-              <p className="text-gray-800 dark:text-gray-50">
-                No result found!
-              </p>
+            <div
+              className={`flex items-center justify-center z-50 w-screen h-full text-md font-semibold animate-quickOpacity`}
+            >
+              <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem] gap-2 ">
+                <img
+                  src={`${
+                    theme === "dark"
+                      ? "/illustrations/no_result_found_dark.svg"
+                      : "/illustrations/no_result_found_light.svg"
+                  }`}
+                  alt="No result found image"
+                  className="w-52 h-44 "
+                />
+                <p className="text-gray-800 dark:text-gray-50">
+                  No result found!
+                </p>
+              </div>
             </div>
           )}
 

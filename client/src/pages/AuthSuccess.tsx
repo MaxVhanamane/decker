@@ -30,7 +30,7 @@ export default function AuthSuccess() {
       if (userInfo?.email) {
         timeout = setTimeout(() => {
           navigate("/", { replace: true });
-        }, 2000);
+        }, 3000);
       } else {
         navigate("/login", { replace: true });
       }

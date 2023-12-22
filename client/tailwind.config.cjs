@@ -14,6 +14,11 @@ module.exports = {
         'xs': '370px',
         'ms': '400px'
       },
+      backgroundImage: ({ theme }) => ({
+        largeBgForDarkMode: `linear-gradient(to right,${theme('colors.slate.950')},${theme('colors.slate.700')},${theme('colors.slate.900')})`,
+        smallBgForDarkMode: `linear-gradient(to right,${theme('colors.slate.950')},${theme('colors.slate.800')},${theme('colors.slate.800')},${theme('colors.slate.900')})`,
+        lightBg: `linear-gradient(to right,${theme('colors.slate.300')},${theme('colors.slate.200')},${theme('colors.slate.100')})`,
+      }),
       keyframes: {
 
         rotate: {

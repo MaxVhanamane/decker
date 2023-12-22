@@ -32,9 +32,13 @@ const Navbar: FC = () => {
   const location = useLocation();
 
   const [imageError, setImageError] = useState(false);
-  const handleShowUserInfomation = () => {
-    if (showLogoutModal) {
-      divRefForUserSettings.current?.classList.add("transition-none");
+  const handleShowUserInfomation = (isLogout?: boolean) => {
+    // Sometimes, when a user logs out, the user settings modal was kept open. To avoid that, use the isLogout condition here
+    if (isLogout) {
+      divRefForUserSettings.current?.classList.remove("scale-100");
+      divRefForUserSettings.current?.classList.add("scale-0");
+      divRefForUserSettings.current?.classList.add("hidden");
+      return;
     }
     if (divRefForUserSettings.current?.classList.contains("scale-0")) {
       divRefForUserSettings.current?.classList.add("!block");
@@ -238,7 +242,7 @@ const Navbar: FC = () => {
       >
         <div className=" ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4 shadow-md dark:shadow-sky-500 shadow-teal-500  bg-[#fcfefc]  rounded-md dark:bg-slate-900 mx-auto  ">
           <button
-            onClick={handleShowUserInfomation}
+            onClick={() => handleShowUserInfomation()}
             className="font-semibold absolute top-2 right-1 rounded px-1 text-center dark:text-gray-50  text-gray-700 cursor-pointer "
             aria-label="Close"
           >

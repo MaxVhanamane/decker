@@ -71,8 +71,6 @@ const FullScreenCardView = ({
     ? JSON.parse(storedToggleValue)
     : true; // Provide a default value in case the stored value is null or undefined
 
-  // Now, defaultToggleValue is of type boolean
-
   const [toggle, setToggle] = useState(defaultToggleValue);
   const location = useLocation();
   useEffect(() => {
@@ -149,6 +147,37 @@ const FullScreenCardView = ({
     }
   }, []);
 
+  useEffect(() => {
+    // Update the meta tag
+    const metaTag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement;
+
+    if (toggle) {
+      if (metaTag && theme === "light") {
+        const themeColor = "#e2e8f0";
+        metaTag.setAttribute("content", themeColor);
+      }
+      if (metaTag && theme === "dark") {
+        const themeColor = "#1e293b";
+        metaTag.setAttribute("content", themeColor);
+      }
+    } else {
+      if (metaTag && theme === "light") {
+        const themeColor = "#fcfefc";
+        metaTag.setAttribute("content", themeColor);
+      }
+      if (metaTag && theme === "dark") {
+        const themeColor = "#0f172a";
+        metaTag.setAttribute("content", themeColor);
+      }
+    }
+    return () => {
+      const themeColor = theme === "dark" ? "#0f172a" : "#fcfefc";
+      metaTag.setAttribute("content", themeColor);
+    };
+  }, [toggle, theme]);
+
   const handleOnAnimationEnd = () => {
     if (search_index && !startAnimation) {
       setCardInfo({
@@ -186,7 +215,7 @@ const FullScreenCardView = ({
         onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]   ${
           toggle
-            ? "bg-gradient-to-r dark:from-slate-950 lg:dark:via-slate-700  dark:via-slate-800 dark:to-slate-900  from-slate-300 via-slate-200 to-slate-100"
+            ? "dark:lg:bg-largeBgForDarkMode dark:bg-smallBgForDarkMode bg-lightBg"
             : ""
         }   dark:bg-slate-900    flex  flex-col z-[80] items-center ${
           startAnimation
@@ -244,7 +273,7 @@ const FullScreenCardView = ({
           <div
             className={`fixed top-0  py-[0.95rem]  ${
               toggle
-                ? "bg-gradient-to-r dark:from-slate-950 lg:dark:via-slate-700 dark:via-slate-800 dark:to-slate-900  from-slate-300 via-slate-200 to-slate-100"
+                ? "dark:lg:bg-largeBgForDarkMode dark:bg-smallBgForDarkMode bg-lightBg"
                 : ""
             } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-4 left-0 w-full flex items-center justify-between lg:px-96  `}
           >

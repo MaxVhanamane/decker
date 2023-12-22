@@ -73,7 +73,7 @@ const SearchResultCardFullScreenView: FC = () => {
     useState(false);
   const { deck_id, search_index = null } = useParams();
   const location = useLocation();
-
+  const [title, setTitle] = useState("");
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
     note: "",
@@ -92,7 +92,7 @@ const SearchResultCardFullScreenView: FC = () => {
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const shouldPu = useRef<boolean>(false);
+  const shouldPush = useRef<boolean>(false);
   const [wasDeleteModalOpen, setWasDeleteModalOpen] = useState(false);
   wasDeleteModalOpen2 = wasDeleteModalOpen;
 
@@ -140,7 +140,6 @@ const SearchResultCardFullScreenView: FC = () => {
       navigate("/");
     }
   }, []);
-
   // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
   useEffect(() => {
     //
@@ -181,6 +180,11 @@ const SearchResultCardFullScreenView: FC = () => {
         };
         setCardInfo(cardDetailsWithRoute);
         setShowFullScreen(true);
+        if (location?.state?.card?.deckTitle) {
+          setTitle(`Card of a ${location?.state?.card?.deckTitle} Deck`);
+        } else {
+          setTitle("Fullscreen card view");
+        }
       } else {
         setFullScreenCardData(cardInfo);
         setShowFullScreen(true);
@@ -222,13 +226,25 @@ const SearchResultCardFullScreenView: FC = () => {
   );
 
   useEffect(() => {
+    if (openModal || showFullScreen || isConfirmDeleteModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [openModal, showFullScreen, isConfirmDeleteModalOpen]);
+
+  useEffect(() => {
     if (cardDeleted) {
       return;
     }
     const shouldPushState =
       openModal || isConfirmDeleteModalOpen || showFullScreen;
 
-    if (shouldPushState && !shouldPu.current) {
+    if (shouldPushState && !shouldPush.current) {
       const url = new URL(document.URL);
       const absolutePath = url.pathname;
       navigate(absolutePath, { state: { isBackButtonNotClicked: true } });
@@ -237,9 +253,9 @@ const SearchResultCardFullScreenView: FC = () => {
     const trueCount = variableArray.filter((variable) => variable).length;
 
     if (trueCount >= 2) {
-      shouldPu.current = true;
+      shouldPush.current = true;
     } else {
-      shouldPu.current = false;
+      shouldPush.current = false;
     }
 
     window.addEventListener("popstate", handleBrowsersBackButton);
@@ -440,7 +456,7 @@ const SearchResultCardFullScreenView: FC = () => {
   return (
     <>
       <Helmet>
-        <title>Cards</title>
+        <title> {title} </title>
         <meta
           name="description"
           content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."
