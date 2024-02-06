@@ -1,20 +1,29 @@
 import { useContext, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
+import getDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertContext } from "../context/AlertContext";
 
 export default function ProtectedRoutes() {
   const navigate = useNavigate();
   const { userInfo, isAuthenticating } = useContext(UserContext);
+  const queryClient = useQueryClient();
+  const { setAlert } = useContext(AlertContext);
 
   useEffect(() => {
     if (!isAuthenticating && !userInfo) {
       navigate("/login");
     }
+    if (userInfo) {
+      // Caching 'DecksAndCards' allows users to immediately view search results because, for search results, you need all the decks and cards, which might be huge in size. Prefetching and caching this data helps deliver faster results to the user.
+      getDecksAndCardsCache({ queryClient, setAlert });
+    }
   }, [isAuthenticating, userInfo]);
 
   if (isAuthenticating) {
     return (
-      <div className=" absolute top-0 left-0   w-full h-full flex items-center justify-center flex-col gap-2">
+      <div className=" fixed top-0 left-0   w-full h-full flex items-center justify-center flex-col gap-2">
         <img
           onError={(e) => {
             // In Firefox, the alt text is displayed while loading the actual image, which may not look aesthetically pleasing. To address this, I initially set the text color to transparent. Once the image has loaded, I dynamically change the text color. This ensures that even if the image fails to load, the user will see the alt text.

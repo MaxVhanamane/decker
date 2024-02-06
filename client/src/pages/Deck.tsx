@@ -24,10 +24,10 @@ import useUndoDeck from "./../hooks/useUndoDeck";
 import { Helmet } from "react-helmet";
 import { UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
-import useGetDecksAndCardsCache from "../hooks/useGetDecksAndCardsCache";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { searchContext } from "../context/SearchContext";
 import useEditDeck from "../hooks/useEditDeck";
+import { CustomError } from "../utils/customError";
 
 type PropType = {
   undoDeck: DeckTypeWithIndex | null;
@@ -44,7 +44,7 @@ function Deck({
 }: PropType) {
   const { setAlert } = useContext(AlertContext);
   const inputRefElement = useRef<HTMLInputElement>(null);
-  const { data: allDecks, error, isError, isLoading } = useGetDecks();
+  const { data: allDecks, error, isError, isLoading, isPaused } = useGetDecks();
   const navigate = useNavigate();
   const location = useLocation();
   const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
@@ -58,8 +58,7 @@ function Deck({
     data: createDeckResponse,
     reset: resetCreateDeckResponse,
   } = useCreateDeck();
-  // Calling decks-and-cards to cache the data so that users can search offline.
-  useGetDecksAndCardsCache();
+
   const {
     theme,
     handleShowUserInfomation,
@@ -105,6 +104,7 @@ function Deck({
   } = useContext(searchContext);
   const [wasSearchBarInitiallyTrue, setWasSearchBarInitiallyTrue] =
     useState(showSearchBar);
+
   const handleBrowsersBackButton = () => {
     if (showLogoutModal) {
       setShowLogoutModal(false);
@@ -124,17 +124,6 @@ function Deck({
       setOpenSearchBar(false);
     }
   };
-
-  useEffect(() => {
-    if (allDecks && "message" in allDecks) {
-      if (
-        allDecks?.message ===
-        "Your session has expired. Please log in again to continue."
-      ) {
-        navigate("/sessionexpired", { state: { from: "/cards" } });
-      }
-    }
-  }, [allDecks]);
 
   useEffect(() => {
     if (isCreateDeckError) {
@@ -336,7 +325,8 @@ function Deck({
     if (showPopUp.current?.classList.contains("scale-0")) {
       showPopUp.current.classList.remove("scale-0");
       showPopUp?.current?.classList.add("!block");
-      showPopUp.current.classList.add("!w-fit");
+      showPopUp.current.classList.add("!w-[85%]");
+      showPopUp.current.classList.add("md:!w-fit");
       showPopUp.current.classList.add("!h-fit");
       showPopUp.current.classList.add("scale-100");
 
@@ -366,14 +356,13 @@ function Deck({
     handlePopupForUndoButton();
   };
 
-  if (allDecks && "message" in allDecks) {
+  if (isError || isPaused) {
     return (
       <ErrorDisplay
         theme={theme}
-        message={
-          allDecks && "message" in allDecks ? allDecks?.message : undefined
-        }
-        status={allDecks && "status" in allDecks ? allDecks?.status : undefined}
+        message={error?.message}
+        status={(error as CustomError)?.statusCode}
+        isPaused={isPaused}
       >
         <button
           onClick={() => window.location.reload()}
@@ -418,8 +407,8 @@ function Deck({
           </div>
         }
         <PopUpMessage
-          message="Drag and drop the deck here to delete it."
-          showPopUp={showPopUp}
+          message="Drag and drop the deck onto the trash icon to delete it."
+          ref={showPopUp}
         />
         <Droppable droppableId="DeckDeleteArea">
           {(provided, snapshot) => {
@@ -438,7 +427,6 @@ function Deck({
                     snapshot.isDraggingOver ? "-rotate-12" : "transform-none"
                   } `}
                   onClick={handlePopUp}
-                  title="Drag and drop the deck here to delete it."
                 >
                   {snapshot.isDraggingOver ? (
                     <img
@@ -470,6 +458,7 @@ function Deck({
             >
               Deck title
             </label>
+
             <input
               ref={inputRefElement}
               className=" dark:bg-slate-900  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
@@ -492,7 +481,7 @@ function Deck({
           return deck?.pinned === true;
         }).length > 0 ? (
           <section className="mt-4 lg:mb-10  mx-1  animate-opacity_page_transition">
-            <h2 className="text-left  text-md font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2 ">
+            <h2 className="text-left  text-base font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2 ">
               Pinned
             </h2>
 
@@ -609,7 +598,7 @@ function Deck({
           return deck?.pinned === false;
         }).length > 0 ? (
           <section className="mt-4 mb-24  mx-1 animate-opacity_page_transition">
-            <h2 className="text-left text-md font-semibold text-gray-800  my-4 mx-2 dark:text-gray-50 ">
+            <h2 className="text-left text-base font-semibold text-gray-800  my-4 mx-2 dark:text-gray-50 ">
               {allDecks!?.filter((deck) => {
                 return deck?.pinned === true;
               }).length > 0
@@ -792,10 +781,10 @@ function Deck({
               alt="No decks found"
               className="w-56 h-44 lg:w-64 lg:h-52"
             />
-            <p className="pb-1  text-md font-bold dark:text-gray-50 text-gray-800">
+            <p className="pb-1  text-base font-bold dark:text-gray-50 text-gray-800">
               Looks like you haven't added any decks yet.
             </p>
-            <p className="p-1  text-md font-bold dark:text-gray-50 text-gray-800">
+            <p className="p-1  text-base font-bold dark:text-gray-50 text-gray-800">
               Create a new deck to get started.
             </p>
           </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { prism } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -14,6 +14,7 @@ import php from "highlight.js/lib/languages/php";
 import go from "highlight.js/lib/languages/go";
 import swift from "highlight.js/lib/languages/swift";
 import csharp from "highlight.js/lib/languages/csharp";
+import { Link } from "react-router-dom";
 
 // Register the languages
 hljs.registerLanguage("javascript", javascript);
@@ -27,7 +28,7 @@ hljs.registerLanguage("go", go);
 hljs.registerLanguage("swift", swift);
 hljs.registerLanguage("csharp", csharp);
 
-const parseNote = (noteString: string) => {
+const parseNote = (noteString: string, showTypewriterEffect: boolean) => {
   return new Promise<React.ReactNode[]>((resolve, reject) => {
     setTimeout(() => {
       try {
@@ -56,6 +57,7 @@ const parseNote = (noteString: string) => {
             result.push(
               <SyntaxHighlighter
                 key={shortid.generate()}
+                className={`${showTypewriterEffect && "animate-scaleUp"}`}
                 language={language}
                 wrapLongLines={true}
                 style={
@@ -81,7 +83,9 @@ const parseNote = (noteString: string) => {
             // If underlined text is matched
             result.push(
               <u
-                className="underline dark:decoration-teal-400 decoration-sky-500 text-gray-800 dark:text-gray-200"
+                className={`underline  inline-block dark:decoration-teal-400 decoration-sky-500 text-gray-800 dark:text-gray-200 ${
+                  showTypewriterEffect && "animate-scaleUp "
+                } `}
                 key={shortid.generate()}
               >
                 {underlineText}
@@ -90,13 +94,13 @@ const parseNote = (noteString: string) => {
           } else if (linkName !== undefined && href !== undefined) {
             // If a link is matched
             result.push(
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
+              <p
                 key={shortid.generate()}
+                className={`text-left text-blue-600 truncate w-full inline-block ${
+                  showTypewriterEffect && "animate-scaleUp"
+                }`}
               >
-                <p className="text-left text-blue-600 truncate">
+                <Link to={href} target="_blank" rel="noopener noreferrer">
                   <span
                     className="dark:text-gray-50 text-gray-800 cursor-text"
                     onClick={(e) => {
@@ -109,14 +113,16 @@ const parseNote = (noteString: string) => {
                   <span className="underline underline-offset-2 text-blue-600 ">
                     {href}
                   </span>
-                </p>
-              </a>
+                </Link>
+              </p>
             );
           } else if (boldText !== undefined) {
             // If bold text is matched
             result.push(
               <strong
-                className="font-semibold dark:text-teal-400  text-sky-600 "
+                className={`font-semibold dark:text-teal-400  text-sky-600 ${
+                  showTypewriterEffect && "animate-scaleUp inline-block"
+                } `}
                 key={shortid.generate()}
               >
                 {boldText}

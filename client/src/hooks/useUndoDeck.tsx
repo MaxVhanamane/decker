@@ -1,19 +1,18 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeckAndCardType, DeckType, DeckTypeWithIndex } from "../types/types";
+import { CustomError } from "../utils/customError";
 const deleteDeck = async (undoDeck: DeckTypeWithIndex) => {
   try {
     const data = await request.put("/undodeck", undoDeck);
-    if (data?.message) {
-      return { message: data?.message, status: data?.status };
-    } else {
-      return data?.data;
-    }
+
+    return data?.data;
   } catch (error) {
-    return {
-      message: "An unexpected error occurred while undoing the deck deletion.",
-      status: 400,
-    };
+    if (error instanceof CustomError) {
+      throw new CustomError(error?.message, error?.statusCode);
+    } else {
+      throw new CustomError("Something went wrong!", 503);
+    }
   }
 };
 
@@ -60,17 +59,6 @@ const useUndoDeck = () => {
       // Return previous data so that if something goes wrong we can use this in onError method
       // you can pass it in object or you can pass it directly like I did above in create deck
       return { previousQueryData, previousQueryDataForSearch };
-    },
-    onSuccess: (data) => {
-      if (data && "message" in data) {
-        if (data?.message) {
-          throw new Error(data?.message);
-        } else {
-          throw new Error(
-            "An unexpected error occurred while undoing the deck deletion."
-          );
-        }
-      }
     },
 
     onError: (error, _title, context) => {

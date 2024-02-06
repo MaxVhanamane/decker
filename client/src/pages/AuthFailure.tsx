@@ -31,7 +31,7 @@ const AuthFailure: FC = () => {
           className="w-48 h-48 lg:w-52 lg:h-52"
         />
         <div className=" rounded-lg ">
-          <p className="text-md text-gray-800 mb-1 dark:text-gray-50">
+          <p className="text-base text-gray-800 mb-1 dark:text-gray-50">
             Login failed,Please try again!
           </p>
         </div>

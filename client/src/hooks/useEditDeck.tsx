@@ -3,6 +3,7 @@ import { request } from "../utils/fetch-utils";
 import { DeckAndCardType, DeckType } from "../types/types";
 import { useContext } from "react";
 import { searchContext } from "../context/SearchContext";
+import { CustomError } from "../utils/customError";
 type CardData = {
   deck_id: string;
   newTitle: string;
@@ -27,17 +28,14 @@ const editDeck = async (
     const data = await request.put(`/deck/editdeck/${deckItem.deck_id}`, {
       title: deckItem.newTitle,
     });
-    if (data?.message) {
-      return { message: data?.message, status: data?.status };
-    } else {
-      return data?.data;
-    }
+
+    return data?.data;
   } catch (error) {
-    return {
-      message:
-        "An unexpected error occurred while saving the edited deck. Please try again later!",
-      status: 400,
-    };
+    if (error instanceof CustomError) {
+      throw new CustomError(error?.message, error?.statusCode);
+    } else {
+      throw new CustomError("Something went wrong!", 503);
+    }
   }
 };
 
@@ -96,17 +94,7 @@ const useEditDeck = () => {
       // Return previous data so that if something goes wrong we can use this in onError method
       return { previousQueryData, previousQueryDataForSearch };
     },
-    onSuccess: (data) => {
-      if (data && "message" in data) {
-        if (data?.message) {
-          throw new Error(data?.message);
-        } else {
-          throw new Error(
-            "An unexpected error occurred while saving the edited deck. Please try again later!"
-          );
-        }
-      }
-    },
+
     onError: (error, _title, context) => {
       queryClient.setQueryData(["decks"], context?.previousQueryData);
       queryClient.setQueryData(

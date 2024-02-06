@@ -2,6 +2,7 @@ import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { CardDataType } from "../types/types";
+import { CustomError } from "../utils/customError";
 
 type Data = {
   deleteIndex: number;
@@ -20,17 +21,13 @@ const moveCard = async (inputData: Data) => {
       `/card/changeposition/${inputData.deck_id}/${inputData.deleteIndex}/${inputData.moveIndex}`
     );
 
-    if (data?.message) {
-      return { message: data?.message, status: data?.status };
-    } else {
-      return data?.data;
-    }
+    return data?.data;
   } catch (error) {
-    return {
-      message:
-        "An unexpected error occurred while moving the card. Please try again later.",
-      status: 400,
-    };
+    if (error instanceof CustomError) {
+      throw new CustomError(error?.message, error?.statusCode);
+    } else {
+      throw new CustomError("Something went wrong!", 503);
+    }
   }
 };
 
@@ -60,17 +57,6 @@ const useMoveCard = () => {
       );
 
       return previousCardData;
-    },
-    onSuccess: (data) => {
-      if (data && "message" in data) {
-        if (data?.message) {
-          throw new Error(data?.message);
-        } else {
-          throw new Error(
-            "An unexpected error occurred while moving the card. Please try again later."
-          );
-        }
-      }
     },
 
     onError: (error, data: Data, context) => {

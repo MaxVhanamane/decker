@@ -37,7 +37,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   const [foundDecks, setFoundDecks] = useState<SearchResultDeckType[]>([]);
   const [foundResults, setFoundResults] = useState(false);
   const [searching, setSearching] = useState(false);
-  const { data, isError, error, isLoading } = useGetDecksAndCards();
+  const { data, isError, error, isLoading, isPaused } = useGetDecksAndCards();
   const { setAlert } = useContext(AlertContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
   const {
@@ -52,6 +52,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
     setAnimateCloseEditDeckModalInSearchResult,
     openEditDeckModalForSearchResult,
     setOpenEditDeckModalForSearchResult,
+    setOpenSearchBar,
   } = useContext(searchContext);
   const { theme, setUserInfo } = useContext(UserContext);
   const navigate = useNavigate();
@@ -146,16 +147,29 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   }, []);
 
   useEffect(() => {
-    if (data && "message" in data) {
+    if (error) {
       if (
-        data?.message ===
+        error?.message ===
         "Your session has expired. Please log in again to continue."
       ) {
         setUserInfo(null);
         navigate("/sessionexpired", { replace: true });
       }
     }
-  }, [data]);
+  }, [error]);
+
+  // useEffect(() => {
+  //   if (isError) {
+  //     setAlert((preval: AlertData) => ({
+  //       ...preval,
+  //       severity: "error",
+  //       show: true,
+  //       message:
+  //         "Oops! Something went wrong while searching for decks and cards. Please try again later.",
+  //       autoHideDuration: 5000,
+  //     }));
+  //   }
+  // }, [isError]);
 
   useEffect(() => {
     if (isEditDeckError) {
@@ -204,19 +218,47 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
 
   if (isLoading && searchQuery?.length > 0) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center dark:bg-slate-900  text-gray-200   top-[3.45rem] bg-[#fcfefc]">
-        <div className="-mt-[3.45rem]">
+      <div
+        className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-[var(--window-height)] bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
+      >
+        <div className="flex items-center justify-center dark:text-gray-50  fixed top-1/3 lg:top-1/2 left-1/2 -translate-x-1/2 lg:-translate-y-1/2 -translate-y-1/3 gap-2 w-full">
+          <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
+          <p>searching...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || isPaused) {
+    return (
+      <div className="fixed inset-0 dark:bg-slate-900 bg-[#fcfefc]">
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2 px-3 ">
           <img
-            src={
-              localStorage.getItem("theme") === "dark" ||
-              localStorage.getItem("theme") === null
-                ? "/loading_dark.gif"
-                : "/loading_light.gif"
-            }
-            alt="loading"
-            width={200}
-            height={200}
+            src={`${
+              theme === "dark"
+                ? "/illustrations/server_down_dark.svg"
+                : "/illustrations/server_down_light.svg"
+            }`}
+            alt="Server down"
+            className=" w-40 h-36 "
           />
+          <div className="font-semibold text-base">
+            <p>Uh-oh! Couldn't fetch the decks and cards data for searching.</p>
+            <p>Please check your internet connection.</p>
+            <p>If you have a good internet connection,</p>
+            <p>try refreshing the page.</p>
+          </div>
+          <button
+            onClick={() => {
+              navigate(-1);
+              setOpenSearchBar(false);
+            }}
+            className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+            type="button"
+            aria-label="Back"
+          >
+            Back
+          </button>
         </div>
       </div>
     );
@@ -245,7 +287,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
       <div
         className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-[var(--window-height)] bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
       >
-        <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-md dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-900 z-50 pb-4 pt-3">
+        <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-base dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-900 z-50 pb-4 pt-3">
           {searchQuery.length > 0 &&
             (foundDecks.length > 0 || foundCards.length > 0) &&
             showResult && (
@@ -276,7 +318,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
           !foundResults &&
           searchQuery.length > 0 && (
             <div
-              className={`flex items-center justify-center z-50 w-screen h-full text-md font-semibold animate-quickOpacity`}
+              className={`flex items-center justify-center z-50 w-screen h-full text-base font-semibold animate-quickOpacity`}
             >
               <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem] gap-2 ">
                 <img
@@ -313,7 +355,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
           )
         ) : (
           <div
-            className={`flex items-center justify-center z-50 w-screen h-full text-md font-semibold animate-quickOpacity`}
+            className={`flex items-center justify-center z-50 w-screen h-full text-base font-semibold animate-quickOpacity`}
           >
             <div className="relative flex items-center justify-center flex-col lg:top-[-3.42rem] -top-[9rem] gap-2">
               <img

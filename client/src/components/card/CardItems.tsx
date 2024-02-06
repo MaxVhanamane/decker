@@ -26,13 +26,13 @@ interface DeckResponse {
 
 type PropTypes = {
   handleDelete: (index: number) => void;
-  handleEdit: (cardItem: ContentTypeForEdit) => void;
+  handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
   handleShowFullScreen: (card: ContentForFullScreen) => void;
   data: Data | DeckResponse;
 };
 const CardItems = ({
   handleDelete,
-  handleEdit,
+  handleEditCardButtonClick,
   handleShowFullScreen,
   data,
 }: PropTypes) => {
@@ -42,6 +42,7 @@ const CardItems = ({
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
+
   return (
     <Droppable droppableId="cardDropableArea">
       {/* You can't use Draggable directly you have to use it inside Dropable component  */}
@@ -132,7 +133,7 @@ const CardItems = ({
                             <button
                               onClick={(event) => {
                                 event.stopPropagation(),
-                                  handleEdit({
+                                  handleEditCardButtonClick({
                                     ...card,
                                     _id: deck_id!,
                                     cardIndex: index,
@@ -152,12 +153,26 @@ const CardItems = ({
                               <BiEdit />
                             </button>
                           </div>
-                          <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">
-                            {card.title}
+
+                          <p className="font-bold text-base lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">
+                            {card.title ? (
+                              card.title
+                            ) : (
+                              <span className="lg:text-base dark:text-gray-500 text-gray-400">
+                                You have not added title to this card.
+                              </span>
+                            )}
                           </p>
+
                           {/* line-clamp-3 helps to truncate characters after 3 lines */}
                           <p className="text-sm lg:text-base text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1 ">
-                            {card.note}
+                            {card.note ? (
+                              card.note
+                            ) : (
+                              <span className=" dark:text-gray-500 text-gray-400">
+                                You have not added a note to this card.
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>

@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { DeckAndCardType } from "../types/types";
 import { useContext } from "react";
 import { searchContext } from "../context/SearchContext";
+import { CustomError } from "../utils/customError";
 type DataType = {
   id: string;
   pinned: boolean;
@@ -19,20 +20,17 @@ export const updateDeck = async (inputData: DataType) => {
   try {
     // you don't need to add try catch block as axios will automatically throw an error.
     // If you want to throw an error then do it manually  using throw keyword because usequery or usemutation need that
-    const data = await request.patch(`/deck/${inputData.id}`, {
+    const data = await request.patch(`/deck/togglepin/${inputData.id}`, {
       pinned: inputData.pinned,
     });
-    if (data?.message) {
-      return { message: data?.message, status: data?.status };
-    } else {
-      return data?.data;
-    }
+
+    return data?.data;
   } catch (error) {
-    return {
-      message:
-        "An unexpected error occurred while pinning the deck. Please try again later!",
-      status: 400,
-    };
+    if (error instanceof CustomError) {
+      throw new CustomError(error?.message, error?.statusCode);
+    } else {
+      throw new CustomError("Something went wrong!", 503);
+    }
   }
 };
 
@@ -115,18 +113,6 @@ const usePinDeck = () => {
       }
 
       return { previousQueryData, previousQueryDataForSearch };
-    },
-
-    onSuccess: (data) => {
-      if (data && "message" in data) {
-        if (data?.message) {
-          throw new Error(data?.message);
-        } else {
-          throw new Error(
-            "An unexpected error occurred while pinning the deck. Please try again later!"
-          );
-        }
-      }
     },
 
     onError: (error, _title, context) => {

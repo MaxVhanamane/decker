@@ -4,6 +4,7 @@ import { request } from "../utils/fetch-utils";
 import { useNavigate } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
+import { CustomError } from "../utils/customError";
 
 interface ConfirmLogoutModalProps {
   handleShowUserInfomation: (isLogout: boolean) => void;
@@ -24,18 +25,31 @@ const ConfirmLogoutModal: FC<ConfirmLogoutModalProps> = ({
     e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
   ) => {
     if ((e.target as HTMLButtonElement).id === "yesbutton") {
-      const res = await request.post("/auth/logout");
-      if (res?.data?.isLogoutSuccessful) {
-        setUserInfo(null);
-        setShowLogoutModal(false);
-        handleShowUserInfomation(true);
-        navigate("/login", { replace: true });
-      } else {
+      try {
+        const res = await request.post("/auth/logout");
+        if (res?.data?.isLogoutSuccessful) {
+          setUserInfo(null);
+          setShowLogoutModal(false);
+          handleShowUserInfomation(true);
+          navigate("/login", { replace: true });
+        } else {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "error",
+            show: true,
+            message: "Some error occured Please try again later!",
+            autoHideDuration: 5000,
+          }));
+          setShowLogoutModal(false);
+        }
+      } catch (error) {
         setAlert((preval: AlertData) => ({
           ...preval,
           severity: "error",
           show: true,
-          message: "Some error occured Please try again later!",
+          message: (error as CustomError)?.message
+            ? (error as CustomError)?.message
+            : "An error occurred during the logout process. Please try again later.",
           autoHideDuration: 5000,
         }));
         setShowLogoutModal(false);

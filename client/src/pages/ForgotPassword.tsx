@@ -6,12 +6,14 @@ import { request } from "../utils/fetch-utils";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
+import { CustomError } from "../utils/customError";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [otp, setOTP] = useState("");
   const [showWaitMessage, setShowWaitMessage] = useState(false);
   const [showVerifyOTPButton, setShowVerifyOTPButton] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const navigate = useNavigate();
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
@@ -40,23 +42,27 @@ export default function ForgotPassword() {
     }
 
     setShowWaitMessage(true);
-    const res = await request.post("/generateforgetpasswordotp", { email });
-    if (res.data.success) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "success",
-        show: true,
-        message: res.data.message,
-        autoHideDuration: 5000,
-      }));
-      setShowVerifyOTPButton(true);
-      setShowWaitMessage(false);
-    } else {
+    try {
+      const res = await request.post("/generateforgetpasswordotp", { email });
+      if (res.data.success) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "success",
+          show: true,
+          message: res.data.message,
+          autoHideDuration: 5000,
+        }));
+        setShowVerifyOTPButton(true);
+        setShowWaitMessage(false);
+      }
+    } catch (error) {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: res.data.message,
+        message: (error as CustomError)?.message
+          ? (error as CustomError)?.message
+          : "Some error occurred please try again later!",
         autoHideDuration: 6000,
       }));
 
@@ -64,7 +70,8 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleOTPVerification = async () => {
+  const handleOTPVerification = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -75,32 +82,46 @@ export default function ForgotPassword() {
       }));
       return;
     }
+    setIsVerifying(true);
 
-    const res = await request.post("/verifyforgotpasswordotp", { email, otp });
-    if (res.data.success) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "success",
-        show: true,
-        message: res.data.message,
-      }));
-      navigate(`/changepassword?email=${email}&otp=${otp}`);
-    } else {
-      res.data.message =
-        "Your OTP has expired! Please request a new one to continue.";
+    try {
+      const res = await request.post("/verifyforgotpasswordotp", {
+        email,
+        otp,
+      });
+      if (res.data.success) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "success",
+          show: true,
+          message: res.data.message,
+        }));
+        setIsVerifying(false);
+        navigate(`/changepassword?email=${email}&otp=${otp}`);
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: res?.data?.message,
+        }));
+        if (
+          res.data.message ===
+          "Your OTP has expired! Please request a new one to continue."
+        ) {
+          setShowVerifyOTPButton(false);
+          setOTP("");
+        }
+        setIsVerifying(false);
+      }
+    } catch (error) {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: res.data.message,
+        message: (error as CustomError)?.message || "OTP verification failed!",
       }));
-      if (
-        res.data.message ===
-        "Your OTP has expired! Please request a new one to continue."
-      ) {
-        setShowVerifyOTPButton(false);
-        setOTP("");
-      }
+      setIsVerifying(false);
     }
   };
   return (
@@ -134,8 +155,8 @@ export default function ForgotPassword() {
                           : " Enter email address"
                       } `}</h4>
                     </div>
-                    <form onSubmit={handleGetOTP}>
-                      {!showVerifyOTPButton ? (
+                    {!showVerifyOTPButton && (
+                      <form onSubmit={handleGetOTP}>
                         <div className="mb-4">
                           <input
                             onChange={handleChange}
@@ -148,14 +169,13 @@ export default function ForgotPassword() {
                             required
                           />
                         </div>
-                      ) : null}
 
-                      {!showVerifyOTPButton ? (
                         <div className="text-center pt-1 mb-5 pb-1 relative">
                           <button
                             className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
                             type="submit"
                             aria-label="Request OTP"
+                            disabled={showWaitMessage}
                           >
                             Request OTP
                           </button>
@@ -167,8 +187,10 @@ export default function ForgotPassword() {
                             </div>
                           ) : null}
                         </div>
-                      ) : null}
-                      {showVerifyOTPButton ? (
+                      </form>
+                    )}
+                    {showVerifyOTPButton && (
+                      <form onSubmit={handleOTPVerification}>
                         <div className="mb-4">
                           <input
                             onChange={handleChange}
@@ -181,20 +203,19 @@ export default function ForgotPassword() {
                             maxLength={6}
                           />
                         </div>
-                      ) : null}
-                    </form>
-                    {showVerifyOTPButton ? (
-                      <div className="text-center pt-1 mb-6 pb-1">
-                        <button
-                          onClick={handleOTPVerification}
-                          className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
-                          type="button"
-                          aria-label="Verify OTP"
-                        >
-                          Verify OTP
-                        </button>
-                      </div>
-                    ) : null}
+
+                        <div className="text-center pt-1 mb-6 pb-1">
+                          <button
+                            className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                            type="submit"
+                            aria-label="Verify OTP"
+                            disabled={isVerifying}
+                          >
+                            {isVerifying ? "Verifying OTP..." : "Verify OTP"}
+                          </button>
+                        </div>
+                      </form>
+                    )}
                     <div className="flex items-center justify-between pb-6">
                       <p className="text-gray-800 dark:text-gray-50 mr-2">
                         Have an account?

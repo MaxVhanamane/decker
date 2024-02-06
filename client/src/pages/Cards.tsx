@@ -22,7 +22,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData, ContentType, ContentTypeForEdit } from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
-
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
 import ConfirmDeleteModalForCard from "../components/card/ConfirmDeleteModalForCard";
@@ -43,6 +42,7 @@ import { addLink } from "../functions/addLink";
 import { addUnderlineText } from "../functions/addUnderlineText";
 import { addBoldText } from "../functions/addBoldText";
 import CardToolbar from "../components/card/CardToolbar";
+import { CustomError } from "../utils/customError";
 // types
 // let oldContent:string //this  works
 
@@ -125,11 +125,12 @@ const Cards: FC<CardsProps> = ({
   const [wasDeleteModalOpen, setWasDeleteModalOpen] = useState(false);
   wasDeleteModalOpen2 = wasDeleteModalOpen;
   const { deck_id } = useParams();
-
   const location = useLocation();
 
-  const { data, isError, error, isLoading, fetchStatus, isPaused, status } =
-    useGetCards(deck_id!, location?.state?.deck);
+  const { data, isError, error, isLoading, isPaused } = useGetCards(
+    deck_id!,
+    location?.state?.deck
+  );
 
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
@@ -167,7 +168,7 @@ const Cards: FC<CardsProps> = ({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const showPopUp = useRef<HTMLDivElement | null>(null);
   const inputElementRef = useRef<HTMLInputElement>(null);
-  const shouldPu = useRef<boolean>(false);
+  const shouldPushRef = useRef<boolean>(false);
 
   // Other
   const navigate = useNavigate();
@@ -177,12 +178,40 @@ const Cards: FC<CardsProps> = ({
   //useEffects
 
   useEffect(() => {
-    if (data && "message" in data) {
-      if (
-        data?.message ===
-        "Your session has expired. Please log in again to continue."
-      ) {
-        navigate("/sessionexpired", { state: { from: "/cards" } });
+    //If a user clicks the 'Create Card' button, and the request goes to the server, but the client loses connection or encounters an issue, triggering the onError function, I reopen the card that was closed when the user initially clicked the 'Create Card' button. I set the card information again so that the user doesn't lose the card details due to the error. However, if the request reaches the server and is processed, resulting in the creation of the card on the server, when the user regains internet access, they will receive that created card in the data. If the created card is present in the data, it indicates that the server properly processed the request, but the client lost internet, leading to the onError function running. In such cases, there's no point in showing the card info again, so we will reset the title, note, and height. Implemented same thing for card editing.
+    if ((note.length > 0 || title.length > 0) && data && "cards" in data) {
+      const isCardPresent = data?.cards.some(
+        (card) => card.title === title && card.note === note
+      );
+
+      if (isCardPresent) {
+        setNote("");
+        setTitle("");
+        setHeight(80);
+      }
+    }
+
+    if (
+      (editContent.title.length > 0 || editContent.title.length > 0) &&
+      data &&
+      "cards" in data
+    ) {
+      const isCardPresent = data?.cards.some(
+        (card) =>
+          card.title === editContent.title && card.note === editContent.note
+      );
+      if (isCardPresent) {
+        if (showFullScreen) {
+          setFullScreenCardData({ ...editContent });
+        }
+        setCloseEditModal(true);
+        setEditContent({
+          title: "",
+          note: "",
+          _id: "",
+          cardIndex: null,
+          cardId: "",
+        });
       }
     }
   }, [data]);
@@ -243,7 +272,7 @@ const Cards: FC<CardsProps> = ({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [expandTextarea, inputElementRef]);
+  }, [expandTextarea]);
 
   useEffect(() => {
     let timeoutId1: NodeJS.Timeout,
@@ -279,7 +308,7 @@ const Cards: FC<CardsProps> = ({
       clearTimeout(timeoutId2);
       clearTimeout(timeoutId3);
     };
-  }, [checkClose, inputElementRef, textareaRef]);
+  }, [checkClose]);
 
   useEffect(() => {
     if (cardDeleted) {
@@ -358,7 +387,7 @@ const Cards: FC<CardsProps> = ({
       openEditDeckModalForSearchResult ||
       isConfirmDeleteModalOpen;
 
-    if (shouldPushState && !shouldPu.current) {
+    if (shouldPushState && !shouldPushRef.current) {
       if (!wasSearchBarInitiallyTrue) {
         // To push new url into the browser's stack you can use window object or react router dom's useNavigate() hook.
         // window.history.pushState(
@@ -385,9 +414,9 @@ const Cards: FC<CardsProps> = ({
     const trueCount = variableArray.filter((variable) => variable).length;
 
     if (trueCount >= 2) {
-      shouldPu.current = true;
+      shouldPushRef.current = true;
     } else {
-      shouldPu.current = false;
+      shouldPushRef.current = false;
     }
     window.addEventListener("popstate", handleBrowsersBackButton);
     return () => {
@@ -522,7 +551,7 @@ const Cards: FC<CardsProps> = ({
   }, [title, note, data]);
 
   // onClick handlers
-  const handleSubmit = async (e: FormEvent) => {
+  const handleCreateCard = async (e: FormEvent) => {
     e.preventDefault();
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
@@ -538,13 +567,22 @@ const Cards: FC<CardsProps> = ({
     if (title.trim().length > 0 || note.trim().length > 0) {
       const content = { title, note, cardId: shortid.generate() };
       const payload: PayloadType = { deck_id: deck_id!, content };
-      addCard(payload);
+      // Store the current input values to reset them later
+      const currentNote = note;
+      const currentTitle = title;
+      const heightVal = height;
+      addCard(payload, {
+        //While saving the card, if an error occurs, we will retrieve the cleared card information and show it again so that the user doesn't lose the created card details.
+        onError: () => {
+          setNote(currentNote);
+          setTitle(currentTitle);
+          setHeight(heightVal);
+        },
+      });
       setNote("");
       setTitle("");
       setHeight(80);
     } else {
-      setNote("");
-      setTitle("");
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "warning",
@@ -578,7 +616,7 @@ const Cards: FC<CardsProps> = ({
     [isOnline, setIndexOfCardForDeletion, deleteConfirmationModalForCard]
   );
 
-  const handleEdit = useCallback(
+  const handleEditCardButtonClick = useCallback(
     (cardItem: ContentTypeForEdit) => {
       if (!isOnline) {
         setAlert((preval: AlertData) => ({
@@ -596,7 +634,7 @@ const Cards: FC<CardsProps> = ({
     [isOnline, setEditContent, setOpenModal]
   );
 
-  const handleSave = () => {
+  const handleSaveEdit = () => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -613,10 +651,37 @@ const Cards: FC<CardsProps> = ({
       index: editContent.cardIndex!,
     };
 
+    let fullScreenCardDataCache = fullScreenCardData;
+
     if (editContent.title.length > 0 || editContent.note.length > 0) {
-      editCard(data);
+      // If the user saves the edited card and encounters an error during the saving process, this causes the user to lose all the data they created. This is because once the user clicks on the 'Save Card' button, I clear the edited content from the state and close the edit modal. To prevent data loss on error, we will open the modal again and show the lost data.
+      editCard(data, {
+        onError: () => {
+          setEditContent(data.newContent),
+            setOpenModal(true),
+            setCloseEditModal(false);
+          // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
+          if (showFullScreen) {
+            setFullScreenCardData({ ...fullScreenCardDataCache });
+          }
+        },
+      });
       setCloseEditModal(true);
-      setFullScreenCardData({ ...editContent });
+
+      setEditContent({
+        title: "",
+        note: "",
+        _id: "",
+        cardIndex: null,
+        cardId: "",
+      });
+
+      // If the user opens the full screen card view and then clicks on the edit card button, we will display the updated data on full screen once the user saves the edited card.
+
+      if (showFullScreen) {
+        // Last time, when this function was created, it captured the value of the editContent state, and now we have that value available in the editContent here.
+        setFullScreenCardData({ ...editContent });
+      }
     } else {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -646,7 +711,8 @@ const Cards: FC<CardsProps> = ({
     if (showPopUp.current?.classList.contains("scale-0")) {
       showPopUp.current.classList.remove("scale-0");
       showPopUp?.current?.classList.add("!block");
-      showPopUp.current.classList.add("!w-fit");
+      showPopUp.current.classList.add("!w-[85%]");
+      showPopUp.current.classList.add("md:!w-fit");
       showPopUp.current.classList.add("!h-fit");
       showPopUp.current.classList.add("scale-100");
 
@@ -657,7 +723,6 @@ const Cards: FC<CardsProps> = ({
       }, 3000);
     }
   };
-
   const handleShowFullScreen = useCallback(
     (card: ContentForFullScreen) => {
       setShowFullScreen(true);
@@ -762,12 +827,13 @@ const Cards: FC<CardsProps> = ({
     return <Loading />;
   }
 
-  if (data && "message" in data) {
+  if (isError || isPaused) {
     return (
       <ErrorDisplay
         theme={theme}
-        message={data && "message" in data ? data?.message : undefined}
-        status={data && "status" in data ? data?.status : undefined}
+        message={error?.message}
+        status={(error as CustomError)?.statusCode}
+        isPaused={isPaused}
       >
         <button
           onClick={() => navigate("/")}
@@ -794,8 +860,8 @@ const Cards: FC<CardsProps> = ({
       </Helmet>
 
       <PopUpMessage
-        message="Drag and drop the card here to delete it."
-        showPopUp={showPopUp}
+        message="Drag and drop the card onto the trash icon to delete it."
+        ref={showPopUp}
       />
       {showTips && (
         <Tips
@@ -822,7 +888,6 @@ const Cards: FC<CardsProps> = ({
                   snapshot.isDraggingOver ? "-rotate-12 " : "transform-none"
                 }  `}
                 onClick={handlePopUp}
-                title="Drag and drop the card here to delete it."
               >
                 {snapshot.isDraggingOver ? (
                   <img
@@ -850,7 +915,7 @@ const Cards: FC<CardsProps> = ({
           } w-full px-4  mx-auto transition-all duration-1000  `}
         >
           <form
-            onSubmit={handleSubmit}
+            onSubmit={handleCreateCard}
             className="flex flex-col  gap-4 justify-center items-center  "
           >
             {/* <label htmlFor="title" className=" font-bold text-teal-600 dark:text-sky-400">
@@ -904,7 +969,7 @@ const Cards: FC<CardsProps> = ({
                     expandTextarea
                       ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
                       : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center cursor-pointer"
-                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-md text-gray-800   dark:bg-slate-900 dark:text-gray-50 z-10 `}
+                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-base text-gray-800   dark:bg-slate-900 dark:text-gray-50 z-10 `}
                   placeholder={`${
                     expandTextarea ? "Title" : "Craft an Elegant Note"
                   } `}
@@ -923,7 +988,7 @@ const Cards: FC<CardsProps> = ({
                   expandTextarea
                     ? " py-2 border-b-2 rounded-t-0 opacity-100"
                     : "py-0 border-b-2"
-                } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-md  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
+                } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-base  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   setNote(e.target.value);
                 }}
@@ -936,23 +1001,9 @@ const Cards: FC<CardsProps> = ({
                 placeholder="Note"
               ></textarea>
             </div>
-            <div className="flex justify-end">
-              <button
-                className={` outline-none py-1  ${
-                  expandTextarea ? "opacity-100" : "opacity-0"
-                } transition-[opacity] duration-1000`}
-                aria-label="Create Card"
-                type="submit"
-                disabled={expandTextarea ? false : true}
-              >
-                <span className="bg-teal-600 hover:bg-teal-700 text-gray-50 font-semibold text-center py-2 px-2 rounded-md dark:bg-sky-600 dark:hover:bg-sky-700 transition-colors duration-300">
-                  Create Card
-                </span>
-              </button>
-            </div>
           </form>
           {data && "cards" in data && data?.cards?.length > 0 ? (
-            <h1 className="font-bold text-xl text-gray-800 mb-6 dark:text-gray-50 mt-6">
+            <h1 className="font-bold text-xl text-gray-800 mt-8 mb-6 dark:text-gray-50 ">
               {data?.title}
             </h1>
           ) : null}
@@ -961,7 +1012,7 @@ const Cards: FC<CardsProps> = ({
         {data && "cards" in data && data?.cards?.length > 0 ? (
           <CardItems
             handleDelete={handleDelete}
-            handleEdit={handleEdit}
+            handleEditCardButtonClick={handleEditCardButtonClick}
             handleShowFullScreen={handleShowFullScreen}
             data={data}
           />
@@ -976,7 +1027,7 @@ const Cards: FC<CardsProps> = ({
               alt="No cards found"
               className=" w-44 h-44  "
             />
-            <p className="p-1 mt-1 text-md">
+            <p className="p-1 mt-1 text-base">
               Looks like you haven't added any cards yet.
             </p>
             <button
@@ -1016,7 +1067,7 @@ const Cards: FC<CardsProps> = ({
           fullScreenCardData={fullScreenCardData}
           location={location}
           setShowFullScreen={setShowFullScreen}
-          handleEdit={handleEdit}
+          handleEditCardButtonClick={handleEditCardButtonClick}
           handleDelete={handleDelete}
           startAnimation={startAnimation}
           setStartAnimation={setStartAnimation}
@@ -1033,7 +1084,7 @@ const Cards: FC<CardsProps> = ({
           addUnderlineText={addUnderlineTextWrapper}
           editContent={editContent}
           handleChange={handleChange}
-          handleSave={handleSave}
+          handleSaveEdit={handleSaveEdit}
           ref={editTextareaRef}
           openModal={openModal}
           setCloseEditModal={setCloseEditModal}

@@ -7,12 +7,9 @@ import {
   useRef,
   RefObject,
   useCallback,
-  useContext,
+  useMemo,
 } from "react";
-import { request } from "../utils/fetch-utils";
-import { AlertData, userData } from "../types/types";
-import { useLocation, useNavigate } from "react-router-dom";
-import { AlertContext } from "./AlertContext";
+import { userData } from "../types/types";
 
 declare global {
   interface WindowEventMap {
@@ -86,11 +83,10 @@ export const UserContext = createContext<ContexType>({
   handleInstallApp: () => {},
 });
 
+// Note: If you use the useNavigate() or useLocation hooks from react-router-dom within a Context API, that Context API will rerender whenever the route changes.
+
 function UserContextProvider({ children }: UserContextProvider) {
   const [theme, setTheme] = useState<string | null>(null);
-  const { setAlert } = useContext(AlertContext);
-  const navigate = useNavigate();
-  const location = useLocation();
   const deleteConfirmationModalForCard = useRef<HTMLDivElement>(null);
   const divRefForUserSettings = useRef<HTMLDivElement>(null);
   const [showInstallAppButton, setShowInstallAppButton] = useState(false);
@@ -98,15 +94,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const pathNames = [
-    "/signup",
-    "/verifyemail",
-    "/forgotpassword",
-    "/changepassword",
-    "/login",
-    "/accountdeletionsuccess",
-  ];
-  const authPaths = ["/auth/success", "/auth/failure"];
+
   const [userInfo, setUserInfo] = useState<userData | null>(null);
   const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
     number | null
@@ -118,8 +106,9 @@ function UserContextProvider({ children }: UserContextProvider) {
       const event = e as BeforeInstallPromptEvent;
       if (event) {
         // "Storing the showInstallAppButton value in local storage and using it on the Auth Success page to set the showInstallAppButton global state is necessary. This is because, when a user is on the login page and we set setShowInstallAppButton(true), this state will lose its value if the user uses Google Login. Google Login redirects the user to an external URL, and when they return to the app after logging in, the showInstallAppButton state will revert to its default value, which is false. Consequently, the 'Install Decker App' button won't be displayed because the beforeinstallprompt event only fires once when the app loads. To prevent this, we save the value in local storage and use it on the Auth Success page, removing it from there afterward. We've used an if condition to set the value in local storage to avoid unnecessary updates when the user refreshes the page while logged in, triggering the beforeinstallprompt event."
-
-        localStorage.setItem("showInstallAppButton", JSON.stringify(true));
+        if (!showInstallAppButton) {
+          localStorage.setItem("showInstallAppButton", JSON.stringify(true));
+        }
         setDeferredPrompt(event);
         setShowInstallAppButton(true);
         setBeforeInstallHandlerRun(true);
@@ -132,7 +121,7 @@ function UserContextProvider({ children }: UserContextProvider) {
     return () => {
       window.removeEventListener("beforeinstallprompt", beforeInstallHandler);
     };
-  }, [setShowInstallAppButton, setBeforeInstallHandlerRun]);
+  }, [showInstallAppButton]);
 
   const handleInstallApp = useCallback(async () => {
     if (deferredPrompt) {
@@ -144,44 +133,6 @@ function UserContextProvider({ children }: UserContextProvider) {
       }
     }
   }, [deferredPrompt, setDeferredPrompt, setShowInstallAppButton]);
-
-  const getUser = async (): Promise<void> => {
-    try {
-      const data = await request.get("/getuser");
-      if (
-        data?.data?.message ===
-        "Your session has expired. Please log in again to continue."
-      ) {
-        setUserInfo(null);
-        navigate("/login");
-        return;
-      } else if (data.data) {
-        setUserInfo(data.data);
-      } else if (pathNames.includes(location.pathname)) {
-        navigate(location.pathname);
-      } else if (authPaths.includes(location.pathname)) {
-        navigate("/login");
-      } else {
-        navigate("/login");
-      }
-    } catch {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "An error occurred. Please try logging in again.",
-        autoHideDuration: 5000,
-      }));
-      setIsAuthenticating(false);
-      navigate("/login");
-    } finally {
-      setIsAuthenticating(false);
-    }
-  };
-
-  useEffect(() => {
-    getUser();
-  }, []);
 
   // give default theme as dark
   useEffect(() => {
@@ -248,37 +199,54 @@ function UserContextProvider({ children }: UserContextProvider) {
     }
   }, [beforeInstallHandlerRun, userInfo, isAuthenticating]);
 
-  const handleShowUserInfomation = () => {
+  const handleShowUserInfomation = useCallback(() => {
     if (divRefForUserSettings.current?.classList.contains("scale-100")) {
       divRefForUserSettings.current?.classList.remove("scale-100");
       divRefForUserSettings.current?.classList.add("scale-0");
       divRefForUserSettings.current?.classList.add("hidden");
     }
-  };
+  }, []);
+
+  const contextValue = useMemo(() => {
+    return {
+      userInfo,
+      setUserInfo,
+      theme,
+      setTheme,
+      deleteConfirmationModalForCard,
+      indexOfCardForDeletion,
+      setIndexOfCardForDeletion,
+      divRefForUserSettings,
+      showInstallAppButton,
+      setShowInstallAppButton,
+      handleShowUserInfomation,
+      isAuthenticating,
+      setIsAuthenticating,
+      handleInstallApp,
+      showLogoutModal,
+      setShowLogoutModal,
+    };
+  }, [
+    userInfo,
+    setUserInfo,
+    theme,
+    setTheme,
+    deleteConfirmationModalForCard,
+    indexOfCardForDeletion,
+    setIndexOfCardForDeletion,
+    divRefForUserSettings,
+    showInstallAppButton,
+    setShowInstallAppButton,
+    handleShowUserInfomation,
+    isAuthenticating,
+    setIsAuthenticating,
+    handleInstallApp,
+    showLogoutModal,
+    setShowLogoutModal,
+  ]);
 
   return (
-    <UserContext.Provider
-      value={{
-        userInfo,
-        setUserInfo,
-        theme,
-        setTheme,
-        deleteConfirmationModalForCard,
-        indexOfCardForDeletion,
-        setIndexOfCardForDeletion,
-        divRefForUserSettings,
-        showInstallAppButton,
-        setShowInstallAppButton,
-        handleShowUserInfomation,
-        isAuthenticating,
-        setIsAuthenticating,
-        handleInstallApp,
-        showLogoutModal,
-        setShowLogoutModal,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
+    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
   );
 }
 

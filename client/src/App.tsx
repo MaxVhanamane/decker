@@ -21,6 +21,8 @@ import { AlertContext } from "./context/AlertContext";
 import { OfflineContext } from "./context/OfflineContext";
 import CheckAuth from "./components/CheckAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { request } from "./utils/fetch-utils";
+import { CustomError } from "./utils/customError";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -55,8 +57,12 @@ function App() {
     reset: resetDeleteDeckResponse,
   } = useDeleteDeck();
 
-  const { deleteConfirmationModalForCard, setIndexOfCardForDeletion } =
-    useContext(UserContext);
+  const {
+    deleteConfirmationModalForCard,
+    setIndexOfCardForDeletion,
+    setUserInfo,
+    setIsAuthenticating,
+  } = useContext(UserContext);
   const {
     mutate: moveCard,
     reset: resetMoveCardResponse,
@@ -67,6 +73,57 @@ function App() {
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
+
+  const pathNames = [
+    "/signup",
+    "/verifyemail",
+    "/forgotpassword",
+    "/changepassword",
+    "/login",
+    "/accountdeletionsuccess",
+  ];
+  const authPaths = ["/auth/success", "/auth/failure"];
+
+  const getUser = async (): Promise<void> => {
+    try {
+      const data = await request.get("/getuser");
+      if (data.data) {
+        setUserInfo(data.data);
+      } else if (pathNames.includes(location.pathname)) {
+        navigate(location.pathname);
+      } else if (authPaths.includes(location.pathname)) {
+        navigate("/login");
+      } else {
+        navigate("/login");
+      }
+    } catch (error) {
+      if (
+        (error as CustomError)?.message ===
+        "Your session has expired. Please log in again to continue."
+      ) {
+        setUserInfo(null);
+        navigate("/login");
+        return;
+      }
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "An error occurred. Please try logging in again.",
+        autoHideDuration: 5000,
+      }));
+      setIsAuthenticating(false);
+      navigate("/login");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!(location.pathname === "/auth/success")) {
+      getUser();
+    }
+  }, []);
 
   useEffect(() => {
     if (isDeleteDeckError) {
@@ -153,6 +210,9 @@ function App() {
       }
       navigate(location.pathname, { state: { isBackButtonNotClicked: true } });
     } else if (result.destination?.droppableId == "cardDropableArea") {
+      let deleteIndex = result.source.index;
+      let moveIndex = result.destination.index;
+      if (deleteIndex === moveIndex) return;
       if (!isOnline) {
         setAlert((preval: AlertData) => ({
           ...preval,
@@ -163,9 +223,7 @@ function App() {
         }));
         return;
       }
-      let deleteIndex = result.source.index;
-      let moveIndex = result.destination.index;
-      if (deleteIndex === moveIndex) return;
+
       const receivedData = result.draggableId.split("-");
       const id = receivedData[0];
       let data = {

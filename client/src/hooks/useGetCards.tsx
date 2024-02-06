@@ -1,43 +1,37 @@
 import { request } from "../utils/fetch-utils";
 import { useQuery } from "@tanstack/react-query";
 import { Data } from "../types/types";
+import { CustomError } from "../utils/customError";
 
-interface DeckType {
+type DeckType = {
   cards: { title: string; note: string; cardId: string; _id: string }[];
   deck_id: string;
   pinned: boolean;
   title: string;
-}
+};
 
-interface DeckResponse {
+type DeckResponse = {
   title: string;
   cards: { title: string; note: string; cardId: string; _id: string }[];
-}
-
-type ErrorResponse = {
-  message: string;
-  status: number;
 };
 
 const getCards = async (
   _id: string,
   deck: DeckType | null
-): Promise<Data | DeckResponse | null | ErrorResponse> => {
+): Promise<Data | DeckResponse | null> => {
   //If the searchBar is open or there is a deck or search_index value available, it means that I have come to /cards/deck_id page from the searchBar. In this case, I will use the data that I have sent in the Link tag using the state. I will not make any network request. This way, I can achieve offline functionality.
   if (!deck) {
     try {
       const data = await request.get(`/cards/${_id}`);
-      if (data?.message) {
-        return { message: data?.message, status: data?.status };
-      } else {
-        return data?.data;
-      }
+
+      return data?.data;
     } catch (error) {
-      return {
-        message:
-          "An unexpected error occurred while fetching card data. Please try again later.",
-        status: 400,
-      };
+      if (error instanceof CustomError) {
+        // Now TypeScript recognizes 'error' as an instance of CustomError
+        throw new CustomError(error?.message, error?.statusCode);
+      } else {
+        throw new CustomError("Something went wrong!", 503);
+      }
     }
   } else if (deck) {
     return { title: deck.title, cards: deck.cards };
@@ -59,6 +53,7 @@ const useGetCards = (deck_id: string, deck: DeckType | null) => {
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: true, // Refetch on network reconnect
     retry: 0, // no retry on network errorMessage
+    gcTime: 10800000, // 3 hours
   });
 };
 

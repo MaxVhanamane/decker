@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -48,7 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = require("dotenv");
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = __importStar(require("mongoose"));
+const mongoose_1 = require("mongoose");
 const deck_1 = __importDefault(require("./models/deck"));
 const cors_1 = __importDefault(require("cors"));
 const express_session_1 = __importDefault(require("express-session"));
@@ -63,6 +40,8 @@ const accountdeletionotps_1 = __importDefault(require("./models/accountdeletiono
 const cookieParser = require('cookie-parser');
 const LocalStrategy = passport_local_1.default.Strategy;
 const connect_mongo_1 = __importDefault(require("connect-mongo"));
+const dbConnection_1 = require("./DB/dbConnection");
+const fetchUserDetails_1 = require("./middlewares/fetchUserDetails");
 const GoogleStrategy = require("passport-google-oauth20");
 const compression = require('compression');
 (0, dotenv_1.config)();
@@ -87,13 +66,13 @@ app.use((0, express_session_1.default)({
         autoRemoveInterval: 60,
         collectionName: "sessions"
     }),
-    // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
+    // Comment out these keys - httpOnly,secure - from the cookie object while working on localhost. If you don't comment them out, cookies will not be sent to the frontend, and authentication will not work properly.
     // uncomment it while deploying
     cookie: {
         httpOnly: true,
         sameSite: "none",
         secure: true,
-        maxAge: 1000 * 60 * 60 * 24 * 14 //cookie expires in 14 days
+        maxAge: 1000 * 60 * 60 * 24 * 30 //cookie expires in 30 days
     }
 }));
 app.use(cookieParser());
@@ -115,7 +94,7 @@ function (username, password, done) {
         }
         // check if user is registered with Google Auth
         if (!(user === null || user === void 0 ? void 0 : user.password)) {
-            return done(new mongoose_1.Error("You can't log in with your username and password; you signed up with Google. Please use the 'Continue with Google' button to log in."));
+            return done(new mongoose_1.Error("You can't log in with your username and password, you signed up with Google. Please use the 'Continue with Google' button to log in."));
         }
         // If we reach this line it means we found the user now let's compare the passoword.
         bcryptjs_1.default.compare(password, user === null || user === void 0 ? void 0 : user.password, (err, result) => {
@@ -197,34 +176,22 @@ passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 
         done(error);
     }
 }));
-// middleware to get user details
-const fetchUserDetails = function (req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (req === null || req === void 0 ? void 0 : req.isAuthenticated()) {
-            next();
-        }
-        else {
-            return res.status(401).json({ message: "Your session has expired. Please log in again to continue." });
-        }
-    });
-};
-mongoose_1.default.set("strictQuery", true);
-// This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
-mongoose_1.default.connect(process.env.MONGO_URI)
+// Connect to MongoDB and start the server
+(0, dbConnection_1.connectToMongoDB)()
     .then(() => {
-    console.log("Connected to mongodb successfully");
-    // We will start to listen for request once the DB is connected
     app.listen(process.env.PORT || PORT, () => {
-        console.log("server is running on port " + PORT);
+        console.log("Server is running on port " + PORT);
     });
 })
-    .catch((err) => { console.log(err); });
+    .catch((err) => console.error(err));
 // To detect if the user is offline
-// app.get('/ping', async function (req: Request, res: Response) {
-//   res.sendStatus(200)
-// })
+app.get('/ping', function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        res.sendStatus(204);
+    });
+});
 //Deck routes 
-app.get('/decks', fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/decks', fetchUserDetails_1.fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = req === null || req === void 0 ? void 0 : req.user;
         // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
@@ -243,7 +210,7 @@ app.get('/decks', fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0
         res.status(500).json({ message: "Internal server error!" });
     }
 }));
-app.get('/decks-and-cards', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/decks-and-cards', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = req === null || req === void 0 ? void 0 : req.user;
         const decks = yield deck_1.default.find({ email: user === null || user === void 0 ? void 0 : user._id }, { title: 1, cards: 1, pinned: 1 }).sort({ date: -1 });
@@ -253,7 +220,7 @@ app.get('/decks-and-cards', fetchUserDetails, (req, res) => __awaiter(void 0, vo
         res.status(500).json({ message: "Internal server error!" });
     }
 }));
-app.post('/deck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/deck', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req === null || req === void 0 ? void 0 : req.user;
     try {
         const newDeck = new deck_1.default({
@@ -268,7 +235,7 @@ app.post('/deck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void
         res.status(500).json({ message: "An unexpected error occurred while creating the deck. Please try again later." });
     }
 }));
-app.patch('/deck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.patch('/deck/togglepin/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
         const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() });
@@ -278,7 +245,7 @@ app.patch('/deck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, vo
         res.status(500).json({ message: "An unexpected error occurred while pinning the deck. Please try again later!", isError: true });
     }
 }));
-app.put('/undodeck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put('/undodeck', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     delete req.body.index;
     const deck = req.body;
     try {
@@ -290,7 +257,7 @@ app.put('/undodeck', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, v
         res.status(500).json({ message: "An unexpected error occurred while undoing the deck deletion." });
     }
 }));
-app.put('/deck/editdeck/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put('/deck/editdeck/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const updatedDeck = yield deck_1.default.findByIdAndUpdate(req.params.deck_id, { title: req.body.title });
         res.status(200).json(updatedDeck);
@@ -299,7 +266,7 @@ app.put('/deck/editdeck/:deck_id', fetchUserDetails, (req, res) => __awaiter(voi
         res.status(500).json({ message: "An unexpected error occurred while saving the edited deck. Please try again later!" });
     }
 }));
-app.delete('/deck/:id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.delete('/deck/:id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const deletedDeckInfo = yield deck_1.default.findByIdAndDelete(req.params.id);
         //Sending an email and including the date is important because if the user decides to undo the deck and add it again to the database, we will need those details.
@@ -311,7 +278,7 @@ app.delete('/deck/:id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0
     }
 }));
 // Card routes
-app.get('/cards/:_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/cards/:_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const cards = yield deck_1.default.findById({ _id: req.params._id }, { cards: 1, title: 1 });
         if (cards) {
@@ -331,7 +298,7 @@ app.get('/cards/:_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0,
         }
     }
 }));
-app.post('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/card/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const getDeck = yield deck_1.default.findById(req.params.deck_id);
         if (!getDeck) {
@@ -346,7 +313,7 @@ app.post('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, voi
     }
 }));
 //Edit card
-app.patch('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.patch('/card/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         //get the deck using _id
         const Deck = yield deck_1.default.findById(req.params.deck_id);
@@ -371,7 +338,7 @@ app.patch('/card/:deck_id', fetchUserDetails, (req, res) => __awaiter(void 0, vo
         res.status(500).json({ message: "An unexpected error occurred while saving the edited card. Please try again later!" });
     }
 }));
-app.delete('/card/:id/:index', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.delete('/card/:id/:index', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const deck = yield deck_1.default.findById(req.params.id);
         if (deck) {
@@ -387,7 +354,7 @@ app.delete('/card/:id/:index', fetchUserDetails, (req, res) => __awaiter(void 0,
         res.status(500).json({ message: "An unexpected error occurred while deleting the card. Please try again later.", success: false });
     }
 }));
-app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const deck = yield deck_1.default.findById(req.params.id);
         if (deck) {
@@ -411,8 +378,10 @@ app.get('/auth/google', passport_1.default.authenticate('google', {
     scope: ['profile', 'email']
     // scope:['openid','profile', 'email'] 
 }));
-app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL}/auth/success` }));
-app.get("/getuser", fetchUserDetails, (req, res) => {
+app.get('/auth/google/callback', passport_1.default.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, }), (req, res) => {
+    res.redirect(`${process.env.REDIRECT_URL}/auth/success`);
+});
+app.get("/getuser", fetchUserDetails_1.fetchUserDetails, (req, res) => {
     if (req.user) {
         const _a = req.user, { _id } = _a, userInfo = __rest(_a, ["_id"]);
         res.status(200).json(userInfo); // here we get user in req.user because passports deserialize function attaches it automatically
@@ -424,7 +393,7 @@ app.get("/getuser", fetchUserDetails, (req, res) => {
 app.post('/auth/logout', (req, res, next) => {
     req.logout((err) => {
         if (err) {
-            return next(err);
+            return res.status(401).json({ message: 'Logout failed. Please try again.' });
         }
         res.status(200).json({ isLogoutSuccessful: true });
     });
@@ -469,7 +438,7 @@ app.post('/login', passport_1.default.authenticate('local', { failWithError: tru
         res.status(200).json({ success: false });
     }
 }, function (error, req, res, next) {
-    return res.status(200).json({ success: false, message: error.message });
+    return res.status(401).json({ success: false, message: error.message });
 });
 function generateOTP() {
     // Declare a variable to store the OTP
@@ -570,11 +539,14 @@ app.post("/verifyotp", (req, res) => __awaiter(void 0, void 0, void 0, function*
 // forgot password
 app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email }); // This is where user with otp stored while creating account
+        let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email });
         let mainUser = yield user_1.default.findOne({ email: req.body.email }); // We only allow users with existing accounts to reset their password.
         let oneTimePassword = generateOTP();
+        if (mainUser && !(mainUser === null || mainUser === void 0 ? void 0 : mainUser.password)) {
+            return res.status(403).json({ success: false, message: "Since you logged in using Google, your password is managed by your Google account. Please use Google's account settings to update your password." });
+        }
         if (mainUser) {
-            // If the user is found in the 'mainUser' variable, we will check if they exist in the 'ForgotPasswordOTP' modal. If they do, it indicates that they have previously requested an OTP. so we will replace the old OTP with new one.
+            //If the user is found in the 'mainUser' variable, we will then check if the user exists in the 'ForgotPasswordOTP' model. If they do, it indicates that they have previously requested an OTP, so we will replace the old OTP with a new one.
             if (!user) {
                 let generateUserWithOTP = new forgotpasswordotps_1.default({
                     email: req.body.email,
@@ -591,7 +563,7 @@ app.post("/generateforgetpasswordotp", (req, res) => __awaiter(void 0, void 0, v
             }
         }
         else {
-            return res.status(409).json({ success: false, message: "User with this email doesn't exists! Please create an account first." });
+            return res.status(404).json({ success: false, message: "User with this email doesn't exists! Please create an account first." });
         }
         let email = `
    <p> Dear User,</p>
@@ -666,7 +638,7 @@ app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(401).json({ success: false, message: "You are unauthorized!" });
     }
 }));
-app.post("/generateaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/generateaccountdeletionotp", fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let user = yield accountdeletionotps_1.default.findOne({ email: req.body.email });
         let mainUser = yield user_1.default.findOne({ email: req.body.email });
@@ -725,7 +697,7 @@ app.post("/generateaccountdeletionotp", fetchUserDetails, (req, res) => __awaite
         res.status(500).json({ success: false, message: "Some error occurred please try again later!" });
     }
 }));
-app.post("/verifyaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/verifyaccountdeletionotp", fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let user = yield accountdeletionotps_1.default.findOne({ email: req.body.email });
     if (user) {
         // Check If the otp is expired or not.
@@ -746,7 +718,7 @@ app.post("/verifyaccountdeletionotp", fetchUserDetails, (req, res) => __awaiter(
         res.status(200).json({ success: false, message: "No user found!" });
     }
 }));
-app.post("/deleteaccount", fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/deleteaccount", fetchUserDetails_1.fetchUserDetails, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (req.user) {
         try {
             // saving user in userInfo so that I can use the _id of the user to delete the decks. because in DeckModal email field is a foreign key.

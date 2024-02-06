@@ -7,10 +7,7 @@ export default function CheckAuth() {
   const { userInfo, isAuthenticating, setUserInfo } = useContext(UserContext);
   const location = useLocation();
   useEffect(() => {
-    if (
-      location?.state?.from === "/cards" ||
-      location?.state?.from === "/decks"
-    ) {
+    if (location?.state?.authFailed === true) {
       setUserInfo(null);
       return;
     }

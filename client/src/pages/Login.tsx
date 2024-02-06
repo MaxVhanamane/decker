@@ -6,6 +6,7 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { Helmet } from "react-helmet";
 import { OfflineContext } from "../context/OfflineContext";
+import { CustomError } from "../utils/customError";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -38,27 +39,33 @@ export default function Login() {
     }
     setIsLoggingIn(true);
 
+    if (password.length < 8) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "Password must be at least 8 characters long.",
+        autoHideDuration: 5000,
+      }));
+      setIsLoggingIn(false);
+      return;
+    }
+
     try {
       const data = { email, password };
 
       const response = await request.post("/login", data);
       if (response.data.success == true) {
         navigate("/auth/success", { replace: true });
-      } else {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
-          message: response.data.message,
-          autoHideDuration: 7000,
-        }));
       }
     } catch (error) {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: "An error occurred during login.",
+        message: (error as CustomError)?.message
+          ? (error as CustomError)?.message
+          : "An error occurred during the login process",
         autoHideDuration: 5000,
       }));
     } finally {
@@ -121,7 +128,7 @@ export default function Login() {
                             placeholder="Email"
                             name="email"
                             required
-                            autoComplete="username"
+                            autoComplete="email"
                           />
                         </div>
                         <div className="mb-4">

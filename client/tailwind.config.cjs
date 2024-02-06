@@ -16,9 +16,18 @@ module.exports = {
       },
       backgroundImage: ({ theme }) => ({
         BgForDarkMode: `linear-gradient(to right,${theme('colors.slate.950')},${theme('colors.slate.700')},${theme('colors.slate.900')})`,
+        BgForSmallDevicesDarkMode: `linear-gradient(to right,${theme('colors.slate.900')},${theme('colors.slate.800')},${theme('colors.slate.700')})`,
         lightBg: `linear-gradient(to right,${theme('colors.slate.300')},${theme('colors.slate.200')},${theme('colors.slate.100')})`,
       }),
       keyframes: {
+        marquee: {
+          "0%": {
+            "transform": "translateX(100%)"
+          },
+          "100%": {
+            "transform": "translateX(-100%)"
+          }
+        },
 
         rotate: {
           "0%": {
@@ -176,7 +185,7 @@ module.exports = {
       },
 
       animation: {
-
+        marquee: "marquee 10s linear 1",
         rotate: "rotate 10s linear infinite",
         translateFromLeftToRight: "translateFromLeftToRight 0.3s ease-in-out 1",
         translateFromLeftToRightSearch: "translateFromLeftToRightSearch 0.3s ease-in-out 1",

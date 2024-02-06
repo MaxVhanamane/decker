@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
-import react from "@vitejs/plugin-react-swc";
+import reactSWC from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
 
 
@@ -7,9 +7,8 @@ export default defineConfig(({ command, mode }) => {
   // In vite.config.ts we can't access env variables using import.meta.env.VITE_API_URL we have to use following code to access it.
   const env = loadEnv(mode, process.cwd())
   const API_URL = `${env.VITE_API_URL}`
-
   return {
-    plugins: [react(), VitePWA({
+    plugins: [reactSWC(), VitePWA({
 
       registerType: 'autoUpdate',
       devOptions: {
@@ -29,7 +28,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'decks-cache',
               expiration: {
                 maxEntries: 1, // number of entries to store
-                maxAgeSeconds: 60 * 60 * 24 * 14, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 30, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200]
@@ -45,7 +44,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'cards-cache',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 14, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 30, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200],
@@ -60,7 +59,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'search-cache',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 14, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 30, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200],
@@ -74,7 +73,7 @@ export default defineConfig(({ command, mode }) => {
               cacheName: 'auth-cache',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 14, // cache expiration time
+                maxAgeSeconds: 60 * 60 * 24 * 30, // cache expiration time
               },
               cacheableResponse: {
                 statuses: [200, 401],

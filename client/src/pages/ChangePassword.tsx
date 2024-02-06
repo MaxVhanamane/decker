@@ -7,6 +7,7 @@ import { UserContext } from "../context/UserContext";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
+import { CustomError } from "../utils/customError";
 export default function ChangePassword() {
   const location = useLocation();
 
@@ -53,23 +54,27 @@ export default function ChangePassword() {
     if (password === confirmPass) {
       if (password.length > 7 && confirmPass.length > 7) {
         const data = { email: emailAddress, otp: otp, newPassword: password };
-        const res = await request.post("/changepassword", data);
-        if (res.data.success) {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "success",
-            show: true,
-            message: res.data.message,
-          }));
-          setConfirmPass("");
-          setPassword("");
-          navigate("/login");
-        } else {
+        try {
+          const res = await request.post("/changepassword", data);
+          if (res.data.success) {
+            setAlert((preval: AlertData) => ({
+              ...preval,
+              severity: "success",
+              show: true,
+              message: res.data.message,
+            }));
+            setConfirmPass("");
+            setPassword("");
+            navigate("/login");
+          }
+        } catch (error) {
           setAlert((preval: AlertData) => ({
             ...preval,
             severity: "error",
             show: true,
-            message: res.data.message,
+            message: (error as CustomError)?.message
+              ? (error as CustomError)?.message
+              : "Something went wrong please try again later!",
           }));
         }
       } else {
@@ -130,6 +135,7 @@ export default function ChangePassword() {
                             value={password}
                             placeholder="New password"
                             required
+                            autoComplete="off"
                           />
                         </div>
                         <div className="mb-4">
@@ -142,6 +148,7 @@ export default function ChangePassword() {
                             value={confirmPass}
                             placeholder="Confirm new password"
                             required
+                            autoComplete="off"
                           />
                         </div>
                         <div className="text-center pt-1 mb-5 pb-1">

@@ -2,6 +2,7 @@ import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { CardDataType } from "../types/types";
+import { CustomError } from "../utils/customError";
 
 type PayloadData = {
   deck_id: string;
@@ -23,18 +24,14 @@ const createCard = async (payload: PayloadData) => {
       content: payload.content,
     });
 
-    if (data?.message) {
-      return { message: data?.message, status: data?.status };
-    } else {
-      return data?.data;
-    }
+    return data?.data;
   } catch (error) {
     // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
-    return {
-      message:
-        "An unexpected error occurred while creating the card. Please try again later.",
-      status: 400,
-    };
+    if (error instanceof CustomError) {
+      throw new CustomError(error?.message, error?.statusCode);
+    } else {
+      throw new CustomError("Something went wrong!", 503);
+    }
   }
 };
 
@@ -66,18 +63,6 @@ const useCreateCard = () => {
       return previousCardData;
     },
 
-    onSuccess: (data) => {
-      if (data && "message" in data) {
-        if (data?.message) {
-          throw new Error(data?.message);
-        } else {
-          throw new Error(
-            "An unexpected error occurred while creating the card. Please try again later."
-          );
-        }
-      }
-    },
-
     onError: (error, data: PayloadData, context) => {
       queryClient.setQueryData(["cards", data.deck_id], context);
     },
@@ -91,6 +76,7 @@ const useCreateCard = () => {
         queryKey: ["cards", dataThatWePassed.deck_id],
       });
     },
+    retry: false,
   });
 };
 

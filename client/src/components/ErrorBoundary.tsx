@@ -32,7 +32,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             alt="Connection Issue Illustration"
             className=" w-40 h-36 "
           />
-          <div className="font-semibold text-md dark:text-gray-200 text-gray-700 flex items-center justify-center flex-col gap-1">
+          <div className="font-semibold text-base dark:text-gray-200 text-gray-700 flex items-center justify-center flex-col gap-1">
             <p> Failed to load the content. </p>
             <p>
               Please check your internet connection and try refreshing the page.

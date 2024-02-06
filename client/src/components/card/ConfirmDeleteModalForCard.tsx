@@ -27,6 +27,7 @@ const ConfirmDeleteModalForCard = ({
     e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
   ) => {
     const payload = { deck_id: deck_id!, index: indexOfCardForDeletion! };
+
     if ((e.target as HTMLButtonElement).id === "yesbutton") {
       deleteCardItem(payload);
       deleteConfirmationModalForCard?.current?.classList.add("hidden");

@@ -1,4 +1,4 @@
-import React, {
+import {
   ChangeEvent,
   useState,
   useRef,
@@ -288,7 +288,7 @@ const SearchResultCardFullScreenView: FC = () => {
     [isOnline]
   );
 
-  const handleEdit = useCallback(
+  const handleEditCardButtonClick = useCallback(
     (cardItem: ContentTypeForEdit) => {
       if (!isOnline) {
         setAlert((preval: AlertData) => ({
@@ -306,7 +306,7 @@ const SearchResultCardFullScreenView: FC = () => {
     [isOnline]
   );
 
-  const handleSave = () => {
+  const handleSaveEdit = () => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -324,9 +324,20 @@ const SearchResultCardFullScreenView: FC = () => {
       newContent: editContentData,
       index: editContent.cardIndex!,
     };
+    let fullScreenCardDataCache = fullScreenCardData;
 
     if (editContent.title.length > 0 || editContent.note.length > 0) {
-      editCard(data);
+      editCard(data, {
+        onError: () => {
+          setEditContent(data.newContent),
+            setOpenModal(true),
+            setCloseEditModal(false);
+          // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
+          if (showFullScreen) {
+            setFullScreenCardData({ ...fullScreenCardDataCache });
+          }
+        },
+      });
       setCloseEditModal(true);
       setPreviousCardInfoForError({ ...fullScreenCardData });
       setFullScreenCardData({ ...editContent });
@@ -472,7 +483,7 @@ const SearchResultCardFullScreenView: FC = () => {
           addUnderlineText={addUnderlineTextWrapper}
           editContent={editContent}
           handleChange={handleChange}
-          handleSave={handleSave}
+          handleSaveEdit={handleSaveEdit}
           ref={editTextareaRef}
           search_index={search_index}
           openModal={openModal}
@@ -496,7 +507,7 @@ const SearchResultCardFullScreenView: FC = () => {
           search_index={search_index}
           location={location}
           setShowFullScreen={setShowFullScreen}
-          handleEdit={handleEdit}
+          handleEditCardButtonClick={handleEditCardButtonClick}
           handleDelete={handleDelete}
           startAnimation={startAnimation}
           setStartAnimation={setStartAnimation}

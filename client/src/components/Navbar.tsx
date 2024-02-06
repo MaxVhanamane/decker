@@ -238,7 +238,7 @@ const Navbar: FC = () => {
 
       <div
         ref={divRefForUserSettings}
-        className=" fixed transition duration-500 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-[90] "
+        className=" fixed transition duration-300 ease-in-out scale-0  right-6   px-5 py-2 pb-4  z-[90] "
       >
         <div className=" ring-1 dark:ring-sky-500 ring-teal-500 absolute right-4 top-4 shadow-md dark:shadow-sky-500 shadow-teal-500  bg-[#fcfefc]  rounded-md dark:bg-slate-900 mx-auto  ">
           <button

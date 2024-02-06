@@ -2,17 +2,33 @@ import { useNavigate } from "react-router-dom";
 import { useContext, useEffect } from "react";
 import { TiTick } from "react-icons/ti";
 import { request } from "../utils/fetch-utils";
-import { userData } from "../types/types";
+import { AlertData, userData } from "../types/types";
 import { UserContext } from "../context/UserContext";
+import { AlertContext } from "../context/AlertContext";
 
 export default function AuthSuccess() {
-  const { setUserInfo, setShowInstallAppButton } = useContext(UserContext);
+  const { setUserInfo, setShowInstallAppButton, setIsAuthenticating } =
+    useContext(UserContext);
+  const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
-  const getUser = async (): Promise<userData> => {
-    const userData = await request.get("/getuser");
-    setUserInfo(userData.data);
+  const getUser = async (): Promise<userData | null> => {
+    try {
+      const userData = await request.get("/getuser");
+      setUserInfo(userData.data);
+      setIsAuthenticating(false);
 
-    return userData.data;
+      return userData.data;
+    } catch (error) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message:
+          "Some error occured while fetching user details, please login again to continue.",
+        autoHideDuration: 5000,
+      }));
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -32,6 +48,8 @@ export default function AuthSuccess() {
           navigate("/", { replace: true });
         }, 3000);
       } else {
+        // Setting isAuthenticating to false is crucial. If I don't set it to false, in the CheckAuth component, it will have a true value. This could lead to a blank page since the /login page passes through CheckAuth, and if isAuthenticating is true, checkAuth component returns null.
+        setIsAuthenticating(false);
         navigate("/login", { replace: true });
       }
 

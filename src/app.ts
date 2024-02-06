@@ -17,6 +17,8 @@ import AccountDeletionOTP from "./models/accountdeletionotps";
 const cookieParser = require('cookie-parser')
 const LocalStrategy = passportLocal.Strategy
 import MongoStore from 'connect-mongo'
+import { connectToMongoDB } from "./DB/dbConnection";
+import { fetchUserDetails } from "./middlewares/fetchUserDetails";
 const GoogleStrategy = require("passport-google-oauth20")
 const compression = require('compression');
 config()
@@ -76,13 +78,13 @@ app.use(session({
     autoRemoveInterval: 60, // check for expired sessions after every 60 minute and remove them.
     collectionName: "sessions"
   }),
-  // comment cookie object while working on localhost if don't comment it will not send cookies to the frontend(Authentication will not work properly).
+  // Comment out these keys - httpOnly,secure - from the cookie object while working on localhost. If you don't comment them out, cookies will not be sent to the frontend, and authentication will not work properly.
   // uncomment it while deploying
   cookie: {
     httpOnly: true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
     sameSite: "none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
     secure: true,      // it allows only https requests. you can only send these cookies to https sites
-    maxAge: 1000 * 60 * 60 * 24 * 14   //cookie expires in 14 days
+    maxAge: 1000 * 60 * 60 * 24 * 30   //cookie expires in 30 days
 
   }
 }))
@@ -106,7 +108,7 @@ passport.use(new LocalStrategy(
     // check if user is registered with Google Auth
 
     if (!user?.password) {
-      return done(new Error("You can't log in with your username and password; you signed up with Google. Please use the 'Continue with Google' button to log in."));
+      return done(new Error("You can't log in with your username and password, you signed up with Google. Please use the 'Continue with Google' button to log in."));
 
     }
     // If we reach this line it means we found the user now let's compare the passoword.
@@ -205,36 +207,22 @@ passport.deserializeUser(async (id: string, done: (err: any, user?: UserDetails 
 
 
 
-// middleware to get user details
-const fetchUserDetails = async function (req: Request, res: Response, next: NextFunction) {
-  if (req?.isAuthenticated()) {
 
-    next()
-  }
-  else {
-    return res.status(401).json({ message: "Your session has expired. Please log in again to continue." })
-  }
 
-}
-
-mongoose.set("strictQuery", true);
-
-// This is the recomended way to connect to the mongodb database using mongoose. source: https://docs.cyclic.sh/how-to/using-mongo-db#connection-example-mongoclient
-mongoose.connect(process.env.MONGO_URI!)
+// Connect to MongoDB and start the server
+connectToMongoDB()
   .then(() => {
-    console.log("Connected to mongodb successfully");
-    // We will start to listen for request once the DB is connected
     app.listen(process.env.PORT || PORT, () => {
-      console.log("server is running on port " + PORT)
-    })
+      console.log("Server is running on port " + PORT);
+    });
   })
-  .catch((err: Error) => { console.log(err) });
+  .catch((err) => console.error(err));
 
 
 // To detect if the user is offline
-// app.get('/ping', async function (req: Request, res: Response) {
-//   res.sendStatus(200)
-// })
+app.get('/ping', async function (req: Request, res: Response) {
+  res.sendStatus(204)
+})
 
 
 //Deck routes 
@@ -298,7 +286,7 @@ app.post('/deck', fetchUserDetails, async (req: Request, res: Response) => {
 
 
 
-app.patch('/deck/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
+app.patch('/deck/togglepin/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
   try {
     //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
     const updatedDeck = await DeckModal.findByIdAndUpdate(req.params.deck_id, { pinned: req.body.pinned, date: new Date() })
@@ -485,7 +473,9 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, successRedirect: `${process.env.REDIRECT_URL!}/auth/success` }));
+  passport.authenticate('google', { failureRedirect: `${process.env.REDIRECT_URL}/auth/failure`, failureMessage: true, }), (req, res) => {
+    res.redirect(`${process.env.REDIRECT_URL!}/auth/success`)
+  });
 
 app.get("/getuser", fetchUserDetails, (req, res) => {
   if (req.user) {
@@ -499,7 +489,7 @@ app.get("/getuser", fetchUserDetails, (req, res) => {
 
 app.post('/auth/logout', (req, res, next) => {
   req.logout((err) => {
-    if (err) { return next(err); }
+    if (err) { return res.status(401).json({ message: 'Logout failed. Please try again.' }); }
 
     res.status(200).json({ isLogoutSuccessful: true });
   });
@@ -555,8 +545,7 @@ app.post('/login',
       res.status(200).json({ success: false });
     }
   }, function (error: any, req: Request, res: Response, next: NextFunction) {
-
-    return res.status(200).json({ success: false, message: error.message });
+    return res.status(401).json({ success: false, message: error.message });
   }
 );
 
@@ -688,12 +677,16 @@ app.post("/verifyotp", async (req: Request, res: Response) => {
 app.post("/generateforgetpasswordotp", async (req: Request, res: Response) => {
 
   try {
-    let user = await ForgotPasswordOTP.findOne({ email: req.body.email }) // This is where user with otp stored while creating account
+    let user = await ForgotPasswordOTP.findOne({ email: req.body.email })
     let mainUser = await User.findOne({ email: req.body.email })  // We only allow users with existing accounts to reset their password.
     let oneTimePassword = generateOTP();
 
+    if (mainUser && !mainUser?.password) {
+      return res.status(403).json({ success: false, message: "Since you logged in using Google, your password is managed by your Google account. Please use Google's account settings to update your password." })
+    }
+
     if (mainUser) {
-      // If the user is found in the 'mainUser' variable, we will check if they exist in the 'ForgotPasswordOTP' modal. If they do, it indicates that they have previously requested an OTP. so we will replace the old OTP with new one.
+      //If the user is found in the 'mainUser' variable, we will then check if the user exists in the 'ForgotPasswordOTP' model. If they do, it indicates that they have previously requested an OTP, so we will replace the old OTP with a new one.
       if (!user) {
         let generateUserWithOTP = new ForgotPasswordOTP({
           email: req.body.email,
@@ -713,7 +706,7 @@ app.post("/generateforgetpasswordotp", async (req: Request, res: Response) => {
 
     else {
 
-      return res.status(409).json({ success: false, message: "User with this email doesn't exists! Please create an account first." })
+      return res.status(404).json({ success: false, message: "User with this email doesn't exists! Please create an account first." })
     }
 
 

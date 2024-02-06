@@ -2,13 +2,24 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
-import { Dispatch, memo, useContext, useEffect, useRef, useState } from "react";
+import { GiFeather } from "react-icons/gi";
+import React, {
+  Dispatch,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import parseNote from "../../functions/parseNote";
 import ThemeToggler from "../ThemeToggler";
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
 import { UserContext } from "../../context/UserContext";
 import { searchContext } from "../../context/SearchContext";
 import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
+import { TbKeyboard, TbKeyboardOff } from "react-icons/tb";
+import PopUpMessage from "../PopUpMessage";
 type ContentType = {
   title: string;
   note: string;
@@ -39,7 +50,7 @@ type propTypes = {
   setShowScrollButtons: Dispatch<React.SetStateAction<boolean>>;
   showScrollButtons: boolean;
   startAnimation: boolean;
-  handleEdit: (cardItem: ContentTypeForEdit) => void;
+  handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
   handleDelete: (index: number) => void;
 };
 
@@ -48,7 +59,7 @@ const FullScreenCardView = ({
   search_index,
   setShowFullScreen,
   handleDelete,
-  handleEdit,
+  handleEditCardButtonClick,
   startAnimation,
   setStartAnimation,
   showScrollButtons,
@@ -56,36 +67,91 @@ const FullScreenCardView = ({
 }: propTypes) => {
   const { theme } = useContext(UserContext);
   const navigate = useNavigate();
+  const showPopUp = useRef<HTMLDivElement | null>(null);
+
   const bottomElementRef = useRef<HTMLDivElement>(null);
   const topElementRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
     useState(false);
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
-  const [parsedNote, setParsedNote] = useState<React.ReactNode[] | null>(null);
+  const [parsedNote, setParsedNote] = useState<React.ReactNode[]>([]);
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
   const { cardInfo, setCardInfo } = useContext(searchContext);
   const storedToggleValue: string | null = localStorage.getItem("toggleColor");
+  const [pageOpenCount, setPageOpenCount] = useState(1);
+  const storedTypewriterEffectValue: string | null = localStorage.getItem(
+    "showTypewriterEffect"
+  );
   const defaultToggleValue: boolean = storedToggleValue
     ? JSON.parse(storedToggleValue)
-    : true; // Provide a default value in case the stored value is null or undefined
-
+    : false; // Provide a default value in case the stored value is null or undefined
+  const defaultTypewriterEffectValue: boolean = storedTypewriterEffectValue
+    ? JSON.parse(storedTypewriterEffectValue)
+    : false; // Provide a default value in case the stored value is null or undefined
   const [toggle, setToggle] = useState(defaultToggleValue);
+  const [showTypewriterEffect, setShowTypewriterEffect] = useState(
+    defaultTypewriterEffectValue
+  );
+  const [dispalyResponse, setDisplayResponse] = useState<React.ReactNode[]>([]);
   const location = useLocation();
+  const [startTyping, setStartTyping] = useState(false);
+  const [typingInProgress, setTypingInProgress] = useState(false);
+  const iRef = useRef<number>(0); // Initialize a ref to store the value of `i`. we will use this iref to continue typing where we left off when pause Typing becomes true and then false.
+  const intervalIdRef = useRef<NodeJS.Timeout>();
+
+  const flattenReactNodes = (nodes: React.ReactNode[]): React.ReactNode[] => {
+    const filteredNodes = nodes.filter((node) => node !== undefined);
+
+    const result = filteredNodes.reduce<React.ReactNode[]>((acc, node) => {
+      if (typeof node === "string") {
+        return [
+          ...acc,
+          ...node.split("").map((char) => char as React.ReactNode),
+        ];
+      }
+
+      if (React.isValidElement(node)) {
+        return [...acc, node];
+      }
+
+      return acc;
+    }, []);
+
+    return result;
+  };
+
+  const flattenedArray = useMemo(() => {
+    if (search_index) {
+      return [];
+    }
+
+    return flattenReactNodes(parsedNote);
+  }, [parsedNote]);
+
   useEffect(() => {
-    const parseNoteAndSetCache = async () => {
+    const parseNoteAndSet = async () => {
       try {
-        const parsedNoteResult = await parseNote(fullScreenCardData.note);
+        setParsingComplete(false);
+        const parsedNoteResult = await parseNote(
+          fullScreenCardData.note,
+          showTypewriterEffect
+        );
         setParsedNote(parsedNoteResult);
       } catch (error) {
-        setParsedNote(null);
+        setParsedNote([]);
         setParsingError("An error occurred while parsing the note.");
       } finally {
         setParsingComplete(true);
+        if (intervalIdRef.current) {
+          clearInterval(intervalIdRef.current);
+        }
+        iRef.current = 0;
+        setDisplayResponse([]);
       }
     };
-    parseNoteAndSetCache();
+    parseNoteAndSet();
   }, [fullScreenCardData.note, theme]);
 
   const handleScrollToTheBottom = () => {
@@ -100,6 +166,18 @@ const FullScreenCardView = ({
   };
 
   let prevScrollPosition = 0;
+
+  useEffect(() => {
+    if (window.innerWidth < 1024 && !defaultToggleValue) {
+      setToggle(false); // Adjust the condition based on your screen size criteria
+    } else if (window.innerWidth >= 1024) {
+      if (localStorage.getItem("toggleColor")) {
+        setToggle(defaultToggleValue);
+      } else {
+        setToggle(true);
+      }
+    }
+  }, []);
 
   const handleScroll = () => {
     if (divRef.current) {
@@ -148,6 +226,55 @@ const FullScreenCardView = ({
   }, []);
 
   useEffect(() => {
+    if (showTypewriterEffect && pageOpenCount === 1 && !search_index) {
+      if (parsingComplete) {
+        const totalLength = flattenedArray.length;
+
+        if (flattenedArray.length !== dispalyResponse.length) {
+          setTypingInProgress(true);
+
+          intervalIdRef.current = setInterval(() => {
+            // The startTyping state makes sure that the typing only begins after the card finishes opening. Without this, if the content is short, it might get typed before the card opens fully because there's an animation that takes a bit of time.
+            if (startTyping) {
+              const currentChar = flattenedArray[iRef.current];
+              setDisplayResponse((prev) => {
+                const updatedResponse: React.ReactNode[] = [
+                  ...prev,
+                  currentChar,
+                ];
+
+                iRef.current++;
+
+                if (iRef.current >= totalLength) {
+                  clearInterval(intervalIdRef.current!);
+                  iRef.current = 0;
+                  setTypingInProgress(false);
+                }
+                return updatedResponse;
+              });
+            }
+          }, 20);
+        }
+      }
+    } else if (!search_index) {
+      setDisplayResponse([...parsedNote]);
+    }
+
+    return () => {
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+      }
+    };
+  }, [
+    parsedNote,
+    parsingComplete,
+    startTyping,
+    showTypewriterEffect,
+    pageOpenCount,
+    search_index,
+  ]);
+
+  useEffect(() => {
     // Update the meta tag
     const metaTag = document.querySelector(
       'meta[name="theme-color"]'
@@ -179,6 +306,7 @@ const FullScreenCardView = ({
   }, [toggle, theme]);
 
   const handleOnAnimationEnd = () => {
+    setStartTyping(true);
     if (search_index && !startAnimation) {
       setCardInfo({
         title: "",
@@ -209,12 +337,39 @@ const FullScreenCardView = ({
     }
   };
 
+  const handlePopUp = () => {
+    if (showPopUp.current?.classList.contains("scale-0")) {
+      showPopUp.current.classList.remove("scale-0");
+      showPopUp?.current?.classList.add("!block");
+      showPopUp.current.classList.add("!w-[85%]");
+      showPopUp.current.classList.add("md:!w-fit");
+      showPopUp.current.classList.add("!h-fit");
+      showPopUp.current.classList.add("scale-100");
+
+      setTimeout(() => {
+        showPopUp?.current?.classList.remove("scale-100");
+        showPopUp?.current?.classList.add("scale-0");
+        showPopUp?.current?.classList.add("hidden");
+      }, 3000);
+    }
+  };
+
   return (
     <>
+      <PopUpMessage
+        ref={showPopUp}
+        message={
+          showTypewriterEffect
+            ? "You have turned on the typing effect"
+            : "You have turned off the typing effect"
+        }
+      />
       <article
         onAnimationEnd={handleOnAnimationEnd}
-        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]   ${
-          toggle ? "dark:bg-BgForDarkMode bg-lightBg" : ""
+        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]    ${
+          toggle
+            ? "dark:bg-BgForSmallDevicesDarkMode bg-lightBg dark:lg:bg-BgForDarkMode"
+            : ""
         }   dark:bg-slate-900    flex  flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
@@ -222,7 +377,7 @@ const FullScreenCardView = ({
         } `}
       >
         <div
-          className={`mt-2 lg:mt-1  w-full overflow-auto p-[0.95rem] md:p-14 lg:px-96  `}
+          className={`mt-2 lg:mt-1  w-full overflow-auto p-[0.95rem] md:p-14 md:w-[51.25rem]  `}
           ref={divRef}
         >
           <div ref={topElementRef} />
@@ -236,25 +391,37 @@ const FullScreenCardView = ({
                     ? "font-semibold"
                     : "font-normal"
                 }  text-lg  lg:text-xl  break-words break-normal  whitespace-pre-line text-gray-800 dark:text-slate-100 ${
-                  parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
+                  parsedNote.length > 0 &&
+                  "animate-opacityFadeIn lg:animate-quickOpacity"
                 }`}
               >
                 {fullScreenCardData?.title}
               </p>
 
               <div
-                className={`text-left mb-20 lg:mb-16 break-words break-normal   whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
-                  parsedNote && "animate-opacityFadeIn lg:animate-quickOpacity"
+                className={`text-left text-base mb-20 lg:mb-16 break-words break-normal leading-7 whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
+                  parsedNote.length > 0 &&
+                  "animate-opacityFadeIn lg:animate-quickOpacity"
                 } `}
               >
-                {parsedNote}
+                {showTypewriterEffect && !search_index
+                  ? dispalyResponse
+                  : parsedNote}
+                {
+                  <GiFeather
+                    className={`inline-block text-3xl ml-2 -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 ${
+                      !typingInProgress &&
+                      "opacity-0 animate-[opacityFadeOut_0.3s_linear_1]"
+                    }`}
+                  />
+                }
               </div>
               <div ref={bottomElementRef} />
             </div>
           ) : !parsingError ? (
             <div
               className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-gray-800 dark:text-gray-200 ${
-                !parsedNote && "animate-opacityFadeIn "
+                !(parsedNote.length > 0) && "animate-opacityFadeIn "
               }`}
             >
               Loading...
@@ -262,7 +429,7 @@ const FullScreenCardView = ({
           ) : (
             <div
               className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-gray-800 dark:text-gray-200 ${
-                !parsedNote && "animate-opacityFadeIn"
+                !(parsedNote.length > 0) && "animate-opacityFadeIn"
               } w-full`}
             >
               {parsingError}
@@ -270,75 +437,130 @@ const FullScreenCardView = ({
           )}
           <div
             className={`fixed top-0  py-[0.95rem]  ${
-              toggle ? "dark:bg-BgForDarkMode bg-lightBg" : ""
-            } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-4 left-0 w-full flex items-center justify-between lg:px-96  `}
+              toggle
+                ? "dark:lg:bg-BgForDarkMode dark:bg-BgForSmallDevicesDarkMode bg-lightBg"
+                : ""
+            } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-3 md:px-0 left-0 w-full flex items-center justify-center  `}
           >
-            <div>
-              <button
-                onClick={() => {
-                  setStartAnimation(false);
-                  setShowScrollButtons(false);
-                  if (location?.state?.isBackButtonNotClicked) {
-                    navigate(-1);
-                  }
-                }}
-                className=" text-xl rounded pl-1  text-center dark:text-gray-200 text-gray-500  cursor-pointer flex items-center justify-center "
-                aria-label="Back"
-                title="Back"
-              >
-                <IoIosArrowBack /> <p className="text-xs   ">Back</p>
-              </button>
-            </div>
-            <div className="flex items-center justify-center gap-2 ">
-              <div onClick={() => setParsingComplete(false)}>
-                <ThemeToggler />
+            <div className="md:w-[51.25rem] flex items-center justify-between md:px-14 w-full  ">
+              <div>
+                <button
+                  onClick={() => {
+                    setStartAnimation(false);
+                    setShowScrollButtons(false);
+                    if (location?.state?.isBackButtonNotClicked) {
+                      navigate(-1);
+                    }
+                  }}
+                  className=" text-xl rounded   text-center dark:text-gray-200 text-gray-500  cursor-pointer flex items-center justify-center "
+                  aria-label="Back"
+                  title="Back"
+                >
+                  <IoIosArrowBack className="lg:-ml-[0.15rem]" />{" "}
+                  <p className="text-xs   ">Back</p>
+                </button>
               </div>
+              <div className="flex items-center justify-center gap-3 ">
+                <span
+                  onClick={() => {
+                    if (typingInProgress) {
+                      setTypingInProgress(false);
+                    }
+                  }}
+                >
+                  <ThemeToggler />
+                </span>
 
-              <button
-                onClick={() => {
-                  handleDelete(fullScreenCardData?.cardIndex!);
-                }}
-                type="button"
-                className="text-blue-500 dark:text-sky-500 text-xl outline-none px-1 transition-all duration-200  text-center hover:scale-95 "
-                aria-label="Delete Card"
-                title="Delete Card"
-              >
-                <MdOutlineDeleteOutline />
-              </button>
+                {!search_index && (
+                  <button
+                    onClick={() => {
+                      localStorage.setItem(
+                        "showTypewriterEffect",
+                        JSON.stringify(!showTypewriterEffect)
+                      );
+                      setPageOpenCount(1);
+                      setShowTypewriterEffect((pre) => !pre);
+                      iRef.current = 0;
+                      setDisplayResponse([]);
+                      if (typingInProgress) {
+                        setTypingInProgress(false);
+                      }
+                      handlePopUp();
+                    }}
+                    type="button"
+                    className="text-blue-500  outline-none    text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                    aria-label="Toggle typing effect"
+                    title="Toggle typing effect"
+                  >
+                    {showTypewriterEffect ? (
+                      <TbKeyboard className="text-[1.3rem]" />
+                    ) : (
+                      <TbKeyboardOff className="text-[1.3rem]" />
+                    )}
+                  </button>
+                )}
 
-              <button
-                onClick={() => {
-                  handleEdit(fullScreenCardData);
-                }}
-                type="button"
-                className="text-blue-500 text-xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
-                aria-label="Edit Card"
-                title="Edit Card"
-              >
-                <BiEdit />
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.setItem("toggleColor", JSON.stringify(!toggle));
-                  setToggle((pre) => !pre);
-                }}
-                type="button"
-                className="text-blue-500 text-2xl outline-none  px-1  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
-                aria-label="Toggle Colors"
-                title="Toggle Colors"
-              >
-                {toggle ? <LuToggleRight /> : <LuToggleLeft />}
-              </button>
+                <button
+                  onClick={() => {
+                    handleDelete(fullScreenCardData?.cardIndex!);
+                    if (typingInProgress) {
+                      setTypingInProgress(false);
+                    }
+                    setPageOpenCount(4);
+                  }}
+                  type="button"
+                  className="text-blue-500 dark:text-sky-500 text-xl outline-none  transition-all duration-200  text-center hover:scale-95 "
+                  aria-label="Delete Card"
+                  title="Delete Card"
+                >
+                  <MdOutlineDeleteOutline />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setPageOpenCount(3);
+                    if (typingInProgress) {
+                      setTypingInProgress(false);
+                    }
+                    handleEditCardButtonClick(fullScreenCardData);
+                  }}
+                  type="button"
+                  className="text-blue-500 text-xl outline-none  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                  aria-label="Edit Card"
+                  title="Edit Card"
+                >
+                  <BiEdit />
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(
+                      "toggleColor",
+                      JSON.stringify(!toggle)
+                    );
+                    setToggle((pre) => !pre);
+                  }}
+                  type="button"
+                  className="text-blue-500 text-2xl outline-none   lg:pr-0  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                  aria-label="Toggle Colors"
+                  title="Toggle Colors"
+                >
+                  {toggle ? (
+                    <LuToggleRight className="lg:-mr-[0.25rem]" />
+                  ) : (
+                    <LuToggleLeft className="lg:-mr-[0.25rem]" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </article>
       {showScrollButtons &&
         (showScrollToBottomButton || showScrollToTopButton) && (
-          <div className="fixed lg:right-8 lg:bottom-16 bottom-6 right-4 z-[80] animate-opacityFadeIn">
+          <div className="fixed lg:left-1/2 lg:translate-x-[20.5rem] lg:right-1/2 lg:bottom-8 bottom-7 right-5 z-[80] animate-opacityFadeIn">
             {showScrollToBottomButton && parsedNote && (
               <button
-                className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400  "
+                className="  border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300  "
                 onClick={handleScrollToTheBottom}
               >
                 <HiOutlineArrowSmDown />
@@ -346,7 +568,7 @@ const FullScreenCardView = ({
             )}
             {showScrollToTopButton && (
               <button
-                className=" fixed lg:right-8 lg:bottom-16 bottom-7 right-5 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
+                className="  border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300 "
                 onClick={handleScrollToTop}
               >
                 <HiOutlineArrowSmUp />

@@ -8,6 +8,7 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import ReCAPTCHA from "react-google-recaptcha";
 import { OfflineContext } from "../context/OfflineContext";
+import { CustomError } from "../utils/customError";
 
 export default function DeleteMyAccount() {
   const [email, setEmail] = useState("");
@@ -50,32 +51,49 @@ export default function DeleteMyAccount() {
     }
 
     if (userInfo?.email === email) {
-      setShowWaitMessage(true);
-      const res = await request.post("/generateaccountdeletionotp", { email });
-      if (res.data.success) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "success",
-          show: true,
-          message: res.data.message,
-          autoHideDuration: 5000,
-        }));
-        setShowVerifyOTPButton(true);
-        setShowWaitMessage(false);
-      } else if (
-        res.data.message ===
-        "Your session has expired. Please log in again to continue."
-      ) {
-        setUserInfo(null);
-        navigate("/sessionexpired");
-      } else {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
-          message: res.data.message,
-          autoHideDuration: 6000,
-        }));
+      try {
+        setShowWaitMessage(true);
+        const res = await request.post("/generateaccountdeletionotp", {
+          email,
+        });
+        if (res.data.success) {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "success",
+            show: true,
+            message: res.data.message,
+            autoHideDuration: 5000,
+          }));
+          setShowVerifyOTPButton(true);
+          setShowWaitMessage(false);
+        } else {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "error",
+            show: true,
+            message: res.data.message,
+            autoHideDuration: 6000,
+          }));
+          setShowWaitMessage(false);
+        }
+      } catch (error) {
+        if (
+          (error as CustomError)?.message ===
+          "Your session has expired. Please log in again to continue."
+        ) {
+          setUserInfo(null);
+          navigate("/sessionexpired");
+        } else {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "error",
+            show: true,
+            message:
+              (error as CustomError)?.message ||
+              "Something went wrong please try again!",
+            autoHideDuration: 6000,
+          }));
+        }
         setShowWaitMessage(false);
       }
     } else {
@@ -109,40 +127,53 @@ export default function DeleteMyAccount() {
     setIsDeletingAccount(true);
 
     if (otp.length === 6) {
-      const res = await request.post("/verifyaccountdeletionotp", {
-        email,
-        otp,
-      });
-      if (res.data.success) {
-        const res = await request.post("/deleteaccount", { email });
+      try {
+        const res = await request.post("/verifyaccountdeletionotp", {
+          email,
+          otp,
+        });
         if (res.data.success) {
-          setUserInfo(null);
-          navigate("/accountdeletionsuccess", {
-            replace: true,
-            state: { accountDeletedSuccessfully: true },
-          });
+          const res = await request.post("/deleteaccount", { email });
+          if (res?.data?.success) {
+            setUserInfo(null);
+            navigate("/accountdeletionsuccess", {
+              replace: true,
+              state: { accountDeletedSuccessfully: true },
+            });
+          }
+        } else {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "error",
+            show: true,
+            message: res?.data?.message,
+            autoHideDuration: 5000,
+          }));
+          if (
+            res?.data?.message ===
+            "Your OTP has expired! Please request a new one to continue."
+          ) {
+            setShowVerifyOTPButton(false);
+            setOTP("");
+          }
         }
-      } else if (
-        res.data.message ===
-        "Your session has expired. Please log in again to continue."
-      ) {
-        setUserInfo(null);
-        navigate("/sessionexpired");
-      } else {
+      } catch (error) {
+        if (
+          (error as CustomError)?.message ===
+          "Your session has expired. Please log in again to continue."
+        ) {
+          setUserInfo(null);
+          navigate("/sessionexpired");
+        }
+
         setAlert((preval: AlertData) => ({
           ...preval,
           severity: "error",
           show: true,
-          message: res.data.message,
+          message:
+            (error as CustomError)?.message || "OTP verification failed!",
           autoHideDuration: 5000,
         }));
-        if (
-          res.data.message ===
-          "Your OTP has expired! Please request a new one to continue."
-        ) {
-          setShowVerifyOTPButton(false);
-          setOTP("");
-        }
       }
     } else {
       setAlert((preval: AlertData) => ({
@@ -184,6 +215,10 @@ export default function DeleteMyAccount() {
     setCaptcha(false);
   };
 
+  const handleCancelButtonClick = () => {
+    navigate(from);
+  };
+
   return (
     <>
       <section className="absolute top-0 left-0 w-full h-full ">
@@ -211,7 +246,7 @@ export default function DeleteMyAccount() {
                         </h2>
 
                         {showVerifyOTPButton && (
-                          <h4 className="text-md  mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50 text-justify">
+                          <h4 className="text-base  mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50 text-justify">
                             Are you sure you want to delete your account? This
                             action is permanent and cannot be undone. All of
                             your decks and cards inside them will be deleted,
@@ -228,8 +263,8 @@ export default function DeleteMyAccount() {
                           </h4>
                         )}
                       </div>
-                      <form onSubmit={handleGetOTP}>
-                        {!showVerifyOTPButton ? (
+                      {!showVerifyOTPButton && (
+                        <form onSubmit={handleGetOTP}>
                           <div className="mb-1">
                             <input
                               onChange={handleChange}
@@ -242,8 +277,7 @@ export default function DeleteMyAccount() {
                               required
                             />
                           </div>
-                        ) : null}
-                        {!showVerifyOTPButton ? (
+
                           <div className="text-center pt-1 mb-5 pb-1 relative  ">
                             {isOnline ? (
                               <div className="w-[18.75rem] h-[4.625rem]">
@@ -320,8 +354,10 @@ export default function DeleteMyAccount() {
                               </div>
                             ) : null}
                           </div>
-                        ) : null}
-                        {showVerifyOTPButton ? (
+                        </form>
+                      )}
+                      {showVerifyOTPButton && (
+                        <form onSubmit={(e) => e.preventDefault()}>
                           <div className="mb-4 flex items-center justify-center">
                             <input
                               onChange={handleChange}
@@ -334,34 +370,31 @@ export default function DeleteMyAccount() {
                               maxLength={6}
                             />
                           </div>
-                        ) : null}
-                      </form>
-                      {showVerifyOTPButton ? (
-                        <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
-                          <button
-                            onClick={handleOTPVerification}
-                            className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
-                            type="button"
-                            aria-label="Verify OTP and Delete My Account"
-                            disabled={isDeletingAccount}
-                          >
-                            {isDeletingAccount
-                              ? "Account Deletion in Progress..."
-                              : "Verify OTP and Delete My Account"}
-                          </button>
-                          <button
-                            className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3   bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
-                            disabled={isDeletingAccount}
-                            type="button"
-                            aria-label="Cancel"
-                            onClick={() => {
-                              navigate(from);
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : null}
+
+                          <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
+                            <button
+                              onClick={handleOTPVerification}
+                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
+                              type="button"
+                              aria-label="Verify OTP and Delete My Account"
+                              disabled={isDeletingAccount}
+                            >
+                              {isDeletingAccount
+                                ? "Account Deletion in Progress..."
+                                : "Verify OTP and Delete My Account"}
+                            </button>
+                            <button
+                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3   bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
+                              disabled={isDeletingAccount}
+                              type="button"
+                              aria-label="Cancel"
+                              onClick={handleCancelButtonClick}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      )}
                     </div>
                   </div>
                 </div>

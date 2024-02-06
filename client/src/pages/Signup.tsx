@@ -8,6 +8,7 @@ import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { Helmet } from "react-helmet";
 import { OfflineContext } from "../context/OfflineContext";
+import { CustomError } from "../utils/customError";
 export default function SignUp() {
   const location = useLocation();
 
@@ -58,25 +59,36 @@ export default function SignUp() {
 
     if (password === confirmPass) {
       if (password.length > 7 && confirmPass.length > 7) {
-        const data = { username, email: emailAddress, otp: otp, password };
-        const res = await request.post("/signup", data);
-        if (res.data.success) {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "success",
-            show: true,
-            message: res.data.message,
-          }));
-          setConfirmPass("");
-          setPassword("");
-          setUsername("");
-          navigate("/login");
-        } else {
+        try {
+          const data = { username, email: emailAddress, otp: otp, password };
+          const res = await request.post("/signup", data);
+          if (res.data.success) {
+            setAlert((preval: AlertData) => ({
+              ...preval,
+              severity: "success",
+              show: true,
+              message: res.data.message,
+            }));
+            setConfirmPass("");
+            setPassword("");
+            setUsername("");
+            navigate("/login");
+          } else {
+            setAlert((preval: AlertData) => ({
+              ...preval,
+              severity: "error",
+              show: true,
+              message: res.data.message,
+            }));
+          }
+        } catch (error) {
           setAlert((preval: AlertData) => ({
             ...preval,
             severity: "error",
             show: true,
-            message: res.data.message,
+            message:
+              (error as CustomError)?.message ||
+              "Oops! Something went wrong while signing you up. Please try again, and make sure all the information is entered correctly.",
           }));
         }
       } else {

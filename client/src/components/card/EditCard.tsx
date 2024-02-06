@@ -42,7 +42,7 @@ type EditCardProps = {
   ) => void;
   addUnderlineText: (e: React.MouseEvent<HTMLButtonElement>) => void;
   editContent: ContentTypeForEdit;
-  handleSave: () => void;
+  handleSaveEdit: () => void;
   closeEditModal: boolean;
   setCloseEditModal: Dispatch<React.SetStateAction<boolean>>;
 };
@@ -57,7 +57,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
       addUnderlineText,
       editContent,
       handleChange,
-      handleSave,
+      handleSaveEdit,
       search_index,
       openModal,
       closeEditModal,
@@ -71,7 +71,6 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     const { setAlert } = useContext(AlertContext);
     const location = useLocation();
     const navigate = useNavigate();
-
     const scrollToBottom = () => {
       const ref = editTextareaRef as MutableRefObject<HTMLTextAreaElement>;
 
@@ -183,6 +182,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
       }
     };
     useEffect(() => {
+      //When you give a fixed height and open the app in a mobile browser, you might observe the edit modal changing its height when the browser address bar hides and shows. This can hide the bottom part of the edit modal, requiring you to scroll to see it. To avoid that, we will calculate the proper available height and set it.
       const handleResize = () => {
         document.documentElement.style.setProperty(
           "--window-height",
@@ -263,7 +263,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="Close"
                   title="Close"
-                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-red-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full hover:text-gray-200 dark:hover:text-gray-300 p-1    text-xl   text-red-500  transition-all duration-150 "
                   type="button"
                   onClick={() => {
                     // You can remove the pushed state using either of these methods
@@ -292,7 +292,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                   title="Save"
                   className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
                   type="button"
-                  onClick={handleSave}
+                  onClick={handleSaveEdit}
                 >
                   <BsCheckLg />
                 </button>
@@ -325,7 +325,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 ></textarea>
                 {showScrollToBottomButton && (
                   <button
-                    className=" absolute  bottom-6 right-4 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
+                    className=" absolute  bottom-6 right-4 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300 "
                     onClick={scrollToBottom}
                   >
                     <HiOutlineArrowSmDown />
@@ -333,7 +333,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 )}
                 {showScrollToTopButton && (
                   <button
-                    className=" absolute  bottom-6 right-4 border-2 dark:border-gray-600 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-400 "
+                    className=" absolute  bottom-6 right-4 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300 "
                     onClick={scrollToTop}
                   >
                     <HiOutlineArrowSmUp />

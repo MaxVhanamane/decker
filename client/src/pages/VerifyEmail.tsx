@@ -6,6 +6,7 @@ import { request } from "../utils/fetch-utils";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
+import { CustomError } from "../utils/customError";
 export default function VerifyEmail() {
   const [email, setEmail] = useState("");
   const [otp, setOTP] = useState("");
@@ -38,30 +39,44 @@ export default function VerifyEmail() {
       return;
     }
     setShowWaitMessage(true);
-    const res = await request.post("/generateotp", { email });
-    if (res.data.success) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "success",
-        show: true,
-        message: res.data.message,
-        autoHideDuration: 5000,
-      }));
-      setShowVerifyOTPButton(true);
-      setShowWaitMessage(false);
-    } else {
+    try {
+      const res = await request.post("/generateotp", { email });
+      if (res.data.success) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "success",
+          show: true,
+          message: res.data.message,
+          autoHideDuration: 5000,
+        }));
+        setShowVerifyOTPButton(true);
+        setShowWaitMessage(false);
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: res.data.message,
+          autoHideDuration: 6000,
+        }));
+        setShowWaitMessage(false);
+      }
+    } catch (error) {
       setAlert((preval: AlertData) => ({
         ...preval,
         severity: "error",
         show: true,
-        message: res.data.message,
+        message:
+          (error as CustomError)?.message ||
+          "Oops! Something went wrong. Please try again.",
         autoHideDuration: 6000,
       }));
       setShowWaitMessage(false);
     }
   };
 
-  const handleOTPVerification = async () => {
+  const handleOTPVerification = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -74,30 +89,42 @@ export default function VerifyEmail() {
     }
     setIsVerifyingOTP(true);
     if (otp.length === 6) {
-      const res = await request.post("/verifyotp", { email, otp });
-      if (res.data.success) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "success",
-          show: true,
-          message: res.data.message,
-        }));
-        navigate(`/signup?email=${email}&otp=${otp}`);
-      } else {
+      try {
+        const res = await request.post("/verifyotp", { email, otp });
+        if (res.data.success) {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "success",
+            show: true,
+            message: res.data.message,
+          }));
+          navigate(`/signup?email=${email}&otp=${otp}`);
+        } else {
+          setAlert((preval: AlertData) => ({
+            ...preval,
+            severity: "error",
+            show: true,
+            message: res.data.message,
+          }));
+
+          if (
+            res.data.message ===
+            "Your OTP has expired! Please request a new one to continue."
+          ) {
+            setOTP("");
+            setShowVerifyOTPButton(false);
+          }
+        }
+      } catch (error) {
         setAlert((preval: AlertData) => ({
           ...preval,
           severity: "error",
           show: true,
-          message: res.data.message,
+          message:
+            (error as CustomError)?.message ||
+            "Uh-oh! Something went wrong while verifying the OTP.",
         }));
-
-        if (
-          res.data.message ===
-          "Your OTP has expired! Please request a new one to continue."
-        ) {
-          setOTP("");
-          setShowVerifyOTPButton(false);
-        }
+        setIsVerifyingOTP(false);
       }
     } else {
       setAlert((preval: AlertData) => ({
@@ -142,8 +169,8 @@ export default function VerifyEmail() {
                             : " Verify email address"
                         } `}</h4>
                       </div>
-                      <form onSubmit={handleGetOTP}>
-                        {!showVerifyOTPButton ? (
+                      {!showVerifyOTPButton && (
+                        <form onSubmit={handleGetOTP}>
                           <div className="mb-4">
                             <input
                               onChange={handleChange}
@@ -156,9 +183,7 @@ export default function VerifyEmail() {
                               required
                             />
                           </div>
-                        ) : null}
 
-                        {!showVerifyOTPButton ? (
                           <div className="text-center pt-1 mb-5 pb-1 relative">
                             <button
                               className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
@@ -176,8 +201,10 @@ export default function VerifyEmail() {
                               </div>
                             ) : null}
                           </div>
-                        ) : null}
-                        {showVerifyOTPButton ? (
+                        </form>
+                      )}
+                      {showVerifyOTPButton && (
+                        <form onSubmit={handleOTPVerification}>
                           <div className="mb-4">
                             <input
                               onChange={handleChange}
@@ -190,21 +217,21 @@ export default function VerifyEmail() {
                               maxLength={6}
                             />
                           </div>
-                        ) : null}
-                      </form>
-                      {showVerifyOTPButton ? (
-                        <div className="text-center pt-1 mb-4 pb-1">
-                          <button
-                            onClick={handleOTPVerification}
-                            className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
-                            type="button"
-                            aria-label="Verify OTP"
-                            disabled={isVerifyingOTP}
-                          >
-                            Verify OTP
-                          </button>
-                        </div>
-                      ) : null}
+
+                          <div className="text-center pt-1 mb-4 pb-1">
+                            <button
+                              className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none disabled:cursor-not-allowed"
+                              type="submit"
+                              aria-label="Verify OTP"
+                              disabled={isVerifyingOTP}
+                            >
+                              {isVerifyingOTP
+                                ? "Verifying OTP..."
+                                : "Verify OTP"}
+                            </button>
+                          </div>
+                        </form>
+                      )}
                       <div className="flex items-center justify-between pb-6">
                         <p className="text-gray-800 dark:text-gray-50 mr-2">
                           Have an account?

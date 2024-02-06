@@ -16,6 +16,7 @@ const Tips = ({
   setCloseTipsModal,
 }: propTypes) => {
   const { theme } = useContext(UserContext);
+
   return (
     <div
       onAnimationEnd={() => {
@@ -55,7 +56,7 @@ const Tips = ({
             this (e.g. _your content_).
             <span className="ml-1">
               This will result in something like this:
-              <u className="underline decoration-pink-500 text-gray-800 dark:text-gray-200 ml-1">
+              <u className="underline dark:decoration-teal-400 decoration-sky-500 text-gray-800 dark:text-gray-200 ml-1">
                 your content
               </u>
             </span>
@@ -102,11 +103,11 @@ const Tips = ({
           </ul>
           <p className="mt-4  ">
             You can achieve the desired effects using
-            <u className="underline decoration-pink-500 text-gray-800 dark:text-gray-200 mr-1 ml-1">
+            <u className="underline dark:decoration-teal-400 decoration-sky-500 text-gray-800 dark:text-gray-200 mr-1 ml-1">
               the provided buttons,
             </u>
             or if you prefer,
-            <u className="underline decoration-pink-500 text-gray-800 dark:text-gray-200 mr-1 ml-1">
+            <u className="underline dark:decoration-teal-400 decoration-sky-500 text-gray-800 dark:text-gray-200 mr-1 ml-1">
               manually type the required syntax
             </u>
             using your keyboard.

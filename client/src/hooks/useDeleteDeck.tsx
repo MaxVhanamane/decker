@@ -1,8 +1,8 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertContext } from "../context/AlertContext";
 import { DeckAndCardType, DeckType, DeckTypeWithIndex } from "../types/types";
-import { useContext, RefObject } from "react";
+import { RefObject } from "react";
+import { CustomError } from "../utils/customError";
 
 type ResponseType = {
   modifiedDeckInfo: {
@@ -35,17 +35,14 @@ const deleteDeck = async ({
 }): Promise<ResponseType | ErrorResponse> => {
   try {
     const data = await request.delete(`/deck/${_id}`);
-    if (data?.message) {
-      return { message: data?.message, status: data?.status };
-    } else {
-      return data?.data;
-    }
+
+    return data?.data;
   } catch (error) {
-    return {
-      message:
-        "An unexpected error occurred while deleting the deck. Please try again later!",
-      status: 400,
-    };
+    if (error instanceof CustomError) {
+      throw new CustomError(error?.message, error?.statusCode);
+    } else {
+      throw new CustomError("Something went wrong!", 503);
+    }
   }
 };
 
@@ -123,7 +120,7 @@ const useDeleteDeck = () => {
     },
     onSuccess: (data: ResponseType | ErrorResponse, _variables, context) => {
       // we need index of deck here so that when we undo, we can insert it in a right place.
-      if (data && "modifiedDeckInfo" in data && !("message" in data)) {
+      if (data && "modifiedDeckInfo" in data) {
         let deletedDeckInformation = {
           ...data.modifiedDeckInfo,
           index: context!.indexOfDeletedDeck,
@@ -140,14 +137,6 @@ const useDeleteDeck = () => {
           context!.undoButtonRef?.current?.classList.add("scale-0");
           context!.undoButtonRef?.current?.classList.add("hidden");
           context!.handlePopupForUndoButton();
-        }
-      } else {
-        if (data && "message" in data) {
-          throw new Error(data?.message as string);
-        } else {
-          throw new Error(
-            "An unexpected error occurred while deleting the deck. Please try again later!"
-          );
         }
       }
     },

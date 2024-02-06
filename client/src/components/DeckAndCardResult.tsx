@@ -73,23 +73,28 @@ const DeckAndCardResult: FC<PropType> = ({
 
       // Split the text using the regular expression and keep track of the first match.
       let isFirstMatch = false;
-      const foundString = text.split(regex).map((part, index) => {
-        // Check if the current part matches the search query.
-        if (regex.test(part) && !isFirstMatch) {
-          isFirstMatch = true;
-          // Highlight the first occurrence.
-          return (
-            <span
-              key={index}
-              className={`${theme === "dark" ? "bg-red-500" : "bg-yellow-300"}`}
-            >
-              {part}
-            </span>
-          );
-        } else {
-          return part;
-        }
-      });
+      const foundString = text
+        .slice(0, 300)
+        .split(regex)
+        .map((part, index) => {
+          // Check if the current part matches the search query.
+          if (regex.test(part) && !isFirstMatch) {
+            isFirstMatch = true;
+            // Highlight the first occurrence.
+            return (
+              <span
+                key={index}
+                className={`${
+                  theme === "dark" ? "bg-red-500" : "bg-yellow-300"
+                }`}
+              >
+                {part}
+              </span>
+            );
+          } else {
+            return part;
+          }
+        });
 
       return <>{foundString}</>;
     },
@@ -318,12 +323,22 @@ const DeckAndCardResult: FC<PropType> = ({
           >
             <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8.8rem] lg:h-40 text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group">
               <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">
-                {searchQuery.length > 0 &&
-                  highlightText(card.title, searchQuery)}
+                {card.title ? (
+                  highlightText(card.title, searchQuery)
+                ) : (
+                  <span className="lg:text-base dark:text-gray-500 text-gray-400">
+                    You have not added title to this card.
+                  </span>
+                )}
               </p>
               <p className="text-sm lg:text-base  text-gray-800 dark:text-gray-100 px-1 line-clamp-3 break-words break-all -ml-1">
-                {searchQuery.length > 0 &&
-                  highlightText(card.note, searchQuery)}
+                {card.note ? (
+                  highlightText(card.note, searchQuery)
+                ) : (
+                  <span className=" dark:text-gray-500 text-gray-400">
+                    You have not added a note to this card.
+                  </span>
+                )}
               </p>
               <p className="absolute text-gray-50 bg-teal-800 group-hover:bg-teal-700   dark:bg-sky-800  dark:group-hover:bg-sky-700 transition duration-300 right-0 bottom-0 px-2 rounded-br-[0.340rem] rounded-tl-md line-clamp-1 break-all text-center  max-w-[10rem]">
                 {card.deckTitle}
