@@ -4,26 +4,23 @@ import { DeckAndCardType, DeckType } from "../types/types";
 import { useContext } from "react";
 import { searchContext } from "../context/SearchContext";
 import { CustomError } from "../utils/customError";
-type CardData = {
+import { updateCache } from "../utils/updateCache";
+
+type DeckData = {
   deck_id: string;
   newTitle: string;
 };
 
-type PromiseData = {
+type SuccessResponseType = {
   title: string;
   _id: string;
   cards: { title: string; note: string }[];
   pinned: boolean;
 };
 
-type ErrorResponse = {
-  message: string;
-  status: number;
-};
-
 const editDeck = async (
-  deckItem: CardData
-): Promise<PromiseData | ErrorResponse> => {
+  deckItem: DeckData
+): Promise<SuccessResponseType | CustomError> => {
   try {
     const data = await request.put(`/deck/editdeck/${deckItem.deck_id}`, {
       title: deckItem.newTitle,
@@ -69,10 +66,10 @@ const useEditDeck = () => {
       );
 
       //When a user performs a search, they will receive updated data. If I don't implement this, there is a possibility that if the user changes the deck name on the home page and then performs a search, they might see old deck name for a sec.Only after the network request completes, they will see the updated data.
-      const previousQueryDataForSearch = queryClient.getQueryData<
+      const previousCardAndDeckQueryData = queryClient.getQueryData<
         DeckAndCardType[]
       >(["decks-and-cards"]);
-      if (previousQueryDataForSearch) {
+      if (previousCardAndDeckQueryData) {
         await queryClient.cancelQueries({ queryKey: ["decks-and-cards"] });
         queryClient.setQueryData<DeckAndCardType[] | undefined>(
           ["decks-and-cards"],
@@ -92,15 +89,19 @@ const useEditDeck = () => {
       }
 
       // Return previous data so that if something goes wrong we can use this in onError method
-      return { previousQueryData, previousQueryDataForSearch };
+      return { previousQueryData, previousCardAndDeckQueryData };
     },
 
     onError: (error, _title, context) => {
       queryClient.setQueryData(["decks"], context?.previousQueryData);
       queryClient.setQueryData(
         ["decks-and-cards"],
-        context?.previousQueryDataForSearch
+        context?.previousCardAndDeckQueryData
       );
+    },
+
+    onSuccess: (responseData, mutationData, context) => {
+      updateCache("editDeck", "search-cache", "decks-and-cards", mutationData);
     },
 
     onSettled: (serverData, error, data, context) => {

@@ -20,8 +20,6 @@
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
-    width: 100%;
-    height: -webkit-fill-available;
 
   }
 
@@ -33,8 +31,66 @@
     visibility: hidden;
   }
 
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  /* Show scrollbar for specific elements, e.g., code blocks */
+  .show-scrollbar {
+    overflow: auto;
+    scrollbar-width: 8px;
+
+    /* For Firefox */
+  }
+
+  .show-scrollbar::-webkit-scrollbar {
+    height: 8px;
+
+    /* For Webkit browsers like Chrome and Safari */
+  }
+
+
+  .show-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #64748b;
+    border-radius: 10px;
+  }
+
+  .show-scrollbar::-webkit-scrollbar-track {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+
+
+
+  }
+
+  html.dark .show-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 10px;
+
+  }
+
+
+  html.dark .show-scrollbar::-webkit-scrollbar-track {
+    background-color: #1e293b;
+    border-radius: 10px;
+    /* Replace 'red' with your desired color code */
+  }
+
+
+
 
 }
+
 
 
 /* Hide the scrollbar */

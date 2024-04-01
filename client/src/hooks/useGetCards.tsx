@@ -1,29 +1,26 @@
 import { request } from "../utils/fetch-utils";
 import { useQuery } from "@tanstack/react-query";
-import { Data } from "../types/types";
 import { CustomError } from "../utils/customError";
 
 type DeckType = {
   cards: { title: string; note: string; cardId: string; _id: string }[];
   deck_id: string;
-  pinned: boolean;
   title: string;
 };
 
-type DeckResponse = {
+type SuccessResponseType = {
   title: string;
   cards: { title: string; note: string; cardId: string; _id: string }[];
+  _id: string;
 };
 
 const getCards = async (
   _id: string,
   deck: DeckType | null
-): Promise<Data | DeckResponse | null> => {
-  //If the searchBar is open or there is a deck or search_index value available, it means that I have come to /cards/deck_id page from the searchBar. In this case, I will use the data that I have sent in the Link tag using the state. I will not make any network request. This way, I can achieve offline functionality.
+): Promise<SuccessResponseType | null> => {
   if (!deck) {
     try {
       const data = await request.get(`/cards/${_id}`);
-
       return data?.data;
     } catch (error) {
       if (error instanceof CustomError) {
@@ -34,7 +31,8 @@ const getCards = async (
       }
     }
   } else if (deck) {
-    return { title: deck.title, cards: deck.cards };
+    // If deck is present,it means that I have come to /cards/deck_id page from the searchBar. In this case, I will use the data that I have sent in the Link tag using the state. I will not make any network request. This way, I can achieve offline functionality.
+    return { title: deck.title, cards: deck.cards, _id: deck.deck_id };
   }
 
   return null;

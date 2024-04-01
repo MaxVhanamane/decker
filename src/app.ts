@@ -1,6 +1,6 @@
 import { config } from "dotenv"
 import express, { NextFunction, Request, Response } from "express"
-import mongoose, { Error } from "mongoose";
+import mongoose, { Error, isValidObjectId } from "mongoose";
 import DeckModal from './models/deck';
 import cors from "cors"
 import session from "express-session";
@@ -303,7 +303,7 @@ app.patch('/deck/togglepin/:deck_id', fetchUserDetails, async (req: Request, res
 
 })
 
-app.put('/undodeck', fetchUserDetails, async (req: Request, res: Response) => {
+app.put('/deck/undodeck', fetchUserDetails, async (req: Request, res: Response) => {
   delete req.body.index
   const deck = req.body
 
@@ -311,9 +311,9 @@ app.put('/undodeck', fetchUserDetails, async (req: Request, res: Response) => {
     const newDeck = new DeckModal({
       ...deck
     })
-    const createdDeck = await newDeck.save()
+    await newDeck.save()
 
-    res.status(200).json({ createdDeck, success: true })
+    res.status(200).json({ success: true })
   }
 
   catch (error) {
@@ -353,9 +353,9 @@ app.delete('/deck/:id', fetchUserDetails, async (req: Request, res: Response) =>
 app.get('/cards/:_id', fetchUserDetails, async (req: Request, res: Response) => {
 
   try {
-    const cards = await DeckModal.findById({ _id: req.params._id }, { cards: 1, title: 1 });
+    const cards = await DeckModal.findById({ _id: req.params._id }, { cards: 1, title: 1, _id: 1 });
     if (cards) {
-      res.status(200).json({ cards: cards.cards, title: cards.title })
+      res.status(200).json({ cards: cards.cards, title: cards.title, _id: cards._id })
     }
     else {
       res.status(404).json({ message: "No cards found!" });
@@ -379,6 +379,7 @@ app.post('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response)
     if (!getDeck) {
       return res.status(400).json({ message: "No deck found! Please check deck id" })
     }
+
     getDeck.cards.unshift(req.body.content)
     const createdCard = await getDeck.save()
     res.status(201).json(createdCard)
@@ -391,25 +392,27 @@ app.post('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response)
 
 //Edit card
 app.patch('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response) => {
+  const deckId = req.params.deck_id;
+  const index = req.body.index;
+  const { title, note } = req.body.newContent;
+
   try {
-    //get the deck using _id
-    const Deck = await DeckModal.findById(req.params.deck_id)
-    // take out cards from received deck
-    const cards = Deck?.cards
-    if (cards) {
-      // get the index from body
-      const index = req.body.index
-      //remove one item at index (which we received) and add newContent at that index
-      cards?.splice(index, 1, req.body.newContent); // this will modify original array
-      // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
-      Deck.cards.splice(0, Deck.cards.length, ...cards)
-      // save it in the db
-      const newCard = await Deck.save()
-      res.status(200).json(newCard)
+    const updatedCard = await DeckModal.findOneAndUpdate(
+      { _id: deckId },
+      {
+        $set: {
+          [`cards.${index}.title`]: title,
+          [`cards.${index}.note`]: note,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedCard) {
+      return res.status(404).json({ success: false, message: 'Card not found' });
     }
-    else {
-      res.status(400).json({ message: "Card not found!" })
-    }
+
+    res.status(200).json({ success: true });
   }
   catch (error) {
     res.status(500).json({ message: "An unexpected error occurred while saving the edited card. Please try again later!" })
@@ -417,14 +420,53 @@ app.patch('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response
 })
 
 
+app.put('/card/undocard', fetchUserDetails, async (req: Request, res: Response) => {
+  const deck_id = req.body.deck_id
+  const cardContent = req.body.content
+  const cardIndex = req.body.index
+
+  // When a user creates a new card, I add a dummy _id, which is not a valid MongoDB id format. Once the id gets created on the server, it replaces the dummy _id with the newly created _id. However, if a user creates a card and immediately deletes it, and then undoes the deletion, you will have a dummy id in req.body.content._id, which can't be saved in the database because it is not in a valid _id format. Therefore, if we encounter an invalid _id format, we will simply delete it and allow the server to create a new one.
+
+  if (!isValidObjectId(req?.body?.content?._id)) {
+    delete req?.body?.content?._id
+  }
+
+
+  try {
+    // //get the deck using _id
+    // const Deck = await DeckModal.findById(deck_id)
+    // // take out cards from received deck
+
+    // Deck?.cards.splice(cardIndex, 0, cardContent)
+    // // save it in the db
+    // await Deck?.save()
+    await DeckModal.findOneAndUpdate(
+      { _id: deck_id },
+      { $push: { cards: { $each: [cardContent], $position: cardIndex } } },
+    );
+
+    setTimeout(() => {
+      res.status(200).json({ success: true })
+
+    }, 5000)
+  }
+
+  catch (error) {
+    res.status(500).json({ message: "An unexpected error occurred while undoing the deck deletion." });
+  }
+
+})
+
+
 app.delete('/card/:id/:index', fetchUserDetails, async (req: Request, res: Response) => {
+
   try {
     const deck = await DeckModal.findById(req.params.id)
     if (deck) {
 
       deck.cards.splice(parseInt(req.params.index), 1);
-      let newArray = await deck.save()
-      res.status(200).json({ cards: newArray, success: true })
+      await deck.save()
+      res.status(200).json({ success: true })
     }
     else {
       res.status(400).json({ message: "Card not found!", success: false })
@@ -464,6 +506,19 @@ app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails, as
   }
 })
 
+app.post('/login',
+  passport.authenticate('local', { failWithError: true }),
+  (req: Request, res: Response) => {
+    if (req.user) {
+      res.status(200).json({ success: true });
+    }
+    else {
+      res.status(200).json({ success: false });
+    }
+  }, function (error: any, req: Request, res: Response, next: NextFunction) {
+    return res.status(401).json({ success: false, message: error.message });
+  }
+);
 
 
 
@@ -535,19 +590,7 @@ app.post("/signup", async (req: Request, res: Response) => {
 
 
 
-app.post('/login',
-  passport.authenticate('local', { failWithError: true }),
-  (req: Request, res: Response) => {
-    if (req.user) {
-      res.status(200).json({ success: true });
-    }
-    else {
-      res.status(200).json({ success: false });
-    }
-  }, function (error: any, req: Request, res: Response, next: NextFunction) {
-    return res.status(401).json({ success: false, message: error.message });
-  }
-);
+
 
 
 
@@ -965,3 +1008,22 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
 //   }));
 //   await deck.save();
 // }
+
+
+// To check document size: I was gettting this warning Documents larger than 2 MB found in the collection(s) scanned.
+// const largestDocumentSize = await DeckModal
+// .aggregate([
+//   {
+//     $addFields: {
+//       documentSize: { $bsonSize: '$$ROOT' }
+//     }
+//   },
+//   {
+//     $match: {
+//       documentSize: { $gt: 2 * 1024 * 1024 } // 2 MB in bytes
+//     }
+//   }
+// ])
+// .exec();
+// console.log(largestDocumentSize)
+

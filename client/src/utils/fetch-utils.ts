@@ -40,11 +40,13 @@ const checkIsUserOnline = async () => {
 };
 
 const callAPI = async (url: string, timeout: number) => {
+    // Add credentials when making a request to /ping to avoid CORS errors.
+    const shouldAddCredentials = url.includes("/ping")
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-        const response = await fetch(url, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' }, method: "GET" });
+        const response = await fetch(url, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' }, method: "GET", credentials: shouldAddCredentials ? "include" : "omit" });
         clearTimeout(timeoutId);
         return response;
     } catch (error) {
@@ -69,6 +71,7 @@ export const request = {
             const online = await checkIsUserOnline()
 
             if (!online) {
+
                 // Check if cached data is available
                 const cachedResponse = await caches.match(`${this.baseURL}${url}`);
                 if (cachedResponse) {
@@ -80,7 +83,6 @@ export const request = {
                 throw new CustomError("No internet connection", 0);
 
             }
-
 
 
 

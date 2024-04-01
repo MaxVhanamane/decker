@@ -1,4 +1,11 @@
-import { Dispatch, MouseEvent, SetStateAction, memo, useState } from "react";
+import {
+  Dispatch,
+  MouseEvent,
+  SetStateAction,
+  memo,
+  useContext,
+  useState,
+} from "react";
 import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
 import { BiCodeCurly } from "react-icons/bi";
 import { BsCheckLg, BsTypeUnderline } from "react-icons/bs";
@@ -7,6 +14,7 @@ import { FiMinusSquare, FiPlusSquare } from "react-icons/fi";
 import { TbBulbFilled } from "react-icons/tb";
 import { MdOutlineClose } from "react-icons/md";
 import Tooltip from "../Tooltip";
+import { AudioContext } from "../../context/AudioContext";
 
 type PropTypes = {
   addLinkWrapper: (
@@ -41,6 +49,7 @@ const CardToolbar = ({
   handleClose,
 }: PropTypes) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
 
   const handleMouseEnter = () => {
     hoverTimer = window.setTimeout(() => {
@@ -193,6 +202,11 @@ const CardToolbar = ({
             handleClose();
             if (showTooltip) {
               setShowTooltip(false);
+            }
+            if (isPlayingAudioAllowed) {
+              setTimeout(() => {
+                handlePlayAudio("close");
+              }, 100);
             }
           }}
         >

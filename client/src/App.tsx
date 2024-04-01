@@ -1,10 +1,14 @@
 import { useContext, useRef, useState, lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { AlertData, DeckTypeWithIndex } from "./types/types";
+import {
+  AlertData,
+  CardsDataType,
+  DeckTypeWithIndex,
+  UndoCardPayloadData,
+} from "./types/types";
 import useMoveCard from "./hooks/useMoveCard";
 import { UserContext } from "./context/UserContext";
 import { useRegisterSW } from "virtual:pwa-register/react";
-
 import {
   DragDropContext,
   DropResult,
@@ -23,6 +27,9 @@ import CheckAuth from "./components/CheckAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { request } from "./utils/fetch-utils";
 import { CustomError } from "./utils/customError";
+import { AudioContext } from "./context/AudioContext";
+import useDeleteCard from "./hooks/useDeleteCard";
+import { useQueryClient } from "@tanstack/react-query";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -42,6 +49,7 @@ const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 // putting timout variable outside of the function so that It will be created only once not on each render
 // So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
 let timeout: NodeJS.Timeout;
+let timeoutForUndoCard: NodeJS.Timeout;
 const isFirefox = /firefox/i.test(navigator.userAgent);
 
 function App() {
@@ -49,13 +57,22 @@ function App() {
   if ("serviceWorker" in navigator && !isFirefox) {
     useRegisterSW();
   }
-  const [undoDeck, setUndoDeck] = useState<DeckTypeWithIndex | null>(null);
+  const [undoDeckDetails, setUndoDeckDetails] =
+    useState<DeckTypeWithIndex | null>(null);
+  const [undoCardDetails, setUndoCardDetails] =
+    useState<UndoCardPayloadData | null>(null);
   const {
     mutate: deleteDeckMutation,
     error: deleteDeckError,
     isError: isDeleteDeckError,
     reset: resetDeleteDeckResponse,
   } = useDeleteDeck();
+  const {
+    mutate: deleteCardMutation,
+    error: deleteCardError,
+    isError: isDeleteCardError,
+    reset: resetDeleteCardResponse,
+  } = useDeleteCard();
 
   const {
     deleteConfirmationModalForCard,
@@ -70,10 +87,11 @@ function App() {
     error: moveCardError,
   } = useMoveCard();
   const undoButtonRef = useRef<HTMLDivElement | null>(null);
+  const undoButtonRefForCard = useRef<HTMLDivElement | null>(null);
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
-
+  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
   const pathNames = [
     "/signup",
     "/verifyemail",
@@ -83,7 +101,7 @@ function App() {
     "/accountdeletionsuccess",
   ];
   const authPaths = ["/auth/success", "/auth/failure"];
-
+  const queryClient = useQueryClient();
   const getUser = async (): Promise<void> => {
     try {
       const data = await request.get("/getuser");
@@ -158,11 +176,40 @@ function App() {
     }
   };
 
+  const handlePopupForUndoButtonForCard = () => {
+    if (undoButtonRefForCard.current?.classList.contains("scale-0")) {
+      undoButtonRefForCard.current.classList.remove("scale-0");
+      undoButtonRefForCard?.current?.classList.add("!block");
+      undoButtonRefForCard.current.classList.add("!w-[19rem]");
+      undoButtonRefForCard.current.classList.add("!h-fit");
+      undoButtonRefForCard.current.classList.add("scale-100");
+
+      timeoutForUndoCard = setTimeout(() => {
+        undoButtonRefForCard?.current?.classList.remove("scale-100");
+        undoButtonRefForCard?.current?.classList.add("scale-0");
+        undoButtonRefForCard?.current?.classList.add("hidden");
+      }, 7000);
+    } else if (undoButtonRefForCard?.current?.classList.contains("scale-100")) {
+      clearTimeout(timeoutForUndoCard);
+      undoButtonRefForCard.current.classList.add("scale-0");
+      undoButtonRefForCard?.current?.classList.add("hidden");
+      undoButtonRefForCard.current.classList.remove("scale-100");
+    }
+  };
+
   const handleUndoDeck = (deck: DeckTypeWithIndex | null): void => {
     if (deck === null) {
-      setUndoDeck(null);
+      setUndoDeckDetails(null);
     } else {
-      setUndoDeck({ ...deck });
+      setUndoDeckDetails(deck);
+    }
+  };
+
+  const handleUndoCard = (card: UndoCardPayloadData | null): void => {
+    if (card === null) {
+      setUndoCardDetails(null);
+    } else {
+      setUndoCardDetails(card);
     }
   };
 
@@ -188,7 +235,15 @@ function App() {
         undoButtonRef,
         handlePopupForUndoButton,
       };
-      deleteDeckMutation(data);
+      deleteDeckMutation(data, {
+        onSuccess: () => {
+          if (isPlayingAudioAllowed) {
+            setTimeout(() => {
+              handlePlayAudio("deletedSuccessfully");
+            }, 100);
+          }
+        },
+      });
     } else if (result.destination?.droppableId == "cardDeleteArea") {
       if (!isOnline) {
         setAlert((preval: AlertData) => ({
@@ -202,13 +257,47 @@ function App() {
       }
 
       let cardToDeleteIndex = result.source.index;
-      setIndexOfCardForDeletion(cardToDeleteIndex);
-      if (
-        deleteConfirmationModalForCard?.current?.classList.contains("hidden")
-      ) {
-        deleteConfirmationModalForCard?.current?.classList.remove("hidden");
+      let deck_id = result.draggableId.split("-")[0];
+
+      const cardInfo = queryClient.getQueryData<CardsDataType>([
+        "cards",
+        deck_id,
+      ]);
+
+      if (cardInfo && "cards" in cardInfo) {
+        const cardInformation = cardInfo?.cards?.[cardToDeleteIndex];
+        // Delete the _id field from the card because the server will generate a new _id when it adds the card back.
+        setUndoCardDetails({
+          deck_id,
+          content: cardInformation,
+          index: cardToDeleteIndex,
+        });
+        const cardToDelete = {
+          deck_id,
+          index: cardToDeleteIndex,
+        };
+        deleteCardMutation(cardToDelete, {
+          onSuccess: () => {
+            // If user deletes cards one after the another that creates problem because when user deletes second card
+            // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
+            if (undoButtonRefForCard.current?.classList.contains("scale-0")) {
+              handlePopupForUndoButtonForCard();
+            } else {
+              clearTimeout(timeoutForUndoCard);
+              undoButtonRefForCard?.current?.classList.remove("scale-100");
+              undoButtonRefForCard?.current?.classList.add("scale-0");
+              undoButtonRefForCard?.current?.classList.add("hidden");
+              handlePopupForUndoButtonForCard();
+            }
+
+            if (isPlayingAudioAllowed) {
+              setTimeout(() => {
+                handlePlayAudio("deletedSuccessfully");
+              }, 100);
+            }
+          },
+        });
       }
-      navigate(location.pathname, { state: { isBackButtonNotClicked: true } });
     } else if (result.destination?.droppableId == "cardDropableArea") {
       let deleteIndex = result.source.index;
       let moveIndex = result.destination.index;
@@ -239,6 +328,13 @@ function App() {
     <>
       <DragDropContext
         onDragEnd={(result: DropResult, provided: ResponderProvided) => {
+          //To avoid calling the function (handleChange) unnecessarily, we will first check if dropableId is present and if it is not equal to bulbArea. If the user drops over bulbArea, I have no actions to take; it is just there to add a swing to a bulb.
+          if (
+            result?.destination?.droppableId === "bulbArea" ||
+            !result?.destination?.droppableId
+          ) {
+            return;
+          }
           handleChange(result, provided);
         }}
       >
@@ -250,7 +346,7 @@ function App() {
                 path="/"
                 element={
                   <Deck
-                    undoDeck={undoDeck}
+                    undoDeckDetails={undoDeckDetails}
                     handleUndoDeck={handleUndoDeck}
                     undoButtonRef={undoButtonRef}
                     handlePopupForUndoButton={handlePopupForUndoButton}
@@ -262,9 +358,17 @@ function App() {
                 element={
                   <Suspense fallback={<Loading />}>
                     <Cards
+                      handlePopupForUndoButtonForCard={
+                        handlePopupForUndoButtonForCard
+                      }
+                      undoCardDetails={undoCardDetails}
+                      handleUndoCard={handleUndoCard}
+                      undoButtonRefForCard={undoButtonRefForCard}
                       resetMoveCardResponse={resetMoveCardResponse}
                       moveCardError={moveCardError}
                       isMoveCardError={isMoveCardError}
+                      setUndoCardDetails={setUndoCardDetails}
+                      timeoutForUndoCard={timeoutForUndoCard}
                     />
                   </Suspense>
                 }

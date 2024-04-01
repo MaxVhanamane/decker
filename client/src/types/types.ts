@@ -46,15 +46,12 @@ export type CardDataType = {
   cards: {
     title: string,
     note: string,
+    cardId: string
     _id: string
   }[]
 }
 
-export type Data = {
-  _id: string;
-  title: string;
-  cards: { title: string, note: string, cardId: string; _id: string }[];
-}
+
 
 export type FetchErrorType = {
   message: string;
@@ -80,6 +77,12 @@ export type SearchResultDeckType = {
   deck_id: string;
   title: string;
   pinned: boolean;
+  cards: {
+    title: string;
+    note: string;
+    _id: string;
+    cardId: string
+  }[] | [];
 };
 
 //cards
@@ -94,3 +97,20 @@ export type ContentType = {
 export type ContentTypeForEdit = ContentType & {
   cardIndex: number | null;
 }
+
+export type CardsDataType = {
+  _id: string;
+  title: string;
+  cards: { title: string; note: string; cardId: string; _id: string }[];
+};
+
+export type UndoCardPayloadData = {
+  deck_id: string;
+  content: {
+    title: string;
+    note: string;
+    cardId: string;
+    _id: string
+  };
+  index: number;
+};

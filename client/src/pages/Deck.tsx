@@ -28,16 +28,18 @@ import ErrorDisplay from "../components/ErrorDisplay";
 import { searchContext } from "../context/SearchContext";
 import useEditDeck from "../hooks/useEditDeck";
 import { CustomError } from "../utils/customError";
+import { AudioContext } from "../context/AudioContext";
+import Bulb, { ChangeBulbColor } from "../components/Bulb";
 
 type PropType = {
-  undoDeck: DeckTypeWithIndex | null;
+  undoDeckDetails: DeckTypeWithIndex | null;
   handleUndoDeck: (deck: DeckTypeWithIndex | null) => void;
   undoButtonRef: RefObject<HTMLDivElement>;
   handlePopupForUndoButton: () => void;
 };
 
 function Deck({
-  undoDeck,
+  undoDeckDetails,
   handleUndoDeck,
   undoButtonRef,
   handlePopupForUndoButton,
@@ -87,12 +89,14 @@ function Deck({
     mutate: undoDeckItem,
     error: undoDeckError,
     isError: isUndoDeckError,
-    reset: resetUndoDeck,
+    reset: resetUndoDeckResponse,
   } = useUndoDeck();
   const { isOnline } = useContext(OfflineContext);
+  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
   // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
   const showPopUp = useRef<HTMLDivElement | null>(null);
   const shouldPushStateRef = useRef<boolean>(false);
+  const bulbRef = useRef<ChangeBulbColor>(null);
 
   const {
     showSearchBar,
@@ -162,10 +166,11 @@ function Deck({
         ...preval,
         severity: "error",
         show: true,
-        message: undoDeckError?.message,
+        message:
+          "We're sorry, but we couldn't undo your deck due to a technical issue. Your deck may not be restored. We apologize for any inconvenience.",
         autoHideDuration: 5000,
       }));
-      resetEditDeckResponse();
+      resetUndoDeckResponse();
     }
   }, [isCreateDeckError, isEditDeckError, isPinDeckError, isUndoDeckError]);
 
@@ -173,9 +178,10 @@ function Deck({
     if (cardDeleted) {
       setCardDeleted(false);
     }
-  }, []);
+  }, [cardDeleted]);
 
   useEffect(() => {
+    // To avoid a weird cut in the modal bottom, we will set overflow to hidden when edit modal is open. This is because on mobile phones, when the address bar hides and shows when you scroll, it changes the height of the screen, causing the layout to sometimes shift weirdly.
     if (openEditDeckModal) {
       document.body.style.overflow = "hidden";
     } else {
@@ -186,6 +192,7 @@ function Deck({
       document.body.style.overflow = "auto";
     };
   }, [openEditDeckModal]);
+
   useEffect(() => {
     const shouldPushState = showSearchBar || openEditDeckModal;
     openEditDeckModalForSearchResult;
@@ -244,7 +251,15 @@ function Deck({
     }
 
     if (inputRefElement.current!.value.trim().length > 0) {
-      addDeck(inputRefElement.current!.value);
+      addDeck(inputRefElement.current!.value, {
+        onSuccess: () => {
+          if (isPlayingAudioAllowed) {
+            setTimeout(() => {
+              handlePlayAudio("createdSuccessfully");
+            }, 100);
+          }
+        },
+      });
       inputRefElement.current!.value = "";
     } else {
       inputRefElement.current!.value = "";
@@ -262,7 +277,7 @@ function Deck({
     const elementToScrollTo = document.getElementById(
       `${createDeckResponse?._id}`
     );
-
+    const overlayElement = document.getElementById("radialGradientOverlay");
     // Calculate an offset to control the scrolling position
     const yOffset = -200;
 
@@ -270,25 +285,62 @@ function Deck({
     if (elementToScrollTo) {
       setTimeout(() => {
         elementToScrollTo.classList.add(
-          "animate-[pulse_1s_ease-in-out_2]",
-          "shadow-md",
+          "animate-[pulse_1.5s_ease-in-out_2]",
+          "shadow-shadow-4-sides",
           "shadow-violet-700",
           "border-violet-700"
+        );
+        overlayElement?.classList.add(
+          "after:bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
+          "after:opacity-100"
         );
       }, 100);
 
-      const y = elementToScrollTo.getBoundingClientRect().top + yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      // Get the bounding box of the element
+      const elementRect = elementToScrollTo.getBoundingClientRect();
 
-      // Remove the classes after the animation has completed
-      elementToScrollTo.addEventListener("animationend", () => {
-        elementToScrollTo.classList.remove(
-          "animate-[pulse_1s_ease-in-out_2]",
-          "shadow-md",
-          "shadow-violet-700",
-          "border-violet-700"
-        );
-      });
+      // Check if the element is already in the viewport
+      if (
+        elementRect.top >= 0 &&
+        elementRect.bottom <=
+          (window.innerHeight || document.documentElement.clientHeight)
+      ) {
+        // Element is already in view, no need to scroll
+        // Remove the classes after the animation has completed
+        elementToScrollTo.addEventListener("animationend", () => {
+          elementToScrollTo.classList.remove(
+            "animate-[pulse_1.5s_ease-in-out_2]",
+            "shadow-shadow-4-sides",
+            "shadow-violet-700",
+            "border-violet-700"
+          );
+          overlayElement?.classList.remove(
+            "after:bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
+            "after:opacity-100"
+          );
+        });
+      } else {
+        // Calculate the target scroll position
+        const targetScrollPosition = elementRect.top + window.scrollY + yOffset;
+
+        // Scroll to the target position
+        window.scrollTo({ top: targetScrollPosition, behavior: "smooth" });
+
+        // Remove the classes after the animation has completed
+        elementToScrollTo.addEventListener("animationend", () => {
+          elementToScrollTo.classList.remove(
+            "animate-[pulse_1.5s_ease-in-out_2]",
+            "shadow-shadow-4-sides",
+            "shadow-violet-700",
+            "border-violet-700"
+          );
+          overlayElement?.classList.remove(
+            "after:bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
+            "after:opacity-100"
+          );
+        });
+      }
+      resetCreateDeckResponse();
     }
   }, [createDeckResponse]);
 
@@ -337,7 +389,8 @@ function Deck({
       }, 3000);
     }
   };
-  const handleUndo = () => {
+
+  const handleUndoButtonClick = () => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -349,7 +402,7 @@ function Deck({
       return;
     }
     // I have set the value of undoDeck state in useDeleteDeck()
-    undoDeckItem(undoDeck!);
+    undoDeckItem(undoDeckDetails!);
     // Once we undo the deck, we will set the state that was holding the deleted item to null so that when we delete another item, it can hold that fresh data.
     handleUndoDeck(null);
     // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
@@ -389,29 +442,36 @@ function Deck({
           content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."
         />
       </Helmet>
-      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14 overflow-auto ">
-        {
-          <div
-            ref={undoButtonRef}
-            className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
+      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14  ">
+        <div
+          ref={undoButtonRef}
+          className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
+        >
+          <span className="mr-4">Deck deleted successfully!</span>
+          <span
+            className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400"
+            onClick={() => {
+              handleUndoButtonClick();
+            }}
           >
-            <span className="mr-4">Deck deleted successfully!</span>
-            <span
-              className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400"
-              onClick={() => {
-                handleUndo();
-              }}
-            >
-              Undo
-            </span>
-          </div>
-        }
+            Undo
+          </span>
+        </div>
+
         <PopUpMessage
           message="Drag and drop the deck onto the trash icon to delete it."
           ref={showPopUp}
         />
+
+        <Bulb ref={bulbRef} />
+
         <Droppable droppableId="DeckDeleteArea">
           {(provided, snapshot) => {
+            if (snapshot.isDraggingOver) {
+              bulbRef?.current?.setBulbColor("red");
+            } else {
+              bulbRef?.current?.resetBulbColor("red");
+            }
             return (
               <div
                 className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700    lg:right-2 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${
@@ -424,7 +484,9 @@ function Deck({
               >
                 <div
                   className={` cursor-pointer transition-transform duration-300 ${
-                    snapshot.isDraggingOver ? "-rotate-12" : "transform-none"
+                    snapshot.isDraggingOver
+                      ? "-rotate-12 dragging"
+                      : "transform-none"
                   } `}
                   onClick={handlePopUp}
                 >
@@ -447,7 +509,7 @@ function Deck({
           }}
         </Droppable>
 
-        <div className="w-full px-4 mx-auto ">
+        <div className="w-full px-4 mx-auto z-30  pointer-events-none">
           <form
             onSubmit={handleSubmit}
             className="flex flex-col md:flex-row gap-4 justify-center items-center"
@@ -461,12 +523,12 @@ function Deck({
 
             <input
               ref={inputRefElement}
-              className=" dark:bg-slate-900  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md"
+              className=" bg-transparent  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md pointer-events-auto"
               type="text"
               id="title"
             />
             <button
-              className="bg-[#459C98] dark:bg-sky-600 dark:hover:bg-sky-700  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300"
+              className="bg-[#459C98] dark:bg-sky-600 dark:hover:bg-sky-700  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300 pointer-events-auto"
               aria-label="Add Deck"
               type="submit"
             >
@@ -504,79 +566,111 @@ function Deck({
                             shouldRespectForcePress
                           >
                             {(provided, snapshot) => {
+                              if (snapshot.draggingOver === "DeckDeleteArea") {
+                                bulbRef?.current?.resetBulbColor(
+                                  "fuchsia",
+                                  true
+                                );
+                              } else if (snapshot.isDragging) {
+                                bulbRef?.current?.setBulbColor("fuchsia");
+                              } else {
+                                bulbRef?.current?.resetBulbColor("fuchsia");
+                              }
                               return (
                                 <div
-                                  className={`relative border  ${
-                                    snapshot.isDragging
-                                      ? " border-yellow-400 animate-pulse  shadow-2xl shadow-yellow-400 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-yellow-500 before:to-yellow-400 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-yellow-500 text-yellow-500 before:!opacity-100 "
-                                      : "border-gray-400 "
-                                  } ${
-                                    snapshot.draggingOver ===
-                                      "DeckDeleteArea" &&
-                                    " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
-                                  } 
-        text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
-                     transition-[border-color] duration-150  dark:hover:bg-slate-800 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] before:absolute hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]  hover:after:bg-gray-100 dark:hover:after:bg-slate-800 overflow-hidden before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300 after:rounded-sm z-30`}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
+                                  className={` ${
+                                    snapshot.isDragging &&
+                                    "dark:bg-gray-900 bg-gray-100 rounded-md"
+                                  }`}
                                 >
-                                  <div className="z-40 w-full">
-                                    <div className="absolute bottom-0 right-0">
-                                      {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
+                                  <div
+                                    className={`relative border  ${
+                                      snapshot.isDragging
+                                        ? " border-fuchsia-600 animate-pulse  shadow-2xl shadow-fuchsia-600 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-fuchsia-600 before:to-fuchsia-500 before:animate-rotate after:content-[''] before:!transition-all before:duration-300 after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-fuchsia-600 text-fuchsia-600 before:!opacity-100  "
+                                        : "border-gray-400 "
+                                    } ${
+                                      snapshot.draggingOver ===
+                                        "DeckDeleteArea" &&
+                                      " !border-red-500 !shadow-4-sides !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
+                                    } 
+        text-gray-800 dark:text-gray-50  
+                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
+                     transition-[border-color,box-shadow,background-color] duration-300  dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500  overflow-hidden  z-30  shadow-4-sides dark:hover:shadow-sky-500 hover:shadow-teal-500 before:opacity-0 group`}
+                                  >
+                                    <div
+                                      className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 group-hover:after:bg-radialGradient group-hover:after:opacity-100 after:transition-all after:duration-300 pointer-events-none ${
+                                        snapshot.isDragging
+                                          ? "after:bg-[radial-gradient(#c026d3,#0c7bb3e6)] after:opacity-100"
+                                          : "after:bg-radialGradient"
+                                      }  ${
+                                        snapshot.draggingOver ===
+                                        "DeckDeleteArea"
+                                          ? "after:bg-[radial-gradient(#ef4444,#0c7bb3e6)] after:opacity-100"
+                                          : ""
+                                      }`}
+                                    ></div>
+                                    <div className="z-40 w-full ">
+                                      <div className="absolute bottom-0 right-0">
+                                        {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
 
-                                      <button
-                                        onClick={() => {
-                                          handleEditDeck(deck._id, deck.title);
-                                          if (
-                                            divRefForUserSettings.current?.classList.contains(
-                                              "scale-100"
-                                            )
-                                          ) {
-                                            handleShowUserInfomation();
-                                          }
-                                        }}
-                                        type="button"
-                                        className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                                        aria-label="Edit Deck"
-                                      >
-                                        <BiEdit />
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          handlePin(deck._id, deck.pinned);
-                                          if (
-                                            divRefForUserSettings.current?.classList.contains(
-                                              "scale-100"
-                                            )
-                                          ) {
-                                            handleShowUserInfomation();
-                                          }
-                                        }}
-                                        type="button"
-                                        className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95"
-                                        aria-label="Pin Deck"
-                                      >
-                                        <BsFillPinFill className="text-[0.9rem]" />
-                                      </button>
+                                        <button
+                                          onClick={() => {
+                                            handleEditDeck(
+                                              deck._id,
+                                              deck.title
+                                            );
+                                            if (
+                                              divRefForUserSettings.current?.classList.contains(
+                                                "scale-100"
+                                              )
+                                            ) {
+                                              handleShowUserInfomation();
+                                            }
+                                          }}
+                                          type="button"
+                                          className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
+                                          aria-label="Edit Deck"
+                                        >
+                                          <BiEdit />
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            handlePin(deck._id, deck.pinned);
+                                            if (
+                                              divRefForUserSettings.current?.classList.contains(
+                                                "scale-100"
+                                              )
+                                            ) {
+                                              handleShowUserInfomation();
+                                            }
+                                          }}
+                                          type="button"
+                                          className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95"
+                                          aria-label="Pin Deck"
+                                        >
+                                          <BsFillPinFill className="text-[0.9rem]" />
+                                        </button>
+                                      </div>
+                                      <Link to={`cards/${deck._id}`}>
+                                        <p
+                                          onClick={() => {
+                                            if (
+                                              divRefForUserSettings.current?.classList.contains(
+                                                "scale-100"
+                                              )
+                                            ) {
+                                              handleShowUserInfomation();
+                                            }
+                                          }}
+                                          className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full  "
+                                        >
+                                          {deck.title}
+                                        </p>
+                                      </Link>
                                     </div>
-                                    <Link to={`cards/${deck._id}`}>
-                                      <p
-                                        onClick={() => {
-                                          if (
-                                            divRefForUserSettings.current?.classList.contains(
-                                              "scale-100"
-                                            )
-                                          ) {
-                                            handleShowUserInfomation();
-                                          }
-                                        }}
-                                        className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full  "
-                                      >
-                                        {deck.title}
-                                      </p>
-                                    </Link>
                                   </div>
                                 </div>
                               );
@@ -625,123 +719,150 @@ function Deck({
                             isDragDisabled={deck.isProcessing}
                           >
                             {(provided, snapshot) => {
+                              if (snapshot.draggingOver === "DeckDeleteArea") {
+                                bulbRef?.current?.resetBulbColor("lime", true);
+                              } else if (snapshot.isDragging) {
+                                bulbRef?.current?.setBulbColor("lime");
+                              } else {
+                                bulbRef?.current?.resetBulbColor("lime");
+                              }
                               return (
                                 <div
-                                  id={deck._id}
-                                  className={`relative border  ${
-                                    snapshot.isDragging
-                                      ? " border-lime-500 animate-pulse  shadow-2xl shadow-lime-500 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-lime-500 before:to-lime-500 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-lime-500 text-lime-500 before:!opacity-100 "
-                                      : "border-gray-400 "
-                                  } ${
-                                    snapshot.draggingOver ===
-                                      "DeckDeleteArea" &&
-                                    " !border-red-500 !shadow-2xl !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
-                                  } 
-        text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
-                     transition-[border-color] duration-150   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 after:rounded-sm z-30 ${
-                       deck.isProcessing
-                         ? "cursor-not-allowed"
-                         : "dark:hover:bg-slate-800 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 hover:before:content-[''] hover:before:w-[3rem] hover:before:py-[60%] hover:before:bg-gradient-to-r hover:before:from-sky-500 hover:before:to-green-400 hover:before:animate-rotate hover:after:content-[''] hover:after:absolute hover:after:inset-[0.15rem]   hover:after:bg-gray-100 dark:hover:after:bg-slate-800  hover:before:opacity-100"
-                     }  `}
                                   ref={provided.innerRef}
                                   {...provided.dragHandleProps}
                                   {...provided.draggableProps}
+                                  className={` ${
+                                    snapshot.isDragging &&
+                                    "dark:bg-gray-900 bg-gray-100 rounded-md"
+                                  }`}
                                 >
-                                  <div className="z-40 flex w-full">
-                                    {!deck.isProcessing && (
-                                      <div className="absolute bottom-0 right-0 ">
-                                        <button
-                                          onClick={() => {
-                                            handleEditDeck(
-                                              deck._id,
-                                              deck.title
-                                            );
-                                            if (
-                                              divRefForUserSettings.current?.classList.contains(
-                                                "scale-100"
-                                              )
-                                            ) {
-                                              handleShowUserInfomation();
-                                            }
-                                          }}
-                                          type="button"
-                                          className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                                          aria-label="Edit Deck"
-                                        >
-                                          <BiEdit />
-                                        </button>
-
-                                        <button
-                                          onClick={() => {
-                                            handlePin(deck._id, deck.pinned);
-                                            if (
-                                              divRefForUserSettings.current?.classList.contains(
-                                                "scale-100"
-                                              )
-                                            ) {
-                                              handleShowUserInfomation();
-                                            }
-                                          }}
-                                          type="button"
-                                          className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"
-                                          aria-label="Pin Deck"
-                                        >
-                                          <BsPin className="text-[0.9rem]" />
-                                        </button>
-                                      </div>
-                                    )}
-
+                                  <div
+                                    id={deck._id}
+                                    className={`relative border  ${
+                                      snapshot.isDragging
+                                        ? " border-lime-500 animate-pulse  shadow-2xl shadow-lime-500 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-lime-500 before:to-lime-500 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-lime-500 text-lime-500 before:!opacity-100 "
+                                        : "border-gray-400 "
+                                    } ${
+                                      snapshot.draggingOver ===
+                                        "DeckDeleteArea" &&
+                                      " !border-red-500 !shadow-4-sides !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
+                                    } 
+        text-gray-800 dark:text-gray-50  
+                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
+                     transition-[border-color,box-shadow,background-color] duration-300   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 z-30 shadow-4-sides group  ${
+                       deck.isProcessing
+                         ? "cursor-not-allowed"
+                         : " dark:hover:shadow-sky-500 hover:shadow-teal-500 dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 "
+                     }  `}
+                                  >
                                     <div
-                                      onClick={() => {
-                                        if (
-                                          !isCreatingDeck &&
-                                          !deck.isProcessing
-                                        ) {
-                                          navigate(`cards/${deck._id}`);
-                                        }
-                                        if (
-                                          divRefForUserSettings.current?.classList.contains(
-                                            "scale-100"
-                                          )
-                                        ) {
-                                          handleShowUserInfomation();
-                                        }
-                                      }}
-                                      className={`  h-7  w-full flex items-center justify-center`}
-                                    >
-                                      {deck.isProcessing ? (
-                                        <svg
-                                          className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                          ></circle>
-                                          <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                          ></path>
-                                        </svg>
-                                      ) : (
-                                        <p
-                                          className={`text-center transition-opacity duration-700  cursor-pointer w-full break-all font-bold  line-clamp-1  ${
-                                            deck.isProcessing
-                                              ? "opacity-0"
-                                              : "opacity-100"
-                                          }`}
-                                        >
-                                          {deck.title}
-                                        </p>
+                                      id="radialGradientOverlay"
+                                      className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 group-hover:after:bg-radialGradient group-hover:after:opacity-100 after:transition-all after:duration-300 pointer-events-none  ${
+                                        snapshot.isDragging
+                                          ? "after:bg-[radial-gradient(#84cc16,#0c7bb3e6)] after:opacity-100"
+                                          : "after:bg-radialGradient"
+                                      }  ${
+                                        snapshot.draggingOver ===
+                                        "DeckDeleteArea"
+                                          ? "after:bg-[radial-gradient(#ef4444,#0c7bb3e6)] after:opacity-100"
+                                          : ""
+                                      }`}
+                                    ></div>
+                                    <div className="z-40 flex w-full">
+                                      {!deck.isProcessing && (
+                                        <div className="absolute bottom-0 right-0 ">
+                                          <button
+                                            onClick={() => {
+                                              handleEditDeck(
+                                                deck._id,
+                                                deck.title
+                                              );
+                                              if (
+                                                divRefForUserSettings.current?.classList.contains(
+                                                  "scale-100"
+                                                )
+                                              ) {
+                                                handleShowUserInfomation();
+                                              }
+                                            }}
+                                            type="button"
+                                            className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
+                                            aria-label="Edit Deck"
+                                          >
+                                            <BiEdit />
+                                          </button>
+
+                                          <button
+                                            onClick={() => {
+                                              handlePin(deck._id, deck.pinned);
+                                              if (
+                                                divRefForUserSettings.current?.classList.contains(
+                                                  "scale-100"
+                                                )
+                                              ) {
+                                                handleShowUserInfomation();
+                                              }
+                                            }}
+                                            type="button"
+                                            className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"
+                                            aria-label="Pin Deck"
+                                          >
+                                            <BsPin className="text-[0.9rem]" />
+                                          </button>
+                                        </div>
                                       )}
+
+                                      <div
+                                        onClick={() => {
+                                          if (
+                                            !isCreatingDeck &&
+                                            !deck.isProcessing
+                                          ) {
+                                            navigate(`cards/${deck._id}`);
+                                          }
+                                          if (
+                                            divRefForUserSettings.current?.classList.contains(
+                                              "scale-100"
+                                            )
+                                          ) {
+                                            handleShowUserInfomation();
+                                          }
+                                        }}
+                                        className={`  h-7  w-full flex items-center justify-center`}
+                                      >
+                                        {deck.isProcessing ? (
+                                          <svg
+                                            className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                              className="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
+                                          </svg>
+                                        ) : (
+                                          <p
+                                            className={`text-center transition-opacity duration-700  cursor-pointer w-full break-all font-bold  line-clamp-1  ${
+                                              deck.isProcessing
+                                                ? "opacity-0"
+                                                : "opacity-100"
+                                            }`}
+                                          >
+                                            {deck.title}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>

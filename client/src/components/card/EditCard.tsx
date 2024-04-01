@@ -205,14 +205,14 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     return (
       <div
         onAnimationEnd={handleOnAnimationEnd}
-        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] sticky top-0 inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
+        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed top-0 inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
           closeEditModal
-            ? " opacity-0 animate-opacityFadeOut"
-            : "animate-[opacity_0.2s_linear_1]"
+            ? "lg:opacity-0 lg:animate-[opacityFadeOut_0.1s_linear_1] animate-translateFromRightToLeft"
+            : "lg:animate-[opacity_0.1s_linear_1] animate-translateFromLeftToRight"
         } `}
       >
-        <div className=" w-screen   lg:w-1/2 md:mx-auto md:w-[90%]   md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
-          <div className="w-full  h-[3.4rem] dark:bg-slate-800 md:dark:bg-slate-900 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10  md:bg-[#fcfefc]">
+        <div className=" w-screen lg:w-1/2 md:mx-auto md:w-[90%] md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
+          <div className="w-full h-[3.45rem] dark:bg-slate-800 md:dark:bg-slate-900 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10  md:bg-[#fcfefc]">
             <div>
               <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-600 text-gray-700 font-semibold ">
                 Edit <span className="hidden md:inline">Card</span>
@@ -223,7 +223,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
               <div className="flex items-center justify-center gap-3  ">
                 <button
                   title="Add a link"
-                  className="dark:text-blue-600   dark:hover:text-gray-300 text-blue-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-150"
+                  className="dark:text-blue-600   dark:hover:text-gray-300 text-blue-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-300"
                   type="button"
                   name="addLinkToEditCard"
                   onClick={(e) => addLink(e)}
@@ -232,7 +232,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 </button>
                 <button
                   title="Add code sample"
-                  className="dark:text-green-600   dark:hover:text-gray-300 text-green-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-150"
+                  className="dark:text-green-600   dark:hover:text-gray-300 text-green-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-300"
                   type="button"
                   name="addCodeSnippetToEditCard"
                   onClick={(e) => addCodeBlock(e)}
@@ -242,7 +242,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="addUnderlineTextToEditCard"
                   title="Underline text"
-                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-300 "
                   type="button"
                   onClick={(e) => addUnderlineText(e)}
                 >
@@ -251,7 +251,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="addBoldTextToEditCard"
                   title="Bold text"
-                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-300 "
                   type="button"
                   onClick={(e) => addBoldText(e)}
                 >
@@ -263,7 +263,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="Close"
                   title="Close"
-                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full hover:text-gray-200 dark:hover:text-gray-300 p-1    text-xl   text-red-500  transition-all duration-150 "
+                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full hover:text-gray-200 dark:hover:text-gray-300 p-1    text-xl   text-red-500  transition-all duration-300 "
                   type="button"
                   onClick={() => {
                     // You can remove the pushed state using either of these methods
@@ -282,6 +282,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                         },
                       });
                     }
+
                     setCloseEditModal(true);
                   }}
                 >
@@ -290,7 +291,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                 <button
                   name="Save"
                   title="Save"
-                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-150 "
+                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-300 "
                   type="button"
                   onClick={handleSaveEdit}
                 >

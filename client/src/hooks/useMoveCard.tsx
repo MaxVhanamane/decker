@@ -1,21 +1,30 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { CardDataType } from "../types/types";
+import { CardDataType, DeckAndCardType } from "../types/types";
 import { CustomError } from "../utils/customError";
+import { updateCache } from "../utils/updateCache";
 
-type Data = {
+type moveCardPayloadDataType = {
   deleteIndex: number;
   moveIndex: number;
   deck_id: string;
 };
 
-type OldData = {
-  cards: { title: string; note: string }[];
-  title: string;
+type SuccessResponseType = {
+  success: true;
 };
 
-const moveCard = async (inputData: Data) => {
+type AlternateSuccessResponseType = {
+  success: true;
+  message: string;
+};
+
+const moveCard = async (
+  inputData: moveCardPayloadDataType
+): Promise<
+  SuccessResponseType | AlternateSuccessResponseType | CustomError
+> => {
   try {
     const data = await request.put(
       `/card/changeposition/${inputData.deck_id}/${inputData.deleteIndex}/${inputData.moveIndex}`
@@ -36,15 +45,17 @@ const useMoveCard = () => {
 
   return useMutation({
     mutationFn: moveCard,
-    onMutate: async (data: Data) => {
+    onMutate: async (data: moveCardPayloadDataType) => {
       await queryClient.cancelQueries({
         queryKey: ["cards", data.deck_id],
       });
-      const previousCardData: CardDataType[] = queryClient.getQueryData([
-        "cards",
-        data.deck_id,
-      ])!;
-      queryClient.setQueryData<OldData | undefined>(
+      await queryClient.cancelQueries({
+        queryKey: ["decks-and-cards"],
+      });
+      const previousCardData: CardDataType[] | undefined =
+        queryClient.getQueryData(["cards", data.deck_id]);
+
+      queryClient.setQueryData<CardDataType | undefined>(
         ["cards", data.deck_id],
         (oldCardData) => {
           if (oldCardData) {
@@ -55,12 +66,50 @@ const useMoveCard = () => {
           }
         }
       );
+      // update decks-and-cards which is used for searching
+      const previousCardAndDeckQueryData: DeckAndCardType[] | undefined =
+        queryClient.getQueryData(["decks-and-cards"]);
 
-      return previousCardData;
+      queryClient.setQueryData<DeckAndCardType[]>(
+        ["decks-and-cards"],
+        (oldDecksAndCards) => {
+          if (oldDecksAndCards) {
+            const deepCopiedDecks: DeckAndCardType[] = JSON.parse(
+              JSON.stringify(oldDecksAndCards)
+            );
+            const modifiedData = deepCopiedDecks.map((deck) => {
+              if (deck?._id === data?.deck_id) {
+                const newCardsArray = [...deck?.cards];
+                let element_to_move = newCardsArray.splice(
+                  data.deleteIndex,
+                  1
+                )[0];
+                newCardsArray.splice(data.moveIndex, 0, element_to_move);
+                return { ...deck, cards: newCardsArray };
+              } else {
+                return deck;
+              }
+            });
+            return modifiedData;
+          }
+        }
+      );
+
+      return { previousCardData, previousCardAndDeckQueryData };
+    },
+    onSuccess: (serverResponse, mutationData) => {
+      updateCache("moveCard", "search-cache", "decks-and-cards", mutationData);
     },
 
-    onError: (error, data: Data, context) => {
-      queryClient.setQueryData(["cards", data.deck_id], context);
+    onError: (error, data: moveCardPayloadDataType, context) => {
+      queryClient.setQueryData(
+        ["cards", data.deck_id],
+        context?.previousCardData
+      );
+      queryClient.setQueryData(
+        ["decks-and-cards"],
+        context?.previousCardAndDeckQueryData
+      );
     },
     onSettled: (
       dataReturnedByTheAxiosRequest,

@@ -3,14 +3,9 @@ import { AlertData, DeckAndCardType } from "../types/types";
 import { request } from "../utils/fetch-utils";
 import { CustomError } from "../utils/customError";
 
-type DeckTypeValue = DeckAndCardType[];
-type ErrorResponse = {
-  message: string;
-  status: number;
-};
 const getDecksAndCards = async (
   setAlert: React.Dispatch<React.SetStateAction<AlertData>>
-): Promise<DeckTypeValue> => {
+): Promise<DeckAndCardType[]> => {
   try {
     const data = await request.get(`/decks-and-cards`);
     return data?.data;
@@ -38,7 +33,7 @@ export default function getDecksAndCardsCache({
   queryClient: QueryClient;
   setAlert: React.Dispatch<React.SetStateAction<AlertData>>;
 }) {
-  queryClient.prefetchQuery<DeckTypeValue | ErrorResponse>({
+  queryClient.prefetchQuery<DeckAndCardType[] | CustomError>({
     queryKey: ["decks-and-cards"],
     queryFn: () => getDecksAndCards(setAlert),
     gcTime: 10800000, // 3 hours

@@ -2,9 +2,9 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
-import { GiFeather } from "react-icons/gi";
 import React, {
   Dispatch,
+  isValidElement,
   memo,
   useContext,
   useEffect,
@@ -20,6 +20,8 @@ import { searchContext } from "../../context/SearchContext";
 import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
 import { TbKeyboard, TbKeyboardOff } from "react-icons/tb";
 import PopUpMessage from "../PopUpMessage";
+import DisplayNote from "./DisplayNote";
+import { AudioContext } from "../../context/AudioContext";
 type ContentType = {
   title: string;
   note: string;
@@ -79,6 +81,7 @@ const FullScreenCardView = ({
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
   const { cardInfo, setCardInfo } = useContext(searchContext);
+  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
   const storedToggleValue: string | null = localStorage.getItem("toggleColor");
   const [pageOpenCount, setPageOpenCount] = useState(1);
   const storedTypewriterEffectValue: string | null = localStorage.getItem(
@@ -102,23 +105,28 @@ const FullScreenCardView = ({
   const intervalIdRef = useRef<NodeJS.Timeout>();
 
   const flattenReactNodes = (nodes: React.ReactNode[]): React.ReactNode[] => {
-    const filteredNodes = nodes.filter((node) => node !== undefined);
+    // Nodes will be an array that contains React elements for bold, underlined, linked, and code block styles. It will also include normal strings if no styles have been applied.
 
-    const result = filteredNodes.reduce<React.ReactNode[]>((acc, node) => {
+    const result = nodes.reduce<React.ReactNode[]>((accumulator, node) => {
       if (typeof node === "string") {
+        // The regular expression /(\s+)/ is designed to split the string wherever one or more whitespace characters (spaces, tabs, or newlines) are found. The \s+ part of the regular expression specifies that it should match one or more occurrences of whitespace characters.
+
+        // .flatMap((part) => (/\s+/.test(part) ? [part] : [...part])) — This part will keep the spaces as they are. If there are multiple spaces one after another, we will keep all of them together; we will not split them. If we encounter text, we will split it.  if we split the empty long string then while showing typing effect it will show typing effect to blank long string.
+
         return [
-          ...acc,
-          ...node.split("").map((char) => char as React.ReactNode),
+          ...accumulator,
+          ...node
+            .split(/(\s+)/)
+            .flatMap((part) => (/\s+/.test(part) ? [part] : [...part])),
         ];
       }
 
       if (React.isValidElement(node)) {
-        return [...acc, node];
+        return [...accumulator, node];
       }
 
-      return acc;
+      return accumulator;
     }, []);
-
     return result;
   };
 
@@ -126,7 +134,6 @@ const FullScreenCardView = ({
     if (search_index) {
       return [];
     }
-
     return flattenReactNodes(parsedNote);
   }, [parsedNote]);
 
@@ -226,17 +233,20 @@ const FullScreenCardView = ({
   }, []);
 
   useEffect(() => {
+    // If typing is in progress and the user clicks on the edit or delete button, instead of showing the typing effect, we will simply remove the typing effect and add all the text at once. This is because the user is not looking at the typing effect, so it is a waste of resources. To achieve this, we will use pageOpenCount state.
     if (showTypewriterEffect && pageOpenCount === 1 && !search_index) {
       if (parsingComplete) {
         const totalLength = flattenedArray.length;
 
         if (flattenedArray.length !== dispalyResponse.length) {
+          // typingInProgress is used to show feather icon
           setTypingInProgress(true);
 
           intervalIdRef.current = setInterval(() => {
             // The startTyping state makes sure that the typing only begins after the card finishes opening. Without this, if the content is short, it might get typed before the card opens fully because there's an animation that takes a bit of time.
             if (startTyping) {
               const currentChar = flattenedArray[iRef.current];
+
               setDisplayResponse((prev) => {
                 const updatedResponse: React.ReactNode[] = [
                   ...prev,
@@ -257,7 +267,9 @@ const FullScreenCardView = ({
         }
       }
     } else if (!search_index) {
-      setDisplayResponse([...parsedNote]);
+      if (showTypewriterEffect) {
+        setDisplayResponse(parsedNote);
+      }
     }
 
     return () => {
@@ -316,7 +328,6 @@ const FullScreenCardView = ({
         from: "",
         cardId: "",
       });
-      navigate(-1);
       navigate(cardInfo?.from, { replace: true });
     }
     if (!showScrollButtons) {
@@ -368,16 +379,16 @@ const FullScreenCardView = ({
         onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]    ${
           toggle
-            ? "dark:bg-BgForSmallDevicesDarkMode bg-lightBg dark:lg:bg-BgForDarkMode"
+            ? "dark:bg-BgDarkModeSmall bg-lightBg dark:lg:bg-BgForDarkMode"
             : ""
-        }   dark:bg-slate-900    flex  flex-col z-[80] items-center ${
+        }   dark:bg-slate-900 flex flex-col z-[80] items-center ${
           startAnimation
             ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
             : "animate-translateFromRightToLeft lg:animate-opacityFadeOut lg:opacity-0 scale-0 lg:scale-100 "
         } `}
       >
         <div
-          className={`mt-2 lg:mt-1  w-full overflow-auto p-[0.95rem] md:p-14 md:w-[51.25rem]  `}
+          className={`mt-2 lg:mt-1 w-full overflow-auto p-[0.95rem] md:p-14 md:w-[51.25rem]  `}
           ref={divRef}
         >
           <div ref={topElementRef} />
@@ -398,24 +409,13 @@ const FullScreenCardView = ({
                 {fullScreenCardData?.title}
               </p>
 
-              <div
-                className={`text-left text-base mb-20 lg:mb-16 break-words break-normal leading-7 whitespace-pre-wrap text-gray-800 dark:text-gray-200 ${
-                  parsedNote.length > 0 &&
-                  "animate-opacityFadeIn lg:animate-quickOpacity"
-                } `}
-              >
-                {showTypewriterEffect && !search_index
-                  ? dispalyResponse
-                  : parsedNote}
-                {
-                  <GiFeather
-                    className={`inline-block text-3xl ml-2 -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 ${
-                      !typingInProgress &&
-                      "opacity-0 animate-[opacityFadeOut_0.3s_linear_1]"
-                    }`}
-                  />
-                }
-              </div>
+              <DisplayNote
+                parsedNote={parsedNote}
+                showTypewriterEffect={showTypewriterEffect}
+                search_index={search_index}
+                dispalyResponse={dispalyResponse}
+                typingInProgress={typingInProgress}
+              />
               <div ref={bottomElementRef} />
             </div>
           ) : !parsingError ? (
@@ -436,9 +436,9 @@ const FullScreenCardView = ({
             </div>
           )}
           <div
-            className={`fixed top-0  py-[0.95rem]  ${
+            className={`fixed top-0  py-[0.55rem]  ${
               toggle
-                ? "dark:lg:bg-BgForDarkMode dark:bg-BgForSmallDevicesDarkMode bg-lightBg"
+                ? "dark:lg:bg-BgForDarkMode dark:bg-BgDarkModeSmall bg-lightBg"
                 : ""
             } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-3 md:px-0 left-0 w-full flex items-center justify-center  `}
           >
@@ -460,7 +460,7 @@ const FullScreenCardView = ({
                   <p className="text-xs   ">Back</p>
                 </button>
               </div>
-              <div className="flex items-center justify-center gap-3 ">
+              <div className="flex items-center justify-center gap-1 ">
                 <span
                   onClick={() => {
                     if (typingInProgress) {
@@ -468,7 +468,7 @@ const FullScreenCardView = ({
                     }
                   }}
                 >
-                  <ThemeToggler />
+                  <ThemeToggler ParentComponentName="FullScreenCardView" />
                 </span>
 
                 {!search_index && (
@@ -488,7 +488,7 @@ const FullScreenCardView = ({
                       handlePopUp();
                     }}
                     type="button"
-                    className="text-blue-500  outline-none    text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                    className="text-blue-500  outline-none  text-center dark:hover:text-gray-300 hover:text-gray-200 dark:hover:bg-gray-700 hover:bg-gray-400 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
                     aria-label="Toggle typing effect"
                     title="Toggle typing effect"
                   >
@@ -509,7 +509,7 @@ const FullScreenCardView = ({
                     setPageOpenCount(4);
                   }}
                   type="button"
-                  className="text-blue-500 dark:text-sky-500 text-xl outline-none  transition-all duration-200  text-center hover:scale-95 "
+                  className="text-blue-500 dark:text-sky-500 text-xl outline-none  transition-all duration-300  text-center dark:hover:bg-gray-700 hover:bg-gray-400 dark:hover:text-gray-300 hover:text-gray-200 rounded-full p-[0.4rem] "
                   aria-label="Delete Card"
                   title="Delete Card"
                 >
@@ -525,7 +525,7 @@ const FullScreenCardView = ({
                     handleEditCardButtonClick(fullScreenCardData);
                   }}
                   type="button"
-                  className="text-blue-500 text-xl outline-none  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                  className="text-blue-500 text-xl outline-none  text-center dark:hover:bg-gray-700 hover:bg-gray-400 dark:hover:text-gray-300 hover:text-gray-200 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
                   aria-label="Edit Card"
                   title="Edit Card"
                 >
@@ -538,17 +538,26 @@ const FullScreenCardView = ({
                       JSON.stringify(!toggle)
                     );
                     setToggle((pre) => !pre);
+                    if (toggle) {
+                      if (isPlayingAudioAllowed) {
+                        setTimeout(() => {
+                          handlePlayAudio("switchOnAudioSound");
+                        }, 100);
+                      }
+                    } else {
+                      if (isPlayingAudioAllowed) {
+                        setTimeout(() => {
+                          handlePlayAudio("switchOffAudioSound");
+                        }, 100);
+                      }
+                    }
                   }}
                   type="button"
-                  className="text-blue-500 text-2xl outline-none   lg:pr-0  text-center hover:scale-95 dark:text-sky-500 transition-all duration-200"
+                  className="text-blue-500 text-2xl outline-none  text-center dark:hover:text-gray-300 hover:text-gray-200 dark:hover:bg-gray-700 hover:bg-gray-400 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
                   aria-label="Toggle Colors"
                   title="Toggle Colors"
                 >
-                  {toggle ? (
-                    <LuToggleRight className="lg:-mr-[0.25rem]" />
-                  ) : (
-                    <LuToggleLeft className="lg:-mr-[0.25rem]" />
-                  )}
+                  {toggle ? <LuToggleRight /> : <LuToggleLeft />}
                 </button>
               </div>
             </div>

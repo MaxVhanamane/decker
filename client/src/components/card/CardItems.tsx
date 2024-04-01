@@ -8,15 +8,16 @@ import { UserContext } from "../../context/UserContext";
 import { useContext } from "react";
 import { AlertContext } from "../../context/AlertContext";
 import { OfflineContext } from "../../context/OfflineContext";
-import {
-  AlertData,
-  ContentType,
-  ContentTypeForEdit,
-  Data,
-} from "../../types/types";
+import { AlertData, ContentType, ContentTypeForEdit } from "../../types/types";
 
 type ContentForFullScreen = ContentType & {
   cardIndex: number | null;
+};
+
+type Data = {
+  _id: string;
+  title: string;
+  cards: { title: string; note: string; cardId: string; _id: string }[];
 };
 
 interface DeckResponse {
@@ -42,14 +43,13 @@ const CardItems = ({
   const changeColorWhileDragging = useRef<HTMLDivElement | null>(null);
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
-
   return (
     <Droppable droppableId="cardDropableArea">
       {/* You can't use Draggable directly you have to use it inside Dropable component  */}
-      {(provided, snapshot) => {
+      {(provided) => {
         return (
           <div
-            className="flex flex-row flex-wrap gap-4 justify-center items-center  mx-2 lg:mx-52 mb-48 animate-opacity_page_transition  "
+            className="grid grid-cols-1 gap-4 items-center justify-center  mx-2 lg:mx-52 mb-48 animate-opacity_page_transition "
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
@@ -71,6 +71,10 @@ const CardItems = ({
                         ref={provided.innerRef}
                         {...provided.dragHandleProps}
                         {...provided.draggableProps}
+                        className={`mx-auto ${
+                          snapshot.isDragging &&
+                          "dark:bg-slate-900 bg-[#fcfefc]"
+                        }`}
                       >
                         <div
                           ref={changeColorWhileDragging}
@@ -84,21 +88,83 @@ const CardItems = ({
                             }
                             handleShowFullScreen({
                               ...card,
-                              _id: deck_id!,
                               cardIndex: index,
                             });
                           }}
-                          className={`relative border   ${
+                          className={`relative border overflow-hidden group-card  group/card ${
                             snapshot.isDragging
-                              ? "shadow-2xl ring-1 ring-cyan-500 shadow-cyan-500 border-cyan-500  animate-pulse dark:bg-slate-900 bg-[#fcfefc]"
+                              ? "shadow-4-sides ring-1 ring-sky-500 shadow-sky-500 border-sky-500 dark:border-emerald-500 dark:ring-emerald-500 dark:shadow-emerald-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-[#fcfefc]"
                               : "border-gray-400 "
                           } ${
                             snapshot.draggingOver === "cardDeleteArea"
-                              ? "shadow-2xl !shadow-red-500 !border-red-500 !bg-transparent !ring-red-500"
+                              ? "shadow-4-sides !shadow-red-500 !border-red-500  !ring-red-500 "
                               : null
-                          }   flex flex-col text-gray-800
-                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-800/50 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group`}
+                          }   flex flex-col 
+                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color,box-shadow] duration-300   dark:hover:border-cyan-500 shadow-4-sides dark:hover:shadow-cyan-500   hover:border-emerald-600 hover:shadow-emerald-600 group`}
                         >
+                          <div
+                            className={`absolute  top-0 -right-1 -z-10 ${
+                              snapshot.isDragging && "z-10"
+                            }`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={` ${
+                                snapshot.isDragging &&
+                                !(snapshot.draggingOver === "cardDeleteArea")
+                                  ? "!text-sky-500 dark:!text-emerald-500"
+                                  : "group-hover/card:text-emerald-500  dark:group-hover/card:text-sky-500"
+                              } ${
+                                snapshot.draggingOver === "cardDeleteArea" &&
+                                "dark:!text-red-500 !text-red-500 "
+                              } ${
+                                snapshot.isDragging
+                                  ? " animate-scaleUpDown"
+                                  : ""
+                              } absolute -right-4 -top-8 h-20 w-20 origin-top-right stroke-[0.5] text-black/10 duration-300 group-hover/card:scale-90 dark:text-white/10`}
+                            >
+                              <circle cx="12" cy="12" r="10"></circle>
+                            </svg>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={`   absolute -right-4 -top-8 h-28 w-28 origin-top-right stroke-[0.4] text-black/10 duration-500 group-hover/card:scale-90 dark:text-white/10 
+                              ${
+                                snapshot.isDragging &&
+                                !(snapshot.draggingOver === "cardDeleteArea")
+                                  ? "!text-sky-500 dark:!text-emerald-500 "
+                                  : "group-hover/card:text-emerald-500  dark:group-hover/card:text-sky-500"
+                              }
+
+                              ${
+                                snapshot.draggingOver === "cardDeleteArea" &&
+                                "dark:!text-red-500 !text-red-500"
+                              }
+                              ${
+                                snapshot.isDragging
+                                  ? " animate-scaleUpDown"
+                                  : ""
+                              }
+                              `}
+                            >
+                              <circle cx="12" cy="12" r="10"></circle>
+                            </svg>
+                          </div>
                           <div className="absolute bottom-0 right-0 ">
                             {/* If I don't use event.stopPropagation() then when I click on delete button or edit button it will first use the onClick that is added on parent i.e div onClick={()=>handleShowFullScreen({...card,_id:deck_id!})} then it will use the onClick that is defined on buttons. which is a problem in this case to avoid that I have used event.stopPropagation() */}
                             <button
@@ -135,7 +201,6 @@ const CardItems = ({
                                 event.stopPropagation(),
                                   handleEditCardButtonClick({
                                     ...card,
-                                    _id: deck_id!,
                                     cardIndex: index,
                                   });
                                 if (

@@ -15,10 +15,11 @@ export default defineConfig(({ command, mode }) => {
         enabled: true
       },
       injectRegister: 'auto',
-      // add this to cache all the imports
       workbox: {
         globDirectory: "dist",
-        globPatterns: ["**/*",],
+        globPatterns: ['**/*'],
+        globIgnores: ['splash_screens/**'],
+
         runtimeCaching: [
           {
 
@@ -38,7 +39,7 @@ export default defineConfig(({ command, mode }) => {
 
           },
           {
-            urlPattern: new RegExp(`${API_URL}/cards/.+`),
+            urlPattern: new RegExp(`${API_URL}/cards/[^/]+`),
             handler: 'NetworkFirst', // Caching strategy for /cards/deck_id
             options: {
               cacheName: 'cards-cache',
@@ -82,11 +83,7 @@ export default defineConfig(({ command, mode }) => {
           },
         ]
       },
-      // add this to cache all the
-      // static assets in the public folder
-      includeAssets: [
-        "**/*",
-      ],
+
       manifest: {
         "name": "Decker",
         "short_name": "Decker",

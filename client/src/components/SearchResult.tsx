@@ -53,6 +53,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
     openEditDeckModalForSearchResult,
     setOpenEditDeckModalForSearchResult,
     setOpenSearchBar,
+    openSearchBar,
   } = useContext(searchContext);
   const { theme, setUserInfo } = useContext(UserContext);
   const navigate = useNavigate();
@@ -219,7 +220,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
   if (isLoading && searchQuery?.length > 0) {
     return (
       <div
-        className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-[var(--window-height)] bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
+        className={`absolute  top-[9rem] lg:top-[3.45rem] overflow-scroll h-[var(--window-height)] bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
       >
         <div className="flex items-center justify-center dark:text-gray-50  fixed top-1/3 lg:top-1/2 left-1/2 -translate-x-1/2 lg:-translate-y-1/2 -translate-y-1/3 gap-2 w-full">
           <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
@@ -274,7 +275,7 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
               {foundDecks.length + foundCards.length > 1 ? (
                 <p>
                   Search Results
-                  <span className="font-extralight text-xs ml-1">
+                  <span className="font-extralight text-xs ml-1 text-gray-600 dark:text-gray-300">
                     (about {foundDecks.length + foundCards.length} results)
                   </span>
                 </p>

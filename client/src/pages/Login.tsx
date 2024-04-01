@@ -84,7 +84,8 @@ export default function Login() {
       }));
       return;
     }
-    window.open(`${import.meta.env.VITE_GOOGLE_AUTH_URL}`, "_self");
+    // window.open(`${import.meta.env.VITE_GOOGLE_AUTH_URL}`, "_self");
+    window.location.href = `${import.meta.env.VITE_GOOGLE_AUTH_URL}`;
   };
 
   return (

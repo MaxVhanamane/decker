@@ -245,13 +245,13 @@ app.patch('/deck/togglepin/:deck_id', fetchUserDetails_1.fetchUserDetails, (req,
         res.status(500).json({ message: "An unexpected error occurred while pinning the deck. Please try again later!", isError: true });
     }
 }));
-app.put('/undodeck', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put('/deck/undodeck', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     delete req.body.index;
     const deck = req.body;
     try {
         const newDeck = new deck_1.default(Object.assign({}, deck));
-        const createdDeck = yield newDeck.save();
-        res.status(200).json({ createdDeck, success: true });
+        yield newDeck.save();
+        res.status(200).json({ success: true });
     }
     catch (error) {
         res.status(500).json({ message: "An unexpected error occurred while undoing the deck deletion." });
@@ -280,9 +280,9 @@ app.delete('/deck/:id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awa
 // Card routes
 app.get('/cards/:_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const cards = yield deck_1.default.findById({ _id: req.params._id }, { cards: 1, title: 1 });
+        const cards = yield deck_1.default.findById({ _id: req.params._id }, { cards: 1, title: 1, _id: 1 });
         if (cards) {
-            res.status(200).json({ cards: cards.cards, title: cards.title });
+            res.status(200).json({ cards: cards.cards, title: cards.title, _id: cards._id });
         }
         else {
             res.status(404).json({ message: "No cards found!" });
@@ -314,28 +314,48 @@ app.post('/card/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __
 }));
 //Edit card
 app.patch('/card/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deckId = req.params.deck_id;
+    const index = req.body.index;
+    const { title, note } = req.body.newContent;
     try {
-        //get the deck using _id
-        const Deck = yield deck_1.default.findById(req.params.deck_id);
-        // take out cards from received deck
-        const cards = Deck === null || Deck === void 0 ? void 0 : Deck.cards;
-        if (cards) {
-            // get the index from body
-            const index = req.body.index;
-            //remove one item at index (which we received) and add newContent at that index
-            cards === null || cards === void 0 ? void 0 : cards.splice(index, 1, req.body.newContent); // this will modify original array
-            // remove all the items from an array of old cards (start:0 to end:total length of cards) and put the new array that we just created.
-            Deck.cards.splice(0, Deck.cards.length, ...cards);
-            // save it in the db
-            const newCard = yield Deck.save();
-            res.status(200).json(newCard);
+        const updatedCard = yield deck_1.default.findOneAndUpdate({ _id: deckId }, {
+            $set: {
+                [`cards.${index}.title`]: title,
+                [`cards.${index}.note`]: note,
+            },
+        }, { new: true });
+        if (!updatedCard) {
+            return res.status(404).json({ success: false, message: 'Card not found' });
         }
-        else {
-            res.status(400).json({ message: "Card not found!" });
-        }
+        res.status(200).json({ success: true });
     }
     catch (error) {
         res.status(500).json({ message: "An unexpected error occurred while saving the edited card. Please try again later!" });
+    }
+}));
+app.put('/card/undocard', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c, _d, _e, _f;
+    const deck_id = req.body.deck_id;
+    const cardContent = req.body.content;
+    const cardIndex = req.body.index;
+    // When a user creates a new card, I add a dummy _id, which is not a valid MongoDB id format. Once the id gets created on the server, it replaces the dummy _id with the newly created _id. However, if a user creates a card and immediately deletes it, and then undoes the deletion, you will have a dummy id in req.body.content._id, which can't be saved in the database because it is not in a valid _id format. Therefore, if we encounter an invalid _id format, we will simply delete it and allow the server to create a new one.
+    if (!(0, mongoose_1.isValidObjectId)((_d = (_c = req === null || req === void 0 ? void 0 : req.body) === null || _c === void 0 ? void 0 : _c.content) === null || _d === void 0 ? void 0 : _d._id)) {
+        (_f = (_e = req === null || req === void 0 ? void 0 : req.body) === null || _e === void 0 ? void 0 : _e.content) === null || _f === void 0 ? true : delete _f._id;
+    }
+    try {
+        // //get the deck using _id
+        // const Deck = await DeckModal.findById(deck_id)
+        // // take out cards from received deck
+        // Deck?.cards.splice(cardIndex, 0, cardContent)
+        // // save it in the db
+        // await Deck?.save()
+        yield deck_1.default.findOneAndUpdate({ _id: deck_id }, { $push: { cards: { $each: [cardContent], $position: cardIndex } } });
+        setTimeout(() => {
+            res.status(200).json({ success: true });
+        }, 5000);
+    }
+    catch (error) {
+        res.status(500).json({ message: "An unexpected error occurred while undoing the deck deletion." });
     }
 }));
 app.delete('/card/:id/:index', fetchUserDetails_1.fetchUserDetails, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -343,8 +363,8 @@ app.delete('/card/:id/:index', fetchUserDetails_1.fetchUserDetails, (req, res) =
         const deck = yield deck_1.default.findById(req.params.id);
         if (deck) {
             deck.cards.splice(parseInt(req.params.index), 1);
-            let newArray = yield deck.save();
-            res.status(200).json({ cards: newArray, success: true });
+            yield deck.save();
+            res.status(200).json({ success: true });
         }
         else {
             res.status(400).json({ message: "Card not found!", success: false });
@@ -374,6 +394,16 @@ app.put('/card/changeposition/:id/:deleteIndex/:moveIndex', fetchUserDetails_1.f
         res.status(500).json({ message: "An unexpected error occurred while moving the card. Please try again later.", success: false });
     }
 }));
+app.post('/login', passport_1.default.authenticate('local', { failWithError: true }), (req, res) => {
+    if (req.user) {
+        res.status(200).json({ success: true });
+    }
+    else {
+        res.status(200).json({ success: false });
+    }
+}, function (error, req, res, next) {
+    return res.status(401).json({ success: false, message: error.message });
+});
 app.get('/auth/google', passport_1.default.authenticate('google', {
     scope: ['profile', 'email']
     // scope:['openid','profile', 'email'] 
@@ -430,16 +460,6 @@ app.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(400).json({ success: false, message: "Invalid Email or OTP" });
     }
 }));
-app.post('/login', passport_1.default.authenticate('local', { failWithError: true }), (req, res) => {
-    if (req.user) {
-        res.status(200).json({ success: true });
-    }
-    else {
-        res.status(200).json({ success: false });
-    }
-}, function (error, req, res, next) {
-    return res.status(401).json({ success: false, message: error.message });
-});
 function generateOTP() {
     // Declare a variable to store the OTP
     let otp = "";
@@ -620,10 +640,10 @@ app.post("/verifyforgotpasswordotp", (req, res) => __awaiter(void 0, void 0, voi
     }
 }));
 app.post("/changepassword", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
+    var _g;
     let user = yield forgotpasswordotps_1.default.findOne({ email: req.body.email });
     // Here we will check if the OTP in our db and the otp that we get in our req are the same ones.
-    if (((user === null || user === void 0 ? void 0 : user.otp) === parseInt((_c = req === null || req === void 0 ? void 0 : req.body) === null || _c === void 0 ? void 0 : _c.otp))) {
+    if (((user === null || user === void 0 ? void 0 : user.otp) === parseInt((_g = req === null || req === void 0 ? void 0 : req.body) === null || _g === void 0 ? void 0 : _g.otp))) {
         const newPassword = req.body.newPassword;
         const hashedPassword = yield bcryptjs_1.default.hash(newPassword, 10);
         try {
@@ -772,3 +792,19 @@ app.post("/deleteaccount", fetchUserDetails_1.fetchUserDetails, (req, res, next)
 //   }));
 //   await deck.save();
 // }
+// To check document size: I was gettting this warning Documents larger than 2 MB found in the collection(s) scanned.
+// const largestDocumentSize = await DeckModal
+// .aggregate([
+//   {
+//     $addFields: {
+//       documentSize: { $bsonSize: '$$ROOT' }
+//     }
+//   },
+//   {
+//     $match: {
+//       documentSize: { $gt: 2 * 1024 * 1024 } // 2 MB in bytes
+//     }
+//   }
+// ])
+// .exec();
+// console.log(largestDocumentSize)

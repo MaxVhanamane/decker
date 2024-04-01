@@ -2,9 +2,18 @@ import { request } from "../utils/fetch-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeckAndCardType, DeckType, DeckTypeWithIndex } from "../types/types";
 import { CustomError } from "../utils/customError";
-const deleteDeck = async (undoDeck: DeckTypeWithIndex) => {
+import { updateCache } from "../utils/updateCache";
+
+type SuccessResponseType = {
+  success: boolean;
+};
+
+const undoDeck = async (
+  undoDeck: DeckTypeWithIndex
+): Promise<SuccessResponseType | CustomError> => {
+  // Whatever data you pass to the mutate function, you will receive that data in the mutationFn
   try {
-    const data = await request.put("/undodeck", undoDeck);
+    const data = await request.put("/deck/undodeck", undoDeck);
 
     return data?.data;
   } catch (error) {
@@ -19,7 +28,7 @@ const deleteDeck = async (undoDeck: DeckTypeWithIndex) => {
 const useUndoDeck = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteDeck,
+    mutationFn: undoDeck,
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ["decks"] });
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
@@ -41,11 +50,11 @@ const useUndoDeck = () => {
       await queryClient.cancelQueries({ queryKey: ["decks-and-cards"] });
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      const previousQueryDataForSearch: DeckAndCardType[] =
+      const previousCardAndDeckQueryData: DeckAndCardType[] =
         queryClient.getQueryData(["decks-and-cards"])!;
-      if (previousQueryDataForSearch) {
+      if (previousCardAndDeckQueryData) {
         queryClient.setQueryData(["decks-and-cards"], () => {
-          const newArray = [...previousQueryDataForSearch];
+          const newArray = [...previousCardAndDeckQueryData];
           newArray.splice(data.index, 0, {
             _id: data._id,
             title: data.title,
@@ -58,7 +67,10 @@ const useUndoDeck = () => {
 
       // Return previous data so that if something goes wrong we can use this in onError method
       // you can pass it in object or you can pass it directly like I did above in create deck
-      return { previousQueryData, previousQueryDataForSearch };
+      return { previousQueryData, previousCardAndDeckQueryData };
+    },
+    onSuccess: (serverResponse, mutationData) => {
+      updateCache("undoDeck", "search-cache", "decks-and-cards", mutationData);
     },
 
     onError: (error, _title, context) => {
@@ -69,7 +81,7 @@ const useUndoDeck = () => {
       queryClient.setQueryData(["decks"], context?.previousQueryData);
       queryClient.setQueryData(
         ["decks-and-cards"],
-        context?.previousQueryDataForSearch
+        context?.previousCardAndDeckQueryData
       );
     },
 

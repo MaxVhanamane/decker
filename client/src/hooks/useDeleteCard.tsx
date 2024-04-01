@@ -1,30 +1,22 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { CardDataType } from "../types/types";
+import { CardDataType, DeckAndCardType } from "../types/types";
 import { CustomError } from "../utils/customError";
+import { updateCache } from "../utils/updateCache";
 
-export type DeckTypes = {
-  success: boolean;
-  cards: { _id: string; title: string; cards: string[] };
-};
-type PayloadType = {
+type DeleteCardPayloadType = {
   deck_id: string;
   index: number;
 };
 
-export type OldData = {
-  cards: { title: string; note: string; _id: string }[];
-  title: string;
-};
-type ErrorResponse = {
-  message: string;
-  status: number;
+type SuccessResponseType = {
+  success: boolean;
 };
 
 const deleteCard = async (
-  payLoad: PayloadType
-): Promise<DeckTypes | ErrorResponse> => {
+  payLoad: DeleteCardPayloadType
+): Promise<SuccessResponseType | CustomError> => {
   try {
     const data = await request.delete(
       `/card/${payLoad.deck_id}/${payLoad.index}`
@@ -44,19 +36,17 @@ const useDeleteCard = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteCard,
-    onMutate: async (data: PayloadType) => {
+    onMutate: async (data: DeleteCardPayloadType) => {
       await queryClient.cancelQueries({
         queryKey: ["cards", data.deck_id],
       });
       await queryClient.cancelQueries({
         queryKey: ["decks-and-cards"],
       });
-      const previousQueryData: CardDataType[] = queryClient.getQueryData([
-        "cards",
-        data.deck_id,
-      ])!;
+      const previousCardQueryData: CardDataType[] | undefined =
+        queryClient.getQueryData(["cards", data.deck_id]);
 
-      queryClient.setQueryData<OldData | undefined>(
+      queryClient.setQueryData<CardDataType | undefined>(
         ["cards", data.deck_id],
         (oldQueryData) => {
           if (oldQueryData) {
@@ -66,14 +56,18 @@ const useDeleteCard = () => {
           }
         }
       );
-      const allDecksAndCards = queryClient.getQueryData(["decks-and-cards"]);
-      queryClient.setQueryData<any>(
-        ["decks-and-cards"],
-        (oldQueryData: any) => {
-          if (oldQueryData) {
-            const newArr = JSON.parse(JSON.stringify(oldQueryData));
+      // update decks-and-cards which is used for searching
+      const previousCardAndDeckQueryData: DeckAndCardType[] | undefined =
+        queryClient.getQueryData(["decks-and-cards"]);
 
-            const modifiedData = newArr.map((obj: any) => {
+      queryClient.setQueryData<DeckAndCardType[]>(
+        ["decks-and-cards"],
+        (oldQueryData) => {
+          if (oldQueryData) {
+            const deepCopiedDecks: DeckAndCardType[] = JSON.parse(
+              JSON.stringify(oldQueryData)
+            );
+            const modifiedData = deepCopiedDecks.map((obj) => {
               if (obj._id === data.deck_id) {
                 const updatedCards = [...obj.cards]; // Create a new reference for obj.cards
                 updatedCards.splice(data.index, 1);
@@ -89,18 +83,35 @@ const useDeleteCard = () => {
           }
         }
       );
-      return previousQueryData;
+
+      return { previousCardQueryData, previousCardAndDeckQueryData };
+    },
+    onSuccess: (_serverResponse, mutationData) => {
+      updateCache(
+        "deleteCard",
+        "search-cache",
+        "decks-and-cards",
+        mutationData
+      );
     },
 
     // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
-    onSettled: (serverData, error, data, context) => {
+    onSettled: (serverData, error, mutationData, context) => {
       if (error) {
-        queryClient.setQueryData(["cards", data.deck_id], context);
+        queryClient.setQueryData(
+          ["cards", mutationData.deck_id],
+          context?.previousCardQueryData
+        );
+        queryClient.setQueryData(
+          ["decks-and-cards"],
+          context?.previousCardAndDeckQueryData
+        );
       }
-      // If the search bar is open, it means that the user has deleted the card after searching. As I am using the "decks" query for searching, I need updated data, so I will invalidate the query and retrieve fresh data.
+      // If the search bar is open, it means that the user has deleted the card after searching. As I am using the "decks-and-cards" query for searching, I need updated data, so I will invalidate the query and retrieve fresh data.
+      //As deck-and-card data might be large in size, we won't invalidate it every time a user deletes a card to prevent frequent transfer of big data. We will only do optimistic updates instead.
 
       queryClient.invalidateQueries({
-        queryKey: ["cards", data.deck_id],
+        queryKey: ["cards", mutationData.deck_id],
       });
     },
   });

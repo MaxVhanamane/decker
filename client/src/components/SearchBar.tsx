@@ -12,21 +12,19 @@ import SearchResult from "./SearchResult";
 import { RiCloseFill } from "react-icons/ri";
 import { searchContext } from "../context/SearchContext";
 import { useNavigate } from "react-router-dom";
+import { AudioContext } from "../context/AudioContext";
 
 const SearchBar: FC = () => {
   const { showSearchBar, setShowSearchBar, setOpenSearchBar, openSearchBar } =
     useContext(searchContext);
+  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
   const searchBarRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState<string>("");
   const deferredQuery = useDeferredValue(inputValue);
   const navigate = useNavigate();
+
   useEffect(() => {
-    if (!openSearchBar && showSearchBar) {
-      setOpenSearchBar(true);
-    }
-    if (!showSearchBar) {
-      setOpenSearchBar(false);
-    }
+    setOpenSearchBar(showSearchBar);
   }, [showSearchBar]);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -74,6 +72,12 @@ const SearchBar: FC = () => {
               onClick={() => {
                 navigate(-1);
                 setOpenSearchBar(false);
+
+                if (isPlayingAudioAllowed) {
+                  setTimeout(() => {
+                    handlePlayAudio("close");
+                  }, 100);
+                }
               }}
               className={`text-gray-400 dark:text-gray-400 ${
                 showSearchBar ? "opactiy-100" : "opacity-0"

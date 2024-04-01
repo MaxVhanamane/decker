@@ -10,6 +10,9 @@ import React, {
   useCallback,
   KeyboardEvent,
   memo,
+  RefObject,
+  SetStateAction,
+  Dispatch,
 } from "react";
 import { useParams } from "react-router-dom";
 import useGetCards from "../hooks/useGetCards";
@@ -20,7 +23,12 @@ import { UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
-import { AlertData, ContentType, ContentTypeForEdit } from "../types/types";
+import {
+  AlertData,
+  ContentType,
+  ContentTypeForEdit,
+  UndoCardPayloadData,
+} from "../types/types";
 import { Droppable } from "react-beautiful-dnd";
 import Loading from "../components/Loading";
 import PopUpMessage from "../components/PopUpMessage";
@@ -43,6 +51,8 @@ import { addUnderlineText } from "../functions/addUnderlineText";
 import { addBoldText } from "../functions/addBoldText";
 import CardToolbar from "../components/card/CardToolbar";
 import { CustomError } from "../utils/customError";
+import { AudioContext } from "../context/AudioContext";
+import useUndoCard from "../hooks/useUndoCard";
 // types
 // let oldContent:string //this  works
 
@@ -67,12 +77,24 @@ interface CardsProps {
   isMoveCardError: boolean;
   moveCardError: Error | null;
   resetMoveCardResponse: () => void;
+  undoButtonRefForCard: RefObject<HTMLDivElement>;
+  handlePopupForUndoButtonForCard: () => void;
+  undoCardDetails: UndoCardPayloadData | null;
+  handleUndoCard: (card: UndoCardPayloadData | null) => void;
+  setUndoCardDetails: Dispatch<SetStateAction<UndoCardPayloadData | null>>;
+  timeoutForUndoCard: NodeJS.Timeout;
 }
 // Component
 const Cards: FC<CardsProps> = ({
   isMoveCardError,
   moveCardError,
   resetMoveCardResponse,
+  handlePopupForUndoButtonForCard,
+  undoButtonRefForCard,
+  undoCardDetails,
+  handleUndoCard,
+  setUndoCardDetails,
+  timeoutForUndoCard,
 }) => {
   // States
   const { setAlert } = useContext(AlertContext);
@@ -83,6 +105,7 @@ const Cards: FC<CardsProps> = ({
     setAnimateCloseEditDeckModalInSearchResult,
     cardDeleted,
     setCardDeleted,
+    setShowSearchBar,
   } = useContext(searchContext);
   const {
     indexOfCardForDeletion,
@@ -94,6 +117,12 @@ const Cards: FC<CardsProps> = ({
     showLogoutModal,
     setShowLogoutModal,
   } = useContext(UserContext);
+  const {
+    mutate: undoCardItem,
+    error: undoCardError,
+    isError: isUndoCardError,
+    reset: resetUndoCardResponse,
+  } = useUndoCard();
   const [wasSearchBarInitiallyTrue, setWasSearchBarInitiallyTrue] =
     useState(showSearchBar);
   const { isOnline } = useContext(OfflineContext);
@@ -126,6 +155,7 @@ const Cards: FC<CardsProps> = ({
   wasDeleteModalOpen2 = wasDeleteModalOpen;
   const { deck_id } = useParams();
   const location = useLocation();
+  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
 
   const { data, isError, error, isLoading, isPaused } = useGetCards(
     deck_id!,
@@ -161,6 +191,7 @@ const Cards: FC<CardsProps> = ({
     reset: resetDeleteCardResponse,
     isError: isDeleteCardError,
     error: deleteCardError,
+    isSuccess: isCardDeleted,
   } = useDeleteCard();
 
   // Refs
@@ -176,45 +207,6 @@ const Cards: FC<CardsProps> = ({
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
 
   //useEffects
-
-  useEffect(() => {
-    //If a user clicks the 'Create Card' button, and the request goes to the server, but the client loses connection or encounters an issue, triggering the onError function, I reopen the card that was closed when the user initially clicked the 'Create Card' button. I set the card information again so that the user doesn't lose the card details due to the error. However, if the request reaches the server and is processed, resulting in the creation of the card on the server, when the user regains internet access, they will receive that created card in the data. If the created card is present in the data, it indicates that the server properly processed the request, but the client lost internet, leading to the onError function running. In such cases, there's no point in showing the card info again, so we will reset the title, note, and height. Implemented same thing for card editing.
-    if ((note.length > 0 || title.length > 0) && data && "cards" in data) {
-      const isCardPresent = data?.cards.some(
-        (card) => card.title === title && card.note === note
-      );
-
-      if (isCardPresent) {
-        setNote("");
-        setTitle("");
-        setHeight(80);
-      }
-    }
-
-    if (
-      (editContent.title.length > 0 || editContent.title.length > 0) &&
-      data &&
-      "cards" in data
-    ) {
-      const isCardPresent = data?.cards.some(
-        (card) =>
-          card.title === editContent.title && card.note === editContent.note
-      );
-      if (isCardPresent) {
-        if (showFullScreen) {
-          setFullScreenCardData({ ...editContent });
-        }
-        setCloseEditModal(true);
-        setEditContent({
-          title: "",
-          note: "",
-          _id: "",
-          cardIndex: null,
-          cardId: "",
-        });
-      }
-    }
-  }, [data]);
 
   useEffect(() => {
     if (isCreateCardError) {
@@ -257,7 +249,24 @@ const Cards: FC<CardsProps> = ({
       }));
       resetEditCardResponse();
     }
-  }, [isCreateCardError, isDeleteCardError, isMoveCardError, isEditCardError]);
+    if (isUndoCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message:
+          "We're sorry, but we couldn't undo your card due to a technical issue. Your card may not be restored. We apologize for any inconvenience.",
+        autoHideDuration: 7000,
+      }));
+      resetUndoCardResponse();
+    }
+  }, [
+    isCreateCardError,
+    isDeleteCardError,
+    isMoveCardError,
+    isEditCardError,
+    isUndoCardError,
+  ]);
 
   useEffect(() => {
     const isRoundedTopClassPresent =
@@ -314,7 +323,7 @@ const Cards: FC<CardsProps> = ({
     if (cardDeleted) {
       setCardDeleted(false);
     }
-  }, []);
+  }, [cardDeleted]);
 
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
@@ -338,6 +347,7 @@ const Cards: FC<CardsProps> = ({
         setAnimateCloseEditDeckModalInSearchResult(true);
         return;
       }
+
       if (showSearchBar && !showFullScreen) {
         if (divRefForUserSettings.current?.classList.contains("scale-100")) {
           handleShowUserInfomation();
@@ -345,6 +355,7 @@ const Cards: FC<CardsProps> = ({
         setOpenSearchBar(false);
         return;
       }
+
       if (showTips) {
         setCloseTipsModal(true);
         return;
@@ -535,6 +546,25 @@ const Cards: FC<CardsProps> = ({
     }
   }, []);
 
+  const handleUndoButtonClick = () => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
+    // I have set the value of undoDeck state in useDeleteDeck()
+    undoCardItem(undoCardDetails!);
+    // Once we undo the deck, we will set the state that was holding the deleted item to null so that when we delete another item, it can hold that fresh data.
+    handleUndoCard(null);
+    // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
+    handlePopupForUndoButtonForCard();
+  };
+
   const handleClose = useCallback(() => {
     if (title.trim().length > 0 || note.trim().length > 0) {
       setShowConfirmCloseCardModal(true);
@@ -549,7 +579,6 @@ const Cards: FC<CardsProps> = ({
       }
     }
   }, [title, note, data]);
-
   // onClick handlers
   const handleCreateCard = async (e: FormEvent) => {
     e.preventDefault();
@@ -582,6 +611,11 @@ const Cards: FC<CardsProps> = ({
       setNote("");
       setTitle("");
       setHeight(80);
+      if (isPlayingAudioAllowed) {
+        setTimeout(() => {
+          handlePlayAudio("createdSuccessfully");
+        }, 100);
+      }
     } else {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -645,10 +679,13 @@ const Cards: FC<CardsProps> = ({
       }));
       return;
     }
+
+    const contentWithCardIndex = { ...editContent };
+    const { cardIndex: index, ...contentWithoutCardIndex } = editContent;
     let data = {
       deck_id: deck_id!,
-      newContent: editContent,
-      index: editContent.cardIndex!,
+      newContent: contentWithoutCardIndex,
+      index: index!,
     };
 
     let fullScreenCardDataCache = fullScreenCardData;
@@ -657,7 +694,7 @@ const Cards: FC<CardsProps> = ({
       // If the user saves the edited card and encounters an error during the saving process, this causes the user to lose all the data they created. This is because once the user clicks on the 'Save Card' button, I clear the edited content from the state and close the edit modal. To prevent data loss on error, we will open the modal again and show the lost data.
       editCard(data, {
         onError: () => {
-          setEditContent(data.newContent),
+          setEditContent(contentWithCardIndex),
             setOpenModal(true),
             setCloseEditModal(false);
           // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
@@ -668,13 +705,14 @@ const Cards: FC<CardsProps> = ({
       });
       setCloseEditModal(true);
 
-      setEditContent({
-        title: "",
-        note: "",
-        _id: "",
-        cardIndex: null,
-        cardId: "",
-      });
+      // It's okay not to reset the setEditContent because the next time I open a new card in edit mode, I will have the new data.
+      // setEditContent({
+      //   title: "",
+      //   note: "",
+      //   _id: "",
+      //   cardIndex: null,
+      //   cardId: "",
+      // });
 
       // If the user opens the full screen card view and then clicks on the edit card button, we will display the updated data on full screen once the user saves the edited card.
 
@@ -851,7 +889,11 @@ const Cards: FC<CardsProps> = ({
     <>
       <Helmet>
         <title>
-          {showSearchBar ? "Search Results" : `Cards for ${data?.title}`}
+          {showSearchBar
+            ? "Search result"
+            : data && "title" in data
+            ? `${data?.title}-cards`
+            : "Error"}
         </title>
         <meta
           name="description"
@@ -870,6 +912,21 @@ const Cards: FC<CardsProps> = ({
           setCloseTipsModal={setCloseTipsModal}
         />
       )}
+
+      <div
+        ref={undoButtonRefForCard}
+        className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
+      >
+        <span className="mr-4">Card deleted successfully!</span>
+        <span
+          className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400"
+          onClick={() => {
+            handleUndoButtonClick();
+          }}
+        >
+          Undo
+        </span>
+      </div>
 
       <Droppable droppableId="cardDeleteArea">
         {(provided, snapshot) => {
@@ -948,10 +1005,19 @@ const Cards: FC<CardsProps> = ({
                   handleClose={handleClose}
                 />
               </div>
-              <div className="h-10 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw] z-10 relative">
+              <div
+                onClick={() => {
+                  setExpandTextArea(true);
+                  if (isPlayingAudioAllowed && !expandTextarea) {
+                    setTimeout(() => {
+                      handlePlayAudio("open");
+                    }, 100);
+                  }
+                }}
+                className="h-10 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw] z-10 relative"
+              >
                 <input
                   ref={inputElementRef}
-                  onClick={() => setExpandTextArea(true)}
                   type="text"
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setTitle(e.target.value);
@@ -965,6 +1031,7 @@ const Cards: FC<CardsProps> = ({
                     }
                   }}
                   value={title}
+                  readOnly={!expandTextarea}
                   className={`${
                     expandTextarea
                       ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
@@ -976,10 +1043,7 @@ const Cards: FC<CardsProps> = ({
                 />
                 {!expandTextarea && (
                   <div className="absolute  top-1/2 -translate-y-1/2 right-8 cursor-pointer  ">
-                    <BsChevronExpand
-                      onClick={() => setExpandTextArea(true)}
-                      className="dark:text-gray-100 text-teal-600 "
-                    />
+                    <BsChevronExpand className="dark:text-gray-100 text-teal-600 " />
                   </div>
                 )}
               </div>
@@ -1031,7 +1095,14 @@ const Cards: FC<CardsProps> = ({
               Looks like you haven't added any cards yet.
             </p>
             <button
-              onClick={() => setExpandTextArea(true)}
+              onClick={() => {
+                setExpandTextArea(true);
+                if (isPlayingAudioAllowed) {
+                  setTimeout(() => {
+                    handlePlayAudio("open");
+                  }, 100);
+                }
+              }}
               className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded-md  active:shadow-lg text-gray-50   w-fit px-2  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
               type="button"
               aria-label="Craft an Elegant Note"
@@ -1049,6 +1120,10 @@ const Cards: FC<CardsProps> = ({
         setIsConfirmDeleteModalOpen={setIsConfirmDeleteModalOpen}
         setWasDeleteModalOpen={setWasDeleteModalOpen}
         showFullScreen={showFullScreen}
+        setUndoCardDetails={setUndoCardDetails}
+        undoButtonRefForCard={undoButtonRefForCard}
+        handlePopupForUndoButtonForCard={handlePopupForUndoButtonForCard}
+        timeoutForUndoCard={timeoutForUndoCard}
       />
       {showConfirmCloseCardModal ? (
         <ConfirmCloseCard

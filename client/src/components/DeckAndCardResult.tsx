@@ -43,7 +43,7 @@ const DeckAndCardResult: FC<PropType> = ({
 }) => {
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
-  const { setShowSearchBar } = useContext(searchContext);
+  const { setOpenSearchBar } = useContext(searchContext);
   const { theme, divRefForUserSettings, handleShowUserInfomation } =
     useContext(UserContext);
   const {
@@ -203,11 +203,17 @@ const DeckAndCardResult: FC<PropType> = ({
                       </div>
                       <Link
                         onClick={() => {
-                          setShowSearchBar(false);
+                          setOpenSearchBar(false);
                           handleShowUserInfomation();
                         }}
                         to={`cards/${deck.deck_id}`}
-                        state={{ deck }}
+                        state={{
+                          deck: {
+                            title: deck?.title,
+                            deck_id: deck?.deck_id,
+                            cards: deck?.cards,
+                          },
+                        }}
                         replace={true}
                       >
                         <p className=" break-all font-semibold  line-clamp-1 h-7 text-center  ">
@@ -228,7 +234,7 @@ const DeckAndCardResult: FC<PropType> = ({
           className={`${
             foundDecks?.filter((deck) => deck.pinned === true).length > 0
               ? "mt-12"
-              : "mt-24 "
+              : "lg:mt-16 "
           } mx-1 lg:mb-10 animate-quickOpacity`}
         >
           <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
@@ -282,10 +288,16 @@ const DeckAndCardResult: FC<PropType> = ({
                       </div>
                       <Link
                         onClick={() => {
-                          setShowSearchBar(false), handleShowUserInfomation();
+                          setOpenSearchBar(false), handleShowUserInfomation();
                         }}
                         to={`cards/${deck.deck_id}`}
-                        state={{ deck }}
+                        state={{
+                          deck: {
+                            title: deck?.title,
+                            deck_id: deck?.deck_id,
+                            cards: deck?.cards,
+                          },
+                        }}
                         replace={true}
                       >
                         <p className=" break-all font-semibold  line-clamp-1 h-7 text-center  ">
@@ -320,6 +332,7 @@ const DeckAndCardResult: FC<PropType> = ({
             key={card.cardId}
             to={`/search/result/${card.deck_id}/${card.cardIndex}`}
             state={{ from: location.pathname, card }}
+            replace={true}
           >
             <div className="border relative border-gray-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8.8rem] lg:h-40 text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 group">
               <p className="font-bold text-md lg:text-lg text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all -ml-1 ">

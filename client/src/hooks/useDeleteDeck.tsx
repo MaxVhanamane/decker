@@ -3,8 +3,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeckAndCardType, DeckType, DeckTypeWithIndex } from "../types/types";
 import { RefObject } from "react";
 import { CustomError } from "../utils/customError";
+import { updateCache } from "../utils/updateCache";
 
-type ResponseType = {
+type SuccessResponseType = {
   modifiedDeckInfo: {
     _id: string;
     title: string;
@@ -23,16 +24,11 @@ type ResponseType = {
   success: boolean;
 };
 
-type ErrorResponse = {
-  message: string;
-  status: number;
-};
-
 const deleteDeck = async ({
   _id,
 }: {
   _id: string;
-}): Promise<ResponseType | ErrorResponse> => {
+}): Promise<SuccessResponseType | CustomError> => {
   try {
     const data = await request.delete(`/deck/${_id}`);
 
@@ -86,9 +82,9 @@ const useDeleteDeck = () => {
         }
       );
 
-      const previousQueryDataForSearch: DeckAndCardType[] =
+      const previousCardAndDeckQueryData: DeckAndCardType[] =
         queryClient.getQueryData(["decks-and-cards"])!;
-      if (previousQueryDataForSearch) {
+      if (previousCardAndDeckQueryData) {
         queryClient.setQueryData(
           ["decks-and-cards"],
           (oldQueryData: DeckAndCardType[] | undefined) => {
@@ -98,7 +94,7 @@ const useDeleteDeck = () => {
                 if (deck._id === _id) {
                   indexOfDeletedDeck = index;
                 }
-                return deck._id != _id;
+                return deck._id !== _id;
               }
             );
             return newData;
@@ -111,33 +107,38 @@ const useDeleteDeck = () => {
       return {
         previousQueryData,
         indexOfDeletedDeck,
-        handleUndoDeck,
-        undoButtonRef,
-        handlePopupForUndoButton,
-        timeout,
-        previousQueryDataForSearch,
+        previousCardAndDeckQueryData,
       };
     },
-    onSuccess: (data: ResponseType | ErrorResponse, _variables, context) => {
+    onSuccess: (
+      data: SuccessResponseType | CustomError,
+      mutationData,
+      context
+    ) => {
       // we need index of deck here so that when we undo, we can insert it in a right place.
       if (data && "modifiedDeckInfo" in data) {
         let deletedDeckInformation = {
           ...data.modifiedDeckInfo,
           index: context!.indexOfDeletedDeck,
         };
-        context?.handleUndoDeck(deletedDeckInformation);
+
+        mutationData?.handleUndoDeck(deletedDeckInformation);
         // If user deletes decks one after the another that creates problem because when user deletes second deck
         // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
-        if (context!.undoButtonRef.current?.classList.contains("scale-0")) {
-          context!.handlePopupForUndoButton();
+        if (
+          mutationData!.undoButtonRef.current?.classList.contains("scale-0")
+        ) {
+          mutationData!.handlePopupForUndoButton();
         } else {
-          clearTimeout(context!.timeout);
-          context!.undoButtonRef?.current?.classList.remove("scale-100");
-
-          context!.undoButtonRef?.current?.classList.add("scale-0");
-          context!.undoButtonRef?.current?.classList.add("hidden");
-          context!.handlePopupForUndoButton();
+          clearTimeout(mutationData!.timeout);
+          mutationData!.undoButtonRef?.current?.classList.remove("scale-100");
+          mutationData!.undoButtonRef?.current?.classList.add("scale-0");
+          mutationData!.undoButtonRef?.current?.classList.add("hidden");
+          mutationData!.handlePopupForUndoButton();
         }
+        updateCache("deleteDeck", "search-cache", "decks-and-cards", {
+          deck_id: mutationData?._id,
+        });
       }
     },
 
@@ -150,7 +151,7 @@ const useDeleteDeck = () => {
       queryClient.setQueryData(["decks"], context?.previousQueryData);
       queryClient.setQueryData(
         ["decks-and-cards"],
-        context?.previousQueryDataForSearch
+        context?.previousCardAndDeckQueryData
       );
     },
 

@@ -87,7 +87,14 @@ const SearchResultCardFullScreenView: FC = () => {
     isError: isEditCardError,
     error: editCardError,
   } = useEditCard();
-  const { mutate: deleteCardItem } = useDeleteCard();
+  const {
+    mutate: deleteCardItem,
+    data: deleteCardResponse,
+    reset: resetDeleteCardResponse,
+    isError: isDeleteCardError,
+    error: deleteCardError,
+    isSuccess: isCardDeleted,
+  } = useDeleteCard();
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -108,6 +115,7 @@ const SearchResultCardFullScreenView: FC = () => {
         autoHideDuration: 5000,
       }));
       resetEditCardResponse();
+
       if (previousCardInfoForError) {
         setFullScreenCardData({ ...previousCardInfoForError });
         if (previousCardInfoForError?.from) {
@@ -118,20 +126,35 @@ const SearchResultCardFullScreenView: FC = () => {
         }
       }
     }
-  }, [isEditCardError]);
+
+    if (isDeleteCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: deleteCardError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetDeleteCardResponse();
+    }
+  }, [isEditCardError, isDeleteCardError]);
 
   useEffect(() => {
     if (location?.state?.deleted) {
       setCardDeleted(true);
+      // Navigation is asynchronous, so when I call navigate(-1) twice, it will first navigate back by 1 step. Subsequently, on the next navigate call, it will navigate back by one more step.
       navigate(-1);
       navigate(-1);
-      navigate(-1);
+    }
+    if (location.state?.from && cardDeleted) {
       if (location.state?.from === "/") {
-        navigate("/", { state: { deleted: true } });
+        navigate("/", { state: { deleted: true }, replace: true });
       } else {
-        navigate(location.state?.from, { state: { deleted: true } });
+        navigate(location.state?.from, {
+          state: { deleted: true },
+          replace: true,
+        });
       }
-      return;
     }
   }, [location]);
 
@@ -165,7 +188,7 @@ const SearchResultCardFullScreenView: FC = () => {
         // here we will set the values for cardInfo object that we created above.
         cardInformation.title = location?.state?.card?.title;
         cardInformation.note = location?.state?.card?.note;
-        cardInformation._id = location?.state?.card?.deck_id;
+        cardInformation._id = location?.state?.card?._id;
         cardInformation.cardId = location?.state?.card?.cardId;
 
         // here we will create all the data that is needed to show it in full screen
@@ -181,7 +204,7 @@ const SearchResultCardFullScreenView: FC = () => {
         setCardInfo(cardDetailsWithRoute);
         setShowFullScreen(true);
         if (location?.state?.card?.deckTitle) {
-          setTitle(`Card of a ${location?.state?.card?.deckTitle} Deck`);
+          setTitle(`${location?.state?.card?.deckTitle}-Cards`);
         } else {
           setTitle("Fullscreen card view");
         }
@@ -318,10 +341,12 @@ const SearchResultCardFullScreenView: FC = () => {
       navigate(-1);
       return;
     }
-    const { from, ...editContentData } = editContent;
+
+    const contentWithCardIndex = { ...editContent };
+    const { from, cardIndex: index, ...contentWithoutCardIndex } = editContent;
     let data = {
       deck_id: deck_id!,
-      newContent: editContentData,
+      newContent: contentWithoutCardIndex,
       index: editContent.cardIndex!,
     };
     let fullScreenCardDataCache = fullScreenCardData;
@@ -329,7 +354,7 @@ const SearchResultCardFullScreenView: FC = () => {
     if (editContent.title.length > 0 || editContent.note.length > 0) {
       editCard(data, {
         onError: () => {
-          setEditContent(data.newContent),
+          setEditContent(contentWithCardIndex),
             setOpenModal(true),
             setCloseEditModal(false);
           // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
@@ -457,17 +482,13 @@ const SearchResultCardFullScreenView: FC = () => {
   );
 
   if (cardDeleted) {
-    return (
-      <div className="z-[90] flex items-center justify-center fixed top-[3.45rem] h-full left-1/2 -translate-x-1/2 text-white dark:bg-slate-900 w-full">
-        <p className="-translate-y-[3.45rem]">Deleting...</p>
-      </div>
-    );
+    return null;
   }
 
   return (
     <>
       <Helmet>
-        <title> {title} </title>
+        <title>{title}</title>
         <meta
           name="description"
           content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."

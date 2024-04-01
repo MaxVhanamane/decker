@@ -5,18 +5,27 @@ import { DeckAndCardType } from "../types/types";
 import { useContext } from "react";
 import { searchContext } from "../context/SearchContext";
 import { CustomError } from "../utils/customError";
-type DataType = {
+import { updateCache } from "../utils/updateCache";
+
+type PinDeckPayloadType = {
   id: string;
   pinned: boolean;
 };
 
-type DeckTypes = {
+type DeckType = {
   _id: string;
   title: string;
   cards: string[];
   pinned: boolean;
 };
-export const updateDeck = async (inputData: DataType) => {
+
+type SuccessResponseType = {
+  success: boolean;
+};
+
+export const pinDeck = async (
+  inputData: PinDeckPayloadType
+): Promise<SuccessResponseType | CustomError> => {
   try {
     // you don't need to add try catch block as axios will automatically throw an error.
     // If you want to throw an error then do it manually  using throw keyword because usequery or usemutation need that
@@ -39,15 +48,13 @@ const usePinDeck = () => {
   const { showSearchBar } = useContext(searchContext);
 
   return useMutation({
-    mutationFn: updateDeck,
-    onMutate: async (data: DataType) => {
+    mutationFn: pinDeck,
+    onMutate: async (data: PinDeckPayloadType) => {
       await queryClient.cancelQueries({ queryKey: ["decks"] });
 
-      const previousQueryData = queryClient.getQueryData<DeckTypes[]>([
-        "decks",
-      ]);
+      const previousQueryData = queryClient.getQueryData<DeckType[]>(["decks"]);
       // Make a deep copy because if an error occurs, we are returning the previousQueryData. If I directly work on it, I won't be able to reverse the changes made in case of an error.
-      const CopiedPreviousQueryData: DeckTypes[] = JSON.parse(
+      const CopiedPreviousQueryData: DeckType[] = JSON.parse(
         JSON.stringify(previousQueryData)
       );
 
@@ -69,26 +76,25 @@ const usePinDeck = () => {
       // then we will add the item in the beginning of an array using unshift
       CopiedPreviousQueryData!.unshift(deckToBeChanged!);
 
-      queryClient.setQueryData<DeckTypes[] | undefined>(["decks"], () => {
+      queryClient.setQueryData<DeckType[] | undefined>(["decks"], () => {
         return CopiedPreviousQueryData;
       });
 
       //To keep search result in sync.
       await queryClient.cancelQueries({ queryKey: ["decks-and-cards"] });
 
-      const previousQueryDataForSearch = queryClient.getQueryData<
+      const previousCardAndDeckQueryData = queryClient.getQueryData<
         DeckAndCardType[]
       >(["decks-and-cards"]);
 
-      if (previousQueryDataForSearch) {
-        const CopiedPreviousQueryDataForSearch: DeckAndCardType[] = JSON.parse(
-          JSON.stringify(previousQueryDataForSearch)
-        );
+      if (previousCardAndDeckQueryData) {
+        const CopiedPreviousCardAndDeckQueryData: DeckAndCardType[] =
+          JSON.parse(JSON.stringify(previousCardAndDeckQueryData));
         // all this code is to show pinned and unpinned items in the beginning
         // To store index of an item that we want to pin or unpin
         let indexValue: number;
         // first get the item which we want to pin or unpin
-        const deckToBeChanged = CopiedPreviousQueryDataForSearch!.find(
+        const deckToBeChanged = CopiedPreviousCardAndDeckQueryData!.find(
           (obj, index) => {
             if (obj._id === data.id) {
               indexValue = index;
@@ -100,26 +106,30 @@ const usePinDeck = () => {
         // once we get the item then we will change the pinned property
         deckToBeChanged!.pinned = data.pinned;
         // then we will remove the item that we want pin or unpin
-        CopiedPreviousQueryDataForSearch!.splice(indexValue!, 1);
+        CopiedPreviousCardAndDeckQueryData!.splice(indexValue!, 1);
         // then we will add the item in the beginning of an array using unshift
-        CopiedPreviousQueryDataForSearch!.unshift(deckToBeChanged!);
+        CopiedPreviousCardAndDeckQueryData!.unshift(deckToBeChanged!);
 
         queryClient.setQueryData<DeckAndCardType[] | undefined>(
           ["decks-and-cards"],
           () => {
-            return CopiedPreviousQueryDataForSearch;
+            return CopiedPreviousCardAndDeckQueryData;
           }
         );
       }
 
-      return { previousQueryData, previousQueryDataForSearch };
+      return { previousQueryData, previousCardAndDeckQueryData };
+    },
+
+    onSuccess: (serverResponse, mutationData) => {
+      updateCache("pinDeck", "search-cache", "decks-and-cards", mutationData);
     },
 
     onError: (error, _title, context) => {
       queryClient.setQueryData(["decks"], context?.previousQueryData);
       queryClient.setQueryData(
         ["decks-and-cards"],
-        context?.previousQueryDataForSearch
+        context?.previousCardAndDeckQueryData
       );
     },
 

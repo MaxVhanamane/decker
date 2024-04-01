@@ -10,32 +10,41 @@ import Layout from "./components/Layout";
 import ThemeColorUpdater from "./components/ThemeCodeUpdater";
 import OfflineProvider from "./context/OfflineContext";
 import SearchProvider from "./context/SearchContext";
-const queryClient = new QueryClient();
+import { AudioProvider } from "./context/AudioContext";
+import { BulbContextProvider } from "./context/BulbContext";
+
+const queryClient = new QueryClient({
+  // Read more about the Network Mode in the React Query documentation.
+  defaultOptions: { queries: { networkMode: "offlineFirst" } },
+});
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <>
-    <AlertState>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <OfflineProvider>
-            <UserContextProvider>
-              <SearchProvider>
-                <ThemeColorUpdater />
+    <AudioProvider>
+      <AlertState>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <OfflineProvider>
+              <UserContextProvider>
+                <SearchProvider>
+                  <ThemeColorUpdater />
+                  <BulbContextProvider>
+                    <Layout>
+                      <App />
+                    </Layout>
+                  </BulbContextProvider>
+                </SearchProvider>
+              </UserContextProvider>
+            </OfflineProvider>
+          </BrowserRouter>
 
-                <Layout>
-                  <App />
-                </Layout>
-              </SearchProvider>
-            </UserContextProvider>
-          </OfflineProvider>
-        </BrowserRouter>
-
-        <ReactQueryDevtools
-          initialIsOpen={false}
-          position="bottom"
-          buttonPosition="bottom-left"
-        />
-      </QueryClientProvider>
-    </AlertState>
+          <ReactQueryDevtools
+            initialIsOpen={false}
+            position="bottom"
+            buttonPosition="bottom-left"
+          />
+        </QueryClientProvider>
+      </AlertState>
+    </AudioProvider>
   </>
 );

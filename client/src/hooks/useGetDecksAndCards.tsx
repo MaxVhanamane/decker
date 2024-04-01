@@ -4,12 +4,9 @@ import { DeckAndCardType } from "../types/types";
 import { request } from "../utils/fetch-utils";
 import { CustomError } from "../utils/customError";
 
-type DeckTypeValue = DeckAndCardType[];
-type ErrorResponse = {
-  message: string;
-  status: number;
-};
-const getDecksAndCards = async (): Promise<DeckTypeValue | ErrorResponse> => {
+export const getDecksAndCards = async (): Promise<
+  DeckAndCardType[] | CustomError
+> => {
   try {
     const data = await request.get(`/decks-and-cards`);
 

@@ -4,22 +4,18 @@ import { AlertData, DeckAndCardType, DeckType } from "../types/types";
 import { AlertContext } from "../context/AlertContext";
 import { useNavigate } from "react-router-dom";
 import { UseMutateFunction } from "@tanstack/react-query";
+import { CustomError } from "../utils/customError";
 
 type CardData = {
   deck_id: string;
   newTitle: string;
 };
 
-type PromiseData = {
+type SuccessResponseType = {
   title: string;
   _id: string;
   cards: { title: string; note: string }[];
   pinned: boolean;
-};
-
-type ErrorResponse = {
-  message: string;
-  status: number;
 };
 
 interface IProp {
@@ -38,12 +34,12 @@ interface IProp {
     }>
   >;
   editDeck: UseMutateFunction<
-    PromiseData | ErrorResponse,
+    SuccessResponseType | CustomError,
     Error,
     CardData,
     {
       previousQueryData: DeckType[] | undefined;
-      previousQueryDataForSearch: DeckAndCardType[] | undefined;
+      previousCardAndDeckQueryData: DeckAndCardType[] | undefined;
     }
   >;
 }

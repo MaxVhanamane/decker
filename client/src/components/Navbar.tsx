@@ -1,4 +1,4 @@
-import { FC, memo, useState, useContext, useEffect } from "react";
+import { FC, memo, useState, useContext, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { AlertData } from "../types/types";
@@ -13,6 +13,11 @@ import { OfflineContext } from "../context/OfflineContext";
 import { AlertContext } from "../context/AlertContext";
 import { searchContext } from "../context/SearchContext";
 import { MdInstallDesktop, MdInstallMobile } from "react-icons/md";
+import { HiMiniSpeakerWave } from "react-icons/hi2";
+import { AudioContext } from "../context/AudioContext";
+import { BsLightbulb, BsLightbulbOff } from "react-icons/bs";
+import { BulbContext } from "../context/BulbContext";
+import PopUpMessage from "./PopUpMessage";
 
 const Navbar: FC = () => {
   const {
@@ -28,8 +33,13 @@ const Navbar: FC = () => {
     useContext(searchContext);
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
+  const { isPlayingAudioAllowed, setIsPlayingAudioAllowed, handlePlayAudio } =
+    useContext(AudioContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const showPopUpRef = useRef<HTMLDivElement | null>(null);
+  const { showBulb, setShowSetBulb, setAnimationPlayed } =
+    useContext(BulbContext);
 
   const [imageError, setImageError] = useState(false);
   const handleShowUserInfomation = (isLogout?: boolean) => {
@@ -72,6 +82,55 @@ const Navbar: FC = () => {
     "/accountdeletionsuccess",
   ];
 
+  const handleSwitchOnBulb = () => {
+    if (location.pathname === "/") {
+      setShowSetBulb(false), setAnimationPlayed(false);
+      localStorage.setItem("showBulb", "false");
+      if (isPlayingAudioAllowed) {
+        handlePlayAudio("switchOnAudioSound");
+      }
+    } else {
+      if (showPopUpRef.current?.classList.contains("scale-0")) {
+        showPopUpRef.current.classList.remove("scale-0");
+        showPopUpRef?.current?.classList.add("!block");
+        showPopUpRef.current.classList.add("!w-[85%]");
+        showPopUpRef.current.classList.add("md:!w-fit");
+        showPopUpRef.current.classList.add("!h-fit");
+        showPopUpRef.current.classList.add("scale-100");
+
+        setTimeout(() => {
+          showPopUpRef?.current?.classList.remove("scale-100");
+          showPopUpRef?.current?.classList.add("scale-0");
+          showPopUpRef?.current?.classList.add("hidden");
+        }, 3000);
+      }
+    }
+  };
+
+  const handleSwitchOffBulb = () => {
+    if (location.pathname === "/") {
+      setShowSetBulb(true), localStorage.setItem("showBulb", "true");
+      if (isPlayingAudioAllowed) {
+        handlePlayAudio("switchOffAudioSound");
+      }
+    } else {
+      if (showPopUpRef.current?.classList.contains("scale-0")) {
+        showPopUpRef.current.classList.remove("scale-0");
+        showPopUpRef?.current?.classList.add("!block");
+        showPopUpRef.current.classList.add("!w-[85%]");
+        showPopUpRef.current.classList.add("md:!w-fit");
+        showPopUpRef.current.classList.add("!h-fit");
+        showPopUpRef.current.classList.add("scale-100");
+
+        setTimeout(() => {
+          showPopUpRef?.current?.classList.remove("scale-100");
+          showPopUpRef?.current?.classList.add("scale-0");
+          showPopUpRef?.current?.classList.add("hidden");
+        }, 3000);
+      }
+    }
+  };
+
   return (
     <>
       <nav
@@ -82,6 +141,10 @@ const Navbar: FC = () => {
             : "bg-[#fcfefc]"
         } border-slate-900/10  dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] h-[3.45rem]`}
       >
+        <PopUpMessage
+          message="The bulb option is available only on the home page."
+          ref={showPopUpRef}
+        />
         <div className="flex items-center justify-center flex-row gap-8">
           <div
             onClick={() => {
@@ -151,7 +214,7 @@ const Navbar: FC = () => {
               {userInfo?.email && location.pathname.split("/")[1] == "cards" ? (
                 <Link to="/">
                   <li
-                    className="dark:text-gray-50 text-gray-600 cursor-pointer  font-semibold transition-all duration-150 dark:hover:bg-gray-700 hover:bg-gray-100 hover:rounded-full p-[0.4rem] px-2"
+                    className="dark:text-gray-50 text-gray-600 cursor-pointer  font-semibold transition-all duration-300 dark:hover:bg-gray-700 hover:bg-gray-100 hover:rounded-full py-1.5 px-4"
                     onClick={() => {
                       if (showSearchBar) setOpenSearchBar(false);
                       if (
@@ -185,51 +248,122 @@ const Navbar: FC = () => {
                     handleShowUserInfomation();
                   }
                   setShowSearchBar(true);
+
+                  if (isPlayingAudioAllowed) {
+                    setTimeout(() => {
+                      handlePlayAudio("open");
+                    }, 100);
+                  }
                 }}
                 disabled={showSearchBar}
                 aria-label="Search"
+                title="search"
               >
                 <HiOutlineSearch
                   className={`text-lg dark:text-gray-100 text-gray-500 ${
                     !showSearchBar
                       ? "opacity-100"
                       : "opacity-0 pointer-events-none"
-                  } cursor-pointer transition-opacity lg:duration-[1200ms]  mr-2 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] px-2  w-9 h-9`}
+                  } cursor-pointer transition-all duration-300   dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] px-2  w-9 h-9`}
                 />
               </button>
             </div>
           )}
           <div>
-            <ul className="flex items-center justify-center gap-3">
+            <ul className="flex items-center justify-center gap-1 md:gap-3">
               {!isAuthenticating && (
-                <li className=" text-2xl mr-2 w-9 h-9 flex items-center justify-center p-[1.2rem]">
-                  <ThemeToggler />
-                </li>
+                <>
+                  <li className=" text-2xl  w-9 h-9 flex items-center justify-center p-[1.2rem]">
+                    <ThemeToggler />
+                  </li>
+                </>
               )}
 
               {userInfo?.email ? (
-                <li
-                  onClick={() => {
-                    handleShowUserInfomation();
-                  }}
-                  className=" cursor-pointer   mr-1  rounded-full flex gap-2 px-2 items-center"
-                >
-                  {userInfo?.profile_picture && !imageError ? (
-                    <img
-                      onError={() => {
-                        setImageError(true);
-                      }}
-                      className="rounded-full w-8 h-8 "
-                      src={userInfo?.profile_picture}
-                      alt="profile"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="rounded-full bg-gradient-to-tr from-teal-600 to-green-700 dark:from-sky-700 dark:to-green-700 w-8 h-8 flex items-center justify-center">
-                      <FaRegUser className=" text-lg text-gray-50" />
-                    </div>
-                  )}
-                </li>
+                <>
+                  <li>
+                    {showBulb ? (
+                      <button
+                        onClick={handleSwitchOnBulb}
+                        className={`dark:text-gray-100 text-gray-500 dark:hover:bg-gray-700 hover:bg-gray-100 cursor-pointer text-base  rounded-full p-[0.6rem]`}
+                      >
+                        <BsLightbulb />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSwitchOffBulb}
+                        className={`dark:text-gray-100 text-gray-500 dark:hover:bg-gray-700 hover:bg-gray-100 cursor-pointer text-base  rounded-full p-[0.6rem]`}
+                      >
+                        <BsLightbulbOff />
+                      </button>
+                    )}
+                  </li>
+                  <li>
+                    {isPlayingAudioAllowed ? (
+                      <button
+                        onClick={() => {
+                          setIsPlayingAudioAllowed(false);
+                          localStorage.setItem(
+                            "isPlayingAudioAllowed",
+                            "false"
+                          );
+                          handlePlayAudio("disable");
+                        }}
+                        className="flex items-center justify-center dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]   transition-all duration-300"
+                        title="disable sound"
+                      >
+                        <HiMiniSpeakerWave className="dark:text-gray-100 text-gray-500 text-xl " />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setIsPlayingAudioAllowed(true);
+                          localStorage.setItem("isPlayingAudioAllowed", "true");
+                          handlePlayAudio("enable");
+                        }}
+                        className="flex items-center justify-center dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]   transition-all duration-300"
+                        title="enable sound"
+                      >
+                        <svg
+                          stroke="currentColor"
+                          fill="currentColor"
+                          strokeWidth="0"
+                          viewBox="0 0 20 20"
+                          aria-hidden="true"
+                          height="1em"
+                          width="1em"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="dark:text-gray-100 text-gray-500 text-xl"
+                        >
+                          <path d="M10 3.75a.75.75 0 00-1.264-.546L4.703 7H3.167a.75.75 0 00-.7.48A6.985 6.985 0 002 10c0 .887.165 1.737.468 2.52.111.29.39.48.7.48h1.535l4.033 3.796A.75.75 0 0010 16.25V3.75zM15.95 5.05"></path>
+                        </svg>
+                      </button>
+                    )}
+                  </li>
+                  <li
+                    onClick={() => {
+                      handleShowUserInfomation();
+                    }}
+                    className=" cursor-pointer mr-1 rounded-full flex gap-2 px-2 items-center"
+                    title="settings"
+                  >
+                    {userInfo?.profile_picture && !imageError ? (
+                      <img
+                        onError={() => {
+                          setImageError(true);
+                        }}
+                        className="rounded-full w-8 h-8 "
+                        src={userInfo?.profile_picture}
+                        alt="profile"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="rounded-full bg-gradient-to-tr from-teal-600 to-green-700 dark:from-sky-700 dark:to-green-700 w-8 h-8 flex items-center justify-center">
+                        <FaRegUser className=" text-lg text-gray-50" />
+                      </div>
+                    )}
+                  </li>
+                </>
               ) : null}
             </ul>
           </div>
