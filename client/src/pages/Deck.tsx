@@ -589,12 +589,19 @@ function Deck({
                                   <div
                                     className={`relative border  ${
                                       snapshot.isDragging
-                                        ? " border-fuchsia-600 animate-pulse  shadow-2xl shadow-fuchsia-600 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-fuchsia-600 before:to-fuchsia-500 before:animate-rotate after:content-[''] before:!transition-all before:duration-300 after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-fuchsia-600 text-fuchsia-600 before:!opacity-100  "
-                                        : "border-gray-400 "
+                                        ? ` border-fuchsia-600 animate-pulse  shadow-2xl shadow-fuchsia-600 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-fuchsia-600 before:to-fuchsia-500 before:animate-rotate after:content-[''] before:!transition-all before:duration-300 after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 ${
+                                            !(
+                                              snapshot.draggingOver ===
+                                              "DeckDeleteArea"
+                                            )
+                                              ? "dark:!text-fuchsia-600 !text-fuchsia-60"
+                                              : ""
+                                          } 0 before:!opacity-100 `
+                                        : "border-gray-400"
                                     } ${
-                                      snapshot.draggingOver ===
-                                        "DeckDeleteArea" &&
-                                      " !border-red-500 !shadow-4-sides !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
+                                      snapshot.draggingOver === "DeckDeleteArea"
+                                        ? "!border-red-500 !shadow-4-sides !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
+                                        : ""
                                     } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
@@ -743,9 +750,9 @@ function Deck({
                                         ? " border-lime-500 animate-pulse  shadow-2xl shadow-lime-500 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-lime-500 before:to-lime-500 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-lime-500 text-lime-500 before:!opacity-100 "
                                         : "border-gray-400 "
                                     } ${
-                                      snapshot.draggingOver ===
-                                        "DeckDeleteArea" &&
-                                      " !border-red-500 !shadow-4-sides !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500 "
+                                      snapshot.draggingOver === "DeckDeleteArea"
+                                        ? " !border-red-500 !shadow-4-sides !shadow-red-500 before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
+                                        : ""
                                     } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 

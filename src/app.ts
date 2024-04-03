@@ -206,9 +206,6 @@ passport.deserializeUser(async (id: string, done: (err: any, user?: UserDetails 
 });
 
 
-
-
-
 // Connect to MongoDB and start the server
 connectToMongoDB()
   .then(() => {
@@ -221,9 +218,9 @@ connectToMongoDB()
 
 // To detect if the user is offline
 app.get('/ping', async function (req: Request, res: Response) {
-  res.sendStatus(204)
+  console.log("/ping endpoint")
+  res.status(200).send("online")
 })
-
 
 //Deck routes 
 

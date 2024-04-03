@@ -13,7 +13,7 @@ module.exports = {
 
       boxShadow: {
         '4-sides': '0 0 1rem -0.15rem transparent',
-        'bulb': '0px 0px 150px 75px transparent',
+        'bulb': '0px 0px 175px 100px transparent',
       },
       screens: {
         'xs': '370px',
@@ -201,8 +201,8 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "1%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "1.001%": {
             "background": "#1e293b",
@@ -213,29 +213,29 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "11.001%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "11.002%": {
             "background": "#1e293b",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "12%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
 
           "39.999%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "40%": {
             "background": "#1e293b",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "41%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "41.001%": {
             "background": "#1e293b",
@@ -247,8 +247,8 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "75.5%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "75.501%": {
             "background": "#1e293b",
@@ -260,48 +260,48 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "81.001%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "81.002%": {
             "background": "#1e293b",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "82%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "82.001%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "82.002%": {
             "background": "#1e293b",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "83%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "83.001%": {
             "background": "#1e293b",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "83.002%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "83.003%": {
             "background": "#1e293b",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "88%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "100%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           }
 
         },
@@ -311,8 +311,8 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "1%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "1.001%": {
             "background": "#9ca3af",
@@ -323,29 +323,29 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "11.001%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "11.002%": {
             "background": "#9ca3af",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "12%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
 
           "39.999%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "40%": {
             "background": "#9ca3af",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "41%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "41.001%": {
             "background": "#9ca3af",
@@ -357,8 +357,8 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "75.5%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "75.501%": {
             "background": "#9ca3af",
@@ -370,48 +370,48 @@ module.exports = {
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "81.001%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "81.002%": {
             "background": "#9ca3af",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "82%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "82.001%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "82.002%": {
             "background": "#9ca3af",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "83%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "83.001%": {
             "background": "#9ca3af",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "83.002%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "83.003%": {
             "background": "#9ca3af",
             "box-shadow": "0px 0px 0px 0px transparent"
           },
           "88%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           },
           "100%": {
-            "background": "#0ea5e9",
-            "box-shadow": "0px 0px 150px 75px #38bdf8"
+            "background": "#38bdf8",
+            "box-shadow": "0px 0px 175px 100px #0284c7"
           }
 
         },
@@ -422,7 +422,7 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "1%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "1.001%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
@@ -431,23 +431,23 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "11.001%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "11.002%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "12%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
 
           "39.999%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "40%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "41%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "41.001%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
@@ -457,7 +457,7 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "75.5%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "75.501%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
@@ -467,37 +467,37 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "81.001%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "81.002%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "82%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "82.001%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "82.002%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "83%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "83.001%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "83.002%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "83.003%": {
             "box-shadow": "12px 12px 0px 4.5px  #1e293b"
           },
           "88%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "100%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           }
 
         },
@@ -507,7 +507,7 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "1%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "1.001%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
@@ -516,23 +516,23 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "11.001%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "11.002%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "12%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
 
           "39.999%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "40%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "41%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "41.001%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
@@ -542,7 +542,7 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "75.5%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "75.501%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
@@ -552,37 +552,37 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "81.001%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "81.002%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "82%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "82.001%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "82.002%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "83%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "83.001%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "83.002%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "83.003%": {
             "box-shadow": "-12px 12px 0px 4.5px  #1e293b"
           },
           "88%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "100%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           }
 
         },
@@ -592,7 +592,7 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "1%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "1.001%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
@@ -601,23 +601,23 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "11.001%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "11.002%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "12%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
 
           "39.999%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "40%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "41%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "41.001%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
@@ -627,7 +627,7 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "75.5%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "75.501%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
@@ -637,37 +637,37 @@ module.exports = {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "81.001%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "81.002%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "82%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "82.001%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "82.002%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "83%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "83.001%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "83.002%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "83.003%": {
             "box-shadow": "-12px 12px 0px 4.5px  #9ca3af"
           },
           "88%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           },
           "100%": {
-            "box-shadow": "-12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "-12px 12px 0px 4.5px #38bdf8"
           }
 
         },
@@ -677,7 +677,7 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "1%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "1.001%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
@@ -686,23 +686,23 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "11.001%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "11.002%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "12%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
 
           "39.999%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "40%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "41%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "41.001%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
@@ -712,7 +712,7 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "75.5%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "75.501%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
@@ -722,37 +722,37 @@ module.exports = {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "81.001%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "81.002%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "82%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "82.001%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "82.002%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "83%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "83.001%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "83.002%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "83.003%": {
             "box-shadow": "12px 12px 0px 4.5px  #9ca3af"
           },
           "88%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           },
           "100%": {
-            "box-shadow": "12px 12px 0px 4.5px #0ea5e9"
+            "box-shadow": "12px 12px 0px 4.5px #38bdf8"
           }
 
         },
@@ -761,7 +761,7 @@ module.exports = {
             "background": "#1e293b",
           },
           "1%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "1.001%": {
             "background": "#1e293b",
@@ -770,23 +770,23 @@ module.exports = {
             "background": "#1e293b",
           },
           "11.001%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "11.002%": {
             "background": "#1e293b",
           },
           "12%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
 
           "39.999%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "40%": {
             "background": "#1e293b",
           },
           "41%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "41.001%": {
             "background": "#1e293b",
@@ -796,7 +796,7 @@ module.exports = {
             "background": "#1e293b",
           },
           "75.5%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "75.501%": {
             "background": "#1e293b",
@@ -806,37 +806,37 @@ module.exports = {
             "background": "#1e293b",
           },
           "81.001%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "81.002%": {
             "background": "#1e293b",
           },
           "82%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "82.001%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "82.002%": {
             "background": "#1e293b",
           },
           "83%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "83.001%": {
             "background": "#1e293b",
           },
           "83.002%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "83.003%": {
             "background": "#1e293b",
           },
           "88%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "100%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
 
           }
 
@@ -846,7 +846,7 @@ module.exports = {
             "background": "#9ca3af",
           },
           "1%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "1.001%": {
             "background": "#9ca3af",
@@ -855,23 +855,23 @@ module.exports = {
             "background": "#9ca3af",
           },
           "11.001%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "11.002%": {
             "background": "#9ca3af",
           },
           "12%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
 
           "39.999%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "40%": {
             "background": "#9ca3af",
           },
           "41%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "41.001%": {
             "background": "#9ca3af",
@@ -881,7 +881,7 @@ module.exports = {
             "background": "#9ca3af",
           },
           "75.5%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "75.501%": {
             "background": "#9ca3af",
@@ -891,37 +891,37 @@ module.exports = {
             "background": "#9ca3af",
           },
           "81.001%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "81.002%": {
             "background": "#9ca3af",
           },
           "82%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "82.001%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "82.002%": {
             "background": "#9ca3af",
           },
           "83%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "83.001%": {
             "background": "#9ca3af",
           },
           "83.002%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "83.003%": {
             "background": "#9ca3af",
           },
           "88%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
           },
           "100%": {
-            "background": "#0ea5e9",
+            "background": "#38bdf8",
 
           }
 

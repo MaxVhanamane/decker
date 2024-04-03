@@ -3,7 +3,7 @@ import { CustomError } from "./customError";
 interface RequestOptions {
     method: string;
     credentials: RequestCredentials;
-    headers: {
+    headers?: {
         'Content-Type': string;
 
     };
@@ -16,7 +16,7 @@ const checkIsUserOnline = async () => {
     let online = false;
     // First, make a request to '${import.meta.env.VITE_API_URL}/ping' and check if it returns a response. We will add a timeout to ensure it doesn't hang for an extended period. If it gets aborted or encounters another error, proceed to make another request to a different API and repeat the same process. Based on the response and errors, we will set the online status and return that status.
     try {
-        const response1 = await callAPI(`${import.meta.env.VITE_API_URL}/ping`, 15000);
+        const response1 = await callAPI(`${import.meta.env.VITE_API_URL}/ping`, 10000);
         if (response1.ok) {
             online = true;
         } else {
@@ -25,7 +25,7 @@ const checkIsUserOnline = async () => {
     } catch (error1) {
 
         try {
-            const response2 = await callAPI("https://jsonplaceholder.typicode.com/todos/1", 15000);
+            const response2 = await callAPI("https://jsonplaceholder.typicode.com/todos/1", 10000);
             if (response2.ok) {
                 online = true;
             } else {
@@ -40,13 +40,12 @@ const checkIsUserOnline = async () => {
 };
 
 const callAPI = async (url: string, timeout: number) => {
-    // Add credentials when making a request to /ping to avoid CORS errors.
-    const shouldAddCredentials = url.includes("/ping")
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-        const response = await fetch(url, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' }, method: "GET", credentials: shouldAddCredentials ? "include" : "omit" });
+        const response = await fetch(url, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' }, method: "GET" });
         clearTimeout(timeoutId);
         return response;
     } catch (error) {
@@ -54,9 +53,6 @@ const callAPI = async (url: string, timeout: number) => {
         throw error;
     }
 };
-
-
-
 
 export const request = {
     baseURL: `${import.meta.env.VITE_API_URL}`,
@@ -66,8 +62,6 @@ export const request = {
 
         try {
             // A timeout refers to the maximum amount of time that a client (the requester) is willing to wait for a server to respond to a request.
-
-
             const online = await checkIsUserOnline()
 
             if (!online) {
@@ -84,11 +78,7 @@ export const request = {
 
             }
 
-
-
-
             const res = await fetch(`${this.baseURL}${url}`, options);
-
 
             //In the fetch API, the res.ok property becomes false when the HTTP response status is not within the range of 200 to 299 (inclusive). This means that res.ok will be false for any HTTP status code that indicates an error or a problem with the request.
             if (!res.ok) {
@@ -119,10 +109,7 @@ export const request = {
         const options: RequestOptions = {
             method: 'GET',
             credentials: this.withCredentials ? 'include' : 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
 
-            },
         };
         return this.makeRequest(url, options);
     },
@@ -146,7 +133,6 @@ export const request = {
             credentials: this.withCredentials ? 'include' : 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
-
             },
             body: JSON.stringify(payload),
         };
@@ -172,7 +158,6 @@ export const request = {
             credentials: this.withCredentials ? 'include' : 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
-
             },
         };
         return this.makeRequest(url, options);
