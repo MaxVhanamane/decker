@@ -185,9 +185,9 @@ passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 
 })
     .catch((err) => console.error(err));
 // To detect if the user is offline
-app.get('/ping', function (req, res) {
+app.get('/checkonlinestatus', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("/ping endpoint");
+        console.log("/checkonlinestatus endpoint");
         res.status(200).json({ online: true });
     });
 });

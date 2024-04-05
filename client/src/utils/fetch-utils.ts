@@ -14,12 +14,10 @@ interface RequestOptions {
 
 const checkIsUserOnline = async () => {
     let online = false;
-    // First, make a request to '${import.meta.env.VITE_API_URL}/ping' and check if it returns a response. We will add a timeout to ensure it doesn't hang for an extended period. If it gets aborted or encounters another error, proceed to make another request to a different API and repeat the same process. Based on the response and errors, we will set the online status and return that status.
+    // First, make a request to '${import.meta.env.VITE_API_URL}/checkonlinestatus' and check if it returns a response. We will add a timeout to ensure it doesn't hang for an extended period. If it gets aborted or encounters another error, proceed to make another request to a different API and repeat the same process. Based on the response and errors, we will set the online status and return that status.
     try {
-        const response1 = await request.get("/ping")
-
-        console.log("response1", response1)
-        if (response1.data) {
+        const response1 = await callAPI(`${import.meta.env.VITE_API_URL}/checkonlinestatus`, 10000);
+        if (response1.ok) {
             online = true;
         } else {
             throw new Error(`Request 1 failed with status: ${response1.status}`);
@@ -50,7 +48,6 @@ const callAPI = async (url: string, timeout: number) => {
         clearTimeout(timeoutId);
         return response;
     } catch (error) {
-        console.log("errrrrrrrr", error)
         clearTimeout(timeoutId);
         throw error;
     }
