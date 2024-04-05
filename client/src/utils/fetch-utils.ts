@@ -17,8 +17,7 @@ const checkIsUserOnline = async () => {
     // First, make a request to '${import.meta.env.VITE_API_URL}/ping' and check if it returns a response. We will add a timeout to ensure it doesn't hang for an extended period. If it gets aborted or encounters another error, proceed to make another request to a different API and repeat the same process. Based on the response and errors, we will set the online status and return that status.
     try {
         const response1 = await request.get("/ping")
-        const response1CallAPI = await callAPI(`${import.meta.env.VITE_API_URL}/ping`, 10000);
-        console.log("response1CallAPI", response1CallAPI)
+
         console.log("response1", response1)
         if (response1.data) {
             online = true;
