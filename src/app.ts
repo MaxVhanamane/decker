@@ -219,7 +219,7 @@ connectToMongoDB()
 // To detect if the user is offline
 app.get('/ping', async function (req: Request, res: Response) {
   console.log("/ping endpoint")
-  res.status(200).send("online")
+  res.status(200).json({ online: true })
 })
 
 //Deck routes 

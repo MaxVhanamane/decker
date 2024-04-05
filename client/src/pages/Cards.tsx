@@ -373,6 +373,11 @@ const Cards: FC<CardsProps> = ({
           setShowScrollButtons(false);
         }
       }
+      if (showFullScreen) {
+        // Close the keyboard on phones when the user opens the card.
+        textareaRef?.current?.blur();
+        inputElementRef?.current?.blur();
+      }
     },
     [
       openModal,

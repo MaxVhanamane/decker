@@ -188,7 +188,7 @@ passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 
 app.get('/ping', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("/ping endpoint");
-        res.status(200).send("online");
+        res.status(200).json({ online: true });
     });
 });
 //Deck routes 

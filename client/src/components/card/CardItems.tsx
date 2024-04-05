@@ -93,7 +93,7 @@ const CardItems = ({
                           }}
                           className={`relative border overflow-hidden group-card  group/card ${
                             snapshot.isDragging
-                              ? "shadow-4-sides ring-1 ring-sky-500 shadow-sky-500 border-sky-500 dark:border-emerald-500 dark:ring-emerald-500 dark:shadow-emerald-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-[#fcfefc]"
+                              ? "shadow-4-sides ring-1 dark:ring-sky-500 dark:shadow-sky-500 dark:border-sky-500 border-emerald-500 ring-emerald-500 shadow-emerald-500 lg:ring-sky-500 lg:shadow-sky-500 lg:border-sky-500 lg:dark:border-emerald-500 lg:dark:ring-emerald-500 lg:dark:shadow-emerald-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-[#fcfefc]"
                               : "border-gray-400 "
                           } ${
                             snapshot.draggingOver === "cardDeleteArea"
@@ -120,7 +120,7 @@ const CardItems = ({
                               className={` ${
                                 snapshot.isDragging &&
                                 !(snapshot.draggingOver === "cardDeleteArea")
-                                  ? "!text-sky-500 dark:!text-emerald-500"
+                                  ? "lg:!text-sky-500 lg:dark:!text-emerald-500 dark:!text-sky-500 !text-emerald-500"
                                   : "group-hover/card:text-emerald-500  dark:group-hover/card:text-sky-500"
                               } ${
                                 snapshot.draggingOver === "cardDeleteArea" &&
@@ -147,7 +147,7 @@ const CardItems = ({
                               ${
                                 snapshot.isDragging &&
                                 !(snapshot.draggingOver === "cardDeleteArea")
-                                  ? "!text-sky-500 dark:!text-emerald-500 "
+                                  ? "lg:!text-sky-500 lg:dark:!text-emerald-500 dark:!text-sky-500 !text-emerald-500"
                                   : "group-hover/card:text-emerald-500  dark:group-hover/card:text-sky-500"
                               }
 
