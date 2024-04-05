@@ -218,8 +218,7 @@ connectToMongoDB()
 
 // To detect if the user is offline
 app.get('/checkonlinestatus', async function (req: Request, res: Response) {
-  console.log("/checkonlinestatus endpoint")
-  res.status(200).json({ online: true })
+  res.sendStatus(204)
 })
 
 //Deck routes 
