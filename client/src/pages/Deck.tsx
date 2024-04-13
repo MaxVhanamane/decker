@@ -92,7 +92,8 @@ function Deck({
     reset: resetUndoDeckResponse,
   } = useUndoDeck();
   const { isOnline } = useContext(OfflineContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio, isPlayingAudioAllowed, pathnameForAudio } =
+    useContext(AudioContext);
   // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
   const showPopUp = useRef<HTMLDivElement | null>(null);
   const shouldPushStateRef = useRef<boolean>(false);
@@ -255,7 +256,7 @@ function Deck({
         onSuccess: () => {
           if (isPlayingAudioAllowed) {
             setTimeout(() => {
-              handlePlayAudio("createdSuccessfully");
+              handlePlayAudio("createdSuccessfully", "/");
             }, 100);
           }
         },
@@ -288,10 +289,11 @@ function Deck({
           "animate-[pulse_1.5s_ease-in-out_2]",
           "shadow-shadow-4-sides",
           "shadow-violet-700",
-          "border-violet-700"
+          "border-violet-700",
+          "!text-violet-700"
         );
         overlayElement?.classList.add(
-          "after:bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
+          "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
           "after:opacity-100"
         );
       }, 100);
@@ -312,10 +314,11 @@ function Deck({
             "animate-[pulse_1.5s_ease-in-out_2]",
             "shadow-shadow-4-sides",
             "shadow-violet-700",
-            "border-violet-700"
+            "border-violet-700",
+            "!text-violet-700"
           );
           overlayElement?.classList.remove(
-            "after:bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
+            "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
             "after:opacity-100"
           );
         });
@@ -332,10 +335,11 @@ function Deck({
             "animate-[pulse_1.5s_ease-in-out_2]",
             "shadow-shadow-4-sides",
             "shadow-violet-700",
-            "border-violet-700"
+            "border-violet-700",
+            "!text-violet-700"
           );
           overlayElement?.classList.remove(
-            "after:bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
+            "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
             "after:opacity-100"
           );
         });
@@ -589,7 +593,7 @@ function Deck({
                                   <div
                                     className={`relative border  ${
                                       snapshot.isDragging
-                                        ? ` border-fuchsia-600 animate-pulse  shadow-2xl shadow-fuchsia-600 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-fuchsia-600 before:to-fuchsia-500 before:animate-rotate after:content-[''] before:!transition-all before:duration-300 after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 ${
+                                        ? ` border-fuchsia-600 animate-pulse shadow-2xl shadow-fuchsia-600 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-fuchsia-600 before:to-fuchsia-500 before:animate-rotate after:content-[''] before:!transition-all before:duration-300 after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 ${
                                             !(
                                               snapshot.draggingOver ===
                                               "DeckDeleteArea"
@@ -597,15 +601,15 @@ function Deck({
                                               ? "dark:!text-fuchsia-600 !text-fuchsia-60"
                                               : ""
                                           } 0 before:!opacity-100 `
-                                        : "border-gray-400"
+                                        : "border-gray-400 "
                                     } ${
                                       snapshot.draggingOver === "DeckDeleteArea"
-                                        ? "!border-red-500 !shadow-4-sides !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
+                                        ? "!border-red-500 !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
                                         : ""
                                     } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
-                     transition-[border-color,box-shadow,background-color] duration-300  dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500  overflow-hidden  z-30  shadow-4-sides dark:hover:shadow-sky-500 hover:shadow-teal-500 before:opacity-0 group`}
+                     transition-[border-color,box-shadow,background-color] duration-300 hover:shadow-4-sides  dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500  overflow-hidden  z-30  dark:hover:shadow-sky-500 hover:shadow-teal-500 before:opacity-0 group`}
                                   >
                                     <div
                                       className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 group-hover:after:bg-radialGradient group-hover:after:opacity-100 after:transition-all after:duration-300 pointer-events-none ${
@@ -751,12 +755,12 @@ function Deck({
                                         : "border-gray-400 "
                                     } ${
                                       snapshot.draggingOver === "DeckDeleteArea"
-                                        ? " !border-red-500 !shadow-4-sides !shadow-red-500 before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
+                                        ? " !border-red-500  !shadow-red-500 before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
                                         : ""
                                     } 
         text-gray-800 dark:text-gray-50  
                      rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
-                     transition-[border-color,box-shadow,background-color] duration-300   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 z-30 shadow-4-sides group  ${
+                     transition-[border-color,box-shadow,background-color] duration-300   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 z-30 hover:shadow-4-sides group  ${
                        deck.isProcessing
                          ? "cursor-not-allowed"
                          : " dark:hover:shadow-sky-500 hover:shadow-teal-500 dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 "

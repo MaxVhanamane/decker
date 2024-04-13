@@ -5,6 +5,7 @@ import {
   useCallback,
   useState,
   useContext,
+  useEffect,
 } from "react";
 import { Droppable } from "react-beautiful-dnd";
 import { BulbContext } from "../context/BulbContext";
@@ -206,7 +207,7 @@ const Bulb = forwardRef<ChangeBulbColor, {}>((_, ref) => {
 
                 setAnimationPlayed(true);
               }}
-              className={`relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-700 before:border-solid before:border-t-[18px] before:rounded-[8px] ${
+              className={`relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-700 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer ${
                 showBulb && !animationPlayed
                   ? "dark:animate-flickerDark animate-flickerLight dark:before:animate-flickerBgDark before:animate-flickerBgLight"
                   : "bg-[#38bdf8] shadow-[0px_0px_175px_100px_#0284c7] before:bg-[#38bdf8]"

@@ -93,14 +93,14 @@ const CardItems = ({
                           }}
                           className={`relative border overflow-hidden group-card  group/card ${
                             snapshot.isDragging
-                              ? "shadow-4-sides ring-1 dark:ring-sky-500 dark:shadow-sky-500 dark:border-sky-500 border-emerald-500 ring-emerald-500 shadow-emerald-500 lg:ring-sky-500 lg:shadow-sky-500 lg:border-sky-500 lg:dark:border-emerald-500 lg:dark:ring-emerald-500 lg:dark:shadow-emerald-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-[#fcfefc]"
-                              : "border-gray-400 "
+                              ? "shadow-2xl ring-1 dark:ring-sky-500 dark:shadow-sky-500 dark:border-sky-500 border-emerald-500 ring-emerald-500 shadow-emerald-500 lg:ring-sky-500 lg:shadow-sky-500 lg:border-sky-500 lg:dark:border-emerald-500 lg:dark:ring-emerald-500 lg:dark:shadow-emerald-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-[#fcfefc]"
+                              : "border-gray-400 shadow-4-sides"
                           } ${
                             snapshot.draggingOver === "cardDeleteArea"
-                              ? "shadow-4-sides !shadow-red-500 !border-red-500  !ring-red-500 "
+                              ? " !shadow-red-500 !border-red-500  !ring-red-500 "
                               : null
                           }   flex flex-col 
-                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color,box-shadow] duration-300   dark:hover:border-cyan-500 shadow-4-sides dark:hover:shadow-cyan-500   hover:border-emerald-600 hover:shadow-emerald-600 group`}
+                rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[8.5rem] lg:h-[9.4rem]  text-justify lg:w-[50vw] w-[95vw] transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-cyan-500  dark:hover:shadow-cyan-500   hover:border-emerald-600 hover:shadow-emerald-600 group`}
                         >
                           <div
                             className={`absolute  top-0 -right-1 -z-10 ${

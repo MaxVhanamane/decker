@@ -39,22 +39,18 @@ const SearchBar: FC = () => {
   return (
     <div className={` dark:bg-slate-900 fixed top-16 lg:relative lg:top-auto`}>
       <div
-        onTransitionEnd={(e) => {
-          // If the user closes the keyboard and then tries to switch between light and dark mode, it will focus the input and open the keyboard. To avoid that from happening, we will not open the keyboard if the transition property name is 'background-color'.
-          if (
-            searchBarRef.current &&
-            openSearchBar &&
-            !(e?.propertyName === "background-color")
-          ) {
-            searchBarRef?.current?.focus();
-          }
-        }}
         className={`lg:relative lg:right-auto lg:translate-x-0 fixed w-full bg-[#fcfefc] dark:bg-slate-900 h-32 lg:h-auto top-[3.45rem] lg:top-auto transition-all duration-500 lg:duration-700  ${
           openSearchBar ? "left-0 lg:left-auto" : "left-full lg:left-auto"
         }`}
       >
         <div
-          onTransitionEnd={(e) => e.stopPropagation()}
+          onTransitionEnd={(e) => {
+            //If the user closes the keyboard and then tries to switch between light and dark mode, the input will be focused, potentially opening the keyboard. To prevent this behavior, we will refrain from opening the keyboard if the transition property name is anything other than 'width'.
+            if (e.propertyName !== "width") return;
+            if (searchBarRef.current && openSearchBar) {
+              searchBarRef?.current?.focus();
+            }
+          }}
           className={`lg:relative transform-gpu ${
             openSearchBar ? "w-72 right-1/2" : "w-0 right-0"
           } overflow-hidden  transition-all duration-500 lg:duration-700  lg:right-auto top-[3.85rem] lg:top-auto  fixed  translate-x-1/2 lg:translate-x-0  z-[80] bg-[#fcfefc] dark:bg-slate-900  `}

@@ -1,5 +1,6 @@
 import {
   Dispatch,
+  MutableRefObject,
   SetStateAction,
   createContext,
   useCallback,
@@ -30,20 +31,23 @@ type AudioNamesType =
   | "disable";
 
 type ContextType = {
-  handlePlayAudio: (audioName: AudioNamesType) => void;
+  handlePlayAudio: (audioName: AudioNamesType, path?: string) => void;
   isPlayingAudioAllowed: boolean;
   setIsPlayingAudioAllowed: Dispatch<SetStateAction<boolean>>;
+  pathnameForAudio: MutableRefObject<string | null>;
 };
 
 export const AudioContext = createContext<ContextType>({
   handlePlayAudio: (audioName) => {},
   isPlayingAudioAllowed: false,
   setIsPlayingAudioAllowed: () => {},
+  pathnameForAudio: { current: null },
 });
 
 export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const [audio] = useState(new Audio());
   const isPlaying = useRef(false);
+  const pathnameForAudio = useRef(null);
 
   const [isPlayingAudioAllowed, setIsPlayingAudioAllowed] = useState(() => {
     const allowPlayingAudio = localStorage.getItem("isPlayingAudioAllowed");
@@ -57,7 +61,17 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   const handlePlayAudio = useCallback(
-    (audioName: AudioNamesType) => {
+    (audioName: AudioNamesType, path?: string) => {
+      //If the user is on the "/cards" page and performs an action that triggers a sound, such as deleting a card, and then immediately navigates to the home page ("/"), we will not play the sound. This decision is based on the understanding that there is no need to play the sound when the user has already left the page.
+      if (path) {
+        if (
+          !location.pathname.includes(path) ||
+          (path === "/" && !location.pathname.startsWith("/cards"))
+        ) {
+          return;
+        }
+      }
+
       if (
         audio.src === audioSource[audioName] &&
         !audio.paused &&
@@ -104,6 +118,8 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
         handlePlayAudio,
         isPlayingAudioAllowed,
         setIsPlayingAudioAllowed,
+
+        pathnameForAudio,
       }}
     >
       {children}

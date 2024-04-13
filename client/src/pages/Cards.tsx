@@ -155,7 +155,8 @@ const Cards: FC<CardsProps> = ({
   wasDeleteModalOpen2 = wasDeleteModalOpen;
   const { deck_id } = useParams();
   const location = useLocation();
-  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const { isPlayingAudioAllowed, handlePlayAudio, pathnameForAudio } =
+    useContext(AudioContext);
 
   const { data, isError, error, isLoading, isPaused } = useGetCards(
     deck_id!,
@@ -373,11 +374,6 @@ const Cards: FC<CardsProps> = ({
           setShowScrollButtons(false);
         }
       }
-      if (showFullScreen) {
-        // Close the keyboard on phones when the user opens the card.
-        textareaRef?.current?.blur();
-        inputElementRef?.current?.blur();
-      }
     },
     [
       openModal,
@@ -389,6 +385,17 @@ const Cards: FC<CardsProps> = ({
       showLogoutModal,
     ]
   );
+
+  useEffect(() => {
+    if (showFullScreen || isConfirmDeleteModalOpen || openModal) {
+      // Close the keyboard on phones when the user opens modals or enters fullscreen card view.
+      if (document?.activeElement === textareaRef?.current) {
+        textareaRef?.current?.blur();
+      } else if (document?.activeElement === inputElementRef?.current) {
+        inputElementRef?.current?.blur();
+      }
+    }
+  }, [showFullScreen, isConfirmDeleteModalOpen, openModal]);
 
   // Here we will check if user has used browser's back button if he uses browsers back button to go back then
   // we will first check if card is open in full screen if it is open then we will close it instead of going back to the previous page directly.
@@ -618,7 +625,7 @@ const Cards: FC<CardsProps> = ({
       setHeight(80);
       if (isPlayingAudioAllowed) {
         setTimeout(() => {
-          handlePlayAudio("createdSuccessfully");
+          handlePlayAudio("createdSuccessfully", "/cards");
         }, 100);
       }
     } else {
@@ -1015,7 +1022,7 @@ const Cards: FC<CardsProps> = ({
                   setExpandTextArea(true);
                   if (isPlayingAudioAllowed && !expandTextarea) {
                     setTimeout(() => {
-                      handlePlayAudio("open");
+                      handlePlayAudio("open", "/cards");
                     }, 100);
                   }
                 }}
@@ -1104,7 +1111,7 @@ const Cards: FC<CardsProps> = ({
                 setExpandTextArea(true);
                 if (isPlayingAudioAllowed) {
                   setTimeout(() => {
-                    handlePlayAudio("open");
+                    handlePlayAudio("open", "/cards");
                   }, 100);
                 }
               }}

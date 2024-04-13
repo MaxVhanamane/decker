@@ -91,7 +91,8 @@ function App() {
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio, isPlayingAudioAllowed, pathnameForAudio } =
+    useContext(AudioContext);
   const pathNames = [
     "/signup",
     "/verifyemail",
@@ -238,8 +239,9 @@ function App() {
       deleteDeckMutation(data, {
         onSuccess: () => {
           if (isPlayingAudioAllowed) {
+            pathnameForAudio.current = location.pathname;
             setTimeout(() => {
-              handlePlayAudio("deletedSuccessfully");
+              handlePlayAudio("deletedSuccessfully", "/");
             }, 100);
           }
         },
@@ -292,7 +294,7 @@ function App() {
 
             if (isPlayingAudioAllowed) {
               setTimeout(() => {
-                handlePlayAudio("deletedSuccessfully");
+                handlePlayAudio("deletedSuccessfully", "/cards");
               }, 100);
             }
           },

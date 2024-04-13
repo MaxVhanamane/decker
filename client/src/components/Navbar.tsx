@@ -38,7 +38,7 @@ const Navbar: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const showPopUpRef = useRef<HTMLDivElement | null>(null);
-  const { showBulb, setShowSetBulb, setAnimationPlayed } =
+  const { showBulb, setShowSetBulb, setAnimationPlayed, animationPlayed } =
     useContext(BulbContext);
 
   const [imageError, setImageError] = useState(false);
@@ -60,6 +60,13 @@ const Navbar: FC = () => {
       divRefForUserSettings.current?.classList.add("hidden");
     }
   };
+
+  useEffect(() => {
+    // If the user leaves the home page, we will stop the bulb from flickering. However, if the user keeps switching between the home page and cards or other pages, the flickering will continue because there won't be enough time for the animation to end. The animation is set to end only when it completes, at which point, I set 'animationPlayed' to true.
+    if (!animationPlayed && !(location?.pathname === "/")) {
+      setAnimationPlayed(true);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (showLogoutModal || showSearchBar) {
