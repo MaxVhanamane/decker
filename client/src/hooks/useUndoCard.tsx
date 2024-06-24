@@ -7,6 +7,8 @@ import {
   UndoCardPayloadData,
 } from "../types/types";
 import { updateCache } from "../utils/updateCache";
+import { OfflineContext } from "../context/OfflineContext";
+import { useContext } from "react";
 
 type SuccessResponseType = {
   success: boolean;
@@ -30,6 +32,7 @@ const undoCard = async (
 
 const useUndoCard = () => {
   const queryClient = useQueryClient();
+  const { deck, setDeck } = useContext(OfflineContext);
   return useMutation({
     mutationFn: undoCard,
     onMutate: async (data) => {
@@ -47,7 +50,7 @@ const useUndoCard = () => {
         ["cards", data.deck_id],
         (oldQueryData) => {
           if (oldQueryData) {
-            const newArray = [...oldQueryData?.cards];
+            const newArray = [...oldQueryData.cards];
             newArray.splice(data.index, 0, {
               ...data.content,
             });
@@ -71,7 +74,7 @@ const useUndoCard = () => {
 
               const modifiedDecksAndCards = deepCopiedDecks.map((deck) => {
                 if (deck?._id === data?.deck_id) {
-                  const newArray = [...deck?.cards];
+                  const newArray = [...deck.cards];
                   newArray.splice(data.index, 0, {
                     ...data.content,
                   });
@@ -91,6 +94,9 @@ const useUndoCard = () => {
     },
 
     onSuccess: (_serverResponse, mutationData) => {
+      if (deck) {
+        setDeck(null);
+      }
       updateCache("undoCard", "search-cache", "decks-and-cards", mutationData);
     },
 
@@ -104,12 +110,7 @@ const useUndoCard = () => {
         context?.previousCardAndDeckQueryData
       );
     },
-    onSettled: (
-      _dataReturnedByTheAxiosRequest,
-      _error,
-      dataThatWePassed,
-      _context
-    ) => {
+    onSettled: (_dataReturnedByTheServer, _error, dataThatWePassed) => {
       queryClient.invalidateQueries({
         queryKey: ["cards", dataThatWePassed.deck_id],
       });

@@ -6,23 +6,19 @@ import {
   RefObject,
   memo,
   useEffect,
+  useMemo,
+  useCallback,
 } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Draggable, Droppable } from "react-beautiful-dnd";
-import { BsPin } from "react-icons/bs";
-import { BsFillPinFill } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 import useGetDecks from "../hooks/useGetDecks";
 import useCreateDeck from "../hooks/useCreateDeck";
 import usePinDeck from "../hooks/usePinDeck";
 import { AlertContext } from "../context/AlertContext";
 import EditModalForDeck from "../components/EditModalForDeck";
-import { BiEdit } from "react-icons/bi";
 import Loading from "../components/Loading";
-import PopUpMessage from "../components/PopUpMessage";
-import { AlertData, DeckType, DeckTypeWithIndex } from ".././types/types";
-import useUndoDeck from "./../hooks/useUndoDeck";
+import { AlertData } from ".././types/types";
 import { Helmet } from "react-helmet";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext, UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { searchContext } from "../context/SearchContext";
@@ -30,31 +26,24 @@ import useEditDeck from "../hooks/useEditDeck";
 import { CustomError } from "../utils/customError";
 import { AudioContext } from "../context/AudioContext";
 import Bulb, { ChangeBulbColor } from "../components/Bulb";
+import DeckItems from "../components/deck/DeckItems";
+import DeckCreationForm from "../components/deck/DeckCreationForm";
+import TrashCanDropZone from "../components/TrashCanDropZone";
 
 type PropType = {
-  undoDeckDetails: DeckTypeWithIndex | null;
-  handleUndoDeck: (deck: DeckTypeWithIndex | null) => void;
-  undoButtonRef: RefObject<HTMLDivElement>;
-  handlePopupForUndoButton: () => void;
+  bulbRef: RefObject<ChangeBulbColor>;
 };
 
-function Deck({
-  undoDeckDetails,
-  handleUndoDeck,
-  undoButtonRef,
-  handlePopupForUndoButton,
-}: PropType) {
+function Deck({ bulbRef }: PropType) {
   const { setAlert } = useContext(AlertContext);
   const inputRefElement = useRef<HTMLInputElement>(null);
   const { data: allDecks, error, isError, isLoading, isPaused } = useGetDecks();
   const navigate = useNavigate();
-  const location = useLocation();
   const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
   // Here in createDeckResponse, you will receive the data that the server returns after the mutation.
   const {
     mutate: addDeck,
     isPending: isCreatingDeck,
-    isSuccess: isDeckAdded,
     isError: isCreateDeckError,
     error: createDeckError,
     data: createDeckResponse,
@@ -62,12 +51,13 @@ function Deck({
   } = useCreateDeck();
 
   const {
-    theme,
-    handleShowUserInfomation,
-    divRefForUserSettings,
     showLogoutModal,
     setShowLogoutModal,
+    handleShowUserInfomation,
+    divRefForUserSettings,
   } = useContext(UserContext);
+
+  const { theme } = useContext(ThemeContext);
   const [editData, setEditData] = useState({ deck_id: "", title: "" });
   const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
     useState(false);
@@ -75,29 +65,22 @@ function Deck({
     mutate: editDeck,
     isError: isEditDeckError,
     error: editDeckError,
-    data: editDeckResponse,
+
     reset: resetEditDeckResponse,
   } = useEditDeck();
   const {
     mutate: pinDeck,
     error: pinDeckError,
     isError: isPinDeckError,
-    data: pinDeckResponse,
+
     reset: resetPinDeckResponse,
   } = usePinDeck();
-  const {
-    mutate: undoDeckItem,
-    error: undoDeckError,
-    isError: isUndoDeckError,
-    reset: resetUndoDeckResponse,
-  } = useUndoDeck();
+
   const { isOnline } = useContext(OfflineContext);
-  const { handlePlayAudio, isPlayingAudioAllowed, pathnameForAudio } =
-    useContext(AudioContext);
-  // const deleteConfirmationModal=useRef<HTMLDivElement | null >(null)
-  const showPopUp = useRef<HTMLDivElement | null>(null);
+  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
   const shouldPushStateRef = useRef<boolean>(false);
-  const bulbRef = useRef<ChangeBulbColor>(null);
+
+  const radialGradientOverlayRef = useRef<HTMLDivElement | null>(null);
 
   const {
     showSearchBar,
@@ -162,18 +145,7 @@ function Deck({
       }));
       resetEditDeckResponse();
     }
-    if (isUndoDeckError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message:
-          "We're sorry, but we couldn't undo your deck due to a technical issue. Your deck may not be restored. We apologize for any inconvenience.",
-        autoHideDuration: 5000,
-      }));
-      resetUndoDeckResponse();
-    }
-  }, [isCreateDeckError, isEditDeckError, isPinDeckError, isUndoDeckError]);
+  }, [isCreateDeckError, isEditDeckError, isPinDeckError]);
 
   useEffect(() => {
     if (cardDeleted) {
@@ -207,7 +179,7 @@ function Deck({
       } else {
         setWasSearchBarInitiallyTrue(false);
       }
-    } else if (location?.state?.isBackButtonNotClicked) {
+    } else if (window?.history?.state?.isBackButtonNotClicked) {
       navigate(-1);
     }
 
@@ -236,49 +208,62 @@ function Deck({
     showLogoutModal,
   ]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    //If I don't use trim(), user can create the deck using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str.
-    e.preventDefault();
+  const isPinnedDeckAvailable = useMemo(() => {
+    return allDecks ? !!allDecks?.find((deck) => deck?.pinned === true) : false;
+  }, [allDecks]);
 
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
+  const isUnPinnedDeckAvailable = useMemo(() => {
+    return allDecks
+      ? !!allDecks?.find((deck) => deck?.pinned === false)
+      : false;
+  }, [allDecks]);
 
-    if (inputRefElement.current!.value.trim().length > 0) {
-      addDeck(inputRefElement.current!.value, {
-        onSuccess: () => {
-          if (isPlayingAudioAllowed) {
-            setTimeout(() => {
-              handlePlayAudio("createdSuccessfully", "/");
-            }, 100);
-          }
-        },
-      });
-      inputRefElement.current!.value = "";
-    } else {
-      inputRefElement.current!.value = "";
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "warning",
-        show: true,
-        message: "The deck title should be at least one character long.",
-      }));
-    }
-  };
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      //If I don't use trim(), user can create the deck using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str.
+      e.preventDefault();
+
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
+
+      if (inputRefElement.current!.value.trim().length > 0) {
+        addDeck(inputRefElement.current!.value, {
+          onSuccess: () => {
+            if (isPlayingAudioAllowed) {
+              setTimeout(() => {
+                handlePlayAudio("createdSuccessfully", "/");
+              }, 100);
+            }
+          },
+        });
+        inputRefElement.current!.value = "";
+      } else {
+        inputRefElement.current!.value = "";
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "warning",
+          show: true,
+          message: "The deck title should be at least one character long.",
+        }));
+      }
+    },
+    [isOnline, inputRefElement, addDeck, isPlayingAudioAllowed, handlePlayAudio]
+  );
 
   useEffect(() => {
     // Find the element you want to scroll to
     const elementToScrollTo = document.getElementById(
       `${createDeckResponse?._id}`
     );
-    const overlayElement = document.getElementById("radialGradientOverlay");
+    const overlayElement = radialGradientOverlayRef?.current;
     // Calculate an offset to control the scrolling position
     const yOffset = -200;
 
@@ -290,7 +275,10 @@ function Deck({
           "shadow-shadow-4-sides",
           "shadow-violet-700",
           "border-violet-700",
-          "!text-violet-700"
+          "!text-violet-700",
+          "hover:shadow-none",
+          "dark:hover:border-violet-700",
+          "hover:border-violet-700"
         );
         overlayElement?.classList.add(
           "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
@@ -315,7 +303,10 @@ function Deck({
             "shadow-shadow-4-sides",
             "shadow-violet-700",
             "border-violet-700",
-            "!text-violet-700"
+            "!text-violet-700",
+            "hover:shadow-none",
+            "dark:hover:border-violet-700",
+            "hover:border-violet-700"
           );
           overlayElement?.classList.remove(
             "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
@@ -336,7 +327,10 @@ function Deck({
             "shadow-shadow-4-sides",
             "shadow-violet-700",
             "border-violet-700",
-            "!text-violet-700"
+            "!text-violet-700",
+            "hover:shadow-none",
+            "dark:hover:border-violet-700",
+            "hover:border-violet-700"
           );
           overlayElement?.classList.remove(
             "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
@@ -348,70 +342,40 @@ function Deck({
     }
   }, [createDeckResponse]);
 
-  const handlePin = async (id: string, pinned: boolean) => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
-    pinDeck({ id, pinned: !pinned });
-  };
+  const handlePin = useCallback(
+    async (id: string, pinned: boolean) => {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
+      pinDeck({ id, pinned: !pinned });
+    },
+    [isOnline, pinDeck]
+  );
 
-  const handleEditDeck = (deck_id: string, title: string) => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
-    setEditData({ ...editData, deck_id, title });
-    setOpenEditDeckModal(true);
-  };
-
-  const handlePopUp = () => {
-    if (showPopUp.current?.classList.contains("scale-0")) {
-      showPopUp.current.classList.remove("scale-0");
-      showPopUp?.current?.classList.add("!block");
-      showPopUp.current.classList.add("!w-[85%]");
-      showPopUp.current.classList.add("md:!w-fit");
-      showPopUp.current.classList.add("!h-fit");
-      showPopUp.current.classList.add("scale-100");
-
-      setTimeout(() => {
-        showPopUp?.current?.classList.remove("scale-100");
-        showPopUp?.current?.classList.add("scale-0");
-        showPopUp?.current?.classList.add("hidden");
-      }, 3000);
-    }
-  };
-
-  const handleUndoButtonClick = () => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
-    // I have set the value of undoDeck state in useDeleteDeck()
-    undoDeckItem(undoDeckDetails!);
-    // Once we undo the deck, we will set the state that was holding the deleted item to null so that when we delete another item, it can hold that fresh data.
-    handleUndoDeck(null);
-    // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
-    handlePopupForUndoButton();
-  };
+  const handleEditDeck = useCallback(
+    (deck_id: string, title: string) => {
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
+      }
+      setEditData({ ...editData, deck_id, title });
+      setOpenEditDeckModal(true);
+    },
+    [isOnline, editData]
+  );
 
   if (isError || isPaused) {
     return (
@@ -447,447 +411,40 @@ function Deck({
         />
       </Helmet>
       <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14  ">
-        <div
-          ref={undoButtonRef}
-          className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
-        >
-          <span className="mr-4">Deck deleted successfully!</span>
-          <span
-            className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400"
-            onClick={() => {
-              handleUndoButtonClick();
-            }}
-          >
-            Undo
-          </span>
-        </div>
-
-        <PopUpMessage
-          message="Drag and drop the deck onto the trash icon to delete it."
-          ref={showPopUp}
-        />
-
         <Bulb ref={bulbRef} />
 
-        <Droppable droppableId="DeckDeleteArea">
-          {(provided, snapshot) => {
-            if (snapshot.isDraggingOver) {
-              bulbRef?.current?.setBulbColor("red");
-            } else {
-              bulbRef?.current?.resetBulbColor("red");
-            }
-            return (
-              <div
-                className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700    lg:right-2 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${
-                  snapshot.isDraggingOver
-                    ? "ring-1 ring-red-500 shadow-md shadow-red-500 z-[5001]"
-                    : "ring-1 dark:ring-sky-500/40 ring-teal-500/40"
-                }`}
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                <div
-                  className={` cursor-pointer transition-transform duration-300 ${
-                    snapshot.isDraggingOver
-                      ? "-rotate-12 dragging"
-                      : "transform-none"
-                  } `}
-                  onClick={handlePopUp}
-                >
-                  {snapshot.isDraggingOver ? (
-                    <img
-                      src="/trashcan-open.svg"
-                      alt="Delete deck trash can "
-                      className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
-                    />
-                  ) : (
-                    <img
-                      src="/trashcan-close.svg"
-                      alt="Delete deck trash can "
-                      className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"
-                    />
-                  )}
-                </div>
-              </div>
-            );
-          }}
-        </Droppable>
+        <TrashCanDropZone
+          bulbRef={bulbRef}
+          droppableId="DeckDeleteArea"
+          altText="Trash can for deleting deck"
+        />
 
-        <div className="w-full px-4 mx-auto z-30  pointer-events-none">
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col md:flex-row gap-4 justify-center items-center"
-          >
-            <label
-              htmlFor="title"
-              className="font-bold text-teal-700 dark:text-sky-400 "
-            >
-              Deck title
-            </label>
-
-            <input
-              ref={inputRefElement}
-              className=" bg-transparent  dark:border-sky-400 dark:text-white lg:w-96 w-80 max-w-full py-1 border-2 border-teal-600 outline-none focus:border-teal-700 text-gray-700 px-2 mx-4 rounded-md pointer-events-auto"
-              type="text"
-              id="title"
-            />
-            <button
-              className="bg-[#459C98] dark:bg-sky-600 dark:hover:bg-sky-700  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300 pointer-events-auto"
-              aria-label="Add Deck"
-              type="submit"
-            >
-              Create Deck
-            </button>
-          </form>
-        </div>
+        <DeckCreationForm handleSubmit={handleSubmit} ref={inputRefElement} />
 
         {allDecks &&
         !("message" in allDecks && allDecks.message) &&
-        allDecks?.filter((deck) => {
-          return deck?.pinned === true;
-        }).length > 0 ? (
-          <section className="mt-4 lg:mb-10  mx-1  animate-opacity_page_transition">
-            <h2 className="text-left  text-base font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2 ">
-              Pinned
-            </h2>
-
-            <Droppable droppableId="pinnedArea" isDropDisabled={true}>
-              {(provided) => {
-                return (
-                  <div
-                    className=" flex flex-row flex-wrap gap-2  justify-center items-center py-2 px-1 lg:mx-16 "
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                  >
-                    {allDecks
-                      ?.filter((deck) => deck.pinned === true)
-                      .map((deck, index) => {
-                        return (
-                          <Draggable
-                            draggableId={deck._id}
-                            index={index}
-                            key={deck._id}
-                            shouldRespectForcePress
-                          >
-                            {(provided, snapshot) => {
-                              if (snapshot.draggingOver === "DeckDeleteArea") {
-                                bulbRef?.current?.resetBulbColor(
-                                  "fuchsia",
-                                  true
-                                );
-                              } else if (snapshot.isDragging) {
-                                bulbRef?.current?.setBulbColor("fuchsia");
-                              } else {
-                                bulbRef?.current?.resetBulbColor("fuchsia");
-                              }
-                              return (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.dragHandleProps}
-                                  {...provided.draggableProps}
-                                  className={` ${
-                                    snapshot.isDragging &&
-                                    "dark:bg-gray-900 bg-gray-100 rounded-md"
-                                  }`}
-                                >
-                                  <div
-                                    className={`relative border  ${
-                                      snapshot.isDragging
-                                        ? ` border-fuchsia-600 animate-pulse shadow-2xl shadow-fuchsia-600 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-fuchsia-600 before:to-fuchsia-500 before:animate-rotate after:content-[''] before:!transition-all before:duration-300 after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 ${
-                                            !(
-                                              snapshot.draggingOver ===
-                                              "DeckDeleteArea"
-                                            )
-                                              ? "dark:!text-fuchsia-600 !text-fuchsia-60"
-                                              : ""
-                                          } 0 before:!opacity-100 `
-                                        : "border-gray-400 "
-                                    } ${
-                                      snapshot.draggingOver === "DeckDeleteArea"
-                                        ? "!border-red-500 !shadow-red-500   before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
-                                        : ""
-                                    } 
-        text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[11.8rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify  
-                     transition-[border-color,box-shadow,background-color] duration-300 hover:shadow-4-sides  dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500  overflow-hidden  z-30  dark:hover:shadow-sky-500 hover:shadow-teal-500 before:opacity-0 group`}
-                                  >
-                                    <div
-                                      className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 group-hover:after:bg-radialGradient group-hover:after:opacity-100 after:transition-all after:duration-300 pointer-events-none ${
-                                        snapshot.isDragging
-                                          ? "after:bg-[radial-gradient(#c026d3,#0c7bb3e6)] after:opacity-100"
-                                          : "after:bg-radialGradient"
-                                      }  ${
-                                        snapshot.draggingOver ===
-                                        "DeckDeleteArea"
-                                          ? "after:bg-[radial-gradient(#ef4444,#0c7bb3e6)] after:opacity-100"
-                                          : ""
-                                      }`}
-                                    ></div>
-                                    <div className="z-40 w-full ">
-                                      <div className="absolute bottom-0 right-0">
-                                        {/* <button onClick={()=>{handleDelete(deck._id)}} type="button" className="text-red-500 text-lg outline-none   rounded-tr  text-center hover:scale-105"><MdOutlineDeleteOutline/></button> */}
-
-                                        <button
-                                          onClick={() => {
-                                            handleEditDeck(
-                                              deck._id,
-                                              deck.title
-                                            );
-                                            if (
-                                              divRefForUserSettings.current?.classList.contains(
-                                                "scale-100"
-                                              )
-                                            ) {
-                                              handleShowUserInfomation();
-                                            }
-                                          }}
-                                          type="button"
-                                          className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                                          aria-label="Edit Deck"
-                                        >
-                                          <BiEdit />
-                                        </button>
-                                        <button
-                                          onClick={() => {
-                                            handlePin(deck._id, deck.pinned);
-                                            if (
-                                              divRefForUserSettings.current?.classList.contains(
-                                                "scale-100"
-                                              )
-                                            ) {
-                                              handleShowUserInfomation();
-                                            }
-                                          }}
-                                          type="button"
-                                          className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-500 hover:scale-95"
-                                          aria-label="Pin Deck"
-                                        >
-                                          <BsFillPinFill className="text-[0.9rem]" />
-                                        </button>
-                                      </div>
-                                      <Link to={`cards/${deck._id}`}>
-                                        <p
-                                          onClick={() => {
-                                            if (
-                                              divRefForUserSettings.current?.classList.contains(
-                                                "scale-100"
-                                              )
-                                            ) {
-                                              handleShowUserInfomation();
-                                            }
-                                          }}
-                                          className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full  "
-                                        >
-                                          {deck.title}
-                                        </p>
-                                      </Link>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            }}
-                          </Draggable>
-                        );
-                      })}
-                    {provided.placeholder}
-                  </div>
-                );
-              }}
-            </Droppable>
-          </section>
+        isPinnedDeckAvailable ? (
+          <DeckItems
+            bulbRef={bulbRef}
+            allDecks={allDecks}
+            handlePin={handlePin}
+            handleEditDeck={handleEditDeck}
+            heading="Pinned"
+          />
         ) : null}
 
         {allDecks &&
         !("message" in allDecks && allDecks.message) &&
-        allDecks?.filter((deck) => {
-          return deck?.pinned === false;
-        }).length > 0 ? (
-          <section className="mt-4 mb-24  mx-1 animate-opacity_page_transition">
-            <h2 className="text-left text-base font-semibold text-gray-800  my-4 mx-2 dark:text-gray-50 ">
-              {allDecks!?.filter((deck) => {
-                return deck?.pinned === true;
-              }).length > 0
-                ? "Others"
-                : "Decks"}
-            </h2>
-
-            <Droppable droppableId="othersDeckArea" isDropDisabled={true}>
-              {(provided) => {
-                return (
-                  <div
-                    className="  flex flex-row flex-wrap gap-2  justify-center items-center  py-2 px-1 lg:mx-14 "
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                  >
-                    {allDecks
-                      ?.filter((deck: DeckType) => deck.pinned === false)
-                      .map((deck, index) => {
-                        return (
-                          <Draggable
-                            draggableId={deck._id}
-                            index={index + 500}
-                            key={deck._id}
-                            isDragDisabled={deck.isProcessing}
-                          >
-                            {(provided, snapshot) => {
-                              if (snapshot.draggingOver === "DeckDeleteArea") {
-                                bulbRef?.current?.resetBulbColor("lime", true);
-                              } else if (snapshot.isDragging) {
-                                bulbRef?.current?.setBulbColor("lime");
-                              } else {
-                                bulbRef?.current?.resetBulbColor("lime");
-                              }
-                              return (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.dragHandleProps}
-                                  {...provided.draggableProps}
-                                  className={` ${
-                                    snapshot.isDragging &&
-                                    "dark:bg-gray-900 bg-gray-100 rounded-md"
-                                  }`}
-                                >
-                                  <div
-                                    id={deck._id}
-                                    className={`relative border  ${
-                                      snapshot.isDragging
-                                        ? " border-lime-500 animate-pulse  shadow-2xl shadow-lime-500 dark:bg-slate-900 bg-gray-100 before:content-[''] before:absolute before:w-[3rem] before:py-[60%]  before:bg-gradient-to-r before:from-lime-500 before:to-lime-500 before:animate-rotate after:content-[''] after:absolute after:inset-[0.15rem]  after:bg-gray-100 dark:after:bg-slate-900 dark:text-lime-500 text-lime-500 before:!opacity-100 "
-                                        : "border-gray-400 "
-                                    } ${
-                                      snapshot.draggingOver === "DeckDeleteArea"
-                                        ? " !border-red-500  !shadow-red-500 before:!from-red-500 before:!to-red-400   dark:!text-red-500 !text-red-500"
-                                        : ""
-                                    } 
-        text-gray-800 dark:text-gray-50  
-                     rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[5.5rem]  flex  justify-center items-center text-justify 
-                     transition-[border-color,box-shadow,background-color] duration-300   overflow-hidden  before:absolute before:opacity-0 before:transition-all before:duration-300 z-30 hover:shadow-4-sides group  ${
-                       deck.isProcessing
-                         ? "cursor-not-allowed"
-                         : " dark:hover:shadow-sky-500 hover:shadow-teal-500 dark:hover:bg-gray-900 dark:hover:border-sky-500 hover:bg-gray-100 hover:border-teal-500 "
-                     }  `}
-                                  >
-                                    <div
-                                      id="radialGradientOverlay"
-                                      className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 group-hover:after:bg-radialGradient group-hover:after:opacity-100 after:transition-all after:duration-300 pointer-events-none  ${
-                                        snapshot.isDragging
-                                          ? "after:bg-[radial-gradient(#84cc16,#0c7bb3e6)] after:opacity-100"
-                                          : "after:bg-radialGradient"
-                                      }  ${
-                                        snapshot.draggingOver ===
-                                        "DeckDeleteArea"
-                                          ? "after:bg-[radial-gradient(#ef4444,#0c7bb3e6)] after:opacity-100"
-                                          : ""
-                                      }`}
-                                    ></div>
-                                    <div className="z-40 flex w-full">
-                                      {!deck.isProcessing && (
-                                        <div className="absolute bottom-0 right-0 ">
-                                          <button
-                                            onClick={() => {
-                                              handleEditDeck(
-                                                deck._id,
-                                                deck.title
-                                              );
-                                              if (
-                                                divRefForUserSettings.current?.classList.contains(
-                                                  "scale-100"
-                                                )
-                                              ) {
-                                                handleShowUserInfomation();
-                                              }
-                                            }}
-                                            type="button"
-                                            className=" text-lg outline-none  rounded-tr px-1  text-center hover:scale-95 text-sky-600 dark:text-sky-400"
-                                            aria-label="Edit Deck"
-                                          >
-                                            <BiEdit />
-                                          </button>
-
-                                          <button
-                                            onClick={() => {
-                                              handlePin(deck._id, deck.pinned);
-                                              if (
-                                                divRefForUserSettings.current?.classList.contains(
-                                                  "scale-100"
-                                                )
-                                              ) {
-                                                handleShowUserInfomation();
-                                              }
-                                            }}
-                                            type="button"
-                                            className="  outline-none   rounded-tr text-sm px-1  text-center  text-red-600 dark:text-red-500 hover:scale-95"
-                                            aria-label="Pin Deck"
-                                          >
-                                            <BsPin className="text-[0.9rem]" />
-                                          </button>
-                                        </div>
-                                      )}
-
-                                      <div
-                                        onClick={() => {
-                                          if (
-                                            !isCreatingDeck &&
-                                            !deck.isProcessing
-                                          ) {
-                                            navigate(`cards/${deck._id}`);
-                                          }
-                                          if (
-                                            divRefForUserSettings.current?.classList.contains(
-                                              "scale-100"
-                                            )
-                                          ) {
-                                            handleShowUserInfomation();
-                                          }
-                                        }}
-                                        className={`  h-7  w-full flex items-center justify-center`}
-                                      >
-                                        {deck.isProcessing ? (
-                                          <svg
-                                            className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <circle
-                                              className="opacity-25"
-                                              cx="12"
-                                              cy="12"
-                                              r="10"
-                                              stroke="currentColor"
-                                              strokeWidth="4"
-                                            ></circle>
-                                            <path
-                                              className="opacity-75"
-                                              fill="currentColor"
-                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                            ></path>
-                                          </svg>
-                                        ) : (
-                                          <p
-                                            className={`text-center transition-opacity duration-700  cursor-pointer w-full break-all font-bold  line-clamp-1  ${
-                                              deck.isProcessing
-                                                ? "opacity-0"
-                                                : "opacity-100"
-                                            }`}
-                                          >
-                                            {deck.title}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            }}
-                          </Draggable>
-                        );
-                      })}
-                    {provided.placeholder}
-                  </div>
-                );
-              }}
-            </Droppable>
-          </section>
+        isUnPinnedDeckAvailable ? (
+          <DeckItems
+            bulbRef={bulbRef}
+            allDecks={allDecks}
+            handlePin={handlePin}
+            handleEditDeck={handleEditDeck}
+            heading={isPinnedDeckAvailable ? "Others" : "Decks"}
+            radialGradientOverlayRef={radialGradientOverlayRef}
+            isCreatingDeck={isCreatingDeck}
+          />
         ) : null}
 
         {openEditDeckModal ? (

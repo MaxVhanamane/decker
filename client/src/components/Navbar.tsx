@@ -1,11 +1,11 @@
-import { FC, memo, useState, useContext, useEffect, useRef } from "react";
+import { FC, memo, useState, useContext, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext, UserContext } from "../context/UserContext";
 import { AlertData } from "../types/types";
 import { FaRegUser } from "react-icons/fa";
 import { RiCloseFill, RiLogoutCircleRLine } from "react-icons/ri";
 import ThemeToggler from "./ThemeToggler";
-import SearchBar from "./SearchBar";
+import SearchBar from "./search/SearchBar";
 import { HiOutlineHome, HiOutlineSearch } from "react-icons/hi";
 import { AiOutlineDelete } from "react-icons/ai";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
@@ -17,7 +17,7 @@ import { HiMiniSpeakerWave } from "react-icons/hi2";
 import { AudioContext } from "../context/AudioContext";
 import { BsLightbulb, BsLightbulbOff } from "react-icons/bs";
 import { BulbContext } from "../context/BulbContext";
-import PopUpMessage from "./PopUpMessage";
+import { PopupContext } from "../context/PopupContext";
 
 const Navbar: FC = () => {
   const {
@@ -29,6 +29,7 @@ const Navbar: FC = () => {
     setShowLogoutModal,
     isAuthenticating,
   } = useContext(UserContext);
+
   const { showSearchBar, setShowSearchBar, setOpenSearchBar } =
     useContext(searchContext);
   const { isOnline } = useContext(OfflineContext);
@@ -37,10 +38,10 @@ const Navbar: FC = () => {
     useContext(AudioContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const showPopUpRef = useRef<HTMLDivElement | null>(null);
+  const popupRef = useContext(PopupContext);
   const { showBulb, setShowSetBulb, setAnimationPlayed, animationPlayed } =
     useContext(BulbContext);
-
+  const { theme } = useContext(ThemeContext);
   const [imageError, setImageError] = useState(false);
   const handleShowUserInfomation = (isLogout?: boolean) => {
     // Sometimes, when a user logs out, the user settings modal was kept open. To avoid that, use the isLogout condition here
@@ -97,20 +98,9 @@ const Navbar: FC = () => {
         handlePlayAudio("switchOnAudioSound");
       }
     } else {
-      if (showPopUpRef.current?.classList.contains("scale-0")) {
-        showPopUpRef.current.classList.remove("scale-0");
-        showPopUpRef?.current?.classList.add("!block");
-        showPopUpRef.current.classList.add("!w-[85%]");
-        showPopUpRef.current.classList.add("md:!w-fit");
-        showPopUpRef.current.classList.add("!h-fit");
-        showPopUpRef.current.classList.add("scale-100");
-
-        setTimeout(() => {
-          showPopUpRef?.current?.classList.remove("scale-100");
-          showPopUpRef?.current?.classList.add("scale-0");
-          showPopUpRef?.current?.classList.add("hidden");
-        }, 3000);
-      }
+      popupRef?.current?.show(
+        "The bulb option is available only on the home page."
+      );
     }
   };
 
@@ -121,20 +111,9 @@ const Navbar: FC = () => {
         handlePlayAudio("switchOffAudioSound");
       }
     } else {
-      if (showPopUpRef.current?.classList.contains("scale-0")) {
-        showPopUpRef.current.classList.remove("scale-0");
-        showPopUpRef?.current?.classList.add("!block");
-        showPopUpRef.current.classList.add("!w-[85%]");
-        showPopUpRef.current.classList.add("md:!w-fit");
-        showPopUpRef.current.classList.add("!h-fit");
-        showPopUpRef.current.classList.add("scale-100");
-
-        setTimeout(() => {
-          showPopUpRef?.current?.classList.remove("scale-100");
-          showPopUpRef?.current?.classList.add("scale-0");
-          showPopUpRef?.current?.classList.add("hidden");
-        }, 3000);
-      }
+      popupRef?.current?.show(
+        "The bulb option is available only on the home page."
+      );
     }
   };
 
@@ -142,16 +121,9 @@ const Navbar: FC = () => {
     <>
       <nav
         className={`border-b ${
-          localStorage.getItem("theme") === "dark" ||
-          localStorage.getItem("theme") === null
-            ? "bg-slate-900"
-            : "bg-[#fcfefc]"
+          theme === "dark" || theme === null ? "bg-slate-900" : "bg-[#fcfefc]"
         } border-slate-900/10  dark:border-b dark:border-slate-300/10 px-2  py-2 flex flex-row justify-between items-center sticky top-0 z-[60] h-[3.45rem]`}
       >
-        <PopUpMessage
-          message="The bulb option is available only on the home page."
-          ref={showPopUpRef}
-        />
         <div className="flex items-center justify-center flex-row gap-8">
           <div
             onClick={() => {
@@ -164,10 +136,7 @@ const Navbar: FC = () => {
                 handleShowUserInfomation();
               }
               if (!pathNames.includes(location.pathname)) {
-                if (location.pathname === "/") {
-                  navigate("/", { replace: true });
-                  return;
-                } else {
+                if (location.pathname !== "/") {
                   navigate("/");
                 }
               }
@@ -176,8 +145,7 @@ const Navbar: FC = () => {
           >
             <img
               src={`${
-                localStorage.getItem("theme") === "dark" ||
-                localStorage.getItem("theme") === null
+                theme === "dark" || theme === null
                   ? "/decker_logo_dark.png"
                   : "/decker_logo_light.png"
               }`}
@@ -188,8 +156,7 @@ const Navbar: FC = () => {
             />
             <span
               className={`h-8 w-auto select-none  ${
-                localStorage.getItem("theme") === "dark" ||
-                localStorage.getItem("theme") === null
+                theme === "dark" || theme === null
                   ? "text-gray-50"
                   : "text-gray-700"
               } font-bold text-xl ${

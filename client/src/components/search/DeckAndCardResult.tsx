@@ -3,12 +3,12 @@ import {
   AlertData,
   SearchResultCardsType,
   SearchResultDeckType,
-} from "../types/types";
-import { OfflineContext } from "../context/OfflineContext";
-import { AlertContext } from "../context/AlertContext";
-import { searchContext } from "../context/SearchContext";
-import { UserContext } from "../context/UserContext";
-import usePinDeck from "../hooks/usePinDeck";
+} from "../../types/types";
+import { OfflineContext } from "../../context/OfflineContext";
+import { AlertContext } from "../../context/AlertContext";
+import { searchContext } from "../../context/SearchContext";
+import { ThemeContext, UserContext } from "../../context/UserContext";
+import usePinDeck from "../../hooks/usePinDeck";
 import { BsFillPinFill, BsPin } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { Link, useLocation } from "react-router-dom";
@@ -41,17 +41,14 @@ const DeckAndCardResult: FC<PropType> = ({
   editData,
   searchQuery,
 }) => {
-  const { isOnline } = useContext(OfflineContext);
+  const { isOnline, setDeck } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
   const { setOpenSearchBar } = useContext(searchContext);
-  const { theme, divRefForUserSettings, handleShowUserInfomation } =
+  const { divRefForUserSettings, handleShowUserInfomation } =
     useContext(UserContext);
-  const {
-    mutate: pinDeck,
-    error: pinError,
-    isError: isPinError,
-    isPending: isPinning,
-  } = usePinDeck();
+
+  const { theme } = useContext(ThemeContext);
+  const { mutate: pinDeck } = usePinDeck();
   const location = useLocation();
 
   const { setOpenEditDeckModalForSearchResult } = useContext(searchContext);
@@ -203,17 +200,15 @@ const DeckAndCardResult: FC<PropType> = ({
                       </div>
                       <Link
                         onClick={() => {
+                          setDeck({
+                            title: deck?.title,
+                            deck_id: deck?.deck_id,
+                            cards: deck?.cards,
+                          });
                           setOpenSearchBar(false);
                           handleShowUserInfomation();
                         }}
                         to={`cards/${deck.deck_id}`}
-                        state={{
-                          deck: {
-                            title: deck?.title,
-                            deck_id: deck?.deck_id,
-                            cards: deck?.cards,
-                          },
-                        }}
                         replace={true}
                       >
                         <p className=" break-all font-semibold  line-clamp-1 h-7 text-center  ">
@@ -288,16 +283,14 @@ const DeckAndCardResult: FC<PropType> = ({
                       </div>
                       <Link
                         onClick={() => {
-                          setOpenSearchBar(false), handleShowUserInfomation();
-                        }}
-                        to={`cards/${deck.deck_id}`}
-                        state={{
-                          deck: {
+                          setDeck({
                             title: deck?.title,
                             deck_id: deck?.deck_id,
                             cards: deck?.cards,
-                          },
+                          });
+                          setOpenSearchBar(false), handleShowUserInfomation();
                         }}
+                        to={`cards/${deck.deck_id}`}
                         replace={true}
                       >
                         <p className=" break-all font-semibold  line-clamp-1 h-7 text-center  ">
@@ -326,7 +319,7 @@ const DeckAndCardResult: FC<PropType> = ({
       )}
 
       <div className="flex flex-row flex-wrap justify-center items-center  mx-2 lg:mx-52 mb-48 gap-4 animate-quickOpacity">
-        {foundCards?.map((card, index) => (
+        {foundCards?.map((card) => (
           <Link
             onClick={handleShowUserInfomation}
             key={card.cardId}

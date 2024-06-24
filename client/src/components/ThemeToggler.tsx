@@ -1,14 +1,14 @@
-import { useContext, FC } from "react";
+import { useContext, FC, memo } from "react";
 import { RiSunFill } from "react-icons/ri";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext } from "../context/UserContext";
 import { AudioContext } from "../context/AudioContext";
 
 type PropType = {
   ParentComponentName?: "FullScreenCardView";
 };
 
-const ThemeToggler: FC<PropType> = ({ ParentComponentName }) => {
-  const { theme, setTheme } = useContext(UserContext);
+const ThemeToggler: FC<PropType> = memo(({ ParentComponentName }) => {
+  const { theme, setTheme } = useContext(ThemeContext);
   const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
 
   const handleClick = () => {
@@ -87,6 +87,6 @@ const ThemeToggler: FC<PropType> = ({ ParentComponentName }) => {
       ) : null}
     </>
   );
-};
+});
 
 export default ThemeToggler;

@@ -24,7 +24,7 @@ const DisplayNote = ({
     >
       {showTypewriterEffect && !search_index ? dispalyResponse : parsedNote}
 
-      {
+      {dispalyResponse.length > 0 && (
         <GiFeather
           className={`inline-block text-3xl ml-2 -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 ${
             !showTypewriterEffect && "hidden"
@@ -33,7 +33,7 @@ const DisplayNote = ({
             "opacity-0 animate-[opacityFadeOut_0.3s_linear_1]"
           }`}
         />
-      }
+      )}
     </div>
   );
 };

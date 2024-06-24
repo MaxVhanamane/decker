@@ -1,9 +1,9 @@
 import { useContext } from "react";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 
 export default function PageNotFound() {
-  const { theme } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   return (

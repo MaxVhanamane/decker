@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useContext, FC, useEffect } from "react";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext, UserContext } from "../context/UserContext";
 const AuthFailure: FC = () => {
-  const { userInfo, theme } = useContext(UserContext);
+  const { userInfo } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   useEffect(() => {

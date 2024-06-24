@@ -12,7 +12,6 @@ import {
 import { useParams } from "react-router-dom";
 import useDeleteCard from "../hooks/useDeleteCard";
 import useEditCard from "../hooks/useEditCard";
-import { UserContext } from "../context/UserContext";
 import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
@@ -28,6 +27,7 @@ import { addCodeBlock } from "../functions/addCodeBlock";
 import { addBoldText } from "../functions/addBoldText";
 import { addUnderlineText } from "../functions/addUnderlineText";
 import { addLink } from "../functions/addLink";
+import { CardContext } from "../context/CardContext";
 
 // types
 type ContentType = {
@@ -51,29 +51,34 @@ let wasDeleteModalOpen2: boolean;
 const SearchResultCardFullScreenView: FC = () => {
   // States
   const { setAlert } = useContext(AlertContext);
-  const { cardInfo, setCardInfo, setCardDeleted, cardDeleted } =
-    useContext(searchContext);
+  const { setCardDeleted, cardDeleted } = useContext(searchContext);
   const {
     indexOfCardForDeletion,
     setIndexOfCardForDeletion,
     deleteConfirmationModalForCard,
-  } = useContext(UserContext);
+  } = useContext(CardContext);
   const { isOnline } = useContext(OfflineContext);
   const [note, setNote] = useState<string>("");
   const [openModal, setOpenModal] = useState(false);
-  const [showFullScreen, setShowFullScreen] = useState(false);
+  const [showFullScreen, setShowFullScreen] = useState(true);
   const [startAnimation, setStartAnimation] = useState(true);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [closeEditModal, setCloseEditModal] = useState(false);
+  const location = useLocation();
   const [fullScreenCardData, setFullScreenCardData] =
-    useState<ContentForFullScreen>(cardInfo);
+    useState<ContentForFullScreen | null>(() => {
+      if (location?.state && location?.state?.card) {
+        delete location.state.card.deck_id;
+        delete location.state.card.deckTitle;
+        return { ...location.state.card, from: location?.state?.from };
+      } else return null;
+    });
   const [previousCardInfoForError, setPreviousCardInfoForError] =
     useState<ContentForFullScreen | null>(null);
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
     useState(false);
   const { deck_id, search_index = null } = useParams();
-  const location = useLocation();
-  const [title, setTitle] = useState("");
+
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
     note: "",
@@ -89,11 +94,9 @@ const SearchResultCardFullScreenView: FC = () => {
   } = useEditCard();
   const {
     mutate: deleteCardItem,
-    data: deleteCardResponse,
     reset: resetDeleteCardResponse,
     isError: isDeleteCardError,
     error: deleteCardError,
-    isSuccess: isCardDeleted,
   } = useDeleteCard();
 
   // Refs
@@ -105,6 +108,7 @@ const SearchResultCardFullScreenView: FC = () => {
 
   // Other
   const navigate = useNavigate();
+
   useEffect(() => {
     if (isEditCardError) {
       setAlert((preval: AlertData) => ({
@@ -118,12 +122,6 @@ const SearchResultCardFullScreenView: FC = () => {
 
       if (previousCardInfoForError) {
         setFullScreenCardData({ ...previousCardInfoForError });
-        if (previousCardInfoForError?.from) {
-          setCardInfo({
-            ...previousCardInfoForError,
-            from: previousCardInfoForError.from!,
-          });
-        }
       }
     }
 
@@ -137,14 +135,30 @@ const SearchResultCardFullScreenView: FC = () => {
       }));
       resetDeleteCardResponse();
     }
-  }, [isEditCardError, isDeleteCardError]);
+  }, [
+    isEditCardError,
+    isDeleteCardError,
+    previousCardInfoForError,
+    resetEditCardResponse,
+    resetDeleteCardResponse,
+  ]);
 
   useEffect(() => {
+    //If the user tries to access this link by directly pasting it, we will redirect them to the home page since we are getting data through a link for this page. If the user directly pastes the link, we won't have any data available, so the user will see a blank page. To avoid that, we will redirect them to the home page.
+
+    if (!fullScreenCardData) {
+      navigate("/", { replace: true });
+    }
+  }, [fullScreenCardData]);
+
+  useEffect(() => {
+    // When a user opens a card and deletes it, this useEffect will remove the links that are pushed to the browser stack.
     if (location?.state?.deleted) {
       setCardDeleted(true);
       // Navigation is asynchronous, so when I call navigate(-1) twice, it will first navigate back by 1 step. Subsequently, on the next navigate call, it will navigate back by one more step.
       navigate(-1);
       navigate(-1);
+      return;
     }
     if (location.state?.from && cardDeleted) {
       if (location.state?.from === "/") {
@@ -156,68 +170,7 @@ const SearchResultCardFullScreenView: FC = () => {
         });
       }
     }
-  }, [location]);
-
-  useEffect(() => {
-    if (location?.state?.isBackButtonNotClicked && !cardInfo._id) {
-      navigate("/");
-    }
-  }, []);
-  // This useEffect is for the search bar. If a user searches for something and finds a corresponding card in the search results, clicking on that card will redirect them to this page. Once redirected, we can easily handle all operations related to the card.
-  useEffect(() => {
-    //
-    if (!location?.state && !showFullScreen) {
-      navigate("/");
-    }
-    // Here, we will check if the 'search_index' parameter is present in the URL. If it is, it means that we have arrived at this page from a search result.
-
-    if (search_index) {
-      // we need this info when we show the card in full screen
-      let cardInformation: ContentType = {
-        title: "",
-        note: "",
-        _id: "",
-        cardId: "",
-      };
-
-      if (
-        location?.state?.card !== undefined &&
-        location?.state?.card !== null
-      ) {
-        // The 'data' state contains the deck along with its cards. We can use the 'search_index' to retrieve the specific card that we want to display in fullscreen mode
-        // here we will set the values for cardInfo object that we created above.
-        cardInformation.title = location?.state?.card?.title;
-        cardInformation.note = location?.state?.card?.note;
-        cardInformation._id = location?.state?.card?._id;
-        cardInformation.cardId = location?.state?.card?.cardId;
-
-        // here we will create all the data that is needed to show it in full screen
-        let cardDetails: ContentForFullScreen = {
-          ...cardInformation,
-          cardIndex: location?.state?.card?.cardIndex,
-        };
-
-        const cardDetailsWithRoute: ContentForFullScreen & { from: string } = {
-          ...cardDetails,
-          from: location?.state?.from,
-        };
-        setCardInfo(cardDetailsWithRoute);
-        setShowFullScreen(true);
-        if (location?.state?.card?.deckTitle) {
-          setTitle(`${location?.state?.card?.deckTitle}-Cards`);
-        } else {
-          setTitle("Fullscreen card view");
-        }
-      } else {
-        setFullScreenCardData(cardInfo);
-        setShowFullScreen(true);
-      }
-    }
-  }, [location, search_index]);
-
-  useEffect(() => {
-    setFullScreenCardData(cardInfo);
-  }, [cardInfo]);
+  }, [location, cardDeleted]);
 
   // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
   // redirecting him to home page. if there is no modal open then we will navigate him to home page.
@@ -232,17 +185,15 @@ const SearchResultCardFullScreenView: FC = () => {
         return;
       }
 
-      if (search_index) {
-        if (openModal) {
-          setCloseEditModal(true);
-        } else {
-          if (wasDeleteModalOpen2) {
-            setWasDeleteModalOpen(false);
-            return;
-          }
-          setStartAnimation(false);
-          setShowScrollButtons(false);
+      if (openModal) {
+        setCloseEditModal(true);
+      } else {
+        if (wasDeleteModalOpen2) {
+          setWasDeleteModalOpen(false);
+          return;
         }
+        setStartAnimation(false);
+        setShowScrollButtons(false);
       }
     },
     [openModal]
@@ -266,12 +217,18 @@ const SearchResultCardFullScreenView: FC = () => {
     }
     const shouldPushState =
       openModal || isConfirmDeleteModalOpen || showFullScreen;
-
     if (shouldPushState && !shouldPush.current) {
       const url = new URL(document.URL);
       const absolutePath = url.pathname;
-      navigate(absolutePath, { state: { isBackButtonNotClicked: true } });
+      // navigate(absolutePath, { state: { isBackButtonNotClicked: true } });
+      //Using navigate() can cause the whole tree to re-render. To avoid that, I am using the History API, as it achieves what I want to achieve without re-rendering the whole tree.
+      window.history.pushState(
+        { isBackButtonNotClicked: true },
+        "",
+        absolutePath
+      );
     }
+
     const variableArray = [openModal, isConfirmDeleteModalOpen, showFullScreen];
     const trueCount = variableArray.filter((variable) => variable).length;
 
@@ -343,13 +300,13 @@ const SearchResultCardFullScreenView: FC = () => {
     }
 
     const contentWithCardIndex = { ...editContent };
-    const { from, cardIndex: index, ...contentWithoutCardIndex } = editContent;
-    let data = {
+    const { ...contentWithoutCardIndex } = editContent;
+    const data = {
       deck_id: deck_id!,
       newContent: contentWithoutCardIndex,
       index: editContent.cardIndex!,
     };
-    let fullScreenCardDataCache = fullScreenCardData;
+    const fullScreenCardDataCache = fullScreenCardData;
 
     if (editContent.title.length > 0 || editContent.note.length > 0) {
       editCard(data, {
@@ -359,12 +316,16 @@ const SearchResultCardFullScreenView: FC = () => {
             setCloseEditModal(false);
           // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
           if (showFullScreen) {
-            setFullScreenCardData({ ...fullScreenCardDataCache });
+            setFullScreenCardData({
+              ...fullScreenCardDataCache,
+            } as ContentForFullScreen);
           }
         },
       });
       setCloseEditModal(true);
-      setPreviousCardInfoForError({ ...fullScreenCardData });
+      setPreviousCardInfoForError({
+        ...fullScreenCardData,
+      } as ContentForFullScreen);
       setFullScreenCardData({ ...editContent });
     } else {
       setAlert((preval: AlertData) => ({
@@ -481,14 +442,14 @@ const SearchResultCardFullScreenView: FC = () => {
     ]
   );
 
-  if (cardDeleted) {
+  if (cardDeleted || !fullScreenCardData) {
     return null;
   }
 
   return (
     <>
       <Helmet>
-        <title>{title}</title>
+        <title>Search result</title>
         <meta
           name="description"
           content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."
@@ -516,7 +477,6 @@ const SearchResultCardFullScreenView: FC = () => {
       <ConfirmDeleteModalForCard
         indexOfCardForDeletion={indexOfCardForDeletion!}
         deleteCardItem={deleteCardItem}
-        setShowFullScreen={setShowFullScreen}
         setIsConfirmDeleteModalOpen={setIsConfirmDeleteModalOpen}
         setWasDeleteModalOpen={setWasDeleteModalOpen}
         showFullScreen={showFullScreen}
@@ -524,7 +484,7 @@ const SearchResultCardFullScreenView: FC = () => {
 
       {showFullScreen && (
         <FullScreenCardView
-          fullScreenCardData={fullScreenCardData}
+          fullScreenCardData={fullScreenCardData!}
           search_index={search_index}
           location={location}
           setShowFullScreen={setShowFullScreen}

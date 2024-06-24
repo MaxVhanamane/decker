@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
 import { request } from "../utils/fetch-utils";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext, UserContext } from "../context/UserContext";
 import { AlertContext } from "../context/AlertContext";
 import { AlertData } from "../types/types";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -17,7 +17,8 @@ export default function DeleteMyAccount() {
   const [showVerifyOTPButton, setShowVerifyOTPButton] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const recaptchaRef: RefObject<ReCAPTCHA> = useRef(null);
-  const { userInfo, setUserInfo, theme } = useContext(UserContext);
+  const { userInfo, setUserInfo } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
   const { setAlert } = useContext(AlertContext);

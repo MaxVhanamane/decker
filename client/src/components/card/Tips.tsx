@@ -3,7 +3,7 @@ import { IoIosArrowUp, IoIosArrowBack } from "react-icons/io";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { prism } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { UserContext } from "../../context/UserContext";
+import { ThemeContext } from "../../context/UserContext";
 
 interface propTypes {
   setShowTips: Dispatch<React.SetStateAction<boolean>>;
@@ -15,7 +15,7 @@ const Tips = ({
   closeTipsModal,
   setCloseTipsModal,
 }: propTypes) => {
-  const { theme } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
 
   return (
     <div

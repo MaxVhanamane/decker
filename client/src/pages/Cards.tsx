@@ -1,4 +1,4 @@
-import React, {
+import {
   ChangeEvent,
   FormEvent,
   useState,
@@ -8,7 +8,6 @@ import React, {
   FC,
   useEffect,
   useCallback,
-  KeyboardEvent,
   memo,
   RefObject,
   SetStateAction,
@@ -19,7 +18,7 @@ import useGetCards from "../hooks/useGetCards";
 import useCreateCard from "../hooks/useCreateCard";
 import useDeleteCard from "../hooks/useDeleteCard";
 import useEditCard from "../hooks/useEditCard";
-import { UserContext } from "./../context/UserContext";
+import { ThemeContext, UserContext } from "./../context/UserContext";
 import { Helmet } from "react-helmet";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertContext } from "../context/AlertContext";
@@ -29,20 +28,15 @@ import {
   ContentTypeForEdit,
   UndoCardPayloadData,
 } from "../types/types";
-import { Droppable } from "react-beautiful-dnd";
 import Loading from "../components/Loading";
-import PopUpMessage from "../components/PopUpMessage";
 import ConfirmDeleteModalForCard from "../components/card/ConfirmDeleteModalForCard";
 import CardItems from "../components/card/CardItems";
 import ConfirmCloseCard from "../components/card/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
-
 import shortid from "shortid";
-import { BsChevronExpand } from "react-icons/bs";
 import Tips from "../components/card/Tips";
 import FullScreenCardView from "../components/card/FullScreenCardView";
-
 import EditCard from "../components/card/EditCard";
 import { searchContext } from "../context/SearchContext";
 import { addCodeBlock } from "../functions/addCodeBlock";
@@ -53,6 +47,10 @@ import CardToolbar from "../components/card/CardToolbar";
 import { CustomError } from "../utils/customError";
 import { AudioContext } from "../context/AudioContext";
 import useUndoCard from "../hooks/useUndoCard";
+import CardInput from "../components/card/CardInput";
+import TrashCanDropZone from "../components/TrashCanDropZone";
+import { CardContext } from "../context/CardContext";
+import { PopupContext } from "../context/PopupContext";
 // types
 // let oldContent:string //this  works
 
@@ -78,23 +76,19 @@ interface CardsProps {
   moveCardError: Error | null;
   resetMoveCardResponse: () => void;
   undoButtonRefForCard: RefObject<HTMLDivElement>;
-  handlePopupForUndoButtonForCard: () => void;
   undoCardDetails: UndoCardPayloadData | null;
-  handleUndoCard: (card: UndoCardPayloadData | null) => void;
+  resetUndoCardDetailsValue: (card: UndoCardPayloadData | null) => void;
   setUndoCardDetails: Dispatch<SetStateAction<UndoCardPayloadData | null>>;
-  timeoutForUndoCard: NodeJS.Timeout;
 }
-// Component
+
 const Cards: FC<CardsProps> = ({
   isMoveCardError,
   moveCardError,
   resetMoveCardResponse,
-  handlePopupForUndoButtonForCard,
   undoButtonRefForCard,
   undoCardDetails,
-  handleUndoCard,
+  resetUndoCardDetailsValue,
   setUndoCardDetails,
-  timeoutForUndoCard,
 }) => {
   // States
   const { setAlert } = useContext(AlertContext);
@@ -105,21 +99,22 @@ const Cards: FC<CardsProps> = ({
     setAnimateCloseEditDeckModalInSearchResult,
     cardDeleted,
     setCardDeleted,
-    setShowSearchBar,
   } = useContext(searchContext);
   const {
-    indexOfCardForDeletion,
-    setIndexOfCardForDeletion,
-    deleteConfirmationModalForCard,
-    theme,
     divRefForUserSettings,
     handleShowUserInfomation,
     showLogoutModal,
     setShowLogoutModal,
   } = useContext(UserContext);
   const {
+    indexOfCardForDeletion,
+    setIndexOfCardForDeletion,
+    deleteConfirmationModalForCard,
+  } = useContext(CardContext);
+  const popupRef = useContext(PopupContext);
+  const { theme } = useContext(ThemeContext);
+  const {
     mutate: undoCardItem,
-    error: undoCardError,
     isError: isUndoCardError,
     reset: resetUndoCardResponse,
   } = useUndoCard();
@@ -155,13 +150,15 @@ const Cards: FC<CardsProps> = ({
   wasDeleteModalOpen2 = wasDeleteModalOpen;
   const { deck_id } = useParams();
   const location = useLocation();
-  const { isPlayingAudioAllowed, handlePlayAudio, pathnameForAudio } =
-    useContext(AudioContext);
-
-  const { data, isError, error, isLoading, isPaused } = useGetCards(
-    deck_id!,
-    location?.state?.deck
-  );
+  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const {
+    data,
+    isError,
+    error,
+    isLoading,
+    isPaused,
+    isFetching: isFetchingCards,
+  } = useGetCards(deck_id!);
 
   const [editContent, setEditContent] = useState<ContentTypeForEdit>({
     title: "",
@@ -172,15 +169,14 @@ const Cards: FC<CardsProps> = ({
   });
   const {
     mutate: addCard,
-    data: createCardResponse,
     reset: resetCreateCardResponse,
     isError: isCreateCardError,
     error: createCardError,
+    isPending: isCreatingCard,
   } = useCreateCard();
 
   const {
     mutate: editCard,
-    data: editCardResponse,
     reset: resetEditCardResponse,
     isError: isEditCardError,
     error: editCardError,
@@ -188,27 +184,22 @@ const Cards: FC<CardsProps> = ({
 
   const {
     mutate: deleteCardItem,
-    data: deleteCardResponse,
     reset: resetDeleteCardResponse,
     isError: isDeleteCardError,
     error: deleteCardError,
-    isSuccess: isCardDeleted,
   } = useDeleteCard();
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const showPopUp = useRef<HTMLDivElement | null>(null);
   const inputElementRef = useRef<HTMLInputElement>(null);
   const shouldPushRef = useRef<boolean>(false);
-
+  const undoCardDetailsRef = useRef(undoCardDetails);
+  undoCardDetailsRef.current = undoCardDetails;
   // Other
   const navigate = useNavigate();
   // just for understanding
   //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
-
-  //useEffects
-
   useEffect(() => {
     if (isCreateCardError) {
       setAlert((preval: AlertData) => ({
@@ -235,7 +226,9 @@ const Cards: FC<CardsProps> = ({
         ...preval,
         severity: "error",
         show: true,
-        message: moveCardError?.message!,
+        message: moveCardError
+          ? moveCardError?.message
+          : "Something went wrong!",
         autoHideDuration: 5000,
       }));
       resetMoveCardResponse();
@@ -270,54 +263,43 @@ const Cards: FC<CardsProps> = ({
   ]);
 
   useEffect(() => {
-    const isRoundedTopClassPresent =
-      inputElementRef?.current?.classList.contains("rounded-t-md");
-
-    let timeoutId: NodeJS.Timeout;
-    if (isRoundedTopClassPresent && expandTextarea) {
-      timeoutId = setTimeout(() => {
+    if (expandTextarea) {
+      const timeoutId = setTimeout(() => {
         inputElementRef?.current?.classList.remove("rounded-t-md");
       }, 1200);
+      return () => clearTimeout(timeoutId);
     }
-    return () => {
-      clearTimeout(timeoutId);
-    };
   }, [expandTextarea]);
 
   useEffect(() => {
-    let timeoutId1: NodeJS.Timeout,
-      timeoutId2: NodeJS.Timeout,
-      timeoutId3: NodeJS.Timeout;
-
     if (checkClose) {
-      inputElementRef?.current?.classList.remove("rounded-b-md");
-      inputElementRef?.current?.classList.remove("rounded-t-md");
+      inputElementRef?.current?.classList.remove(
+        "rounded-b-md",
+        "rounded-t-md"
+      );
+      inputElementRef?.current?.classList.add("duration-[1.2s]");
 
-      timeoutId1 = setTimeout(() => {
+      const timeoutId1 = setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-t-md");
-        inputElementRef?.current?.classList.remove("duration-700");
-        inputElementRef?.current?.classList.add("duration-[1.2s]");
         setCheckClose(false);
       }, 1300);
 
-      timeoutId2 = setTimeout(() => {
+      const timeoutId2 = setTimeout(() => {
         inputElementRef?.current?.classList.add("rounded-b-md");
-        inputElementRef?.current?.classList.add("duration-700");
       }, 600);
 
-      timeoutId3 = setTimeout(() => {
+      const timeoutId3 = setTimeout(() => {
         textareaRef?.current?.classList.add("opacity-0");
       }, 950);
-    } else {
-      inputElementRef?.current?.classList.add("rounded-b-md");
-      inputElementRef?.current?.classList.add("rounded-t-md");
-    }
 
-    return () => {
-      clearTimeout(timeoutId1);
-      clearTimeout(timeoutId2);
-      clearTimeout(timeoutId3);
-    };
+      return () => {
+        clearTimeout(timeoutId1);
+        clearTimeout(timeoutId2);
+        clearTimeout(timeoutId3);
+      };
+    } else {
+      inputElementRef?.current?.classList.add("rounded-b-md", "rounded-t-md");
+    }
   }, [checkClose]);
 
   useEffect(() => {
@@ -400,6 +382,7 @@ const Cards: FC<CardsProps> = ({
   // Here we will check if user has used browser's back button if he uses browsers back button to go back then
   // we will first check if card is open in full screen if it is open then we will close it instead of going back to the previous page directly.
   // This is usefull when user is accessing the site on mobile because most users swipe to go back.
+  // Update the ref whenever undoCardDetails changes
 
   useEffect(() => {
     const shouldPushState =
@@ -412,15 +395,14 @@ const Cards: FC<CardsProps> = ({
 
     if (shouldPushState && !shouldPushRef.current) {
       if (!wasSearchBarInitiallyTrue) {
-        // To push new url into the browser's stack you can use window object or react router dom's useNavigate() hook.
-        // window.history.pushState(
-        //   { isBackButtonNotClicked: true },
-        //   "",
-        //   document.URL
-        // );
         const url = new URL(document.URL);
         const absolutePath = url.pathname;
-        navigate(absolutePath, { state: { isBackButtonNotClicked: true } });
+        //Using navigate() can cause the whole tree to re-render. To avoid that, I am using the History API, as it achieves what I want to achieve without re-rendering the whole tree.
+        window.history.pushState(
+          { isBackButtonNotClicked: true },
+          "",
+          absolutePath
+        );
       } else {
         setWasSearchBarInitiallyTrue(false);
       }
@@ -558,7 +540,7 @@ const Cards: FC<CardsProps> = ({
     }
   }, []);
 
-  const handleUndoButtonClick = () => {
+  const handleUndoButtonClick = useCallback(() => {
     if (!isOnline) {
       setAlert((preval: AlertData) => ({
         ...preval,
@@ -569,13 +551,13 @@ const Cards: FC<CardsProps> = ({
       }));
       return;
     }
-    // I have set the value of undoDeck state in useDeleteDeck()
-    undoCardItem(undoCardDetails!);
-    // Once we undo the deck, we will set the state that was holding the deleted item to null so that when we delete another item, it can hold that fresh data.
-    handleUndoCard(null);
-    // calling handlePopupForUndoButton() function so that it can close the dialog box when we click on undo button.
-    handlePopupForUndoButtonForCard();
-  };
+
+    undoCardItem(undoCardDetailsRef.current!, {
+      onSettled: () => {
+        resetUndoCardDetailsValue(null);
+      },
+    });
+  }, [undoCardItem, isOnline, undoCardDetailsRef]);
 
   const handleClose = useCallback(() => {
     if (title.trim().length > 0 || note.trim().length > 0) {
@@ -592,51 +574,74 @@ const Cards: FC<CardsProps> = ({
     }
   }, [title, note, data]);
   // onClick handlers
-  const handleCreateCard = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
-      }));
-      return;
-    }
-    //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
-    if (title.trim().length > 0 || note.trim().length > 0) {
-      const content = { title, note, cardId: shortid.generate() };
-      const payload: PayloadType = { deck_id: deck_id!, content };
-      // Store the current input values to reset them later
-      const currentNote = note;
-      const currentTitle = title;
-      const heightVal = height;
-      addCard(payload, {
-        //While saving the card, if an error occurs, we will retrieve the cleared card information and show it again so that the user doesn't lose the created card details.
-        onError: () => {
-          setNote(currentNote);
-          setTitle(currentTitle);
-          setHeight(heightVal);
-        },
-      });
-      setNote("");
-      setTitle("");
-      setHeight(80);
-      if (isPlayingAudioAllowed) {
-        setTimeout(() => {
-          handlePlayAudio("createdSuccessfully", "/cards");
-        }, 100);
+  const handleCreateCard = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      if (!isOnline) {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "error",
+          show: true,
+          message: "No internet connection",
+          autoHideDuration: 5000,
+        }));
+        return;
       }
-    } else {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "warning",
-        show: true,
-        message: "Title or note should contain one or more characters!",
-      }));
-    }
-  };
+
+      if (isFetchingCards || isCreatingCard) {
+        if (popupRef) {
+          popupRef?.current?.show(
+            "Your previous card is being saved to the server. Please wait a moment..."
+          );
+        }
+        return;
+      }
+      //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
+      if (title.trim().length > 0 || note.trim().length > 0) {
+        const content = { title, note, cardId: shortid.generate() };
+        const payload: PayloadType = { deck_id: deck_id!, content };
+        // Store the current input values to reset them later
+        const currentNote = note;
+        const currentTitle = title;
+        const heightVal = height;
+
+        addCard(payload, {
+          //While saving the card, if an error occurs, we will retrieve the cleared card information and show it again so that the user doesn't lose the created card details.
+          onError: () => {
+            setNote(currentNote);
+            setTitle(currentTitle);
+            setHeight(heightVal);
+          },
+        });
+        setNote("");
+        setTitle("");
+        setHeight(80);
+        if (isPlayingAudioAllowed) {
+          setTimeout(() => {
+            handlePlayAudio("createdSuccessfully", "/cards");
+          }, 100);
+        }
+      } else {
+        setAlert((preval: AlertData) => ({
+          ...preval,
+          severity: "warning",
+          show: true,
+          message: "Title or note should contain one or more characters!",
+        }));
+      }
+    },
+    [
+      isOnline,
+      title,
+      note,
+      isPlayingAudioAllowed,
+      height,
+      addCard,
+      deck_id,
+      isCreatingCard,
+      isFetchingCards,
+    ]
+  );
 
   const handleDelete = useCallback(
     (index: number) => {
@@ -740,7 +745,8 @@ const Cards: FC<CardsProps> = ({
         message: "Title or note should contain one or more characters!",
       }));
     }
-    if (location?.state?.isBackButtonNotClicked) {
+
+    if (window?.history?.state?.isBackButtonNotClicked) {
       navigate(-1);
     }
   };
@@ -757,22 +763,6 @@ const Cards: FC<CardsProps> = ({
     [setEditContent]
   );
 
-  const handlePopUp = () => {
-    if (showPopUp.current?.classList.contains("scale-0")) {
-      showPopUp.current.classList.remove("scale-0");
-      showPopUp?.current?.classList.add("!block");
-      showPopUp.current.classList.add("!w-[85%]");
-      showPopUp.current.classList.add("md:!w-fit");
-      showPopUp.current.classList.add("!h-fit");
-      showPopUp.current.classList.add("scale-100");
-
-      setTimeout(() => {
-        showPopUp?.current?.classList.remove("scale-100");
-        showPopUp?.current?.classList.add("scale-0");
-        showPopUp?.current?.classList.add("hidden");
-      }, 3000);
-    }
-  };
   const handleShowFullScreen = useCallback(
     (card: ContentForFullScreen) => {
       setShowFullScreen(true);
@@ -913,10 +903,6 @@ const Cards: FC<CardsProps> = ({
         />
       </Helmet>
 
-      <PopUpMessage
-        message="Drag and drop the card onto the trash icon to delete it."
-        ref={showPopUp}
-      />
       {showTips && (
         <Tips
           setShowTips={setShowTips}
@@ -925,165 +911,45 @@ const Cards: FC<CardsProps> = ({
         />
       )}
 
-      <div
-        ref={undoButtonRefForCard}
-        className=" transition duration-500 ease-in-out scale-0  w-0 h-0 border-teal-500 bg-teal-200 shadow-teal-500 text-gray-800  rounded-lg z-50 dark:text-gray-50 p-4 dark:bg-slate-900 border shadow dark:border-sky-500 dark:shadow-sky-500  fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2"
-      >
-        <span className="mr-4">Card deleted successfully!</span>
-        <span
-          className="cursor-pointer font-bold text-blue-700 dark:text-yellow-400"
-          onClick={() => {
-            handleUndoButtonClick();
-          }}
-        >
-          Undo
-        </span>
-      </div>
-
-      <Droppable droppableId="cardDeleteArea">
-        {(provided, snapshot) => {
-          return (
-            <div
-              className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700   lg:right-2 bottom-2 right-2 z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${
-                snapshot.isDraggingOver
-                  ? "ring-1 ring-red-500 shadow-md shadow-red-500 z-[5001]"
-                  : "ring-1 dark:ring-sky-500/40 ring-teal-500/40"
-              }`}
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              <div
-                className={` cursor-pointer transition-transform duration-300   ${
-                  snapshot.isDraggingOver ? "-rotate-12 " : "transform-none"
-                }  `}
-                onClick={handlePopUp}
-              >
-                {snapshot.isDraggingOver ? (
-                  <img
-                    src="/trashcan-open.svg"
-                    alt="Delete card trash can"
-                    className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
-                  />
-                ) : (
-                  <img
-                    src="/trashcan-close.svg"
-                    alt="Delete card trash can"
-                    className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"
-                  />
-                )}
-              </div>
-            </div>
-          );
-        }}
-      </Droppable>
+      <TrashCanDropZone
+        droppableId="cardDeleteArea"
+        altText="Trash can for deleting card"
+      />
 
       <div className="flex flex-col gap-2 w-full  relative overflow-auto h-screen  ">
-        <div
-          className={`${
-            expandTextarea ? "mt-4" : "mt-2"
-          } w-full px-4  mx-auto transition-all duration-1000  `}
+        <CardInput
+          expandTextarea={expandTextarea}
+          handleCreateCard={handleCreateCard}
+          data={data}
+          setIsTransitioning={setIsTransitioning}
+          setExpandTextArea={setExpandTextArea}
+          setTitle={setTitle}
+          title={title}
+          note={note}
+          setNote={setNote}
+          adjustTextareaHeightOnPasteAndExpand={
+            adjustTextareaHeightOnPasteAndExpand
+          }
+          height={height}
+          textareaRef={textareaRef}
+          inputElementRef={inputElementRef}
         >
-          <form
-            onSubmit={handleCreateCard}
-            className="flex flex-col  gap-4 justify-center items-center  "
-          >
-            {/* <label htmlFor="title" className=" font-bold text-teal-600 dark:text-sky-400">
-            Card details
-          </label> */}
-            <div className="flex flex-col ">
-              <div
-                onTransitionEnd={() => {
-                  if (data && "cards" in data && data?.cards?.length === 0) {
-                    setIsTransitioning(false);
-                  }
-                }}
-                className={`transition duration-1000 delay-1000 ${
-                  expandTextarea
-                    ? "h-8 p-1 border-t-2 opacity-100"
-                    : "h-8 p-0 translate-y-full border-t-2"
-                } flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] dark:bg-slate-900`}
-              >
-                <CardToolbar
-                  addLinkWrapper={addLinkWrapper}
-                  addBoldTextWrapper={addBoldTextWrapper}
-                  addCodeBlockWrapper={addCodeBlockWrapper}
-                  addUnderlineTextWrapper={addUnderlineTextWrapper}
-                  setShowTips={setShowTips}
-                  increaseTextAreaHeight={increaseTextAreaHeight}
-                  decreaseTextAreaHeight={decreaseTextAreaHeight}
-                  adjustTextareaHeightOnPasteAndExpand={
-                    adjustTextareaHeightOnPasteAndExpand
-                  }
-                  handleClose={handleClose}
-                />
-              </div>
-              <div
-                onClick={() => {
-                  setExpandTextArea(true);
-                  if (isPlayingAudioAllowed && !expandTextarea) {
-                    setTimeout(() => {
-                      handlePlayAudio("open", "/cards");
-                    }, 100);
-                  }
-                }}
-                className="h-10 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw] z-10 relative"
-              >
-                <input
-                  ref={inputElementRef}
-                  type="text"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setTitle(e.target.value);
-                  }}
-                  //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input
-                  //field typically triggers form submission by default. Afterwards, we will shift the focus from the input field to the textarea.
-                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      textareaRef.current?.focus();
-                    }
-                  }}
-                  value={title}
-                  readOnly={!expandTextarea}
-                  className={`${
-                    expandTextarea
-                      ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
-                      : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center cursor-pointer"
-                  } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-base text-gray-800   dark:bg-slate-900 dark:text-gray-50 z-10 `}
-                  placeholder={`${
-                    expandTextarea ? "Title" : "Craft an Elegant Note"
-                  } `}
-                />
-                {!expandTextarea && (
-                  <div className="absolute  top-1/2 -translate-y-1/2 right-8 cursor-pointer  ">
-                    <BsChevronExpand className="dark:text-gray-100 text-teal-600 " />
-                  </div>
-                )}
-              </div>
-              <textarea
-                className={` ${
-                  expandTextarea
-                    ? " py-2 border-b-2 rounded-t-0 opacity-100"
-                    : "py-0 border-b-2"
-                } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-base  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                  setNote(e.target.value);
-                }}
-                ref={textareaRef}
-                style={{
-                  height: expandTextarea ? height + "px" : "0",
-                }}
-                value={note}
-                onPaste={adjustTextareaHeightOnPasteAndExpand}
-                placeholder="Note"
-              ></textarea>
-            </div>
-          </form>
-          {data && "cards" in data && data?.cards?.length > 0 ? (
-            <h1 className="font-bold text-xl text-gray-800 mt-8 mb-6 dark:text-gray-50 ">
-              {data?.title}
-            </h1>
-          ) : null}
-        </div>
+          <CardToolbar
+            addLinkWrapper={addLinkWrapper}
+            addBoldTextWrapper={addBoldTextWrapper}
+            addCodeBlockWrapper={addCodeBlockWrapper}
+            addUnderlineTextWrapper={addUnderlineTextWrapper}
+            setShowTips={setShowTips}
+            increaseTextAreaHeight={increaseTextAreaHeight}
+            decreaseTextAreaHeight={decreaseTextAreaHeight}
+            adjustTextareaHeightOnPasteAndExpand={
+              adjustTextareaHeightOnPasteAndExpand
+            }
+            handleClose={handleClose}
+            isCreatingCard={isCreatingCard}
+            isFetchingCards={isFetchingCards}
+          />
+        </CardInput>
 
         {data && "cards" in data && data?.cards?.length > 0 ? (
           <CardItems
@@ -1128,14 +994,12 @@ const Cards: FC<CardsProps> = ({
       <ConfirmDeleteModalForCard
         indexOfCardForDeletion={indexOfCardForDeletion!}
         deleteCardItem={deleteCardItem}
-        setShowFullScreen={setShowFullScreen}
         setIsConfirmDeleteModalOpen={setIsConfirmDeleteModalOpen}
         setWasDeleteModalOpen={setWasDeleteModalOpen}
         showFullScreen={showFullScreen}
         setUndoCardDetails={setUndoCardDetails}
         undoButtonRefForCard={undoButtonRefForCard}
-        handlePopupForUndoButtonForCard={handlePopupForUndoButtonForCard}
-        timeoutForUndoCard={timeoutForUndoCard}
+        handleUndoButtonClick={handleUndoButtonClick}
       />
       {showConfirmCloseCardModal ? (
         <ConfirmCloseCard

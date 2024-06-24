@@ -8,20 +8,20 @@ import {
   memo,
 } from "react";
 
-import EditModalForDeck from "./EditModalForDeck";
-import { UserContext } from "../context/UserContext";
-import useGetDecksAndCards from "../hooks/useGetDecksAndCards";
+import EditModalForDeck from "../EditModalForDeck";
+import { ThemeContext, UserContext } from "../../context/UserContext";
+import useGetDecksAndCards from "../../hooks/useGetDecksAndCards";
 import {
   AlertData,
   SearchResultCardsType,
   SearchResultDeckType,
-} from "../types/types";
-import { searchContext } from "../context/SearchContext";
-import DeckAndCardResult from "./DeckAndCardResult";
+} from "../../types/types";
+import { searchContext } from "../../context/SearchContext";
 import { useNavigate } from "react-router-dom";
-import useEditDeck from "../hooks/useEditDeck";
-import { AlertContext } from "../context/AlertContext";
+import useEditDeck from "../../hooks/useEditDeck";
+import { AlertContext } from "../../context/AlertContext";
 import { debounce } from "lodash";
+import DeckAndCardResult from "./DeckAndCardResult";
 
 let timer: NodeJS.Timeout;
 
@@ -44,7 +44,6 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
     mutate: editDeck,
     isError: isEditDeckError,
     error: editDeckError,
-    data: editDeckResponse,
     reset: resetEditDeckResponse,
   } = useEditDeck();
   const {
@@ -53,9 +52,9 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
     openEditDeckModalForSearchResult,
     setOpenEditDeckModalForSearchResult,
     setOpenSearchBar,
-    openSearchBar,
   } = useContext(searchContext);
-  const { theme, setUserInfo } = useContext(UserContext);
+  const { setUserInfo } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   // Here, we will add all the cards from all the decks in a single array by including some additional properties that we require later
@@ -267,48 +266,32 @@ const SearchResult: FC<IProp> = ({ searchQuery, inputValue }) => {
 
   return (
     <>
-      <div className=" dark:text-white text-gray-800 fixed top-[6.5rem] h-12 flex items-start justify-center w-full bg-[#fcfefc] dark:bg-slate-900 z-50 lg:hidden font-bold pt-2 ">
-        {searchQuery.length > 0 &&
-          (foundDecks.length > 0 || foundCards.length > 0) &&
-          showResult && (
-            <div className="">
-              {foundDecks.length + foundCards.length > 1 ? (
-                <p>
-                  Search Results
-                  <span className="font-extralight text-xs ml-1 text-gray-600 dark:text-gray-300">
-                    (about {foundDecks.length + foundCards.length} results)
-                  </span>
-                </p>
-              ) : (
-                <p>Search Result</p>
-              )}
-            </div>
-          )}
-      </div>
       <div
         className={`fixed  top-[9rem] lg:top-[3.45rem] overflow-scroll h-[var(--window-height)] bg-[#fcfefc]  dark:bg-slate-900 w-full  `}
       >
-        <div className="hidden bg-[#fcfefc] fixed lg:top-[3.45rem] text-base dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-900 z-50 pb-4 pt-3">
-          {searchQuery.length > 0 &&
-            (foundDecks.length > 0 || foundCards.length > 0) &&
-            showResult && (
-              <div className="mt-2 font-bold">
-                {foundDecks.length + foundCards.length > 1 ? (
-                  <p>
-                    Search Results
-                    <span className="font-extralight text-xs  ml-1">
-                      (about {foundDecks.length + foundCards.length} results)
-                    </span>
-                  </p>
-                ) : (
-                  <p>Search Result</p>
-                )}
-              </div>
-            )}
-        </div>
+        {searchQuery === inputValue && (
+          <div className=" bg-[#fcfefc] fixed top-[6.5rem] h-12 lg:h-auto lg:top-[3.45rem] text-base dark:text-white text-gray-800 w-full lg:flex items-center justify-center dark:bg-slate-900 z-50 pb-4 lg:pt-3">
+            {searchQuery.length > 0 &&
+              (foundDecks.length > 0 || foundCards.length > 0) &&
+              showResult && (
+                <div className="mt-2 font-bold">
+                  {foundDecks.length + foundCards.length > 1 ? (
+                    <p>
+                      Search Results
+                      <span className="font-extralight text-xs  ml-1 text-gray-600 dark:text-gray-300">
+                        (about {foundDecks.length + foundCards.length} results)
+                      </span>
+                    </p>
+                  ) : (
+                    <p>Search Result</p>
+                  )}
+                </div>
+              )}
+          </div>
+        )}
 
         {searching && searchQuery.length > 0 && (
-          <div className="flex items-center justify-center dark:text-gray-50  fixed top-1/3 lg:top-1/2 left-1/2 -translate-x-1/2 lg:-translate-y-1/2 -translate-y-1/3 gap-2">
+          <div className="flex items-center justify-center dark:text-gray-50  fixed top-1/3 lg:top-1/2 left-1/2 -translate-x-1/2 lg:-translate-y-1/2 -translate-y-1/3 gap-2 ">
             <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-200 border-t-2 dark:border-t-cyan-500 border-t-cyan-500 animate-spin"></span>
             <p>searching...</p>
           </div>

@@ -15,7 +15,7 @@ export default function SimpleSnackbar() {
   // handleling onClose event.
   //If you do not add onClose prop in snackbar then it's autoHideDuration prop won't work (from documentation).
   const handleClose = (
-    event: Event | React.SyntheticEvent<any, Event>,
+    event: Event | React.SyntheticEvent<MouseEvent, Event>,
     reason: string
   ) => {
     // If user clicks on screen/window except snackbar notification then do nothing.

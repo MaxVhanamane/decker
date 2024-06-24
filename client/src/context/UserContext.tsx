@@ -26,7 +26,7 @@ interface BeforeInstallPromptEvent extends Event {
   }>;
 }
 
-type UserContextProvider = {
+type UserContextProviderType = {
   children: ReactNode;
 };
 
@@ -39,16 +39,8 @@ interface ContexType {
       }
     | null
     | undefined;
-
   setUserInfo: Dispatch<React.SetStateAction<userData | null>>;
-  setIndexOfCardForDeletion: Dispatch<React.SetStateAction<number | null>>;
-
-  theme: string | null;
-
-  setTheme: Dispatch<React.SetStateAction<string | null>>;
-  deleteConfirmationModalForCard: RefObject<HTMLDivElement>;
   divRefForUserSettings: RefObject<HTMLDivElement>;
-  indexOfCardForDeletion: number | null;
   showInstallAppButton: boolean;
   showLogoutModal: boolean;
   isAuthenticating: boolean;
@@ -58,6 +50,13 @@ interface ContexType {
   handleShowUserInfomation: () => void;
   handleInstallApp: () => void;
 }
+
+interface ThemeContextType {
+  theme: string | null;
+
+  setTheme: Dispatch<React.SetStateAction<string | null>>;
+}
+
 export const UserContext = createContext<ContexType>({
   userInfo: {
     username: "",
@@ -66,14 +65,9 @@ export const UserContext = createContext<ContexType>({
   },
   showLogoutModal: false,
   setUserInfo: () => {},
-  theme: null,
-  setTheme: () => {},
-  deleteConfirmationModalForCard: {
-    current: null,
-  } as RefObject<HTMLDivElement>,
+
   divRefForUserSettings: { current: null } as RefObject<HTMLDivElement>,
-  setIndexOfCardForDeletion: () => {},
-  indexOfCardForDeletion: null,
+
   showInstallAppButton: false,
   setShowInstallAppButton: () => {},
   setShowLogoutModal: () => {},
@@ -83,11 +77,16 @@ export const UserContext = createContext<ContexType>({
   handleInstallApp: () => {},
 });
 
+export const ThemeContext = createContext<ThemeContextType>({
+  theme: null,
+  setTheme: () => {},
+});
+
 // Note: If you use the useNavigate() or useLocation hooks from react-router-dom within a Context API, that Context API will rerender whenever the route changes.
 
-function UserContextProvider({ children }: UserContextProvider) {
+function UserContextProvider({ children }: UserContextProviderType) {
   const [theme, setTheme] = useState<string | null>(null);
-  const deleteConfirmationModalForCard = useRef<HTMLDivElement>(null);
+
   const divRefForUserSettings = useRef<HTMLDivElement>(null);
   const [showInstallAppButton, setShowInstallAppButton] = useState(false);
   const [beforeInstallHandlerRun, setBeforeInstallHandlerRun] = useState(false);
@@ -96,9 +95,7 @@ function UserContextProvider({ children }: UserContextProvider) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const [userInfo, setUserInfo] = useState<userData | null>(null);
-  const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
-    number | null
-  >(null);
+
   const [isAuthenticating, setIsAuthenticating] = useState(true);
 
   useEffect(() => {
@@ -207,11 +204,6 @@ function UserContextProvider({ children }: UserContextProvider) {
     return {
       userInfo,
       setUserInfo,
-      theme,
-      setTheme,
-      deleteConfirmationModalForCard,
-      indexOfCardForDeletion,
-      setIndexOfCardForDeletion,
       divRefForUserSettings,
       showInstallAppButton,
       setShowInstallAppButton,
@@ -225,11 +217,6 @@ function UserContextProvider({ children }: UserContextProvider) {
   }, [
     userInfo,
     setUserInfo,
-    theme,
-    setTheme,
-    deleteConfirmationModalForCard,
-    indexOfCardForDeletion,
-    setIndexOfCardForDeletion,
     divRefForUserSettings,
     showInstallAppButton,
     setShowInstallAppButton,
@@ -241,8 +228,16 @@ function UserContextProvider({ children }: UserContextProvider) {
     setShowLogoutModal,
   ]);
 
+  const themeContextValue = useMemo(() => {
+    return { theme, setTheme };
+  }, [theme, setTheme]);
+
   return (
-    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+    <UserContext.Provider value={contextValue}>
+      <ThemeContext.Provider value={themeContextValue}>
+        {children}
+      </ThemeContext.Provider>
+    </UserContext.Provider>
   );
 }
 

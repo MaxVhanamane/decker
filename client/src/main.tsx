@@ -12,6 +12,8 @@ import OfflineProvider from "./context/OfflineContext";
 import SearchProvider from "./context/SearchContext";
 import { AudioProvider } from "./context/AudioContext";
 import { BulbContextProvider } from "./context/BulbContext";
+import { CardContextProvider } from "./context/CardContext";
+import { PopupContextProvider } from "./context/PopupContext";
 
 const queryClient = new QueryClient({
   // Read more about the Network Mode in the React Query documentation.
@@ -29,9 +31,13 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 <SearchProvider>
                   <ThemeColorUpdater />
                   <BulbContextProvider>
-                    <Layout>
-                      <App />
-                    </Layout>
+                    <PopupContextProvider>
+                      <Layout>
+                        <CardContextProvider>
+                          <App />
+                        </CardContextProvider>
+                      </Layout>
+                    </PopupContextProvider>
                   </BulbContextProvider>
                 </SearchProvider>
               </UserContextProvider>

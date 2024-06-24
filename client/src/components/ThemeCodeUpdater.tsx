@@ -1,8 +1,9 @@
 import React, { useEffect, useContext } from "react";
-import { UserContext } from "../context/UserContext";
+import { ThemeContext, UserContext } from "../context/UserContext";
 
 const ThemeColorUpdater: React.FC = () => {
-  const { theme, userInfo } = useContext(UserContext);
+  const { userInfo } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
     // Update the meta tag

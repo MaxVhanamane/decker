@@ -114,3 +114,43 @@ export type UndoCardPayloadData = {
   };
   index: number;
 };
+
+export type DeckTypeForSearch = {
+  title: string;
+  deck_id: string;
+  cards:
+  | []
+  | {
+    title: string;
+    note: string;
+    _id: string;
+    cardId: string;
+  }[];
+};
+
+export type GetCardsResponseType = {
+  title: string;
+  cards: { title: string; note: string; cardId: string; _id: string }[];
+  _id: string;
+};
+
+
+export type CreateCardPayloadType = {
+  deck_id: string;
+  content: {
+    title: string;
+    note: string;
+    cardId: string;
+  };
+};
+
+export type moveCardPayloadDataType = {
+  deleteIndex: number;
+  moveIndex: number;
+  deck_id: string;
+};
+
+export type DeleteCardPayloadType = {
+  deck_id: string;
+  index: number;
+};

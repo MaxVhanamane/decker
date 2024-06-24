@@ -56,7 +56,7 @@ export const updateCache = (action: string, cacheNameValue: string, urlValue: st
                 case "moveCard": {
                     updatedBodyContent = responseBody.map((deck) => {
                         if (deck?._id === data?.deck_id) {
-                            const newCardsArray = [...deck?.cards];
+                            const newCardsArray = [...deck.cards];
                             let element_to_move = newCardsArray.splice(
                                 data.deleteIndex,
                                 1
@@ -73,7 +73,7 @@ export const updateCache = (action: string, cacheNameValue: string, urlValue: st
                 case "undoCard": {
                     updatedBodyContent = responseBody.map((deck) => {
                         if (deck?._id === data?.deck_id) {
-                            const newArray = [...deck?.cards];
+                            const newArray = [...deck.cards];
                             // As the server generates a new _id when undoing the card, we will add a temporary _id during optimistic updates.
                             newArray.splice(data.index, 0, {
                                 ...data.content,
@@ -89,7 +89,7 @@ export const updateCache = (action: string, cacheNameValue: string, urlValue: st
                 case "editCard": {
                     updatedBodyContent = responseBody.map((deck) => {
                         if (deck?._id === data.deck_id) {
-                            const updatedCards = [...deck?.cards];
+                            const updatedCards = [...deck.cards];
                             updatedCards?.splice(data?.index, 1, data?.newContent);
                             deck.cards = updatedCards;
                             return deck;

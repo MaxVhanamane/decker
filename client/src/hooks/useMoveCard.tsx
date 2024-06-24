@@ -1,15 +1,15 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { CardDataType, DeckAndCardType } from "../types/types";
+import {
+  CardDataType,
+  DeckAndCardType,
+  moveCardPayloadDataType,
+} from "../types/types";
 import { CustomError } from "../utils/customError";
 import { updateCache } from "../utils/updateCache";
-
-type moveCardPayloadDataType = {
-  deleteIndex: number;
-  moveIndex: number;
-  deck_id: string;
-};
+import { OfflineContext } from "../context/OfflineContext";
+import { useContext } from "react";
 
 type SuccessResponseType = {
   success: true;
@@ -41,6 +41,7 @@ const moveCard = async (
 };
 
 const useMoveCard = () => {
+  const { deck, setDeck } = useContext(OfflineContext);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -79,7 +80,7 @@ const useMoveCard = () => {
             );
             const modifiedData = deepCopiedDecks.map((deck) => {
               if (deck?._id === data?.deck_id) {
-                const newCardsArray = [...deck?.cards];
+                const newCardsArray = [...deck.cards];
                 let element_to_move = newCardsArray.splice(
                   data.deleteIndex,
                   1
@@ -98,6 +99,9 @@ const useMoveCard = () => {
       return { previousCardData, previousCardAndDeckQueryData };
     },
     onSuccess: (serverResponse, mutationData) => {
+      if (deck) {
+        setDeck(null);
+      }
       updateCache("moveCard", "search-cache", "decks-and-cards", mutationData);
     },
 
@@ -111,12 +115,7 @@ const useMoveCard = () => {
         context?.previousCardAndDeckQueryData
       );
     },
-    onSettled: (
-      dataReturnedByTheAxiosRequest,
-      error,
-      dataThatWePassed,
-      context
-    ) => {
+    onSettled: (dataReturnedByTheServer, error, dataThatWePassed) => {
       queryClient.invalidateQueries({
         queryKey: ["cards", dataThatWePassed.deck_id],
       });

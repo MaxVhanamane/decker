@@ -1,6 +1,5 @@
 import { Dispatch, MouseEvent, memo, useContext, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { UserContext } from "../../context/UserContext";
 import { searchContext } from "../../context/SearchContext";
 import { UseMutateFunction, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +10,8 @@ import {
 } from "../../types/types";
 import { CustomError } from "../../utils/customError";
 import { AudioContext } from "../../context/AudioContext";
+import { CardContext } from "../../context/CardContext";
+import { PopupContext } from "../../context/PopupContext";
 
 type DeleteCardPayloadType = {
   deck_id: string;
@@ -31,7 +32,6 @@ interface IProp {
       previousCardAndDeckQueryData: DeckAndCardType[] | undefined;
     }
   >;
-  setShowFullScreen?: Dispatch<React.SetStateAction<boolean>>;
   setIsConfirmDeleteModalOpen: Dispatch<React.SetStateAction<boolean>>;
   setWasDeleteModalOpen: Dispatch<React.SetStateAction<boolean>>;
   showFullScreen: boolean;
@@ -39,24 +39,23 @@ interface IProp {
     React.SetStateAction<UndoCardPayloadData | null>
   >;
   undoButtonRefForCard?: React.RefObject<HTMLDivElement>;
-  handlePopupForUndoButtonForCard?: () => void;
   timeoutForUndoCard?: NodeJS.Timeout;
+  handleUndoButtonClick?: () => void;
 }
 const ConfirmDeleteModalForCard = ({
   indexOfCardForDeletion,
   deleteCardItem,
-  setShowFullScreen,
   setIsConfirmDeleteModalOpen,
   setWasDeleteModalOpen,
   showFullScreen,
   setUndoCardDetails,
   undoButtonRefForCard,
-  handlePopupForUndoButtonForCard,
-  timeoutForUndoCard,
+  handleUndoButtonClick,
 }: IProp) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { deleteConfirmationModalForCard } = useContext(UserContext);
+  const popupRef = useContext(PopupContext);
+  const { deleteConfirmationModalForCard } = useContext(CardContext);
   const { showSearchBar } = useContext(searchContext);
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
   const { deck_id } = useParams();
@@ -92,20 +91,14 @@ const ConfirmDeleteModalForCard = ({
         onSuccess: () => {
           // If user deletes cards one after the another that creates problem because when user deletes second card
           // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
-          if (
-            !showSearchBar &&
-            undoButtonRefForCard &&
-            handlePopupForUndoButtonForCard
-          ) {
-            if (undoButtonRefForCard.current?.classList.contains("scale-0")) {
-              handlePopupForUndoButtonForCard();
-            } else {
-              clearTimeout(timeoutForUndoCard);
-              undoButtonRefForCard?.current?.classList.remove("scale-100");
-              undoButtonRefForCard?.current?.classList.add("scale-0");
-              undoButtonRefForCard?.current?.classList.add("hidden");
-              handlePopupForUndoButtonForCard();
-            }
+
+          if (!showSearchBar && undoButtonRefForCard && popupRef) {
+            popupRef.current?.show(
+              "Card deleted successfully!",
+              7000,
+              "Undo",
+              handleUndoButtonClick
+            );
           }
 
           if (isPlayingAudioAllowed) {
@@ -119,10 +112,7 @@ const ConfirmDeleteModalForCard = ({
 
           deleteConfirmationModalForCard?.current?.classList.add("hidden");
           setIsConfirmDeleteModalOpen(false);
-          //  As setShowFullScreen is an optional prop that is why I have put in a If statement to avoid ts error.
-          if (setShowFullScreen) {
-            setShowFullScreen(false);
-          }
+
           // This is for when user opens card and deletes it from there
           if (showFullScreen && !showSearchBar) {
             // When a user opens the card in full screen, I push a new entry into the browser stack. Then, when the user clicks on the delete button, I push another entry into the browser stack. When the user deletes that card, I have to remove those two pushed entries. To remove them, I use two navigate(-1) calls.
@@ -137,7 +127,7 @@ const ConfirmDeleteModalForCard = ({
           }
           // This is for when user deletes card when searchbar is open
           if (showSearchBar) {
-            // If the showSearchBar is true and the user clicks on the delete button, after deleting we will take them back to the page they came from. To get the previous URL, we can use 'location.state?.from', which we set in the Link tag.
+            // If the showSearchBar is true and the user clicks on the delete button, after deleting we will take them back to the page they came from.
             navigate(location.pathname, {
               state: { deleted: true },
               replace: true,
@@ -149,7 +139,7 @@ const ConfirmDeleteModalForCard = ({
       deleteConfirmationModalForCard?.current?.classList.add("hidden");
       setIsConfirmDeleteModalOpen(false);
       setWasDeleteModalOpen(true);
-      if (location?.state?.isBackButtonNotClicked) {
+      if (window?.history?.state?.isBackButtonNotClicked) {
         navigate(-1);
       }
     }
@@ -180,9 +170,14 @@ const ConfirmDeleteModalForCard = ({
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               ></path>
             </svg>
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Are you sure you want to delete this card?
-            </h3>
+            <div className="mb-5 text-lg font-normal">
+              <h3 className="  text-gray-500 dark:text-gray-400">
+                Are you sure you want to delete this card?
+              </h3>
+              <p className="text-red-500">
+                {showSearchBar && "you can not undo this action"}
+              </p>
+            </div>
             <div className="h-12">
               {!deleting ? (
                 <div>
@@ -191,7 +186,7 @@ const ConfirmDeleteModalForCard = ({
                     aria-label="Yes,I'm sure"
                     onClick={getUserConfirmation}
                     type="button"
-                    className="text-white bg-red-600 hover:bg-red-800    font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none"
+                    className="text-white bg-red-600 hover:bg-red-800 transition-colors duration-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none"
                   >
                     Yes, I'm sure
                   </button>
@@ -200,7 +195,7 @@ const ConfirmDeleteModalForCard = ({
                     aria-label="No, cancel"
                     onClick={getUserConfirmation}
                     type="button"
-                    className="text-gray-500 bg-[#fcfefc] hover:bg-gray-100  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none"
+                    className="text-gray-500 bg-[#fcfefc] hover:bg-gray-100 transition-colors duration-300  rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none"
                   >
                     No, cancel
                   </button>

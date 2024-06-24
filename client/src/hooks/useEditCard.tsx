@@ -2,9 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "../utils/fetch-utils";
 import { CardDataType, DeckAndCardType } from "../types/types";
 import { useContext } from "react";
-import { searchContext } from "../context/SearchContext";
 import { CustomError } from "../utils/customError";
 import { updateCache } from "../utils/updateCache";
+import { OfflineContext } from "../context/OfflineContext";
 
 type CardData = {
   deck_id: string;
@@ -46,9 +46,8 @@ const editCard = async (
 };
 
 const useEditCard = () => {
-  const { showSearchBar, cardInfo, setCardInfo } = useContext(searchContext);
+  const { deck, setDeck } = useContext(OfflineContext);
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: editCard,
     onMutate: async (data) => {
@@ -66,7 +65,7 @@ const useEditCard = () => {
         ["cards", data.deck_id],
         (oldQueryData) => {
           if (oldQueryData) {
-            const newArray: QueryData[] = [...oldQueryData?.cards];
+            const newArray: QueryData[] = [...oldQueryData.cards];
             newArray.splice(data.index, 1, data?.newContent);
             return { ...oldQueryData, cards: newArray };
           }
@@ -86,7 +85,7 @@ const useEditCard = () => {
             );
             const modifiedDecks = deepCopiedDecks.map((deck) => {
               if (deck?._id === data.deck_id) {
-                const updatedCards = [...deck?.cards];
+                const updatedCards = [...deck.cards];
                 updatedCards?.splice(data?.index, 1, data?.newContent);
                 deck.cards = updatedCards;
                 return deck;
@@ -99,18 +98,14 @@ const useEditCard = () => {
         }
       );
 
-      if (showSearchBar) {
-        setCardInfo({
-          ...cardInfo,
-          title: data?.newContent?.title,
-          note: data?.newContent?.note,
-        });
-      }
       // Return previous data so that if something goes wrong we can use this in onError method
       return { previousCardQueryData, previousCardAndDeckQueryData };
     },
 
     onSuccess: (_serverResponse, mutationData) => {
+      if (deck) {
+        setDeck(null);
+      }
       updateCache("editCard", "search-cache", "decks-and-cards", mutationData);
     },
 
@@ -126,12 +121,13 @@ const useEditCard = () => {
     },
 
     // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
-    onSettled: (serverData, error, data, context) => {
+    onSettled: (serverData, error, data) => {
       // If the search bar is open, it indicates that the user edited the card from the search result. The search bar is using the 'decks' query as data, so we will invalidate the decks query to keep it updated.
       // As the data for decks might be large in size, to avoid transferring huge data again and again on edit/delete, we will just perform optimistic updates.
       // if (showSearchBar) {
       //   queryClient.invalidateQueries({ queryKey: ["decks-and-cards"] });
       // }
+
       queryClient.invalidateQueries({
         queryKey: ["cards", data.deck_id],
       });

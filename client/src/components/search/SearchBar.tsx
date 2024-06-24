@@ -8,11 +8,11 @@ import {
   useState,
 } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
-import SearchResult from "./SearchResult";
 import { RiCloseFill } from "react-icons/ri";
-import { searchContext } from "../context/SearchContext";
+import { searchContext } from "../../context/SearchContext";
 import { useNavigate } from "react-router-dom";
-import { AudioContext } from "../context/AudioContext";
+import { AudioContext } from "../../context/AudioContext";
+import SearchResult from "./SearchResult";
 
 const SearchBar: FC = () => {
   const { showSearchBar, setShowSearchBar, setOpenSearchBar, openSearchBar } =

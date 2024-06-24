@@ -267,12 +267,10 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
                   type="button"
                   onClick={() => {
                     // You can remove the pushed state using either of these methods
-                    // if (window?.history?.state?.isBackButtonNotClicked) {
-                    //   window.history.back();
-                    // }
-                    if (location?.state?.isBackButtonNotClicked) {
+                    if (window?.history?.state?.isBackButtonNotClicked) {
                       navigate(-1);
                     }
+
                     if (search_index && openModal) {
                       navigate(location?.pathname, {
                         state: {

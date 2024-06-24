@@ -1,13 +1,5 @@
 import React, { createContext, useState, Dispatch, ReactNode } from "react";
 
-type cardInfo = {
-  cardIndex: null | number;
-  title: string;
-  note: string;
-  _id: string;
-  from: string;
-  cardId: string;
-};
 interface ContexType {
   showSearchBar: boolean;
   cardDeleted: boolean;
@@ -20,8 +12,6 @@ interface ContexType {
   setAnimateCloseEditDeckModalInSearchResult: Dispatch<
     React.SetStateAction<boolean>
   >;
-  cardInfo: cardInfo;
-  setCardInfo: Dispatch<React.SetStateAction<cardInfo>>;
   setCardDeleted: Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -40,29 +30,13 @@ export const searchContext = createContext<ContexType>({
   openSearchBar: false,
   setOpenSearchBar: () => {},
   setCardDeleted: () => {},
-  cardInfo: {
-    cardIndex: null,
-    title: "",
-    note: "",
-    _id: "",
-    from: "",
-    cardId: "",
-  },
-  setCardInfo: () => {},
 });
 
 const SearchProvider = ({ children }: SearchContextProvider) => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [openSearchBar, setOpenSearchBar] = useState(false);
   const [cardDeleted, setCardDeleted] = useState(false);
-  const [cardInfo, setCardInfo] = useState<cardInfo>({
-    cardIndex: null,
-    title: "",
-    note: "",
-    _id: "",
-    from: "",
-    cardId: "",
-  });
+
   const [
     animateCloseEditDeckModalInSearchResult,
     setAnimateCloseEditDeckModalInSearchResult,
@@ -78,8 +52,6 @@ const SearchProvider = ({ children }: SearchContextProvider) => {
         setShowSearchBar,
         openSearchBar,
         setOpenSearchBar,
-        cardInfo,
-        setCardInfo,
         animateCloseEditDeckModalInSearchResult,
         setAnimateCloseEditDeckModalInSearchResult,
         openEditDeckModalForSearchResult,

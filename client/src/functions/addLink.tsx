@@ -57,7 +57,7 @@ export const addLink = ({
         0,
         selectionStart
       )} [link name](put your link URL in this bracket)
-          \ ${editContent.note.substring(selectionEnd)}`;
+          ${editContent.note.substring(selectionEnd)}`;
       currentSelectionStart =
         (editTextareaRef?.current?.selectionStart || 0) + 13;
       currentSelectionEnd = currentSelectionStart + 33;

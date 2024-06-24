@@ -1,19 +1,16 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { CardDataType, DeckAndCardType } from "../types/types";
+import {
+  CardDataType,
+  CreateCardPayloadType,
+  DeckAndCardType,
+} from "../types/types";
 import { CustomError } from "../utils/customError";
 import shortid from "shortid";
 import { updateCache } from "../utils/updateCache";
-
-type CreateCardPayloadType = {
-  deck_id: string;
-  content: {
-    title: string;
-    note: string;
-    cardId: string;
-  };
-};
+import { useContext } from "react";
+import { OfflineContext } from "../context/OfflineContext";
 
 const createCard = async (payload: CreateCardPayloadType) => {
   try {
@@ -23,7 +20,6 @@ const createCard = async (payload: CreateCardPayloadType) => {
 
     return data?.data;
   } catch (error) {
-    // network errors, such as a lack of internet connection/no internet connection, may not be recognized as traditional errors by the Axios library. if I don't add if statement like this it will run onSuccess instead of onError.
     if (error instanceof CustomError) {
       throw new CustomError(error?.message, error?.statusCode);
     } else {
@@ -34,6 +30,7 @@ const createCard = async (payload: CreateCardPayloadType) => {
 
 const useCreateCard = () => {
   const queryClient = useQueryClient();
+  const { deck, setDeck } = useContext(OfflineContext);
   return useMutation({
     mutationFn: createCard,
     onMutate: async (data: CreateCardPayloadType) => {
@@ -98,6 +95,9 @@ const useCreateCard = () => {
     },
 
     onSuccess: (_serverResponse, mutationData) => {
+      if (deck) {
+        setDeck(null);
+      }
       updateCache(
         "createCard",
         "search-cache",
@@ -117,12 +117,7 @@ const useCreateCard = () => {
       );
     },
 
-    onSettled: (
-      _dataReturnedByTheAxiosRequest,
-      _error,
-      mutationData,
-      _context
-    ) => {
+    onSettled: (_dataReturnedByTheServer, _error, mutationData) => {
       queryClient.invalidateQueries({
         queryKey: ["cards", mutationData.deck_id],
       });

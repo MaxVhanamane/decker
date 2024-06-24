@@ -7,6 +7,7 @@ interface RequestOptions {
         'Content-Type': string;
 
     };
+    signal?: AbortSignal
     body?: string;
 }
 
@@ -57,11 +58,11 @@ export const request = {
     baseURL: `${import.meta.env.VITE_API_URL}`,
     withCredentials: true,
 
-    async makeRequest(url: string, options: RequestOptions): Promise<any> {
-
+    async makeRequest(url: string, options: RequestOptions) {
+        let online: boolean = false
         try {
             // A timeout refers to the maximum amount of time that a client (the requester) is willing to wait for a server to respond to a request.
-            const online = await checkIsUserOnline()
+            online = await checkIsUserOnline()
 
             if (!online) {
 
@@ -96,6 +97,10 @@ export const request = {
             }
 
             if ((fetchError as CustomError).message === "Failed to fetch") {
+                if (online) {
+                    throw new CustomError("An error occurred while processing your request. The server may be down. Please try again later.", 503)
+
+                }
                 throw new CustomError("No internet connection", 0)
             }
 
@@ -104,11 +109,11 @@ export const request = {
     }
     ,
 
-    async get(url: string) {
+    async get(url: string, signal?: AbortSignal) {
         const options: RequestOptions = {
             method: 'GET',
             credentials: this.withCredentials ? 'include' : 'same-origin',
-
+            signal
         };
         return this.makeRequest(url, options);
     },

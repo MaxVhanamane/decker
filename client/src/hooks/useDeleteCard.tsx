@@ -1,14 +1,15 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { CardDataType, DeckAndCardType } from "../types/types";
+import {
+  CardDataType,
+  DeckAndCardType,
+  DeleteCardPayloadType,
+} from "../types/types";
 import { CustomError } from "../utils/customError";
 import { updateCache } from "../utils/updateCache";
-
-type DeleteCardPayloadType = {
-  deck_id: string;
-  index: number;
-};
+import { OfflineContext } from "../context/OfflineContext";
+import { useContext } from "react";
 
 type SuccessResponseType = {
   success: boolean;
@@ -34,6 +35,8 @@ const deleteCard = async (
 
 const useDeleteCard = () => {
   const queryClient = useQueryClient();
+  const { deck, setDeck } = useContext(OfflineContext);
+
   return useMutation({
     mutationFn: deleteCard,
     onMutate: async (data: DeleteCardPayloadType) => {
@@ -50,7 +53,7 @@ const useDeleteCard = () => {
         ["cards", data.deck_id],
         (oldQueryData) => {
           if (oldQueryData) {
-            const newArray = [...oldQueryData?.cards];
+            const newArray = [...oldQueryData.cards];
             newArray.splice(data.index, 1);
             return { ...oldQueryData, cards: newArray };
           }
@@ -87,6 +90,9 @@ const useDeleteCard = () => {
       return { previousCardQueryData, previousCardAndDeckQueryData };
     },
     onSuccess: (_serverResponse, mutationData) => {
+      if (deck) {
+        setDeck(null);
+      }
       updateCache(
         "deleteCard",
         "search-cache",

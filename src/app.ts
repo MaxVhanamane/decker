@@ -26,7 +26,7 @@ config()
 
 
 let PORT: number = 5000
-
+const isProduction = process.env.NODE_ENV === 'production';
 const app = express()
 app.use(compression());
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
@@ -61,13 +61,19 @@ declare global {
   }
 }
 
+// To detect if the user is offline
+
+
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use(cors({ origin: process.env.ORIGIN, credentials: true }))
 
+
 app.set('trust proxy', 1)
 
 // create session
+console.log(process.env.NODE_ENV === 'production')
+
 app.use(session({
   secret: process.env.SESSION_SECRET!,
   resave: false,
@@ -81,11 +87,10 @@ app.use(session({
   // Comment out these keys - httpOnly,secure - from the cookie object while working on localhost. If you don't comment them out, cookies will not be sent to the frontend, and authentication will not work properly.
   // uncomment it while deploying
   cookie: {
-    httpOnly: true, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
-    sameSite: "none", // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
-    secure: true,      // it allows only https requests. you can only send these cookies to https sites
+    httpOnly: isProduction, //An HttpOnly Cookie is a tag added to a browser cookie that prevents client-side scripts from accessing data
+    sameSite: isProduction ? 'none' : 'lax', // If your frontend and backend is hosted on different origin then use sameSite:none in order to share cookie.
+    secure: isProduction,      // it allows only https requests. you can only send these cookies to https sites
     maxAge: 1000 * 60 * 60 * 24 * 30   //cookie expires in 30 days
-
   }
 }))
 app.use(cookieParser())
@@ -210,15 +215,15 @@ passport.deserializeUser(async (id: string, done: (err: any, user?: UserDetails 
 connectToMongoDB()
   .then(() => {
     app.listen(process.env.PORT || PORT, () => {
+
       console.log("Server is running on port " + PORT);
     });
   })
   .catch((err) => console.error(err));
 
 
-// To detect if the user is offline
-app.get('/checkonlinestatus', async function (req: Request, res: Response) {
-  res.sendStatus(204)
+app.get('/checkonlinestatus', cors({ origin: true }), async function (req: Request, res: Response) {
+  res.status(200).json({ online: true })
 })
 
 //Deck routes 
@@ -377,8 +382,8 @@ app.post('/card/:deck_id', fetchUserDetails, async (req: Request, res: Response)
     }
 
     getDeck.cards.unshift(req.body.content)
-    const createdCard = await getDeck.save()
-    res.status(201).json(createdCard)
+    await getDeck.save()
+    res.status(201).json({ success: true })
   }
   catch (error) {
     res.status(500).json({ message: "An unexpected error occurred while creating the card. Please try again later." })
@@ -441,10 +446,9 @@ app.put('/card/undocard', fetchUserDetails, async (req: Request, res: Response) 
       { $push: { cards: { $each: [cardContent], $position: cardIndex } } },
     );
 
-    setTimeout(() => {
-      res.status(200).json({ success: true })
 
-    }, 5000)
+    res.status(200).json({ success: true })
+
   }
 
   catch (error) {
@@ -971,8 +975,6 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
   }
 
 })
-
-
 
 
 

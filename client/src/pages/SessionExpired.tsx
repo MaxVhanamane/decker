@@ -1,6 +1,6 @@
 import Session from "../components/Session";
 import { useContext, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 
 const SessionExpired = () => {

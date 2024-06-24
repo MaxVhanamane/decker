@@ -28,3 +28,4 @@ dist-ssr
 
 /src/pages/Test.tsx
 /src/pages/Example.tsx
+.vercel

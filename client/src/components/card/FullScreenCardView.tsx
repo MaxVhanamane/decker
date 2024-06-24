@@ -1,5 +1,5 @@
 import { IoIosArrowBack } from "react-icons/io";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
 import React, {
@@ -15,13 +15,13 @@ import React, {
 import parseNote from "../../functions/parseNote";
 import ThemeToggler from "../ThemeToggler";
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
-import { UserContext } from "../../context/UserContext";
-import { searchContext } from "../../context/SearchContext";
+import { ThemeContext } from "../../context/UserContext";
 import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
 import { TbKeyboard, TbKeyboardOff } from "react-icons/tb";
-import PopUpMessage from "../PopUpMessage";
 import DisplayNote from "./DisplayNote";
 import { AudioContext } from "../../context/AudioContext";
+import { PopupContext } from "../../context/PopupContext";
+
 type ContentType = {
   title: string;
   note: string;
@@ -67,11 +67,11 @@ const FullScreenCardView = ({
   showScrollButtons,
   setShowScrollButtons,
 }: propTypes) => {
-  const { theme } = useContext(UserContext);
+  const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
-  const showPopUp = useRef<HTMLDivElement | null>(null);
-
   const bottomElementRef = useRef<HTMLDivElement>(null);
+  const popupRef = useContext(PopupContext);
+
   const topElementRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
@@ -80,7 +80,6 @@ const FullScreenCardView = ({
   const [parsedNote, setParsedNote] = useState<React.ReactNode[]>([]);
   const [parsingError, setParsingError] = useState("");
   const [parsingComplete, setParsingComplete] = useState(false);
-  const { cardInfo, setCardInfo } = useContext(searchContext);
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
   const storedToggleValue: string | null = localStorage.getItem("toggleColor");
   const [pageOpenCount, setPageOpenCount] = useState(1);
@@ -98,7 +97,6 @@ const FullScreenCardView = ({
     defaultTypewriterEffectValue
   );
   const [dispalyResponse, setDisplayResponse] = useState<React.ReactNode[]>([]);
-  const location = useLocation();
   const [startTyping, setStartTyping] = useState(false);
   const [typingInProgress, setTypingInProgress] = useState(false);
   const iRef = useRef<number>(0); // Initialize a ref to store the value of `i`. we will use this iref to continue typing where we left off when pause Typing becomes true and then false.
@@ -121,7 +119,7 @@ const FullScreenCardView = ({
         ];
       }
 
-      if (React.isValidElement(node)) {
+      if (isValidElement(node)) {
         return [...accumulator, node];
       }
 
@@ -319,16 +317,15 @@ const FullScreenCardView = ({
 
   const handleOnAnimationEnd = () => {
     setStartTyping(true);
+
     if (search_index && !startAnimation) {
-      setCardInfo({
-        title: "",
-        note: "",
-        _id: "",
-        cardIndex: null,
-        from: "",
-        cardId: "",
-      });
-      navigate(cardInfo?.from, { replace: true });
+      // If the user closes the fullscreen card view, once the closing animation ends, we will navigate the user back to the page they came from.
+      if (fullScreenCardData?.from) {
+        navigate(fullScreenCardData?.from, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+      return;
     }
     if (!showScrollButtons) {
       setShowScrollButtons(true);
@@ -348,33 +345,8 @@ const FullScreenCardView = ({
     }
   };
 
-  const handlePopUp = () => {
-    if (showPopUp.current?.classList.contains("scale-0")) {
-      showPopUp.current.classList.remove("scale-0");
-      showPopUp?.current?.classList.add("!block");
-      showPopUp.current.classList.add("!w-[85%]");
-      showPopUp.current.classList.add("md:!w-fit");
-      showPopUp.current.classList.add("!h-fit");
-      showPopUp.current.classList.add("scale-100");
-
-      setTimeout(() => {
-        showPopUp?.current?.classList.remove("scale-100");
-        showPopUp?.current?.classList.add("scale-0");
-        showPopUp?.current?.classList.add("hidden");
-      }, 3000);
-    }
-  };
-
   return (
     <>
-      <PopUpMessage
-        ref={showPopUp}
-        message={
-          showTypewriterEffect
-            ? "You have turned on the typing effect"
-            : "You have turned off the typing effect"
-        }
-      />
       <article
         onAnimationEnd={handleOnAnimationEnd}
         className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]    ${
@@ -448,7 +420,7 @@ const FullScreenCardView = ({
                   onClick={() => {
                     setStartAnimation(false);
                     setShowScrollButtons(false);
-                    if (location?.state?.isBackButtonNotClicked) {
+                    if (window?.history?.state?.isBackButtonNotClicked) {
                       navigate(-1);
                     }
                   }}
@@ -480,12 +452,22 @@ const FullScreenCardView = ({
                       );
                       setPageOpenCount(1);
                       setShowTypewriterEffect((pre) => !pre);
+                      if (!showTypewriterEffect) {
+                        popupRef?.current?.show(
+                          "You have turned on the typing effect",
+                          3000
+                        );
+                      } else {
+                        popupRef?.current?.show(
+                          "You have turned off the typing effect",
+                          3000
+                        );
+                      }
                       iRef.current = 0;
                       setDisplayResponse([]);
                       if (typingInProgress) {
                         setTypingInProgress(false);
                       }
-                      handlePopUp();
                     }}
                     type="button"
                     className="text-blue-500  outline-none  text-center dark:hover:text-gray-300 hover:text-gray-200 dark:hover:bg-gray-700 hover:bg-gray-400 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
@@ -502,7 +484,13 @@ const FullScreenCardView = ({
 
                 <button
                   onClick={() => {
-                    handleDelete(fullScreenCardData?.cardIndex!);
+                    if (
+                      fullScreenCardData &&
+                      fullScreenCardData.cardIndex !== undefined &&
+                      fullScreenCardData?.cardIndex !== null
+                    ) {
+                      handleDelete(fullScreenCardData.cardIndex);
+                    }
                     if (typingInProgress) {
                       setTypingInProgress(false);
                     }

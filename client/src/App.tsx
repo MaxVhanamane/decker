@@ -1,4 +1,12 @@
-import { useContext, useRef, useState, lazy, Suspense, useEffect } from "react";
+import {
+  useContext,
+  useRef,
+  useState,
+  lazy,
+  Suspense,
+  useEffect,
+  useCallback,
+} from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import {
   AlertData,
@@ -9,11 +17,7 @@ import {
 import useMoveCard from "./hooks/useMoveCard";
 import { UserContext } from "./context/UserContext";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import {
-  DragDropContext,
-  DropResult,
-  ResponderProvided,
-} from "react-beautiful-dnd";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
 import useDeleteDeck from "./hooks/useDeleteDeck";
 import Loading from "./components/Loading";
 import AuthSuccess from "./pages/AuthSuccess";
@@ -30,6 +34,11 @@ import { CustomError } from "./utils/customError";
 import { AudioContext } from "./context/AudioContext";
 import useDeleteCard from "./hooks/useDeleteCard";
 import { useQueryClient } from "@tanstack/react-query";
+import { ChangeBulbColor } from "./components/Bulb";
+import PopUpMessage from "./components/PopUpMessage";
+import useUndoDeck from "./hooks/useUndoDeck";
+import useUndoCard from "./hooks/useUndoCard";
+import { PopupContext } from "./context/PopupContext";
 // Lazy load the components
 const AuthFailure = lazy(() => import("./pages/AuthFailure"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -46,10 +55,7 @@ const AccountDeletionSuccess = lazy(
   () => import("./pages/AccountDeletionSuccess")
 );
 const PageNotFound = lazy(() => import("./pages/PageNotFound"));
-// putting timout variable outside of the function so that It will be created only once not on each render
-// So that when I use clearTimeout(timeout) It will clear the right timeout variable(instance).
-let timeout: NodeJS.Timeout;
-let timeoutForUndoCard: NodeJS.Timeout;
+
 const isFirefox = /firefox/i.test(navigator.userAgent);
 
 function App() {
@@ -69,30 +75,30 @@ function App() {
   } = useDeleteDeck();
   const {
     mutate: deleteCardMutation,
-    error: deleteCardError,
-    isError: isDeleteCardError,
     reset: resetDeleteCardResponse,
+    isError: isDeleteCardError,
+    error: deleteCardError,
   } = useDeleteCard();
 
-  const {
-    deleteConfirmationModalForCard,
-    setIndexOfCardForDeletion,
-    setUserInfo,
-    setIsAuthenticating,
-  } = useContext(UserContext);
+  const { setUserInfo, setIsAuthenticating } = useContext(UserContext);
   const {
     mutate: moveCard,
     reset: resetMoveCardResponse,
     isError: isMoveCardError,
     error: moveCardError,
   } = useMoveCard();
-  const undoButtonRef = useRef<HTMLDivElement | null>(null);
   const undoButtonRefForCard = useRef<HTMLDivElement | null>(null);
+
+  const popupRef = useContext(PopupContext);
   const { setAlert } = useContext(AlertContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
   const { handlePlayAudio, isPlayingAudioAllowed, pathnameForAudio } =
     useContext(AudioContext);
+  const bulbRef = useRef<ChangeBulbColor>(null);
+  const undoDeckDetailsRef = useRef(undoDeckDetails);
+  // saving the reference of undoDeckDetails value in a ref because when I call a function handleUndoDeckButtonClick
+  undoDeckDetailsRef.current = undoDeckDetails;
   const pathNames = [
     "/signup",
     "/verifyemail",
@@ -103,6 +109,89 @@ function App() {
   ];
   const authPaths = ["/auth/success", "/auth/failure"];
   const queryClient = useQueryClient();
+  const {
+    mutate: undoDeckItem,
+
+    isError: isUndoDeckError,
+    reset: resetUndoDeckResponse,
+  } = useUndoDeck();
+  const {
+    mutate: undoCardItem,
+    isError: isUndoCardError,
+    reset: resetUndoCardResponse,
+  } = useUndoCard();
+
+  const undoCardDetailsRef = useRef(undoCardDetails);
+  //I am saving the reference of the undoCardDetails value in a ref because when I call the function popupRef.current?.show("Card deleted successfully!", 7000, "Undo", handleUndoCardButtonClick), the handleUndoCardButtonClick function contains an old value of undoCardDetails. This happens because, before calling popupRef.current?.show(), I update the value of undoCardDetails, and due to closure, the function handleUndoCardButtonClick retains the old value of undoCardDetails. To avoid this, I am using a reference to undoCardDetails in handleUndoCardButtonClick, so it will always have the latest value.
+  undoCardDetailsRef.current = undoCardDetails;
+
+  const resetUndoDeckDetailsValue = useCallback(
+    (deck: DeckTypeWithIndex | null): void => {
+      if (deck === null) {
+        setUndoDeckDetails(null);
+      } else {
+        setUndoDeckDetails(deck);
+      }
+    },
+    [setUndoDeckDetails]
+  );
+
+  const resetUndoCardDetailsValue = useCallback(
+    (card: UndoCardPayloadData | null): void => {
+      if (card === null) {
+        setUndoCardDetails(null);
+      } else {
+        setUndoCardDetails(card);
+      }
+    },
+    [setUndoCardDetails]
+  );
+
+  const handleUndoDeckButtonClick = useCallback(() => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
+    // I have set the value of undoDeck state in useDeleteDeck()
+    undoDeckItem(undoDeckDetailsRef.current!, {
+      onSettled: () => {
+        // Once we undo the deck, we will set the state that was holding the deleted item to null.
+        resetUndoDeckDetailsValue(null);
+      },
+    });
+  }, [isOnline, setAlert, undoDeckItem, resetUndoDeckDetailsValue]);
+
+  const handleUndoCardButtonClick = useCallback(() => {
+    if (!isOnline) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: "No internet connection",
+        autoHideDuration: 5000,
+      }));
+      return;
+    }
+
+    undoCardItem(undoCardDetailsRef.current!, {
+      onSettled: () => {
+        resetUndoCardDetailsValue(null);
+      },
+    });
+  }, [
+    undoCardItem,
+    isOnline,
+    undoCardDetailsRef,
+    setAlert,
+    resetUndoCardDetailsValue,
+  ]);
+
   const getUser = async (): Promise<void> => {
     try {
       const data = await request.get("/getuser");
@@ -155,69 +244,41 @@ function App() {
       }));
       resetDeleteDeckResponse();
     }
-  }, [isDeleteDeckError]);
-  const handlePopupForUndoButton = () => {
-    if (undoButtonRef.current?.classList.contains("scale-0")) {
-      undoButtonRef.current.classList.remove("scale-0");
-      undoButtonRef?.current?.classList.add("!block");
-      undoButtonRef.current.classList.add("!w-[19rem]");
-      undoButtonRef.current.classList.add("!h-fit");
-      undoButtonRef.current.classList.add("scale-100");
-
-      timeout = setTimeout(() => {
-        undoButtonRef?.current?.classList.remove("scale-100");
-        undoButtonRef?.current?.classList.add("scale-0");
-        undoButtonRef?.current?.classList.add("hidden");
-      }, 7000);
-    } else if (undoButtonRef?.current?.classList.contains("scale-100")) {
-      clearTimeout(timeout);
-      undoButtonRef.current.classList.add("scale-0");
-      undoButtonRef?.current?.classList.add("hidden");
-      undoButtonRef.current.classList.remove("scale-100");
+    if (isUndoDeckError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message:
+          "We're sorry, but we couldn't undo your deck due to a technical issue. Your deck may not be restored. We apologize for any inconvenience.",
+        autoHideDuration: 5000,
+      }));
+      resetUndoDeckResponse();
     }
-  };
-
-  const handlePopupForUndoButtonForCard = () => {
-    if (undoButtonRefForCard.current?.classList.contains("scale-0")) {
-      undoButtonRefForCard.current.classList.remove("scale-0");
-      undoButtonRefForCard?.current?.classList.add("!block");
-      undoButtonRefForCard.current.classList.add("!w-[19rem]");
-      undoButtonRefForCard.current.classList.add("!h-fit");
-      undoButtonRefForCard.current.classList.add("scale-100");
-
-      timeoutForUndoCard = setTimeout(() => {
-        undoButtonRefForCard?.current?.classList.remove("scale-100");
-        undoButtonRefForCard?.current?.classList.add("scale-0");
-        undoButtonRefForCard?.current?.classList.add("hidden");
-      }, 7000);
-    } else if (undoButtonRefForCard?.current?.classList.contains("scale-100")) {
-      clearTimeout(timeoutForUndoCard);
-      undoButtonRefForCard.current.classList.add("scale-0");
-      undoButtonRefForCard?.current?.classList.add("hidden");
-      undoButtonRefForCard.current.classList.remove("scale-100");
+    if (isUndoCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message:
+          "We're sorry, but we couldn't undo your card due to a technical issue. Your card may not be restored. We apologize for any inconvenience.",
+        autoHideDuration: 7000,
+      }));
+      resetUndoCardResponse();
     }
-  };
-
-  const handleUndoDeck = (deck: DeckTypeWithIndex | null): void => {
-    if (deck === null) {
-      setUndoDeckDetails(null);
-    } else {
-      setUndoDeckDetails(deck);
+    if (isDeleteCardError) {
+      setAlert((preval: AlertData) => ({
+        ...preval,
+        severity: "error",
+        show: true,
+        message: deleteCardError?.message,
+        autoHideDuration: 5000,
+      }));
+      resetDeleteCardResponse();
     }
-  };
+  }, [isDeleteDeckError, isUndoDeckError, isUndoCardError, isDeleteCardError]);
 
-  const handleUndoCard = (card: UndoCardPayloadData | null): void => {
-    if (card === null) {
-      setUndoCardDetails(null);
-    } else {
-      setUndoCardDetails(card);
-    }
-  };
-
-  const handleChange = async (
-    result: DropResult,
-    provided: ResponderProvided
-  ) => {
+  const handleChange = async (result: DropResult) => {
     if (result.destination?.droppableId == "DeckDeleteArea") {
       if (!isOnline) {
         setAlert((preval: AlertData) => ({
@@ -231,13 +292,16 @@ function App() {
       }
       let data = {
         _id: result.draggableId,
-        handleUndoDeck,
-        timeout,
-        undoButtonRef,
-        handlePopupForUndoButton,
+        resetUndoDeckDetailsValue,
       };
       deleteDeckMutation(data, {
         onSuccess: () => {
+          popupRef.current?.show(
+            "Deck deleted successfully!",
+            7000,
+            "Undo",
+            handleUndoDeckButtonClick
+          );
           if (isPlayingAudioAllowed) {
             pathnameForAudio.current = location.pathname;
             setTimeout(() => {
@@ -280,17 +344,12 @@ function App() {
         };
         deleteCardMutation(cardToDelete, {
           onSuccess: () => {
-            // If user deletes cards one after the another that creates problem because when user deletes second card
-            // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
-            if (undoButtonRefForCard.current?.classList.contains("scale-0")) {
-              handlePopupForUndoButtonForCard();
-            } else {
-              clearTimeout(timeoutForUndoCard);
-              undoButtonRefForCard?.current?.classList.remove("scale-100");
-              undoButtonRefForCard?.current?.classList.add("scale-0");
-              undoButtonRefForCard?.current?.classList.add("hidden");
-              handlePopupForUndoButtonForCard();
-            }
+            popupRef.current?.show(
+              "Card deleted successfully!",
+              7000,
+              "Undo",
+              handleUndoCardButtonClick
+            );
 
             if (isPlayingAudioAllowed) {
               setTimeout(() => {
@@ -329,7 +388,20 @@ function App() {
   return (
     <>
       <DragDropContext
-        onDragEnd={(result: DropResult, provided: ResponderProvided) => {
+        onDragEnd={(result: DropResult) => {
+          if (bulbRef?.current?.colorName === "fuchsia") {
+            bulbRef?.current?.resetBulbColor("fuchsia");
+            bulbRef.current.colorName = "";
+          } else if (bulbRef?.current?.colorName === "lime") {
+            bulbRef?.current?.resetBulbColor("lime");
+            bulbRef.current.colorName = "";
+          } else if (bulbRef?.current?.colorName === "red") {
+            bulbRef?.current?.resetBulbColor("fuchsia");
+            bulbRef?.current?.resetBulbColor("lime");
+            bulbRef?.current?.resetBulbColor("red");
+            bulbRef.current.colorName = "";
+          }
+
           //To avoid calling the function (handleChange) unnecessarily, we will first check if dropableId is present and if it is not equal to bulbArea. If the user drops over bulbArea, I have no actions to take; it is just there to add a swing to a bulb.
           if (
             result?.destination?.droppableId === "bulbArea" ||
@@ -337,40 +409,26 @@ function App() {
           ) {
             return;
           }
-          handleChange(result, provided);
+          handleChange(result);
         }}
       >
         <ShowAlert />
         <ErrorBoundary>
           <Routes>
             <Route element={<PrivateRoutes />}>
-              <Route
-                path="/"
-                element={
-                  <Deck
-                    undoDeckDetails={undoDeckDetails}
-                    handleUndoDeck={handleUndoDeck}
-                    undoButtonRef={undoButtonRef}
-                    handlePopupForUndoButton={handlePopupForUndoButton}
-                  />
-                }
-              />
+              <Route path="/" element={<Deck bulbRef={bulbRef} />} />
               <Route
                 path="/cards/:deck_id"
                 element={
                   <Suspense fallback={<Loading />}>
                     <Cards
-                      handlePopupForUndoButtonForCard={
-                        handlePopupForUndoButtonForCard
-                      }
                       undoCardDetails={undoCardDetails}
-                      handleUndoCard={handleUndoCard}
+                      resetUndoCardDetailsValue={resetUndoCardDetailsValue}
                       undoButtonRefForCard={undoButtonRefForCard}
                       resetMoveCardResponse={resetMoveCardResponse}
                       moveCardError={moveCardError}
                       isMoveCardError={isMoveCardError}
                       setUndoCardDetails={setUndoCardDetails}
-                      timeoutForUndoCard={timeoutForUndoCard}
                     />
                   </Suspense>
                 }
@@ -467,6 +525,7 @@ function App() {
           </Routes>
         </ErrorBoundary>
       </DragDropContext>
+      <PopUpMessage />
     </>
   );
 }

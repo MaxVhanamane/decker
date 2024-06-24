@@ -34,6 +34,8 @@ type PropTypes = {
   increaseTextAreaHeight: () => void;
   decreaseTextAreaHeight: () => void;
   handleClose: () => void;
+  isCreatingCard: boolean;
+  isFetchingCards: boolean;
 };
 let hoverTimer: number;
 
@@ -47,6 +49,8 @@ const CardToolbar = ({
   decreaseTextAreaHeight,
   adjustTextareaHeightOnPasteAndExpand,
   handleClose,
+  isCreatingCard,
+  isFetchingCards,
 }: PropTypes) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
@@ -219,7 +223,10 @@ const CardToolbar = ({
           onMouseLeave={handleMouseLeave}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="relative group/tooltip text-cyan-500 hover:text-cyan-600 text-[1.2rem] transition-all duration-300 "
+          className={`relative group/tooltip text-cyan-500 hover:text-cyan-600 text-[1.2rem] transition-all duration-300 ${
+            (isFetchingCards || isCreatingCard) &&
+            "text-gray-300 dark:text-gray-500"
+          }`}
           type="submit"
         >
           {showTooltip && <Tooltip toolTipText="Create Card" />}

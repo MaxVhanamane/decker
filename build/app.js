@@ -46,16 +46,19 @@ const GoogleStrategy = require("passport-google-oauth20");
 const compression = require('compression');
 (0, dotenv_1.config)();
 let PORT = 5000;
+const isProduction = process.env.NODE_ENV === 'production';
 const app = (0, express_1.default)();
 app.use(compression());
 // here app.use() acts as middleware. as we have not specified the path here it will run on every request. If you want to run it on a specific path add the path then it will run on that path only. eg. app.use("/add",express.json())
 // express.json() is used to get the content in the body.
 app.use(express_1.default.json({ limit: '5mb' }));
+// To detect if the user is offline
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
 app.use((0, cors_1.default)({ origin: process.env.ORIGIN, credentials: true }));
 app.set('trust proxy', 1);
 // create session
+console.log(process.env.NODE_ENV === 'production');
 app.use((0, express_session_1.default)({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -69,9 +72,9 @@ app.use((0, express_session_1.default)({
     // Comment out these keys - httpOnly,secure - from the cookie object while working on localhost. If you don't comment them out, cookies will not be sent to the frontend, and authentication will not work properly.
     // uncomment it while deploying
     cookie: {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
+        httpOnly: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
         maxAge: 1000 * 60 * 60 * 24 * 30 //cookie expires in 30 days
     }
 }));
@@ -184,10 +187,9 @@ passport_1.default.deserializeUser((id, done) => __awaiter(void 0, void 0, void 
     });
 })
     .catch((err) => console.error(err));
-// To detect if the user is offline
-app.get('/checkonlinestatus', function (req, res) {
+app.get('/checkonlinestatus', (0, cors_1.default)({ origin: true }), function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        res.sendStatus(204);
+        res.status(200).json({ online: true });
     });
 });
 //Deck routes 
@@ -305,8 +307,8 @@ app.post('/card/:deck_id', fetchUserDetails_1.fetchUserDetails, (req, res) => __
             return res.status(400).json({ message: "No deck found! Please check deck id" });
         }
         getDeck.cards.unshift(req.body.content);
-        const createdCard = yield getDeck.save();
-        res.status(201).json(createdCard);
+        yield getDeck.save();
+        res.status(201).json({ success: true });
     }
     catch (error) {
         res.status(500).json({ message: "An unexpected error occurred while creating the card. Please try again later." });
@@ -350,9 +352,7 @@ app.put('/card/undocard', fetchUserDetails_1.fetchUserDetails, (req, res) => __a
         // // save it in the db
         // await Deck?.save()
         yield deck_1.default.findOneAndUpdate({ _id: deck_id }, { $push: { cards: { $each: [cardContent], $position: cardIndex } } });
-        setTimeout(() => {
-            res.status(200).json({ success: true });
-        }, 5000);
+        res.status(200).json({ success: true });
     }
     catch (error) {
         res.status(500).json({ message: "An unexpected error occurred while undoing the deck deletion." });

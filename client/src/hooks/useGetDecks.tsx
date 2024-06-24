@@ -32,7 +32,7 @@ const getDecks = async (
 
 export default function useGetDecks() {
   const { showSearchBar } = useContext(searchContext);
-  const queryClient = useQueryClient(); // Remove the type argument <unknown>
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ["decks"],
 

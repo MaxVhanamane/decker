@@ -27,8 +27,6 @@ export const pinDeck = async (
   inputData: PinDeckPayloadType
 ): Promise<SuccessResponseType | CustomError> => {
   try {
-    // you don't need to add try catch block as axios will automatically throw an error.
-    // If you want to throw an error then do it manually  using throw keyword because usequery or usemutation need that
     const data = await request.patch(`/deck/togglepin/${inputData.id}`, {
       pinned: inputData.pinned,
     });

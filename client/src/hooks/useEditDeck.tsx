@@ -100,11 +100,11 @@ const useEditDeck = () => {
       );
     },
 
-    onSuccess: (responseData, mutationData, context) => {
+    onSuccess: (responseData, mutationData) => {
       updateCache("editDeck", "search-cache", "decks-and-cards", mutationData);
     },
 
-    onSettled: (serverData, error, data, context) => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["decks"] });
       // If the search bar is open, it means that the user performed this  operation from the search results.
 

@@ -1,7 +1,6 @@
 import { request } from "../utils/fetch-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeckAndCardType, DeckType, DeckTypeWithIndex } from "../types/types";
-import { RefObject } from "react";
 import { CustomError } from "../utils/customError";
 import { updateCache } from "../utils/updateCache";
 
@@ -48,16 +47,9 @@ const useDeleteDeck = () => {
     mutationFn: deleteDeck,
     onMutate: async ({
       _id,
-      handleUndoDeck,
-      undoButtonRef,
-      handlePopupForUndoButton,
-      timeout,
     }: {
       _id: string;
-      handleUndoDeck: (data: DeckTypeWithIndex | null) => void;
-      undoButtonRef: RefObject<HTMLDivElement>;
-      handlePopupForUndoButton: () => void;
-      timeout: NodeJS.Timeout;
+      resetUndoDeckDetailsValue: (data: DeckTypeWithIndex | null) => void;
     }) => {
       await queryClient.cancelQueries({ queryKey: ["decks"] });
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
@@ -122,20 +114,8 @@ const useDeleteDeck = () => {
           index: context!.indexOfDeletedDeck,
         };
 
-        mutationData?.handleUndoDeck(deletedDeckInformation);
-        // If user deletes decks one after the another that creates problem because when user deletes second deck
-        // at that time undoButtonRef contains scale-100 so the undo button gets hidden to avoid that I have used if condition here.
-        if (
-          mutationData!.undoButtonRef.current?.classList.contains("scale-0")
-        ) {
-          mutationData!.handlePopupForUndoButton();
-        } else {
-          clearTimeout(mutationData!.timeout);
-          mutationData!.undoButtonRef?.current?.classList.remove("scale-100");
-          mutationData!.undoButtonRef?.current?.classList.add("scale-0");
-          mutationData!.undoButtonRef?.current?.classList.add("hidden");
-          mutationData!.handlePopupForUndoButton();
-        }
+        mutationData?.resetUndoDeckDetailsValue(deletedDeckInformation);
+
         updateCache("deleteDeck", "search-cache", "decks-and-cards", {
           deck_id: mutationData?._id,
         });

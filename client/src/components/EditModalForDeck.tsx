@@ -54,7 +54,6 @@ const EditModalForDeck = ({
   editDeck,
 }: IProp) => {
   const [newTitle, setNewTitle] = useState(editData.title);
-
   const { isOnline } = useContext(OfflineContext);
   const { setAlert } = useContext(AlertContext);
   const navigate = useNavigate();
