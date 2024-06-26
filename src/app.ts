@@ -72,7 +72,6 @@ app.use(cors({ origin: process.env.ORIGIN, credentials: true }))
 app.set('trust proxy', 1)
 
 // create session
-console.log(process.env.NODE_ENV === 'production')
 
 app.use(session({
   secret: process.env.SESSION_SECRET!,
@@ -976,8 +975,8 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
 
 })
 
-
-
+// Exporting the app instance is a requirement for Vercel’s serverless deployment model. It allows Vercel to properly invoke the request handler defined in your Express.js application, ensuring that your server routes and middleware function as expected when deployed. This setup leverages the serverless architecture by dynamically handling requests through the exported handler.
+export default app
 
 
 
