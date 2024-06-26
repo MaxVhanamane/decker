@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon --watch \"src/**\" --ext \"ts,json\" --exec \"ts-node  ./src/app.ts",
     "start": "node ./build/app.js",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "vercel-build": "true"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

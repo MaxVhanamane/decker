@@ -22,9 +22,9 @@ build
 *.njsproj
 *.sln
 *.sw?
-
+.vercel/*
 .env
-
+.VSCodeCounter/
 
 /src/pages/Test.tsx
 /src/pages/Example.tsx
