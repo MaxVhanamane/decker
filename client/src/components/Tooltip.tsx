@@ -2,7 +2,6 @@ import { memo, ReactNode, useState, useRef, useEffect, RefObject } from "react";
 import ReactDOM from "react-dom";
 import { twMerge } from "tailwind-merge";
 
-// Performance optimization: Define constants outside of component
 type ToolTipPositionType = "top" | "bottom" | "left" | "right";
 const tooltipColors = {
   light: {
@@ -28,7 +27,6 @@ const tooltipColors = {
   },
 };
 
-// Performance optimization: Pre-define arrow styles
 const arrowStyles: { [key in ToolTipPositionType]: React.CSSProperties } = {
   top: {
     bottom: "-9.5px",
@@ -61,9 +59,15 @@ type TooltipProps = {
   hideTooltip?: boolean;
   disabled?: boolean | undefined;
   toolTipColor?: "light" | "medium" | "dark";
+  // New prop to customize mobile behavior
+  mobileHoldDuration?: number;
 };
 
-// Performance optimization: Memoize the component
+// Utility function to detect if device is mobile/touch
+const isTouchDevice = () => {
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+};
+
 const Tooltip = memo(
   ({
     children,
@@ -74,6 +78,7 @@ const Tooltip = memo(
     containerRef,
     disabled,
     toolTipColor = "medium",
+    mobileHoldDuration = 500, // Duration to hold on mobile before showing tooltip
   }: TooltipProps) => {
     const [visible, setVisible] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -81,17 +86,33 @@ const Tooltip = memo(
       useState<ToolTipPositionType>(toolTipPosition);
     const tooltipRef = useRef<HTMLDivElement>(null);
 
-    // Performance optimization: Use separate timeouts for different purposes
     const showTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Performance optimization: Memoize handlers to prevent recreation on each render
-    const handleMouseEnter = () => {
-      // Performance optimization: Clear any existing timeout before setting new one
+    const isTouch = isTouchDevice();
+
+    // Clear all timeouts helper
+    const clearAllTimeouts = () => {
       if (showTimeoutRef.current) {
         clearTimeout(showTimeoutRef.current);
+        showTimeoutRef.current = null;
       }
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      if (touchTimeoutRef.current) {
+        clearTimeout(touchTimeoutRef.current);
+        touchTimeoutRef.current = null;
+      }
+    };
 
+    // Desktop mouse handlers
+    const handleMouseEnter = () => {
+      if (isTouch) return; // Skip mouse events on touch devices
+
+      clearAllTimeouts();
       showTimeoutRef.current = setTimeout(() => {
         if (!hideTooltip && !disabled) {
           setVisible(true);
@@ -100,10 +121,41 @@ const Tooltip = memo(
     };
 
     const handleMouseLeave = () => {
-      if (showTimeoutRef.current) {
-        clearTimeout(showTimeoutRef.current);
-        showTimeoutRef.current = null;
-      }
+      if (isTouch) return; // Skip mouse events on touch devices
+
+      clearAllTimeouts();
+      setVisible(false);
+    };
+
+    // Mobile touch handlers
+    const handleTouchStart = () => {
+      if (!isTouch) return; // Skip touch events on non-touch devices
+
+      clearAllTimeouts();
+
+      touchTimeoutRef.current = setTimeout(() => {
+        if (!hideTooltip && !disabled) {
+          setVisible(true);
+        }
+      }, mobileHoldDuration);
+    };
+
+    const handleTouchEnd = () => {
+      if (!isTouch) return; // Skip touch events on non-touch devices
+
+      clearAllTimeouts();
+
+      // Hide tooltip after a short delay on touch end
+      hideTimeoutRef.current = setTimeout(() => {
+        setVisible(false);
+      }, 100);
+    };
+
+    const handleTouchMove = () => {
+      if (!isTouch) return; // Skip touch events on non-touch devices
+
+      // If user moves finger while holding, cancel the tooltip
+      clearAllTimeouts();
       setVisible(false);
     };
 
@@ -115,16 +167,8 @@ const Tooltip = memo(
         setVisible(false);
       }
 
-      // Performance optimization: Proper cleanup
       return () => {
-        if (showTimeoutRef.current) {
-          clearTimeout(showTimeoutRef.current);
-          showTimeoutRef.current = null;
-        }
-        if (hideTimeoutRef.current) {
-          clearTimeout(hideTimeoutRef.current);
-          hideTimeoutRef.current = null;
-        }
+        clearAllTimeouts();
       };
     }, [hideTooltip, disabled, toolTipPosition]);
 
@@ -173,7 +217,6 @@ const Tooltip = memo(
 
       // If the preferred tooltip position causes overflow, find an alternative
       if (!isInsideViewport(positions[toolTipPosition])) {
-        // Performance optimization: Define positions array once
         const positionTypes: ToolTipPositionType[] = [
           "top",
           "bottom",
@@ -196,7 +239,6 @@ const Tooltip = memo(
     // Automatically hide tooltip after duration
     useEffect(() => {
       if (visible && typeof tooltipAutoHideDuration !== "string") {
-        // Performance optimization: Clear existing timeout before setting new one
         if (hideTimeoutRef.current) {
           clearTimeout(hideTimeoutRef.current);
         }
@@ -216,11 +258,25 @@ const Tooltip = memo(
       }
     }, [visible, tooltipAutoHideDuration, toolTipPosition]);
 
-    // Performance optimization: Select colors once
     const colorScheme = tooltipColors[toolTipColor];
 
     return (
-      <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchCancel={handleTouchEnd} // Handle touch cancel same as touch end
+        style={{
+          // Prevent text selection on mobile during long press
+          WebkitUserSelect: "none",
+          userSelect: "none",
+          // Prevent default touch behaviors
+          WebkitTouchCallout: "none",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
         {children}
 
         {visible &&
@@ -228,7 +284,7 @@ const Tooltip = memo(
             <div
               ref={tooltipRef}
               className={twMerge(
-                "absolute text-sm p-2 rounded-md whitespace-nowrap animate-[opacity_0.2s_linear] border",
+                "absolute text-sm p-2 rounded-md whitespace-nowrap animate-[opacity_0.2s_linear] border pointer-events-none",
                 colorScheme.toolTipBackground,
                 colorScheme.toolTipTextColor,
                 colorScheme.toolTipBorder
@@ -276,7 +332,6 @@ const Tooltip = memo(
   }
 );
 
-// Performance optimization: Add displayName for better debugging
 Tooltip.displayName = "Tooltip";
 
 export default Tooltip;

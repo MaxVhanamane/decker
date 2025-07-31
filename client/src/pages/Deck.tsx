@@ -251,7 +251,7 @@ function Deck() {
       </Helmet>
       <div
         ref={deckContainerRef}
-        className="flex flex-col gap-2 pt-8 pb-12  overflow-y-auto overflow-x-hidden scrollbar-gutter h-[calc(100vh-64px)] dark:dark-scrollbar light-scrollbar w-full"
+        className="flex flex-col gap-2 pt-8 pb-12  overflow-y-auto overflow-x-hidden scrollbar-gutter h-[calc(100vh-64px)] dark:dark-scrollbar light-scrollbar w-full items-center"
       >
         <Bulb />
         <DeckCreationForm handleSubmit={handleSubmit} ref={inputRefElement} />

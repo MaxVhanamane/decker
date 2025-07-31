@@ -3,11 +3,19 @@ import { useRef } from "react";
 
 const useCustomSensors = () => {
     const sensors = useRef([
-        useSensor(MouseSensor, { activationConstraint: { distance: 3, delay: 100, } }),
+        useSensor(MouseSensor, {
+            activationConstraint: {
+                distance: 3
+            }
+        }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 250,   // wait 250ms before drag
-                distance: 3 // small movement allowed while holding
+                delay: 500,     // Longer delay for mobile - gives time to start scroll
+                distance: 10,   // More distance tolerance
+                tolerance: {
+                    x: 5,       // Allow 5px horizontal movement
+                    y: 5        // Allow 5px vertical movement
+                }
             }
         }),
         useSensor(KeyboardSensor),
@@ -15,5 +23,4 @@ const useCustomSensors = () => {
 
     return useSensors(...sensors);
 };
-
 export { useCustomSensors };
