@@ -9,6 +9,16 @@
   <meta name="theme-color" content="" />
   <meta name="google-site-verification" content="aAYzyO3i4NSd3T7mUysyHOYJglv6TdVAenqinILO1yk" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1" />
+  <meta name="keywords"
+    content="Decker app, deck-based notes, note-taking, blog-style notes, create cards, rich text editing, drag and drop, offline notes, progressive web app, PWA, customizable notes, syntax highlighting, interactive notes, draggable cards">
+
+  <link rel="preload" href="/fonts/inter-latin-300-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="/fonts/inter-latin-200-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="/fonts/inter-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
   <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png">
   <link rel="apple-touch-startup-image"
     media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
@@ -113,12 +123,23 @@
     media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
     href="splash_screens/8.3__iPad_Mini_portrait.png">
   <title>Decker</title>
-
+  <!-- <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script> -->
 </head>
 
-<body class="antialiased selection:bg-teal-700 dark:selection:bg-sky-700 selection:text-white ">
+<body
+  class="antialiased selection:bg-sky-600 dark:selection:bg-sky-700 selection:text-white font-normal font-customInter   ">
   <div id="root"></div>
+  <svg xmlns="//www.w3.org/2000/svg" version="1.1" class="svg-filters" style="display:none;">
+    <defs>
+      <filter id="marker-shape">
+        <feTurbulence type="fractalNoise" baseFrequency="0 0.15" numOctaves="1" result="warp" />
+        <feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp" />
+      </filter>
+    </defs>
+  </svg>
+  <div id="tooltip-portal"></div>
   <script type="module" src="/src/main.tsx"></script>
+
 </body>
 
 

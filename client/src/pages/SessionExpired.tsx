@@ -5,13 +5,13 @@ import { UserContext } from "../context/UserContext";
 
 const SessionExpired = () => {
   const navigate = useNavigate();
-  const { userInfo } = useContext(UserContext);
+  const { userEmailAddress } = useContext(UserContext);
   useEffect(() => {
-    if (userInfo?.email) {
+    if (userEmailAddress) {
       navigate("/");
     }
   }, []);
-  return !userInfo?.email ? <Session /> : null;
+  return !userEmailAddress ? <Session /> : null;
 };
 
 export default SessionExpired;

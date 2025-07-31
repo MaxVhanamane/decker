@@ -1,10 +1,10 @@
 import {
   Dispatch,
-  MutableRefObject,
   SetStateAction,
   createContext,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -20,7 +20,7 @@ const audioSource = {
   close: "/audio/close.mp3",
 };
 
-type AudioNamesType =
+export type AudioNamesType =
   | "switchOnAudioSound"
   | "switchOffAudioSound"
   | "createdSuccessfully"
@@ -34,20 +34,17 @@ type ContextType = {
   handlePlayAudio: (audioName: AudioNamesType, path?: string) => void;
   isPlayingAudioAllowed: boolean;
   setIsPlayingAudioAllowed: Dispatch<SetStateAction<boolean>>;
-  pathnameForAudio: MutableRefObject<string | null>;
 };
 
 export const AudioContext = createContext<ContextType>({
   handlePlayAudio: () => {},
   isPlayingAudioAllowed: false,
   setIsPlayingAudioAllowed: () => {},
-  pathnameForAudio: { current: null },
 });
 
 export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const [audio] = useState(new Audio());
   const isPlaying = useRef(false);
-  const pathnameForAudio = useRef(null);
 
   const [isPlayingAudioAllowed, setIsPlayingAudioAllowed] = useState(() => {
     const allowPlayingAudio = localStorage.getItem("isPlayingAudioAllowed");
@@ -110,17 +107,16 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  return (
-    <AudioContext.Provider
-      value={{
-        handlePlayAudio,
-        isPlayingAudioAllowed,
-        setIsPlayingAudioAllowed,
+  const value = useMemo(
+    () => ({
+      handlePlayAudio,
+      isPlayingAudioAllowed,
+      setIsPlayingAudioAllowed,
+    }),
+    [handlePlayAudio, isPlayingAudioAllowed]
+  );
 
-        pathnameForAudio,
-      }}
-    >
-      {children}
-    </AudioContext.Provider>
+  return (
+    <AudioContext.Provider value={value}>{children}</AudioContext.Provider>
   );
 };

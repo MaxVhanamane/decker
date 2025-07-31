@@ -4,30 +4,29 @@ import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
 import { request } from "../utils/fetch-utils";
 import { UserContext } from "../context/UserContext";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
 import { CustomError } from "../utils/customError";
+import { ShowToastContext } from "../context/ToastNotificationContext";
+
 export default function ChangePassword() {
   const location = useLocation();
-
   // Parse the query string using the URLSearchParams API
   const searchParams = new URLSearchParams(location.search);
-  const { setAlert } = useContext(AlertContext);
+  const { showToast } = useContext(ShowToastContext);
   // Get the value of a parameter
   const emailAddress = searchParams.get("email");
   const otp = searchParams.get("otp");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
-  const { userInfo } = useContext(UserContext);
+  const { userEmailAddress } = useContext(UserContext);
   const navigate = useNavigate();
   const { isOnline } = useContext(OfflineContext);
 
   useEffect(() => {
-    if (userInfo?.email || !emailAddress || !otp) {
+    if (userEmailAddress || !emailAddress || !otp) {
       navigate("/");
     }
-  }, [userInfo?.email]);
+  }, [userEmailAddress]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "password") {
@@ -41,13 +40,14 @@ export default function ChangePassword() {
     e.preventDefault();
 
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
 
@@ -57,41 +57,49 @@ export default function ChangePassword() {
         try {
           const res = await request.post("/changepassword", data);
           if (res.data.success) {
-            setAlert((preval: AlertData) => ({
-              ...preval,
-              severity: "success",
-              show: true,
+            showToast({
               message: res.data.message,
-            }));
+              severity: "success",
+              autoHideDuration: 5000,
+              position: "top-center",
+              animationStyle: "scale-up",
+              theme: "auto",
+            });
             setConfirmPass("");
             setPassword("");
             navigate("/login");
           }
         } catch (error) {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "error",
-            show: true,
+          showToast({
             message: (error as CustomError)?.message
               ? (error as CustomError)?.message
               : "Something went wrong please try again later!",
-          }));
+            severity: "error",
+            autoHideDuration: 5000,
+            position: "top-center",
+            animationStyle: "scale-up",
+            theme: "auto",
+          });
         }
       } else {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "password must be at least 8 characters long",
-        }));
+          severity: "error",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
       }
     } else {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "Password and confirm password didn't match",
-      }));
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
     }
   };
   return (
@@ -100,23 +108,18 @@ export default function ChangePassword() {
         <div className="  px-6 h-full">
           <div className="flex justify-center items-center flex-wrap h-full  text-gray-800 pt-[3.45rem]">
             <div className="xl:w-6/12">
-              <div className="block bg-[#fcfefc] shadow-lg rounded-lg dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
+              <div className="block bg-white shadow-lg rounded-lg dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
                 <div className="flex justify-center items-center g-0">
                   <div className=" px-4 md:px-0">
                     <div className="md:p-12 p-4 md:mx-6">
                       <div className="flex items-center justify-center flex-col rounded-full">
                         <img
-                          src={`${
-                            localStorage.getItem("theme") === "dark" ||
-                            localStorage.getItem("theme") === null
-                              ? "/decker_logo_dark.png"
-                              : "/decker_logo_light.png"
-                          }`}
+                          src="/decker_logo.png"
                           className="w-7 h-7 object-contain"
                           alt="decker logo"
                         />
 
-                        <h2 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
+                        <h2 className="font-bold text-2xl text-sky-500 ">
                           Decker
                         </h2>
 
@@ -129,7 +132,7 @@ export default function ChangePassword() {
                           <input
                             onChange={handleChange}
                             type="password"
-                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
                             id="password"
                             name="password"
                             value={password}
@@ -142,7 +145,7 @@ export default function ChangePassword() {
                           <input
                             onChange={handleChange}
                             type="password"
-                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
                             id="confirmpassword"
                             name="confirmPass"
                             value={confirmPass}
@@ -153,7 +156,7 @@ export default function ChangePassword() {
                         </div>
                         <div className="text-center pt-1 mb-5 pb-1">
                           <button
-                            className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none"
+                            className="  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3 bg-sky-600 hover:bg-sky-700 outline-none"
                             type="submit"
                             aria-label="Change Password"
                           >
@@ -167,7 +170,7 @@ export default function ChangePassword() {
                           <Link to="/login">
                             <button
                               type="button"
-                              className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-700 dark:border-sky-500 dark:text-sky-500 font-medium text-sm leading-tight  rounded hover:border-teal-500 hover:text-teal-600 dark:hover:text-sky-600 dark:hover:border-sky-400 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
+                              className="inline-block px-6 py-2 border-2 border-sky-500 text-sky-500 font-medium text-sm leading-tight  rounded hover:text-sky-600 hover:border-sky-600 focus:outline-none focus:ring-0 transition duration-150 ease-in-out"
                               aria-label="Login"
                             >
                               Login

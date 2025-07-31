@@ -2,19 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "customInter";
+  src: url("/fonts/inter-latin-200-normal.woff2") format("woff2");
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "customInter";
+  src: url("/fonts/inter-latin-300-normal.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "customInter";
+  src: url("/fonts/inter-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "customInter";
+  src: url("/fonts/inter-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "customInter";
+  src: url("/fonts/inter-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "customInter";
+  src: url("/fonts/inter-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: bold;
+}
+
+@layer utilities {
+  @supports not (backdrop-filter: blur(4px)) {
+    .backdrop-blur-fallback {
+      @apply bg-gray-100/80 dark:bg-slate-900/80;
+    }
+  }
+}
 
 
 @layer base {
 
+  /* CSS animations with fill mode and proper timing */
+  @keyframes roundedTopOut {
+    from {
+      border-top-left-radius: 0.375rem;
+      border-top-right-radius: 0.375rem;
+    }
+
+    to {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+  }
+
+  @keyframes roundedTopIn {
+    from {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+
+    to {
+      border-top-left-radius: 0.375rem;
+      border-top-right-radius: 0.375rem;
+    }
+  }
+
+  .animate-rounded-top-out {
+    animation: roundedTopOut 0.001s ease 1.2s forwards;
+    animation-fill-mode: forwards;
+  }
+
+  .animate-rounded-top-in {
+    animation: roundedTopIn 0.2s ease 1.6s forwards;
+    animation-fill-mode: backwards;
+  }
+
+  .animate-rounded-top-in-mobile {
+    animation: roundedTopIn 0.3s ease 0.8s forwards;
+    animation-fill-mode: backwards;
+  }
+
+
+  @keyframes showScrollbarAfterDelay {
+
+    0%,
+    99% {
+      overflow-y: hidden;
+    }
+
+    100% {
+      overflow-y: auto;
+    }
+  }
+
+  .animate-scrollbar-delayed {
+    animation: showScrollbarAfterDelay 1s linear forwards;
+  }
+
   /* Reset global styles */
   body,
   html {
-    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     margin: 0;
     padding: 0;
     text-align: center;
     box-sizing: border-box;
-    scrollbar-width: none;
+    overflow: hidden;
+
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -23,13 +129,178 @@
 
   }
 
-  ::-webkit-scrollbar {
-    width: 0px;
+
+
+  .scrollbar-hide {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
   }
 
-  img:-moz-loading {
-    visibility: hidden;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Edge */
   }
+
+
+
+  .scrollbar-small::-webkit-scrollbar {
+    width: 8px;
+    /* Width for vertical scrollbar */
+    height: 8px;
+    /* Height for horizontal scrollbar */
+  }
+
+  /* Ensures the grabbing cursor applies globally when dragging with DndKit. By default, DndKit forces the default cursor while dragging, but I want to show the grabbing cursor. Applying it directly to a draggable element doesn't work, so we override the body's cursor, as that's where DndKit applies its styles. */
+  body:has(.cursor-grabbing) {
+    cursor: grabbing !important;
+  }
+
+  /* Disable transitions during theme switch */
+  .disable-transition * {
+    transition: none !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    /* Width for vertical scrollbar */
+    height: 10px;
+    /* Height for horizontal scrollbar */
+  }
+
+  /* Scrollbar track (the background) */
+  ::-webkit-scrollbar-track {
+
+    background-color: transparent;
+
+  }
+
+  /* Scrollbar thumb (the draggable part) */
+  ::-webkit-scrollbar-thumb {
+
+
+    /* Darker gray color for the thumb */
+    border-radius: 15px;
+    /* Rounded corners for the thumb */
+    /* Add a border to the thumb for contrast */
+
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #334155;
+
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+
+    background-color: #475569;
+  }
+
+  .light-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+  }
+
+  .light-scrollbar::-webkit-scrollbar-thumb:hover {
+
+    background-color: #d1d5db;
+  }
+
+  /* Scrollbar thumb hover state (when you hover over the thumb) */
+  ::-webkit-scrollbar-thumb:hover {
+    @apply cursor-grab;
+
+    /* Darker color when hovering */
+
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    @apply cursor-grabbing;
+
+  }
+
+  ::-webkit-scrollbar-button {
+
+    width: 20px;
+    height: 10px;
+  }
+
+  /* Top (Up) Button */
+  .dark-scrollbar::-webkit-scrollbar-button:single-button:decrement {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23334155"><path d="M2 14l10-10 10 10H2z"/></svg>');
+    background-repeat: no-repeat;
+  }
+
+  /* Bottom (Down) Button */
+  .dark-scrollbar::-webkit-scrollbar-button:single-button:increment {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23334155"><path d="M2 10l10 10 10-10H2z"/></svg>');
+    background-repeat: no-repeat;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-button:single-button:horizontal:decrement {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23334155"><path d="M14 2L4 12l10 10V2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-button:single-button:horizontal:increment {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23334155"><path d="M10 2v20l10-10L10 2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+
+  .light-scrollbar::-webkit-scrollbar-button:single-button:decrement {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e5e7eb"><path d="M2 14l10-10 10 10H2z"/></svg>');
+    background-repeat: no-repeat;
+  }
+
+  /* Bottom (Down) Button */
+  .light-scrollbar::-webkit-scrollbar-button:single-button:increment {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e5e7eb"><path d="M2 10l10 10 10-10H2z"/></svg>');
+    background-repeat: no-repeat;
+  }
+
+  .light-scrollbar::-webkit-scrollbar-button:single-button:horizontal:decrement {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e5e7eb"><path d="M14 2L4 12l10 10V2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .light-scrollbar::-webkit-scrollbar-button:single-button:horizontal:increment {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e5e7eb"><path d="M10 2v20l10-10L10 2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+
+  /* 
+  .realistic-marker-highlight:before {
+    content: "";
+    background-color: var(--marker-color, #eab308);
+    width: 100%;
+    height: 1.5em;
+    position: absolute;
+    z-index: -1;
+    filter: url(#marker-shape);
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+
+  } */
+
+  .wavy-highlight {
+
+    border-radius: 0.8em 0.3em;
+    background: transparent;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+
+  /* img:-moz-loading {
+    visibility: hidden;
+  } */
 
   .line-clamp-3 {
     overflow: hidden;
@@ -45,20 +316,59 @@
     -webkit-line-clamp: 1;
   }
 
+
+
+  /* Animation keyframes */
+  @keyframes shimmer {
+    0% {
+      background-position: 300% 0;
+    }
+
+    100% {
+      background-position: -300% 0;
+    }
+  }
+
+  /* Light mode shimmer */
+  .shimmer-skeleton {
+    background-image: linear-gradient(90deg,
+        rgba(190, 195, 205, 1) 0%,
+        rgba(190, 195, 205, 0.85) 40%,
+        rgba(190, 195, 205, 0.6) 50%,
+        rgba(190, 195, 205, 0.85) 60%,
+        rgba(190, 195, 205, 1) 100%);
+
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite linear;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Dark mode shimmer (applies when a parent has .dark) */
+  .dark .shimmer-skeleton {
+    background: linear-gradient(90deg,
+        rgba(55, 65, 81, 0.8) 0%,
+        rgba(75, 85, 99, 1) 20%,
+        rgba(107, 114, 128, 0.9) 50%,
+        rgba(75, 85, 99, 1) 80%,
+        rgba(55, 65, 81, 0.8) 100%);
+    background-size: 200% 100%;
+  }
+
+
+
   /* Show scrollbar for specific elements, e.g., code blocks */
-  .show-scrollbar {
+
+  /* For Firefox */
+  /* .show-scrollbar {
     overflow: auto;
     scrollbar-width: 8px;
+  } */
 
-    /* For Firefox */
-  }
-
-  .show-scrollbar::-webkit-scrollbar {
+  /* .show-scrollbar::-webkit-scrollbar {
     height: 8px;
 
-    /* For Webkit browsers like Chrome and Safari */
   }
-
 
   .show-scrollbar::-webkit-scrollbar-thumb {
     background-color: #64748b;
@@ -68,30 +378,18 @@
   .show-scrollbar::-webkit-scrollbar-track {
     background-color: #cbd5e1;
     border-radius: 10px;
-
-
-
   }
 
   html.dark .show-scrollbar::-webkit-scrollbar-thumb {
     background-color: #334155;
     border-radius: 10px;
-
   }
-
 
   html.dark .show-scrollbar::-webkit-scrollbar-track {
     background-color: #1e293b;
     border-radius: 10px;
-    /* Replace 'red' with your desired color code */
-  }
-
-
-
-
+  } */
 }
-
-
 
 /* Hide the scrollbar */
 /* ::-webkit-scrollbar {

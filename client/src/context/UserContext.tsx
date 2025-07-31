@@ -4,18 +4,12 @@ import {
   ReactNode,
   useState,
   Dispatch,
-  useRef,
-  RefObject,
   useCallback,
   useMemo,
+  useLayoutEffect,
 } from "react";
-import { userData } from "../types/types";
-
-declare global {
-  interface WindowEventMap {
-    beforeinstallprompt: BeforeInstallPromptEvent;
-  }
-}
+import type { userData } from "../types/types";
+import debounce from "lodash/debounce";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: ReadonlyArray<string>;
@@ -26,77 +20,48 @@ interface BeforeInstallPromptEvent extends Event {
   }>;
 }
 
-type UserContextProviderType = {
-  children: ReactNode;
-};
-
 interface ContexType {
   userInfo:
     | {
         username: string;
         profile_picture: string;
-        email: string;
       }
     | null
     | undefined;
   setUserInfo: Dispatch<React.SetStateAction<userData | null>>;
-  divRefForUserSettings: RefObject<HTMLDivElement>;
+  setUserEmailAddress: Dispatch<React.SetStateAction<string | null>>;
   showInstallAppButton: boolean;
-  showLogoutModal: boolean;
-  isAuthenticating: boolean;
+  userEmailAddress: string | null;
   setShowInstallAppButton: Dispatch<React.SetStateAction<boolean>>;
-  setIsAuthenticating: Dispatch<React.SetStateAction<boolean>>;
-  setShowLogoutModal: Dispatch<React.SetStateAction<boolean>>;
-  handleShowUserInfomation: () => void;
   handleInstallApp: () => void;
-}
-
-interface ThemeContextType {
-  theme: string | null;
-
-  setTheme: Dispatch<React.SetStateAction<string | null>>;
 }
 
 export const UserContext = createContext<ContexType>({
   userInfo: {
     username: "",
     profile_picture: "",
-    email: "",
   },
-  showLogoutModal: false,
   setUserInfo: () => {},
-
-  divRefForUserSettings: { current: null } as RefObject<HTMLDivElement>,
-
+  userEmailAddress: null,
   showInstallAppButton: false,
   setShowInstallAppButton: () => {},
-  setShowLogoutModal: () => {},
-  isAuthenticating: true,
-  setIsAuthenticating: () => {},
-  handleShowUserInfomation: () => {},
+  setUserEmailAddress: () => {},
   handleInstallApp: () => {},
-});
-
-export const ThemeContext = createContext<ThemeContextType>({
-  theme: null,
-  setTheme: () => {},
 });
 
 // Note: If you use the useNavigate() or useLocation hooks from react-router-dom within a Context API, that Context API will rerender whenever the route changes.
 
-function UserContextProvider({ children }: UserContextProviderType) {
-  const [theme, setTheme] = useState<string | null>(null);
-
-  const divRefForUserSettings = useRef<HTMLDivElement>(null);
+function UserContextProvider({ children }: { children: ReactNode }) {
   const [showInstallAppButton, setShowInstallAppButton] = useState(false);
+  const [userEmailAddress, setUserEmailAddress] = useState<string | null>(null);
   const [beforeInstallHandlerRun, setBeforeInstallHandlerRun] = useState(false);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  const [userInfo, setUserInfo] = useState<userData | null>(null);
-
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [userInfo, setUserInfo] = useState<userData | null>(() => {
+    const storedUserInfo = localStorage.getItem("userInfo");
+    const userInfo = storedUserInfo ? JSON.parse(storedUserInfo) : null;
+    return userInfo;
+  });
 
   useEffect(() => {
     const beforeInstallHandler = (e: Event) => {
@@ -120,6 +85,27 @@ function UserContextProvider({ children }: UserContextProviderType) {
     };
   }, [showInstallAppButton]);
 
+  useLayoutEffect(() => {
+    //When you give a fixed height and open the app in a mobile browser, you might observe the edit modal changing its height when the browser address bar hides and shows. This can hide the bottom part of the edit modal, requiring you to scroll to see it. To avoid that, we will calculate the proper available height and set it.
+    const handleResize = () => {
+      document.documentElement.style.setProperty(
+        "--window-height",
+        `${window.innerHeight}px`
+      );
+    };
+
+    // Initial setup
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", debounce(handleResize, 500));
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const handleInstallApp = useCallback(async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -131,113 +117,34 @@ function UserContextProvider({ children }: UserContextProviderType) {
     }
   }, [deferredPrompt, setDeferredPrompt, setShowInstallAppButton]);
 
-  // give default theme as dark
   useEffect(() => {
-    const userThemePreference = localStorage.getItem("theme");
-
-    if (userThemePreference) {
-      // User has already selected a theme, use their preference
-      setTheme(userThemePreference);
-    } else {
-      // No user preference found, default to dark theme
-      localStorage.setItem("theme", "dark");
-      setTheme("dark");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (
-      localStorage.getItem("theme") === "dark" ||
-      localStorage.getItem("theme") === null
-    ) {
-      document.documentElement.style.backgroundColor = "#0f172a";
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.style.backgroundColor = "#fcfefc";
-
-      document.documentElement.classList.remove("dark");
-    }
-  }, [theme]);
-
-  //If the user changes the theme preference directly from localStorage or tampers with the userInfo, we will listen for that change and take appropriate action accordingly.
-
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "theme") {
-        const newTheme = event.newValue;
-        const allowedThemes = ["dark", "light"]; // the allowed theme values
-
-        // Check if the new theme value is not null and is one of the allowed themes
-        if (newTheme && allowedThemes.includes(newTheme)) {
-          setTheme(newTheme);
-        } else {
-          // Fallback to a default theme:
-          setTheme("dark");
-          // Reset the theme value in localStorage to the default dark theme
-          localStorage.setItem("theme", "dark");
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (beforeInstallHandlerRun && userInfo && !isAuthenticating) {
+    if (beforeInstallHandlerRun && userInfo) {
       localStorage.removeItem("showInstallAppButton");
     }
-  }, [beforeInstallHandlerRun, userInfo, isAuthenticating]);
-
-  const handleShowUserInfomation = useCallback(() => {
-    if (divRefForUserSettings.current?.classList.contains("scale-100")) {
-      divRefForUserSettings.current?.classList.remove("scale-100");
-      divRefForUserSettings.current?.classList.add("scale-0");
-      divRefForUserSettings.current?.classList.add("hidden");
-    }
-  }, []);
+  }, [beforeInstallHandlerRun, userInfo]);
 
   const contextValue = useMemo(() => {
     return {
       userInfo,
       setUserInfo,
-      divRefForUserSettings,
       showInstallAppButton,
       setShowInstallAppButton,
-      handleShowUserInfomation,
-      isAuthenticating,
-      setIsAuthenticating,
       handleInstallApp,
-      showLogoutModal,
-      setShowLogoutModal,
+      userEmailAddress,
+      setUserEmailAddress,
     };
   }, [
     userInfo,
     setUserInfo,
-    divRefForUserSettings,
     showInstallAppButton,
     setShowInstallAppButton,
-    handleShowUserInfomation,
-    isAuthenticating,
-    setIsAuthenticating,
     handleInstallApp,
-    showLogoutModal,
-    setShowLogoutModal,
+    userEmailAddress,
+    setUserEmailAddress,
   ]);
 
-  const themeContextValue = useMemo(() => {
-    return { theme, setTheme };
-  }, [theme, setTheme]);
-
   return (
-    <UserContext.Provider value={contextValue}>
-      <ThemeContext.Provider value={themeContextValue}>
-        {children}
-      </ThemeContext.Provider>
-    </UserContext.Provider>
+    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
   );
 }
 

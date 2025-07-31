@@ -1,32 +1,27 @@
-import { IoIosArrowBack } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
-import { MdOutlineDeleteOutline } from "react-icons/md";
-import { BiEdit } from "react-icons/bi";
 import React, {
   Dispatch,
-  isValidElement,
-  memo,
+  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import parseNote from "../../functions/parseNote";
-import ThemeToggler from "../ThemeToggler";
-import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
-import { ThemeContext } from "../../context/UserContext";
-import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
+import NoteSection from "./NoteSection";
+import Button from "../Button";
+import { IoIosArrowBack } from "react-icons/io";
 import { TbKeyboard, TbKeyboardOff } from "react-icons/tb";
-import DisplayNote from "./DisplayNote";
+import { MdOutlineDeleteOutline } from "react-icons/md";
+import { BiEdit } from "react-icons/bi";
+import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
+import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
+import ThemeToggler from "../ThemeToggler";
 import { AudioContext } from "../../context/AudioContext";
-import { PopupContext } from "../../context/PopupContext";
+import { Descendant } from "slate";
 
 type ContentType = {
-  title: string;
-  note: string;
-  _id: string;
+  note: Descendant[];
   cardId: string;
+  createdAt: string;
 };
 
 type ContentForFullScreen = ContentType & {
@@ -38,300 +33,138 @@ type ContentTypeForEdit = ContentType & {
   cardIndex: number | null;
 };
 
-type propTypes = {
-  fullScreenCardData: ContentForFullScreen;
-  search_index?: string | null;
-  location: {
-    pathname: string;
-    search: string;
-    hash: string;
-    state: { isBackButtonNotClicked: boolean };
-  };
+type propType = {
+  fullScreenCardData: ContentForFullScreen | null;
   setShowFullScreen: Dispatch<React.SetStateAction<boolean>>;
-  setStartAnimation: Dispatch<React.SetStateAction<boolean>>;
+  setCloseFullScreenWithAnimation: Dispatch<React.SetStateAction<boolean>>;
   setShowScrollButtons: Dispatch<React.SetStateAction<boolean>>;
   showScrollButtons: boolean;
-  startAnimation: boolean;
+  closeFullScreenWithAnimation: boolean;
   handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
   handleDelete: (index: number) => void;
 };
 
 const FullScreenCardView = ({
   fullScreenCardData,
-  search_index,
   setShowFullScreen,
   handleDelete,
   handleEditCardButtonClick,
-  startAnimation,
-  setStartAnimation,
+  closeFullScreenWithAnimation,
+  setCloseFullScreenWithAnimation,
   showScrollButtons,
   setShowScrollButtons,
-}: propTypes) => {
-  const { theme } = useContext(ThemeContext);
-  const navigate = useNavigate();
-  const bottomElementRef = useRef<HTMLDivElement>(null);
-  const popupRef = useContext(PopupContext);
+}: propType) => {
+  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
 
-  const topElementRef = useRef<HTMLDivElement>(null);
-  const divRef = useRef<HTMLDivElement>(null);
+  const [toggleGradient, setToggleGradient] = useState<boolean>(() =>
+    JSON.parse(localStorage.getItem("toggleColor") ?? "false")
+  );
+  const [showTypewriterEffect, setShowTypewriterEffect] = useState(() => {
+    const storedValue = localStorage.getItem("showTypewriterEffect");
+    return storedValue ? JSON.parse(storedValue) === true : false;
+  });
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
     useState(false);
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
-  const [parsedNote, setParsedNote] = useState<React.ReactNode[]>([]);
-  const [parsingError, setParsingError] = useState("");
-  const [parsingComplete, setParsingComplete] = useState(false);
-  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
-  const storedToggleValue: string | null = localStorage.getItem("toggleColor");
-  const [pageOpenCount, setPageOpenCount] = useState(1);
-  const storedTypewriterEffectValue: string | null = localStorage.getItem(
-    "showTypewriterEffect"
-  );
-  const defaultToggleValue: boolean = storedToggleValue
-    ? JSON.parse(storedToggleValue)
-    : false; // Provide a default value in case the stored value is null or undefined
-  const defaultTypewriterEffectValue: boolean = storedTypewriterEffectValue
-    ? JSON.parse(storedTypewriterEffectValue)
-    : false; // Provide a default value in case the stored value is null or undefined
-  const [toggle, setToggle] = useState(defaultToggleValue);
-  const [showTypewriterEffect, setShowTypewriterEffect] = useState(
-    defaultTypewriterEffectValue
-  );
-  const [dispalyResponse, setDisplayResponse] = useState<React.ReactNode[]>([]);
-  const [startTyping, setStartTyping] = useState(false);
-  const [typingInProgress, setTypingInProgress] = useState(false);
-  const iRef = useRef<number>(0); // Initialize a ref to store the value of `i`. we will use this iref to continue typing where we left off when pause Typing becomes true and then false.
-  const intervalIdRef = useRef<NodeJS.Timeout>();
 
-  const flattenReactNodes = (nodes: React.ReactNode[]): React.ReactNode[] => {
-    // Nodes will be an array that contains React elements for bold, underlined, linked, and code block styles. It will also include normal strings if no styles have been applied.
-
-    const result = nodes.reduce<React.ReactNode[]>((accumulator, node) => {
-      if (typeof node === "string") {
-        // The regular expression /(\s+)/ is designed to split the string wherever one or more whitespace characters (spaces, tabs, or newlines) are found. The \s+ part of the regular expression specifies that it should match one or more occurrences of whitespace characters.
-
-        // .flatMap((part) => (/\s+/.test(part) ? [part] : [...part])) — This part will keep the spaces as they are. If there are multiple spaces one after another, we will keep all of them together; we will not split them. If we encounter text, we will split it.  if we split the empty long string then while showing typing effect it will show typing effect to blank long string.
-
-        return [
-          ...accumulator,
-          ...node
-            .split(/(\s+)/)
-            .flatMap((part) => (/\s+/.test(part) ? [part] : [...part])),
-        ];
-      }
-
-      if (isValidElement(node)) {
-        return [...accumulator, node];
-      }
-
-      return accumulator;
-    }, []);
-    return result;
-  };
-
-  const flattenedArray = useMemo(() => {
-    if (search_index) {
-      return [];
-    }
-    return flattenReactNodes(parsedNote);
-  }, [parsedNote]);
-
-  useEffect(() => {
-    const parseNoteAndSet = async () => {
-      try {
-        setParsingComplete(false);
-        const parsedNoteResult = await parseNote(
-          fullScreenCardData.note,
-          showTypewriterEffect
-        );
-        setParsedNote(parsedNoteResult);
-      } catch (error) {
-        setParsedNote([]);
-        setParsingError("An error occurred while parsing the note.");
-      } finally {
-        setParsingComplete(true);
-        if (intervalIdRef.current) {
-          clearInterval(intervalIdRef.current);
-        }
-        iRef.current = 0;
-        setDisplayResponse([]);
-      }
-    };
-    parseNoteAndSet();
-  }, [fullScreenCardData.note, theme]);
-
-  const handleScrollToTheBottom = () => {
-    if (bottomElementRef.current) {
-      bottomElementRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-  const handleScrollToTop = () => {
-    if (topElementRef.current) {
-      topElementRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  let prevScrollPosition = 0;
-
-  useEffect(() => {
-    if (window.innerWidth < 1024 && !defaultToggleValue) {
-      setToggle(false); // Adjust the condition based on your screen size criteria
-    } else if (window.innerWidth >= 1024) {
-      if (localStorage.getItem("toggleColor")) {
-        setToggle(defaultToggleValue);
-      } else {
-        setToggle(true);
-      }
-    }
-  }, []);
-
-  const handleScroll = () => {
-    if (divRef.current) {
-      const scrollPosition = divRef.current.scrollTop;
-      if (scrollPosition > prevScrollPosition) {
-        // Scrolling down
-        setShowScrollToTopButton(false);
-        setShowScrollToBottomButton(true);
-      } else {
-        // Scrolling up
-        setShowScrollToBottomButton(false);
-        setShowScrollToTopButton(true);
-      }
-      if (bottomElementRef.current) {
-        const elementRect = bottomElementRef.current.getBoundingClientRect();
-        const isBottomElementInView =
-          elementRect.top >= 0 && elementRect.bottom <= window.innerHeight;
-        if (isBottomElementInView) {
-          setShowScrollToBottomButton(false);
-          setShowScrollToTopButton(true);
-        }
-      }
-      if (topElementRef.current) {
-        const elementRect = topElementRef.current.getBoundingClientRect();
-        const isTopElementInView =
-          elementRect.top >= 0 && elementRect.bottom <= window.innerHeight;
-        if (isTopElementInView) {
-          setShowScrollToBottomButton(true);
-          setShowScrollToTopButton(false);
-        }
-      }
-
-      prevScrollPosition = scrollPosition;
-    }
-  };
+  const divRef = useRef<HTMLDivElement>(null);
+  const bottomElementRef = useRef<HTMLDivElement>(null);
+  const topElementRef = useRef<HTMLDivElement>(null);
+  const prevScrollPosition = useRef(0);
 
   useEffect(() => {
     if (divRef.current) {
       divRef.current.addEventListener("scroll", handleScroll, true);
 
-      // Clean up the event listener
       return () => {
         divRef.current?.removeEventListener("scroll", handleScroll, true);
       };
     }
   }, []);
 
-  useEffect(() => {
-    // If typing is in progress and the user clicks on the edit or delete button, instead of showing the typing effect, we will simply remove the typing effect and add all the text at once. This is because the user is not looking at the typing effect, so it is a waste of resources. To achieve this, we will use pageOpenCount state.
-    if (showTypewriterEffect && pageOpenCount === 1 && !search_index) {
-      if (parsingComplete) {
-        const totalLength = flattenedArray.length;
+  const handleScroll = () => {
+    if (!divRef.current) return;
 
-        if (flattenedArray.length !== dispalyResponse.length) {
-          // typingInProgress is used to show feather icon
-          setTypingInProgress(true);
+    const scrollTop = divRef.current.scrollTop;
+    const scrollHeight = divRef.current.scrollHeight;
+    const clientHeight = divRef.current.clientHeight;
 
-          intervalIdRef.current = setInterval(() => {
-            // The startTyping state makes sure that the typing only begins after the card finishes opening. Without this, if the content is short, it might get typed before the card opens fully because there's an animation that takes a bit of time.
-            if (startTyping) {
-              const currentChar = flattenedArray[iRef.current];
+    // Check if user is at the top
+    const isAtTop = scrollTop === 0;
+    // Check if user is at the bottom (allowing a small margin to avoid precision issues)
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
 
-              setDisplayResponse((prev) => {
-                const updatedResponse: React.ReactNode[] = [
-                  ...prev,
-                  currentChar,
-                ];
-
-                iRef.current++;
-
-                if (iRef.current >= totalLength) {
-                  clearInterval(intervalIdRef.current!);
-                  iRef.current = 0;
-                  setTypingInProgress(false);
-                }
-                return updatedResponse;
-              });
-            }
-          }, 20);
-        }
-      }
-    } else if (!search_index) {
-      if (showTypewriterEffect) {
-        setDisplayResponse(parsedNote);
+    if (isAtBottom) {
+      setShowScrollToBottomButton(false);
+      setShowScrollToTopButton(true);
+    } else if (isAtTop) {
+      setShowScrollToBottomButton(true);
+      setShowScrollToTopButton(false);
+    } else {
+      if (scrollTop > prevScrollPosition.current) {
+        // Scrolling down
+        setShowScrollToBottomButton(true);
+        setShowScrollToTopButton(false);
+      } else {
+        // Scrolling up
+        setShowScrollToBottomButton(false);
+        setShowScrollToTopButton(true);
       }
     }
 
-    return () => {
-      if (intervalIdRef.current) {
-        clearInterval(intervalIdRef.current);
-      }
-    };
-  }, [
-    parsedNote,
-    parsingComplete,
-    startTyping,
-    showTypewriterEffect,
-    pageOpenCount,
-    search_index,
-  ]);
+    prevScrollPosition.current = scrollTop;
+  };
 
-  useEffect(() => {
-    // Update the meta tag
-    const metaTag = document.querySelector(
-      'meta[name="theme-color"]'
-    ) as HTMLMetaElement;
+  const handleBackButtonClick = useCallback(() => {
+    setCloseFullScreenWithAnimation(true);
+    setShowScrollButtons(false);
+  }, []);
 
-    if (toggle) {
-      if (metaTag && theme === "light") {
-        const themeColor = "#e2e8f0";
-        metaTag.setAttribute("content", themeColor);
-      }
-      if (metaTag && theme === "dark") {
-        const themeColor = "#1e293b";
-        metaTag.setAttribute("content", themeColor);
+  const handleScrollToTheBottom = useCallback(() => {
+    if (bottomElementRef.current) {
+      bottomElementRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+  const handleScrollToTop = useCallback(() => {
+    if (topElementRef.current) {
+      topElementRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  const handleDeleteCard = useCallback(() => {
+    if (
+      fullScreenCardData &&
+      fullScreenCardData.cardIndex !== undefined &&
+      fullScreenCardData?.cardIndex !== null
+    ) {
+      handleDelete(fullScreenCardData.cardIndex);
+    }
+  }, [fullScreenCardData, handleDelete]);
+
+  const handleEditCard = useCallback(() => {
+    if (fullScreenCardData) handleEditCardButtonClick(fullScreenCardData);
+  }, [fullScreenCardData, handleEditCardButtonClick]);
+
+  const handleToggleBgColor = useCallback(() => {
+    localStorage.setItem("toggleColor", JSON.stringify(!toggleGradient));
+    setToggleGradient((pre) => !pre);
+    if (toggleGradient) {
+      if (isPlayingAudioAllowed) {
+        handlePlayAudio("switchOnAudioSound");
       }
     } else {
-      if (metaTag && theme === "light") {
-        const themeColor = "#fcfefc";
-        metaTag.setAttribute("content", themeColor);
-      }
-      if (metaTag && theme === "dark") {
-        const themeColor = "#0f172a";
-        metaTag.setAttribute("content", themeColor);
+      if (isPlayingAudioAllowed) {
+        handlePlayAudio("switchOffAudioSound");
       }
     }
-    return () => {
-      const themeColor = theme === "dark" ? "#0f172a" : "#fcfefc";
-      metaTag.setAttribute("content", themeColor);
-    };
-  }, [toggle, theme]);
+  }, [toggleGradient, isPlayingAudioAllowed, handlePlayAudio]);
 
   const handleOnAnimationEnd = () => {
-    setStartTyping(true);
-
-    if (search_index && !startAnimation) {
-      // If the user closes the fullscreen card view, once the closing animation ends, we will navigate the user back to the page they came from.
-      if (fullScreenCardData?.from) {
-        navigate(fullScreenCardData?.from, { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
-      return;
-    }
     if (!showScrollButtons) {
       setShowScrollButtons(true);
     }
-    if (!startAnimation) {
-      setShowFullScreen(false), setStartAnimation(true);
+    if (closeFullScreenWithAnimation) {
+      setShowFullScreen(false), setCloseFullScreenWithAnimation(false);
     }
     const isScrollable =
       divRef.current!.scrollHeight > divRef.current!.clientHeight + 100;
@@ -349,232 +182,196 @@ const FullScreenCardView = ({
     <>
       <article
         onAnimationEnd={handleOnAnimationEnd}
-        className={`transition-transform duration-500 fixed inset-0 overflow-y-auto bg-[#fcfefc]    ${
-          toggle
+        className={`transition-transform duration-500 fixed inset-0  bg-white    ${
+          toggleGradient
             ? "dark:bg-BgDarkModeSmall bg-lightBg dark:lg:bg-BgForDarkMode"
             : ""
-        }   dark:bg-slate-900 flex flex-col z-[80] items-center ${
-          startAnimation
-            ? "animate-translateFromLeftToRight  lg:animate-quickOpacity  "
-            : "animate-translateFromRightToLeft lg:animate-opacityFadeOut lg:opacity-0 scale-0 lg:scale-100 "
+        }   dark:bg-slate-900  z-[80] flex flex-col items-center  ${
+          !closeFullScreenWithAnimation
+            ? "animate-translateFromLeftToRight  lg:animate-[opacity_0.2s_linear_1]  "
+            : "animate-translateFromRightToLeft lg:animate-opacityFadeOut"
         } `}
       >
-        <div
-          className={`mt-2 lg:mt-1 w-full overflow-auto p-[0.95rem] md:p-14 md:w-[51.25rem]  `}
-          ref={divRef}
-        >
-          <div ref={topElementRef} />
-          {parsingComplete && !parsingError ? (
-            <div className={`mt-12 md:mt-auto `}>
-              {/* here I have used tailwind's -ml-1 class to reduce the gap between the words that causes when you try to add very long words.(now it's removed) */}
-              {/* whitespace-pre-line to keep the new lines and spaces as it is */}
-              <p
-                className={`text-left mb-5 mt-5  ${
-                  fullScreenCardData?.title.length < 50
-                    ? "font-semibold"
-                    : "font-normal"
-                }  text-lg  lg:text-xl  break-words break-normal  whitespace-pre-line text-gray-800 dark:text-slate-100 ${
-                  parsedNote.length > 0 &&
-                  "animate-opacityFadeIn lg:animate-quickOpacity"
-                }`}
-              >
-                {fullScreenCardData?.title}
-              </p>
-
-              <DisplayNote
-                parsedNote={parsedNote}
-                showTypewriterEffect={showTypewriterEffect}
-                search_index={search_index}
-                dispalyResponse={dispalyResponse}
-                typingInProgress={typingInProgress}
-              />
-              <div ref={bottomElementRef} />
-            </div>
-          ) : !parsingError ? (
-            <div
-              className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-gray-800 dark:text-gray-200 ${
-                !(parsedNote.length > 0) && "animate-opacityFadeIn "
-              }`}
-            >
-              Loading...
-            </div>
-          ) : (
-            <div
-              className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-gray-800 dark:text-gray-200 ${
-                !(parsedNote.length > 0) && "animate-opacityFadeIn"
-              } w-full`}
-            >
-              {parsingError}
-            </div>
-          )}
+        <div className={` w-full flex flex-col items-center h-full  relative `}>
+          {/* Buttons */}
           <div
-            className={`fixed top-0  py-[0.55rem]  ${
-              toggle
-                ? "dark:lg:bg-BgForDarkMode dark:bg-BgDarkModeSmall bg-lightBg"
-                : ""
-            } dark:bg-slate-900 border-b dark:border-gray-300/10 border-gray-800/10 bg-[#fcfefc]  px-3 md:px-0 left-0 w-full flex items-center justify-center  `}
+            className={` w-full flex items-center
+               justify-center md:w-[42rem] `}
           >
-            <div className="md:w-[51.25rem] flex items-center justify-between md:px-14 w-full  ">
+            <div className=" flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 ">
               <div>
-                <button
-                  onClick={() => {
-                    setStartAnimation(false);
-                    setShowScrollButtons(false);
-                    if (window?.history?.state?.isBackButtonNotClicked) {
-                      navigate(-1);
-                    }
-                  }}
-                  className=" text-xl rounded   text-center dark:text-gray-200 text-gray-500  cursor-pointer flex items-center justify-center "
-                  aria-label="Back"
-                  title="Back"
+                <Button
+                  variant="plain"
+                  size="md"
+                  aria-label="Go back"
+                  type="button"
+                  onClick={handleBackButtonClick}
+                  className="font-semibold text-lg "
                 >
-                  <IoIosArrowBack className="lg:-ml-[0.15rem]" />{" "}
-                  <p className="text-xs   ">Back</p>
-                </button>
+                  {buttons.Back.label}
+                </Button>
               </div>
               <div className="flex items-center justify-center gap-1 ">
-                <span
-                  onClick={() => {
-                    if (typingInProgress) {
-                      setTypingInProgress(false);
-                    }
-                  }}
-                >
+                <div>
                   <ThemeToggler ParentComponentName="FullScreenCardView" />
-                </span>
+                </div>
 
-                {!search_index && (
-                  <button
-                    onClick={() => {
-                      localStorage.setItem(
-                        "showTypewriterEffect",
-                        JSON.stringify(!showTypewriterEffect)
-                      );
-                      setPageOpenCount(1);
-                      setShowTypewriterEffect((pre) => !pre);
-                      if (!showTypewriterEffect) {
-                        popupRef?.current?.show(
-                          "You have turned on the typing effect",
-                          3000
-                        );
-                      } else {
-                        popupRef?.current?.show(
-                          "You have turned off the typing effect",
-                          3000
-                        );
-                      }
-                      iRef.current = 0;
-                      setDisplayResponse([]);
-                      if (typingInProgress) {
-                        setTypingInProgress(false);
-                      }
-                    }}
-                    type="button"
-                    className="text-blue-500  outline-none  text-center dark:hover:text-gray-300 hover:text-gray-200 dark:hover:bg-gray-700 hover:bg-gray-400 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
-                    aria-label="Toggle typing effect"
-                    title="Toggle typing effect"
-                  >
-                    {showTypewriterEffect ? (
-                      <TbKeyboard className="text-[1.3rem]" />
-                    ) : (
-                      <TbKeyboardOff className="text-[1.3rem]" />
-                    )}
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    if (
-                      fullScreenCardData &&
-                      fullScreenCardData.cardIndex !== undefined &&
-                      fullScreenCardData?.cardIndex !== null
-                    ) {
-                      handleDelete(fullScreenCardData.cardIndex);
-                    }
-                    if (typingInProgress) {
-                      setTypingInProgress(false);
-                    }
-                    setPageOpenCount(4);
-                  }}
+                <Button
+                  variant="plain"
+                  size="md"
+                  aria-label="Toggle typing effect"
+                  toolTipText="Toggle typing effect"
+                  withTooltip
                   type="button"
-                  className="text-blue-500 dark:text-sky-500 text-xl outline-none  transition-all duration-300  text-center dark:hover:bg-gray-700 hover:bg-gray-400 dark:hover:text-gray-300 hover:text-gray-200 rounded-full p-[0.4rem] "
-                  aria-label="Delete Card"
-                  title="Delete Card"
-                >
-                  <MdOutlineDeleteOutline />
-                </button>
-
-                <button
+                  className="text-blue-500 dark:text-sky-500 dark:hover:text-gray-300 hover:text-blue-600 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  "
                   onClick={() => {
-                    setPageOpenCount(3);
-                    if (typingInProgress) {
-                      setTypingInProgress(false);
-                    }
-                    handleEditCardButtonClick(fullScreenCardData);
-                  }}
-                  type="button"
-                  className="text-blue-500 text-xl outline-none  text-center dark:hover:bg-gray-700 hover:bg-gray-400 dark:hover:text-gray-300 hover:text-gray-200 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
-                  aria-label="Edit Card"
-                  title="Edit Card"
-                >
-                  <BiEdit />
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.setItem(
-                      "toggleColor",
-                      JSON.stringify(!toggle)
-                    );
-                    setToggle((pre) => !pre);
-                    if (toggle) {
-                      if (isPlayingAudioAllowed) {
-                        setTimeout(() => {
-                          handlePlayAudio("switchOnAudioSound");
-                        }, 100);
-                      }
+                    if (showTypewriterEffect) {
+                      localStorage.setItem("showTypewriterEffect", "false");
                     } else {
-                      if (isPlayingAudioAllowed) {
-                        setTimeout(() => {
-                          handlePlayAudio("switchOffAudioSound");
-                        }, 100);
-                      }
+                      localStorage.setItem("showTypewriterEffect", "true");
                     }
+                    setShowTypewriterEffect((prev) => !prev);
                   }}
-                  type="button"
-                  className="text-blue-500 text-2xl outline-none  text-center dark:hover:text-gray-300 hover:text-gray-200 dark:hover:bg-gray-700 hover:bg-gray-400 rounded-full p-[0.4rem] dark:text-sky-500 transition-all duration-300"
-                  aria-label="Toggle Colors"
-                  title="Toggle Colors"
                 >
-                  {toggle ? <LuToggleRight /> : <LuToggleLeft />}
-                </button>
+                  {showTypewriterEffect
+                    ? buttons.TypingEffect.label.on
+                    : buttons.TypingEffect.label.off}
+                </Button>
+
+                <Button
+                  variant="plain"
+                  size="lg"
+                  type="button"
+                  aria-label="Delete Card"
+                  toolTipText="Delete Card"
+                  withTooltip
+                  className="text-blue-500 dark:text-sky-500   dark:hover:bg-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 hover:text-blue-600 rounded-full p-[0.4rem] text-xl"
+                  onClick={handleDeleteCard}
+                >
+                  {buttons.Delete.label}
+                </Button>
+
+                <Button
+                  variant="plain"
+                  size="lg"
+                  type="button"
+                  aria-label="Edit Card"
+                  toolTipText="Edit Card"
+                  withTooltip
+                  className="text-blue-500  dark:hover:bg-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 hover:text-blue-600 rounded-full p-[0.4rem] dark:text-sky-500 text-xl"
+                  onClick={handleEditCard}
+                >
+                  {buttons.Edit.label}
+                </Button>
+
+                <Button
+                  variant="plain"
+                  size="lg"
+                  type="button"
+                  aria-label="Toggle Background Color"
+                  toolTipText="Toggle Background Color"
+                  withTooltip
+                  className="text-blue-500   dark:hover:text-gray-300 hover:text-blue-600 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] dark:text-sky-500 text-2xl "
+                  onClick={handleToggleBgColor}
+                >
+                  {toggleGradient
+                    ? buttons.ToggleBgColor.label.on
+                    : buttons.ToggleBgColor.label.off}
+                </Button>
               </div>
             </div>
           </div>
+          {/*content */}
+          <div
+            ref={divRef}
+            className=" w-full  flex  justify-center overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-full "
+          >
+            <div className="w-full  md:w-[42rem] md:-mr-[10px] px-4 md:px-0">
+              <div ref={topElementRef} />
+              <div className={`flex-1`}>
+                <NoteSection
+                  note={fullScreenCardData?.note ?? []}
+                  showTypewriterEffect={showTypewriterEffect}
+                />
+                <div ref={bottomElementRef} />
+              </div>
+            </div>
+          </div>
+          {showScrollButtons &&
+            (showScrollToBottomButton || showScrollToTopButton) && (
+              <div
+                className="absolute  md:bottom-5 bottom-4  z-[80]  w-full  md:w-[42rem] animate-opacityFadeIn"
+                onAnimationEnd={(event) => event.stopPropagation()}
+              >
+                <div className="absolute right-4 md:bottom-4 bottom-2">
+                  {showScrollToBottomButton && (
+                    <Button
+                      variant="plain"
+                      size="md"
+                      aria-label="Scroll to bottom"
+                      toolTipText="Scroll to bottom"
+                      withTooltip
+                      className="  border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300  "
+                      onClick={handleScrollToTheBottom}
+                    >
+                      {buttons.Scroll.label.Bottom}
+                    </Button>
+                  )}
+                  {showScrollToTopButton && (
+                    <Button
+                      variant="plain"
+                      size="md"
+                      aria-label="Scroll to top"
+                      toolTipText="Scroll to top"
+                      withTooltip
+                      className="  border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300  "
+                      onClick={handleScrollToTop}
+                    >
+                      {buttons.Scroll.label.Top}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
         </div>
       </article>
-      {showScrollButtons &&
-        (showScrollToBottomButton || showScrollToTopButton) && (
-          <div className="fixed lg:left-1/2 lg:translate-x-[20.5rem] lg:right-1/2 lg:bottom-8 bottom-7 right-5 z-[80] animate-opacityFadeIn">
-            {showScrollToBottomButton && parsedNote && (
-              <button
-                className="  border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300  "
-                onClick={handleScrollToTheBottom}
-              >
-                <HiOutlineArrowSmDown />
-              </button>
-            )}
-            {showScrollToTopButton && (
-              <button
-                className="  border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300 "
-                onClick={handleScrollToTop}
-              >
-                <HiOutlineArrowSmUp />
-              </button>
-            )}
-          </div>
-        )}
     </>
   );
 };
 
-export default memo(FullScreenCardView);
+export default FullScreenCardView;
+
+const buttons = {
+  Back: {
+    label: (
+      <>
+        <IoIosArrowBack className="md:-ml-[0.8rem] -ml-[0.5rem]" />
+        <p className="text-xs">Back</p>
+      </>
+    ),
+  },
+  TypingEffect: {
+    label: {
+      on: <TbKeyboard className="text-[1.3rem]" />,
+      off: <TbKeyboardOff className="text-[1.3rem]" />,
+    },
+  },
+  Delete: {
+    label: <MdOutlineDeleteOutline />,
+  },
+  Edit: {
+    label: <BiEdit />,
+  },
+  ToggleBgColor: {
+    label: {
+      on: <LuToggleRight />,
+      off: <LuToggleLeft />,
+    },
+  },
+  Scroll: {
+    label: {
+      Bottom: <HiOutlineArrowSmDown />,
+      Top: <HiOutlineArrowSmUp />,
+    },
+  },
+};

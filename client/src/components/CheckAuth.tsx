@@ -4,21 +4,21 @@ import { UserContext } from "../context/UserContext";
 
 export default function CheckAuth() {
   const navigate = useNavigate();
-  const { userInfo, isAuthenticating, setUserInfo } = useContext(UserContext);
+  const { userInfo, setUserInfo, setUserEmailAddress } =
+    useContext(UserContext);
   const location = useLocation();
   useEffect(() => {
     if (location?.state?.authFailed === true) {
       setUserInfo(null);
+      setUserEmailAddress(null);
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("wasPreviouslyLoggedIn");
       return;
     }
-    if (!isAuthenticating && userInfo) {
+    if (userInfo) {
       navigate("/");
     }
-  }, [isAuthenticating, userInfo]);
-
-  if (isAuthenticating) {
-    return null;
-  }
+  }, [userInfo]);
 
   return (
     <>

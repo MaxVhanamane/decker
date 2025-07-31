@@ -1,146 +1,426 @@
-import React, {
+import {
   Dispatch,
-  FormEvent,
-  KeyboardEvent,
   ReactNode,
   RefObject,
   SetStateAction,
   memo,
   useContext,
+  useRef,
+  useMemo,
+  useCallback,
 } from "react";
 import { BsChevronExpand } from "react-icons/bs";
 import { AudioContext } from "../../context/AudioContext";
-import { GetCardsResponseType } from "../../types/types";
+import { twMerge } from "tailwind-merge";
+import { ReactEditor, Slate, withReact } from "slate-react";
+import {
+  createEditor,
+  Editor,
+  Node,
+  Transforms,
+  Descendant,
+  Element,
+} from "slate";
+import RichTextEditor from "../editor/RichTextEditor";
+import { withInlineElements } from "../../utils/editor/plugins/withInlineElements";
+import { withTitle } from "../../utils/editor/plugins/withTitle";
+import { withTitleBackspaceProtection } from "../../utils/editor/plugins/withTitleBackspaceProtection";
+import { withResetToParagraphOnEnter } from "../../utils/editor/plugins/withResetToParagraphOnEnter";
+import { withResetToParagraphOnBackspaceWhenEmpty } from "../../utils/editor/plugins/withResetToParagraphOnBackspaceWhenEmpty";
+import type { CustomElementType } from "../../types/textEditorTypes";
+import LinkModal from "../editor/LinkModal";
+import { withVoidElements } from "../../utils/editor/plugins/withVoidElements";
+import { withClearEmptyMarks } from "../../utils/editor/plugins/withClearEmptyMarks";
+import { withHistory } from "slate-history";
+import { withUnwrapEmptyInlines } from "../../utils/editor/plugins/withUnwrapEmptyInlines";
+import { useIsSmallScreen } from "../../hooks/utility/useIsSmallScreen";
+import { withExitInlineOnSpace } from "../../utils/editor/plugins/withExitInlineOnSpace";
+
+const initialValue: Descendant[] = [
+  {
+    type: "title",
+    children: [{ text: "" }],
+  },
+  {
+    type: "paragraph",
+    children: [{ text: "" }],
+  },
+];
 
 type PropType = {
-  expandTextarea: boolean;
-  handleCreateCard: (e: FormEvent) => void;
-  data: GetCardsResponseType | null | undefined;
-  setIsTransitioning: Dispatch<SetStateAction<boolean>>;
-  setExpandTextArea: Dispatch<SetStateAction<boolean>>;
-  setTitle: Dispatch<SetStateAction<string>>;
-  title: string;
-  note: string;
-  setNote: Dispatch<SetStateAction<string>>;
-  adjustTextareaHeightOnPasteAndExpand: () => void;
+  expandEditor: boolean;
+  handleCreateCard: (
+    resetEditor: () => void,
+    restoreUnsavedContent: (newNote: Descendant[]) => void
+  ) => void;
+  setExpandEditor: Dispatch<SetStateAction<boolean>>;
+  setNote: Dispatch<SetStateAction<Descendant[]>>;
+  expandEditorToMaxHeight: () => void;
   children: ReactNode;
   height: number;
-  textareaRef: RefObject<HTMLTextAreaElement>;
-  inputElementRef: RefObject<HTMLInputElement>;
+  setHeight: Dispatch<SetStateAction<number>>;
+  richTextWrapperRef: RefObject<HTMLDivElement>;
+  setShowHyperlinkModal: Dispatch<SetStateAction<boolean>>;
+  showHyperlinkModal: boolean;
+  handleTransitionEnd: () => void;
 };
 
 const CardInput = ({
-  expandTextarea,
+  expandEditor,
   handleCreateCard,
-  data,
-  setIsTransitioning,
-  setExpandTextArea,
-  setTitle,
-  title,
-  note,
+  setExpandEditor,
   setNote,
-  adjustTextareaHeightOnPasteAndExpand,
+  expandEditorToMaxHeight,
   children,
   height,
-  textareaRef,
-  inputElementRef,
+  setHeight,
+  richTextWrapperRef,
+  showHyperlinkModal,
+  setShowHyperlinkModal,
+  handleTransitionEnd,
 }: PropType) => {
+  const isSmallScreen = useIsSmallScreen();
+  const editorRef = useRef<HTMLDivElement>(null);
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const hasEditorOpened = useRef(false);
+  const isHeightTransitioning = useRef(true);
+  // Memoize editor creation to prevent recreation on every render
+  const editor = useMemo(() => {
+    return withResetToParagraphOnBackspaceWhenEmpty(
+      withResetToParagraphOnEnter(
+        withTitleBackspaceProtection(
+          withTitle(
+            withInlineElements(
+              withUnwrapEmptyInlines(
+                withClearEmptyMarks(
+                  withVoidElements(
+                    withExitInlineOnSpace(
+                      withReact(withHistory(createEditor()))
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+  }, []);
+
+  const { maxHeight, maxHeightSmallScreen } = useMemo(() => {
+    const baseHeight = window.innerHeight - 64 - 16 - 16 - 40;
+    return {
+      maxHeight: baseHeight,
+      maxHeightSmallScreen: baseHeight - 56,
+    };
+  }, []);
+
+  const maxExpandableHeight = isSmallScreen ? maxHeightSmallScreen : maxHeight;
+  const isMaxHeightReached = height === maxExpandableHeight;
+
+  const adjustEditorHeight = useCallback(() => {
+    if (
+      !editorRef.current ||
+      !expandEditor ||
+      (!richTextWrapperRef?.current && !isHeightTransitioning.current)
+    ) {
+      return;
+    }
+
+    const { scrollHeight, clientHeight } = editorRef.current;
+
+    if (
+      scrollHeight > clientHeight &&
+      maxExpandableHeight > scrollHeight &&
+      !isHeightTransitioning.current
+    ) {
+      isHeightTransitioning.current = true;
+      setHeight((previousHeight) => {
+        const remainingSpace = maxExpandableHeight - previousHeight;
+        if (remainingSpace <= 0) return previousHeight;
+
+        const increment = remainingSpace >= 120 ? 120 : remainingSpace;
+        const newHeight = previousHeight + increment;
+
+        return Math.min(newHeight, maxExpandableHeight);
+      });
+    }
+    if (scrollHeight > maxExpandableHeight && height !== maxExpandableHeight) {
+      setHeight(maxExpandableHeight);
+    }
+  }, [
+    expandEditor,
+    isSmallScreen,
+    maxHeight,
+    maxHeightSmallScreen,
+    richTextWrapperRef,
+    setHeight,
+    height,
+  ]);
+
+  const saveToLocalStorage = useCallback((value: Descendant[]) => {
+    try {
+      const content = JSON.stringify(value);
+      localStorage.setItem("content", content);
+    } catch (error) {
+      console.warn("Failed to save to localStorage:", error);
+    }
+  }, []);
+
+  const ensureValidEditor = useCallback(() => {
+    if (editor.children.length === 0) {
+      Transforms.insertNodes(editor, {
+        type: "paragraph",
+        children: [{ text: "" }],
+      });
+    }
+  }, [editor]);
+
+  const handleChange = useCallback(
+    (value: Descendant[]) => {
+      // if (
+      //   editor.selection &&
+      //   ReactEditor.isFocused(editor) &&
+      //   !Range.isCollapsed(editor.selection)
+      // ) {
+      //   setShowHoveringToolbar(true);
+      // }
+
+      // Check if there are content changes (not just selection changes)
+      const isAstChange = editor.operations.some(
+        (op) => "set_selection" !== op.type
+      );
+
+      if (isAstChange) {
+        saveToLocalStorage(value);
+      }
+
+      // Ensure at least one valid node exists
+      ensureValidEditor();
+      setNote(value);
+
+      // Handle editor height adjustment
+      if (value.length > 2 && !isMaxHeightReached) {
+        adjustEditorHeight();
+      }
+    },
+    [
+      editor,
+      saveToLocalStorage,
+      ensureValidEditor,
+      setNote,
+      adjustEditorHeight,
+      isMaxHeightReached,
+    ]
+  );
+  const resetEditor = useCallback(() => {
+    // Directly replace the children
+    editor.children = initialValue;
+
+    // Normalize to ensure consistent state
+    Editor.normalize(editor, { force: true });
+
+    // Trigger onChange to update the state
+    editor.onChange();
+
+    // Set selection to start
+    Transforms.select(editor, Editor.start(editor, []));
+  }, [editor]);
+
+  const restoreUnsavedContent = (newContent: Descendant[]) => {
+    // Set the children directly
+    editor.children = newContent;
+
+    // Reset selection to avoid invalid selection errors
+    editor.selection = null;
+
+    // Trigger onChange to update React state and re-render
+    editor.onChange();
+  };
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      handleCreateCard(resetEditor, restoreUnsavedContent);
+    },
+    [handleCreateCard]
+  );
+
+  const handleEditorClick = useCallback(() => {
+    setExpandEditor(true);
+    hasEditorOpened.current = true;
+
+    if (isPlayingAudioAllowed && !expandEditor) {
+      setTimeout(() => {
+        handlePlayAudio("open", "/cards");
+      }, 100);
+    }
+  }, [setExpandEditor, isPlayingAudioAllowed, expandEditor, handlePlayAudio]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if ((e.key === "Enter" || e.key === " ") && !expandEditor) {
+        e.preventDefault();
+        handleEditorClick();
+      }
+    },
+    [expandEditor, handleEditorClick]
+  );
+  const handleEditorContentClick = useCallback(
+    (e: React.MouseEvent) => {
+      const domRange = window.getSelection()?.getRangeAt(0);
+      if (!domRange) return;
+
+      // Check if editor is empty
+      if (editor.children.length === 0) return;
+
+      // Get the last top-level element (not the deepest node)
+      const lastElementPath = [editor.children.length - 1];
+      const lastElementEntry = Editor.node(editor, lastElementPath);
+      if (!lastElementEntry) return;
+
+      const [lastElement] = lastElementEntry;
+      // Simple check: if last element is a code-block, always allow adding paragraph
+      // For other elements, check if they have content
+      const shouldAllowInsert =
+        (Element.isElement(lastElement) && lastElement.type === "code-block") ||
+        Node.string(lastElement).trim() !== "";
+
+      if (shouldAllowInsert) {
+        try {
+          const domNode = ReactEditor.toDOMNode(editor, lastElement);
+          const rect = domNode.getBoundingClientRect();
+
+          // Check if click is clearly below last node
+          if (e.clientY > rect.bottom + 5) {
+            const newParagraph: CustomElementType = {
+              type: "paragraph",
+              children: [{ text: "" }],
+            };
+
+            const insertPath = [editor.children.length];
+            Transforms.insertNodes(editor, newParagraph, { at: insertPath });
+
+            const point = Editor.start(editor, insertPath);
+            Transforms.select(editor, { anchor: point, focus: point });
+            ReactEditor.focus(editor);
+          }
+        } catch (error) {
+          // Handle case where DOM node can't be found
+          console.debug("Could not get DOM node for click handling");
+        }
+      }
+    },
+    [editor]
+  );
+
+  const shouldShowScrollbar = useMemo(() => {
+    return (
+      (isSmallScreen && height === maxHeightSmallScreen) ||
+      (!isSmallScreen && height === maxHeight)
+    );
+  }, [isSmallScreen, height, maxHeightSmallScreen, maxHeight]);
+
   return (
-    <div
-      className={`${
-        expandTextarea ? "mt-4" : "mt-2"
-      } w-full px-4  mx-auto transition-all duration-1000  `}
-    >
-      <form
-        onSubmit={handleCreateCard}
-        className="flex flex-col  gap-4 justify-center items-center  "
-      >
-        {/* <label htmlFor="title" className=" font-bold text-teal-600 dark:text-sky-400">
-      Card details
-    </label> */}
-        <div className="flex flex-col ">
+    <Slate editor={editor} initialValue={initialValue} onChange={handleChange}>
+      <div className="mt-4 w-full px-4 mx-auto min-h-[12rem] relative">
+        <div className="absolute z-50 top-0 left-0">
+          <div id="dropdownPortalContainer" className="pointer-events-auto" />
+        </div>
+
+        <form
+          onSubmit={handleFormSubmit}
+          className="flex flex-col gap-4 justify-center items-center relative"
+        >
           <div
-            onTransitionEnd={() => {
-              if (data && "cards" in data && data?.cards?.length === 0) {
-                setIsTransitioning(false);
-              }
-            }}
-            className={`transition duration-1000 delay-1000 ${
-              expandTextarea
-                ? "h-8 p-1 border-t-2 opacity-100"
-                : "h-8 p-0 translate-y-full border-t-2"
-            } flex item-center justify-end pr-4 border-r-2 border-l-2 border-teal-500 dark:border-sky-400 rounded-t-md gap-2 lg:w-[40vw] md:w-[70vw] w-[95vw] dark:bg-slate-900`}
+            className={twMerge(
+              "flex flex-col relative transition-[transform] duration-1000 will-change-[transform]",
+              expandEditor
+                ? "-translate-y-0"
+                : "-translate-y-14 md:-translate-y-0 delay-1000"
+            )}
           >
-            {children}
-          </div>
-          <div
-            onClick={() => {
-              setExpandTextArea(true);
-              if (isPlayingAudioAllowed && !expandTextarea) {
-                setTimeout(() => {
-                  handlePlayAudio("open", "/cards");
-                }, 100);
-              }
-            }}
-            className="h-10 lg:max-w-[40vw] md:max-w-[70vw] max-w-[95vw] z-10 relative"
-          >
-            <input
-              ref={inputElementRef}
-              type="text"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setTitle(e.target.value);
-              }}
-              //When the user hits 'Enter' in the input field, we will first prevent the form from submitting, as hitting 'Enter' in an input
-              //field typically triggers form submission by default. Afterwards, we will shift the focus from the input field to the textarea.
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  textareaRef.current?.focus();
+            <div
+              className={twMerge(
+                "transition-[transform,opacity] duration-1000 flex md:h-10 h-20 items-center justify-end border-r border-l dark:border-[#5fb1d6] border-sky-500 rounded-t-md  md:w-[75vw] md:max-w-[44rem] w-[95vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
+                expandEditor
+                  ? "border-t md:delay-1000 delay-1000"
+                  : "p-0 translate-y-full border-t pointer-events-none md:delay-1000 delay-[0s]"
+              )}
+            >
+              {children}
+            </div>
+
+            <div
+              onTransitionEnd={(e) => {
+                if (e.propertyName === "height") {
+                  isHeightTransitioning.current = false;
+                }
+
+                if (e.propertyName === "height" && !expandEditor) {
+                  handleTransitionEnd();
                 }
               }}
-              value={title}
-              readOnly={!expandTextarea}
-              className={`${
-                expandTextarea
-                  ? "border-b-0 rounded-none text-left border-t-2 rounded-t-md mt-0"
-                  : "border-b-2 border-t-2 rounded-b-md rounded-t-md text-center cursor-pointer"
-              } transition-[border-radius]  h-10 px-3 py-2  pb-2 w-full  bg-[#fcfefc]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400   font-semibold outline-none text-base text-gray-800   dark:bg-slate-900 dark:text-gray-50 z-10 `}
-              placeholder={`${
-                expandTextarea ? "Title" : "Craft an Elegant Note"
-              } `}
-            />
-            {!expandTextarea && (
-              <div className="absolute  top-1/2 -translate-y-1/2 right-8 cursor-pointer  ">
-                <BsChevronExpand className="dark:text-gray-100 text-teal-600 " />
+              onClick={handleEditorClick}
+              onKeyDown={handleKeyDown}
+              ref={richTextWrapperRef}
+              tabIndex={-1}
+              className={twMerge(
+                "md:w-[75vw] md:max-w-[44rem] bg-white w-full border dark:border-[#5fb1d6] border-sky-500 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500",
+                expandEditor
+                  ? "before:opacity-0 before:delay-0 delay-[0s]"
+                  : "before:delay-[1.6s] h-[85px] md:h-[45px] delay-1000 md:delay-[0s]",
+                hasEditorOpened.current &&
+                  (expandEditor
+                    ? "animate-rounded-top-out"
+                    : "md:animate-rounded-top-in animate-rounded-top-in-mobile")
+              )}
+              style={{
+                height: expandEditor ? `${height}px` : undefined,
+              }}
+              onPaste={expandEditorToMaxHeight}
+            >
+              <div
+                onClick={handleEditorContentClick}
+                className={twMerge(
+                  "transition-all duration-500 relative h-full w-full px-4 rounded-md  ",
+                  expandEditor ? "opacity-100" : "opacity-0",
+                  shouldShowScrollbar
+                    ? "animate-scrollbar-delayed dark:dark-scrollbar light-scrollbar scrollbar-gutter"
+                    : "overflow-y-hidden"
+                )}
+                data-editor-parent-create
+                ref={editorRef}
+              >
+                <RichTextEditor
+                  setShowHyperlinkModal={setShowHyperlinkModal}
+                  expandEditorToMaxHeight={expandEditorToMaxHeight}
+                  mode="create"
+                />
+                {/* <div className="absolute z-50 top-0 left-0">
+                  <div
+                    id="hoveringToolbarPortalContainer"
+                    className="pointer-events-auto"
+                  />
+                </div> */}
               </div>
+
+              <div
+                className={twMerge(
+                  "absolute top-1/2 -translate-y-1/2 right-8 cursor-pointer z-20 opacity-100 transition-all duration-500",
+                  expandEditor ? "opacity-0 delay-0" : "delay-[1.6s]"
+                )}
+              >
+                <BsChevronExpand className="dark:text-gray-100 text-gray-500" />
+              </div>
+            </div>
+
+            {showHyperlinkModal && (
+              <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
             )}
           </div>
-          <textarea
-            className={` ${
-              expandTextarea
-                ? " py-2 border-b-2 rounded-t-0 opacity-100"
-                : "py-0 border-b-2"
-            } lg:w-[40vw]  md:w-[70vw] bg-[#fcfefc] w-[95vw]  border-r-2 border-l-2  border-teal-500 dark:border-sky-400 rounded-b-md  outline-none  text-gray-800 px-3 text-base  dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border] duration-1000 overflow-hidden  -mt-1 overflow-y-auto `}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-              setNote(e.target.value);
-            }}
-            ref={textareaRef}
-            style={{
-              height: expandTextarea ? height + "px" : "0",
-            }}
-            value={note}
-            onPaste={adjustTextareaHeightOnPasteAndExpand}
-            placeholder="Note"
-          ></textarea>
-        </div>
-      </form>
-      {data && "cards" in data && data?.cards?.length > 0 ? (
-        <h1 className="font-bold text-xl text-gray-800 mt-8 mb-6 dark:text-gray-50 ">
-          {data?.title}
-        </h1>
-      ) : null}
-    </div>
+        </form>
+      </div>
+    </Slate>
   );
 };
 

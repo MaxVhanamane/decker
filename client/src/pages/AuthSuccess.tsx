@@ -2,31 +2,34 @@ import { useNavigate } from "react-router-dom";
 import { useContext, useEffect } from "react";
 import { TiTick } from "react-icons/ti";
 import { request } from "../utils/fetch-utils";
-import { AlertData, userData } from "../types/types";
+import type { userData } from "../types/types";
 import { UserContext } from "../context/UserContext";
-import { AlertContext } from "../context/AlertContext";
+import { ShowToastContext } from "../context/ToastNotificationContext";
+import { UserStore } from "../utils/userStore";
+
+type userInfo = userData & { email: string };
 
 export default function AuthSuccess() {
-  const { setUserInfo, setShowInstallAppButton, setIsAuthenticating } =
+  const { setUserInfo, setShowInstallAppButton, setUserEmailAddress } =
     useContext(UserContext);
-  const { setAlert } = useContext(AlertContext);
+  const { showToast } = useContext(ShowToastContext);
   const navigate = useNavigate();
-  const getUser = async (): Promise<userData | null> => {
+
+  const getUser = async (): Promise<userInfo | null> => {
     try {
       const userData = await request.get("/getuser");
-      setUserInfo(userData.data);
-      setIsAuthenticating(false);
-
-      return userData.data;
+      const { email } = (await request.get("/user/email")).data;
+      return { ...userData.data, email };
     } catch (error) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message:
           "Some error occured while fetching user details, please login again to continue.",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return null;
     }
   };
@@ -40,24 +43,33 @@ export default function AuthSuccess() {
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
+
     (async () => {
       const userInfo = await getUser();
+
       // These if-else conditions are used to prevent the user from accessing this page directly via the URL.
-      if (userInfo?.email) {
+      if (userInfo?.email && userInfo) {
+        const { email, ...rest } = userInfo;
+        setUserInfo(rest);
+        UserStore.saveUser({
+          profile_picture_url: rest.profile_picture,
+          username: rest.username,
+        });
+        setUserEmailAddress(email);
+
         timeout = setTimeout(() => {
           navigate("/", { replace: true });
-        }, 3000);
+        }, 2000);
       } else {
-        // Setting isAuthenticating to false is crucial. If I don't set it to false, in the CheckAuth component, it will have a true value. This could lead to a blank page since the /login page passes through CheckAuth, and if isAuthenticating is true, checkAuth component returns null.
-        setIsAuthenticating(false);
         navigate("/login", { replace: true });
       }
-
-      return () => clearTimeout(timeout);
     })();
+
+    return () => clearTimeout(timeout);
   }, []);
+
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-[#fcfefc] ">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-white ">
       <div className="flex items-center justify-center rounded-full bg-green-700 text-white ">
         <p className="text-4xl">
           <TiTick />

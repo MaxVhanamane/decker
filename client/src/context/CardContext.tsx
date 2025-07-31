@@ -1,30 +1,26 @@
-import {
-  Dispatch,
-  ReactNode,
-  RefObject,
-  createContext,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Dispatch, ReactNode, createContext, useMemo, useState } from "react";
 
 type CardContextType = {
+  undoCardCardId: string | null;
   indexOfCardForDeletion: number | null;
+  shouldTrashCanRotate: boolean;
   setIndexOfCardForDeletion: Dispatch<React.SetStateAction<number | null>>;
-  deleteConfirmationModalForCard: RefObject<HTMLDivElement>;
+  setUndoCardId: Dispatch<React.SetStateAction<string | null>>;
+  setShouldTrashCanRotate: Dispatch<React.SetStateAction<boolean>>;
 };
 
 export const CardContext = createContext<CardContextType>({
+  undoCardCardId: null,
+  shouldTrashCanRotate: false,
   indexOfCardForDeletion: null,
+  setUndoCardId: () => {},
   setIndexOfCardForDeletion: () => {},
-  deleteConfirmationModalForCard: {
-    current: null,
-  } as RefObject<HTMLDivElement>,
+  setShouldTrashCanRotate: () => {},
 });
 
 const CardContextProvider = ({ children }: { children: ReactNode }) => {
-  const deleteConfirmationModalForCard = useRef<HTMLDivElement>(null);
-
+  const [undoCardCardId, setUndoCardId] = useState<string | null>(null);
+  const [shouldTrashCanRotate, setShouldTrashCanRotate] = useState(false);
   const [indexOfCardForDeletion, setIndexOfCardForDeletion] = useState<
     number | null
   >(null);
@@ -33,12 +29,18 @@ const CardContextProvider = ({ children }: { children: ReactNode }) => {
     return {
       indexOfCardForDeletion,
       setIndexOfCardForDeletion,
-      deleteConfirmationModalForCard,
+      shouldTrashCanRotate,
+      setShouldTrashCanRotate,
+      undoCardCardId,
+      setUndoCardId,
     };
   }, [
     indexOfCardForDeletion,
     setIndexOfCardForDeletion,
-    deleteConfirmationModalForCard,
+    shouldTrashCanRotate,
+    setShouldTrashCanRotate,
+    undoCardCardId,
+    setUndoCardId,
   ]);
 
   return (

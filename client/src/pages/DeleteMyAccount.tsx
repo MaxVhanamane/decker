@@ -3,12 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FormEvent, useContext } from "react";
 import { ChangeEvent } from "react";
 import { request } from "../utils/fetch-utils";
-import { ThemeContext, UserContext } from "../context/UserContext";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData } from "../types/types";
+import { UserContext } from "../context/UserContext";
 import ReCAPTCHA from "react-google-recaptcha";
 import { OfflineContext } from "../context/OfflineContext";
 import { CustomError } from "../utils/customError";
+import { ThemeContext } from "../context/ThemeContext";
+import { ShowToastContext } from "../context/ToastNotificationContext";
 
 export default function DeleteMyAccount() {
   const [email, setEmail] = useState("");
@@ -17,11 +17,12 @@ export default function DeleteMyAccount() {
   const [showVerifyOTPButton, setShowVerifyOTPButton] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const recaptchaRef: RefObject<ReCAPTCHA> = useRef(null);
-  const { userInfo, setUserInfo } = useContext(UserContext);
+  const { userEmailAddress, setUserInfo, setUserEmailAddress } =
+    useContext(UserContext);
   const { theme } = useContext(ThemeContext);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
-  const { setAlert } = useContext(AlertContext);
+  const { showToast } = useContext(ShowToastContext);
   const [captcha, setCaptcha] = useState(false);
   const location = useLocation();
   const from = location.state?.from || "/";
@@ -38,43 +39,46 @@ export default function DeleteMyAccount() {
   const handleGetOTP = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
       }
       return;
     }
 
-    if (userInfo?.email === email) {
+    if (userEmailAddress === email) {
       try {
         setShowWaitMessage(true);
         const res = await request.post("/generateaccountdeletionotp", {
           email,
         });
         if (res.data.success) {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "success",
-            show: true,
+          showToast({
             message: res.data.message,
+            severity: "success",
             autoHideDuration: 5000,
-          }));
+            position: "top-center",
+            animationStyle: "scale-up",
+            theme: "auto",
+          });
           setShowVerifyOTPButton(true);
           setShowWaitMessage(false);
         } else {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "error",
-            show: true,
+          showToast({
             message: res.data.message,
-            autoHideDuration: 6000,
-          }));
+            severity: "error",
+            autoHideDuration: 5000,
+            position: "top-center",
+            animationStyle: "scale-up",
+            theme: "auto",
+          });
           setShowWaitMessage(false);
         }
       } catch (error) {
@@ -83,29 +87,35 @@ export default function DeleteMyAccount() {
           "Your session has expired. Please log in again to continue."
         ) {
           setUserInfo(null);
+          setUserEmailAddress(null);
+          localStorage.removeItem("userInfo");
+          localStorage.removeItem("wasPreviouslyLoggedIn");
+
           navigate("/sessionexpired");
         } else {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "error",
-            show: true,
+          showToast({
             message:
               (error as CustomError)?.message ||
               "Something went wrong please try again!",
-            autoHideDuration: 6000,
-          }));
+            severity: "error",
+            autoHideDuration: 5000,
+            position: "top-center",
+            animationStyle: "scale-up",
+            theme: "auto",
+          });
         }
         setShowWaitMessage(false);
       }
     } else {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message:
           "The email you entered does not match with your Logged-in email. Please enter the correct email address to proceed",
+        severity: "error",
         autoHideDuration: 6000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       setShowWaitMessage(false);
     }
     // reset the captcha
@@ -116,13 +126,14 @@ export default function DeleteMyAccount() {
 
   const handleOTPVerification = async () => {
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
     setIsDeletingAccount(true);
@@ -137,19 +148,23 @@ export default function DeleteMyAccount() {
           const res = await request.post("/deleteaccount", { email });
           if (res?.data?.success) {
             setUserInfo(null);
+            setUserEmailAddress(null);
+            localStorage.removeItem("userInfo");
+            localStorage.removeItem("wasPreviouslyLoggedIn");
             navigate("/accountdeletionsuccess", {
               replace: true,
               state: { accountDeletedSuccessfully: true },
             });
           }
         } else {
-          setAlert((preval: AlertData) => ({
-            ...preval,
-            severity: "error",
-            show: true,
+          showToast({
             message: res?.data?.message,
+            severity: "error",
             autoHideDuration: 5000,
-          }));
+            position: "top-center",
+            animationStyle: "scale-up",
+            theme: "auto",
+          });
           if (
             res?.data?.message ===
             "Your OTP has expired! Please request a new one to continue."
@@ -164,39 +179,46 @@ export default function DeleteMyAccount() {
           "Your session has expired. Please log in again to continue."
         ) {
           setUserInfo(null);
+          setUserEmailAddress(null);
+          localStorage.removeItem("userInfo");
+          localStorage.removeItem("wasPreviouslyLoggedIn");
+
           navigate("/sessionexpired");
         }
 
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message:
             (error as CustomError)?.message || "OTP verification failed!",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
       }
     } else {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "Invalid OTP. Please enter a 6-digit OTP to proceed.",
-        autoHideDuration: 6000,
-      }));
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
     }
     setIsDeletingAccount(false);
   };
 
   const handleCaptchaChange = () => {
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
     setCaptcha(true);
@@ -204,13 +226,14 @@ export default function DeleteMyAccount() {
 
   const handleCaptchaExpired = () => {
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
     setCaptcha(false);
@@ -226,23 +249,18 @@ export default function DeleteMyAccount() {
         <div className=" px-2 h-full mx-3">
           <div className="flex justify-center items-center flex-wrap h-full  text-gray-800 pt-[3.45rem]">
             <div className="w-full md:w-6/12">
-              <div className="block   rounded-lg shadow-2xl bg-[#fcfefc] dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
+              <div className="block   rounded-lg shadow-lg bg-white border-2 border-sky-500 dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
                 <div className="flex justify-center items-center ">
                   <div className=" px-4 md:px-0">
                     <div className="md:p-12 p-4 md:mx-6">
                       <div className="flex items-center justify-center flex-col rounded-full">
                         <img
-                          src={`${
-                            localStorage.getItem("theme") === "dark" ||
-                            localStorage.getItem("theme") === null
-                              ? "/decker_logo_dark.png"
-                              : "/decker_logo_light.png"
-                          }`}
+                          src="/decker_logo.png"
                           className="w-7 h-7 object-contain"
                           alt="decker logo"
                         />
 
-                        <h2 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
+                        <h2 className="font-bold text-2xl text-sky-500 ">
                           Decker
                         </h2>
 
@@ -270,7 +288,7 @@ export default function DeleteMyAccount() {
                             <input
                               onChange={handleChange}
                               type="email"
-                              className=" block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50 dark:focus:dark:bg-slate-900"
+                              className=" block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50 dark:focus:dark:bg-slate-900"
                               id="email"
                               name="email"
                               value={email}
@@ -300,7 +318,7 @@ export default function DeleteMyAccount() {
                               </div>
                             )}
                             <button
-                              className={` mt-3 flex items-center justify-center px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none  disabled:cursor-not-allowed ${
+                              className={` mt-3 flex items-center justify-center px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md  active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-sky-600 hover:bg-sky-700 outline-none  disabled:cursor-not-allowed ${
                                 !showWaitMessage
                                   ? "dark:disabled:bg-gray-500 disabled:bg-gray-500"
                                   : ""
@@ -363,7 +381,7 @@ export default function DeleteMyAccount() {
                             <input
                               onChange={handleChange}
                               type="text"
-                              className=" block md:w-1/2 w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                              className=" block md:w-1/2 w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
                               id="otp"
                               name="otp"
                               value={otp}
@@ -375,7 +393,7 @@ export default function DeleteMyAccount() {
                           <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
                             <button
                               onClick={handleOTPVerification}
-                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-teal-600 hover:bg-teal-700 dark:bg-sky-600 dark:hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
+                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-sky-600 hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
                               type="button"
                               aria-label="Verify OTP and Delete My Account"
                               disabled={isDeletingAccount}

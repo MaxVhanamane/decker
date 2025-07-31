@@ -1,156 +1,223 @@
+import { Descendant } from "slate";
 
-import { Dispatch } from 'react';
 export type userData = {
   username: string,
   profile_picture: string,
-  email: string,
-}
-
-export type AlertData = {
-  severity: string,
-  show: boolean,
-  message: string,
-  autoHideDuration: number
-};
-export type AlertType = {
-  alert: AlertData
-  setAlert: Dispatch<React.SetStateAction<AlertData>>
 }
 
 export type DeckType = {
-  _id: string,
   title: string,
   pinned: boolean,
-  isProcessing?: boolean
-}
-
-export type DeckAndCardType = {
-  _id: string,
-  title: string,
-  cards: { title: string, note: string, cardId: string, _id: string }[],
-  pinned: boolean,
-}
-
-export type DeckTypeWithIndex = {
-  _id: string,
-  title: string,
-  pinned: boolean,
-  index: number
-  email: string,
-  date: Date
-  cards: { title: string, note: string, cardId: string, _id: string }[]
-}
-
-export type CardDataType = {
-  title: string,
-  cards: {
-    title: string,
-    note: string,
-    cardId: string
-    _id: string
-  }[]
+  createdAt: string,
+  cardsCount: number,
+  deckId: string
+  isProcessing?: boolean,
 }
 
 
-
-export type FetchErrorType = {
-  message: string;
-  response: {
-    data: {
-      message: string;
-    };
-    status: number;
-  };
-};
-
-export type SearchResultCardsType = {
-  deck_id: string;
+export type UndoDeckType = {
   title: string;
-  note: string;
-  cardIndex: number;
-  cardId: string;
-  _id: string;
-  deckTitle: string;
-};
-
-export type SearchResultDeckType = {
-  deck_id: string;
-  title: string;
+  deckId: string;
   pinned: boolean;
-  cards: {
-    title: string;
-    note: string;
-    _id: string;
-    cardId: string
-  }[] | [];
-};
+  createdAt: string;
+  cardsCount: number;
+  index: number | null,
+  indexOfDeletedDeckSearchResult?: number,
+  searchParams?: {
+    query: string;
+    page: number;
+  };
+}
+
+
+export type CardListType = {
+  title: string,
+  cards: CardContentType[]
+}
+
+
+//bulb
+export type bulbColors = "red" | "yellow" | "lime" | "fuchsia" | "violet" | "cyan";
 
 //cards
-export type ContentType = {
-  title: string;
-  note: string;
-  _id: string;
-  cardId: string;
-};
 
+export type CardContentType = {
+  note: Descendant[]; cardId: string, createdAt: string
+}
 
-export type ContentTypeForEdit = ContentType & {
+export type ContentTypeForEdit = CardContentType & {
   cardIndex: number | null;
 }
 
-export type CardsDataType = {
-  _id: string;
-  title: string;
-  cards: { title: string; note: string; cardId: string; _id: string }[];
-};
+export type DeleteDeckPayload = {
+  deckId: string;
+  searchParams?: {
+    query: string;
+    page: number;
+  };
+}
 
 export type UndoCardPayloadData = {
-  deck_id: string;
-  content: {
-    title: string;
-    note: string;
-    cardId: string;
-    _id: string
-  };
+  deckId: string;
+  content: CardContentType;
   index: number;
-};
-
-export type DeckTypeForSearch = {
-  title: string;
-  deck_id: string;
-  cards:
-  | []
-  | {
-    title: string;
-    note: string;
-    _id: string;
-    cardId: string;
-  }[];
+  searchParams?: {
+    query: string;
+    page: number;
+    undoCardDetails: CardSearchResult;
+    indexOfCardInSearchResult: number;
+  };
 };
 
 export type GetCardsResponseType = {
   title: string;
-  cards: { title: string; note: string; cardId: string; _id: string }[];
-  _id: string;
+  cards: CardContentType[];
+  deckId: string;
 };
 
 
 export type CreateCardPayloadType = {
-  deck_id: string;
+  deckId: string;
   content: {
-    title: string;
-    note: string;
+    note: Descendant[];
     cardId: string;
   };
 };
 
-export type moveCardPayloadDataType = {
-  deleteIndex: number;
-  moveIndex: number;
-  deck_id: string;
+export type moveCardPayloadType = {
+  currentIndex: number;
+  newIndex: number;
+  deckId: string;
 };
 
-export type DeleteCardPayloadType = {
-  deck_id: string;
-  index: number;
+// Toast
+export type PositionValues = | "top-left"
+  | "top-right"
+  | "top-center"
+  | "bottom-left"
+  | "bottom-right"
+  | "bottom-center";
+
+export type AutoHideDurationValues = | 1000
+  | 2000
+  | 3000
+  | 4000
+  | 5000
+  | 6000
+  | 7000
+  | 8000
+  | 9000
+  | 10000
+
+export type ToastHandlerType = {
+  message: string | null,
+  severity: "info" | "success" | "warning" | "error" | null,
+  autoHideDuration?: AutoHideDurationValues,
+  position?: PositionValues,
+  buttonText?: string,
+  buttonHandler?: (() => void) | null;
+  animationStyle?: "slide" | "scale-up",
+  theme?: "auto" | "colored"
+  progressBar?: "show" | "hide",
 };
+
+export type ToastMessageType = {
+  message: string;
+  severity: "info" | "success" | "warning" | "error";
+  autoHideDuration: AutoHideDurationValues;
+  position: PositionValues;
+  buttonText?: string;
+  buttonHandler?: (() => void) | null;
+  id: string;
+  animationStyle?: "slide" | "scale-up";
+  theme?: "auto" | "colored";
+  progressBar: "show" | "hide";
+};
+
+export type CurrentDraggingCardType = {
+  isDragging: boolean;
+  isDraggingCardOverDeleteArea: boolean;
+  card: { title: string; note: Descendant[], createdAt: string };
+} | null;
+
+
+export type CardType = {
+  title: string;
+  cards:
+  | []
+  | CardContentType[];
+  deckId: string;
+}
+  | undefined
+
+
+export type DeleteDeckResponseType = {
+  undoToken: string,
+  deletedDeckInfo: {
+    title: string;
+    deckId: string;
+    pinned: boolean;
+    createdAt: string;
+    cardsCount: number;
+    originalIndexOnServer: number;
+  };
+  success: boolean;
+};
+
+//Search result 
+export type DeckSearchResult = {
+  type: 'deck';
+  deckId: string;
+  title: string;
+  pinned: boolean;
+  createdAt: string;
+  cardsCount: number;
+};
+
+export type ChapterSearchResult = {
+  type: 'chapter';
+  deckId: string;
+  deckTitle: string;
+  chapterId: string;
+  chapterTitle: string;
+  createdAt: string;
+};
+
+export type DeckCardSearchResult = {
+  type: 'deck-card';
+  deckId: string;
+  deckTitle: string;
+  cardId: string;
+  note: Descendant[];
+  createdAt: string;
+  cardIndex: number;
+};
+
+export type ChapterCardSearchResult = {
+  type: 'chapter-card';
+  deckId: string;
+  deckTitle: string;
+  chapterId: string;
+  chapterTitle: string;
+  cardId: string;
+  note: Descendant[];
+  createdAt: string;
+  cardIndex: number;
+};
+export type CardSearchResult = DeckCardSearchResult | ChapterCardSearchResult;
+export type SearchResult = DeckSearchResult | ChapterSearchResult | CardSearchResult;
+
+
+export interface responseData {
+  results: SearchResult[];
+  total: number;
+  page: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export interface SearchResponse {
+  success: boolean;
+  data: responseData;
+}
+

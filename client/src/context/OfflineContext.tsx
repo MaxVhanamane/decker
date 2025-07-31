@@ -4,14 +4,12 @@ import React, {
   useEffect,
   Dispatch,
   ReactNode,
+  useMemo,
 } from "react";
-import { DeckTypeForSearch } from "../types/types";
 
 interface ContexType {
   isOnline: boolean;
   setIsOnline: Dispatch<React.SetStateAction<boolean>>;
-  deck: null | DeckTypeForSearch;
-  setDeck: Dispatch<React.SetStateAction<null | DeckTypeForSearch>>;
 }
 type OfflineContextProvider = {
   children: ReactNode;
@@ -19,13 +17,11 @@ type OfflineContextProvider = {
 export const OfflineContext = createContext<ContexType>({
   isOnline: true,
   setIsOnline: () => {},
-  deck: null,
-  setDeck: () => {},
 });
 
 const OfflineProvider = ({ children }: OfflineContextProvider) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [deck, setDeck] = useState<null | DeckTypeForSearch>(null);
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -39,8 +35,12 @@ const OfflineProvider = ({ children }: OfflineContextProvider) => {
     };
   }, []);
 
+  const contextValue = useMemo(() => {
+    return { isOnline, setIsOnline };
+  }, [isOnline, setIsOnline]);
+
   return (
-    <OfflineContext.Provider value={{ isOnline, setIsOnline, deck, setDeck }}>
+    <OfflineContext.Provider value={contextValue}>
       {children}
     </OfflineContext.Provider>
   );
@@ -51,7 +51,6 @@ export default OfflineProvider;
 // const pingServer = async () => {
 //   try {
 //     const response = await request.get("/ping");
-//     console.log(response);
 //     if (response.status === 200) {
 //       setIsOnline(true);
 //     }

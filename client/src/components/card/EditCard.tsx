@@ -1,76 +1,144 @@
 import React, {
-  ChangeEvent,
   Dispatch,
-  MouseEvent,
   MutableRefObject,
+  SetStateAction,
   forwardRef,
   memo,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
-import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
-import { BiCodeCurly } from "react-icons/bi";
-import { BsCheckLg, BsTypeUnderline } from "react-icons/bs";
+
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
-import { AlertContext } from "../../context/AlertContext";
-import { AlertData } from "../../types/types";
-import { MdOutlineClose } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
-import { debounce } from "lodash";
+import { ShowToastContext } from "../../context/ToastNotificationContext";
+import { IoIosArrowBack } from "react-icons/io";
+import { ReactEditor, Slate, withReact } from "slate-react";
+import RichTextEditor from "../editor/RichTextEditor";
+import { withInlineElements } from "../../utils/editor/plugins/withInlineElements";
+import { createEditor, Editor, Element, Node, Transforms } from "slate";
+import EditCardToolbar from "./EditCardToolbar";
+import type { ContentTypeForEdit } from "../../types/types";
+import LinkModal from "../editor/LinkModal";
+import { withResetToParagraphOnBackspaceWhenEmpty } from "../../utils/editor/plugins/withResetToParagraphOnBackspaceWhenEmpty";
+import { withResetToParagraphOnEnter } from "../../utils/editor/plugins/withResetToParagraphOnEnter";
+import { withTitleBackspaceProtection } from "../../utils/editor/plugins/withTitleBackspaceProtection";
+import { withTitle } from "../../utils/editor/plugins/withTitle";
+import { withUnwrapEmptyInlines } from "../../utils/editor/plugins/withUnwrapEmptyInlines";
+import { withClearEmptyMarks } from "../../utils/editor/plugins/withClearEmptyMarks";
+import { withVoidElements } from "../../utils/editor/plugins/withVoidElements";
+import { withHistory } from "slate-history";
+import { withExitInlineOnSpace } from "../../utils/editor/plugins/withExitInlineOnSpace";
+import type { CustomElementType } from "../../types/textEditorTypes";
 
-type ContentType = {
-  title: string;
-  note: string;
-  _id: string;
-};
-
-type ContentTypeForEdit = ContentType & {
-  cardIndex: number | null;
-};
 type EditCardProps = {
-  openModal: boolean;
-  search_index?: string | null;
-  setOpenModal: Dispatch<React.SetStateAction<boolean>>;
-  addLink: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  addCodeBlock: (
-    e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
-  ) => void;
-  addBoldText: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  handleChange: (
-    e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => void;
-  addUnderlineText: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  editContent: ContentTypeForEdit;
+  setShowEditModalForCard: Dispatch<React.SetStateAction<boolean>>;
+  showEditModalForCard: boolean;
+  setEditContent: Dispatch<SetStateAction<ContentTypeForEdit | null>>;
+  editContent: ContentTypeForEdit | null;
   handleSaveEdit: () => void;
-  closeEditModal: boolean;
-  setCloseEditModal: Dispatch<React.SetStateAction<boolean>>;
+  closeEditModalWithAnimation: boolean;
+  setCloseEditModalWithAnimation: Dispatch<React.SetStateAction<boolean>>;
 };
 
 const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
   (
     {
-      setOpenModal,
-      addLink,
-      addCodeBlock,
-      addBoldText,
-      addUnderlineText,
+      setShowEditModalForCard,
       editContent,
-      handleChange,
+      setEditContent,
       handleSaveEdit,
-      search_index,
-      openModal,
-      closeEditModal,
-      setCloseEditModal,
+      showEditModalForCard,
+      closeEditModalWithAnimation,
+      setCloseEditModalWithAnimation,
     },
     editTextareaRef
   ) => {
+    const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
+    const [toolbarPosition, setToolbarPosition] = useState<"top" | "bottom">(
+      () => {
+        const position = localStorage.getItem("editToolbarPosition");
+        if (position === "top" || position === "bottom") {
+          return position;
+        } else {
+          return "bottom";
+        }
+      }
+    );
     const [showScrollToBottomButton, setShowScrollToBottomButton] =
       useState(false);
+    const editor = useMemo(() => {
+      return withResetToParagraphOnBackspaceWhenEmpty(
+        withResetToParagraphOnEnter(
+          withTitleBackspaceProtection(
+            withTitle(
+              withInlineElements(
+                withUnwrapEmptyInlines(
+                  withClearEmptyMarks(
+                    withVoidElements(
+                      withExitInlineOnSpace(
+                        withReact(withHistory(createEditor()))
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
+    }, []);
     const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
-    const { setAlert } = useContext(AlertContext);
-    const location = useLocation();
-    const navigate = useNavigate();
+    const { showToast } = useContext(ShowToastContext);
+    const handleEditorContentClick = useCallback(
+      (e: React.MouseEvent) => {
+        const domRange = window.getSelection()?.getRangeAt(0);
+        if (!domRange) return;
+
+        // Check if editor is empty
+        if (editor.children.length === 0) return;
+
+        // Get the last top-level element (not the deepest node)
+        const lastElementPath = [editor.children.length - 1];
+        const lastElementEntry = Editor.node(editor, lastElementPath);
+        if (!lastElementEntry) return;
+
+        const [lastElement] = lastElementEntry;
+        // Simple check: if last element is a code-block, always allow adding paragraph
+        // For other elements, check if they have content
+        const shouldAllowInsert =
+          (Element.isElement(lastElement) &&
+            lastElement.type === "code-block") ||
+          Node.string(lastElement).trim() !== "";
+
+        if (shouldAllowInsert) {
+          try {
+            const domNode = ReactEditor.toDOMNode(editor, lastElement);
+            const rect = domNode.getBoundingClientRect();
+
+            // Check if click is clearly below last node
+            if (e.clientY > rect.bottom + 5) {
+              const newParagraph: CustomElementType = {
+                type: "paragraph",
+                children: [{ text: "" }],
+              };
+
+              const insertPath = [editor.children.length];
+              Transforms.insertNodes(editor, newParagraph, { at: insertPath });
+
+              const point = Editor.start(editor, insertPath);
+              Transforms.select(editor, { anchor: point, focus: point });
+              ReactEditor.focus(editor);
+            }
+          } catch (error) {
+            // Handle case where DOM node can't be found
+            console.debug("Could not get DOM node for click handling");
+          }
+        }
+      },
+      [editor]
+    );
     const scrollToBottom = () => {
       const ref = editTextareaRef as MutableRefObject<HTMLTextAreaElement>;
 
@@ -85,13 +153,15 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
           });
         }
       } else {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "warning",
-          show: true,
+        showToast({
           message: "There's nothing to scroll.",
-          autoHideDuration: 2000,
-        }));
+          severity: "warning",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
+
         setShowScrollToTopButton(false);
         setShowScrollToBottomButton(false);
       }
@@ -111,13 +181,14 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
           });
         }
       } else {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "warning",
-          show: true,
+        showToast({
           message: "There's nothing to scroll.",
-          autoHideDuration: 2000,
-        }));
+          severity: "warning",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
         setShowScrollToTopButton(false);
         setShowScrollToBottomButton(false);
       }
@@ -176,171 +247,109 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
     }, []);
 
     const handleOnAnimationEnd = () => {
-      if (openModal && closeEditModal) {
-        setOpenModal(false);
-        setCloseEditModal(false);
+      if (showEditModalForCard && closeEditModalWithAnimation) {
+        setShowEditModalForCard(false);
+        setCloseEditModalWithAnimation(false);
       }
     };
-    useEffect(() => {
-      //When you give a fixed height and open the app in a mobile browser, you might observe the edit modal changing its height when the browser address bar hides and shows. This can hide the bottom part of the edit modal, requiring you to scroll to see it. To avoid that, we will calculate the proper available height and set it.
-      const handleResize = () => {
-        document.documentElement.style.setProperty(
-          "--window-height",
-          `${window.innerHeight}px`
-        );
-      };
-
-      // Initial setup
-      handleResize();
-
-      // Add event listener
-      window.addEventListener("resize", debounce(handleResize, 500));
-
-      // Cleanup
-      return () => {
-        window.removeEventListener("resize", handleResize);
-      };
-    }, []);
 
     return (
       <div
         onAnimationEnd={handleOnAnimationEnd}
-        className={` z-[90] dark:bg-slate-800 md:dark:bg-slate-900 bg-slate-300  md:bg-[#fcfefc] fixed top-0 inset-0 flex items-center justify-center  transition-opacity duration-500 h-[var(--window-height)] ${
-          closeEditModal
-            ? "lg:opacity-0 lg:animate-[opacityFadeOut_0.1s_linear_1] animate-translateFromRightToLeft"
-            : "lg:animate-[opacity_0.1s_linear_1] animate-translateFromLeftToRight"
-        } `}
+        className={` z-[90] dark:md:bg-slate-900/70 md:bg-white/40  md:supports-[backdrop-filter]:bg-transparent
+    md:supports-[backdrop-filter]:backdrop-blur-lg
+    dark:md:supports-[backdrop-filter]:bg-transparent
+    dark:md:supports-[backdrop-filter]:backdrop-blur-md fixed  inset-0 flex justify-center items-center  transition-opacity duration-500 h-[var(--window-height)]    ${
+      closeEditModalWithAnimation
+        ? "opacity-0 animate-[opacityFadeOut_0.2s_linear_1] "
+        : "animate-[opacity_0.2s_linear_1] "
+    } `}
       >
-        <div className=" w-screen lg:w-1/2 md:mx-auto md:w-[90%] md:rounded-md flex items-center justify-center flex-col gap-y-1 ">
-          <div className="w-full h-[3.45rem] dark:bg-slate-800 md:dark:bg-slate-900 bg-gray-300  absolute top-0 flex items-center justify-between md:justify-center md:gap-x-[23.5rem] lg:gap-x-[26rem] border-b border-gray-400/40 dark:border-gray-300/10  md:bg-[#fcfefc]">
+        <div className="absolute z-50 top-0 left-0">
+          <div
+            id="dropdownPortalContainerForEdit"
+            className="pointer-events-auto"
+          />
+        </div>
+        <div className="md:w-[45rem] w-full flex flex-col h-full md:h-[40rem] md:p-2 dark:md:bg-slate-500 relative md:bg-slate-300 md:rounded-[12px]">
+          <div className="w-full h-16 bg-white dark:bg-slate-900 border-b border-gray-400/40 dark:border-gray-300/10 px-4  flex items-center justify-between md:hidden flex-shrink-0">
             <div>
-              <h2 className="py-2 px-4 text-left dark:text-white md:text-gray-600 text-gray-700 font-semibold ">
-                Edit <span className="hidden md:inline">Card</span>
-              </h2>
+              <button
+                onClick={() => setCloseEditModalWithAnimation(true)}
+                className="   text-center dark:text-gray-200 text-gray-500  cursor-pointer flex items-center justify-center "
+                aria-label="Back"
+                title="Back"
+              >
+                <IoIosArrowBack className="lg:-ml-[0.15rem]" />
+                <p className="text-xs ">Back</p>
+              </button>
             </div>
-
-            <div className="flex items-center justify-center   px-2 py-1 pr-4 ">
-              <div className="flex items-center justify-center gap-3  ">
-                <button
-                  title="Add a link"
-                  className="dark:text-blue-600   dark:hover:text-gray-300 text-blue-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-300"
-                  type="button"
-                  name="addLinkToEditCard"
-                  onClick={(e) => addLink(e)}
-                >
-                  <AiOutlineLink />
-                </button>
-                <button
-                  title="Add code sample"
-                  className="dark:text-green-600   dark:hover:text-gray-300 text-green-500 hover:text-gray-200 dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1 text-xl  transition-all duration-300"
-                  type="button"
-                  name="addCodeSnippetToEditCard"
-                  onClick={(e) => addCodeBlock(e)}
-                >
-                  <BiCodeCurly />
-                </button>
-                <button
-                  name="addUnderlineTextToEditCard"
-                  title="Underline text"
-                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-300 "
-                  type="button"
-                  onClick={(e) => addUnderlineText(e)}
-                >
-                  <BsTypeUnderline />
-                </button>
-                <button
-                  name="addBoldTextToEditCard"
-                  title="Bold text"
-                  className="dark:text-teal-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-300 "
-                  type="button"
-                  onClick={(e) => addBoldText(e)}
-                >
-                  <AiOutlineBold />
-                </button>
-              </div>
-              <div className="border h-4 mx-3 dark:border-gray-50/20 border-gray-500/40 "></div>
-              <div className="flex items-center justify-center gap-3  ">
-                <button
-                  name="Close"
-                  title="Close"
-                  className="dark:text-red-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full hover:text-gray-200 dark:hover:text-gray-300 p-1    text-xl   text-red-500  transition-all duration-300 "
-                  type="button"
-                  onClick={() => {
-                    // You can remove the pushed state using either of these methods
-                    if (window?.history?.state?.isBackButtonNotClicked) {
-                      navigate(-1);
-                    }
-
-                    if (search_index && openModal) {
-                      navigate(location?.pathname, {
-                        state: {
-                          card: location?.state?.card,
-                          from: location?.state?.from,
-                          deckInfo: location?.state?.deckInfo,
-                        },
-                      });
-                    }
-
-                    setCloseEditModal(true);
-                  }}
-                >
-                  <MdOutlineClose />
-                </button>
-                <button
-                  name="Save"
-                  title="Save"
-                  className="dark:text-sky-500  dark:hover:bg-gray-600 hover:bg-gray-400 hover:rounded-full p-1    text-xl  dark:hover:text-gray-300 text-sky-500 hover:text-gray-200 transition-all duration-300 "
-                  type="button"
-                  onClick={handleSaveEdit}
-                >
-                  <BsCheckLg />
-                </button>
-              </div>
-            </div>
+            <p className="text-sm dark:text-gray-200 text-gray-500">
+              {" "}
+              Edit Note
+            </p>
           </div>
-          <div className=" px-2 py-1  w-full mt-[3.4rem] dark:md:bg-gray-700 md:bg-teal-600 md:p-2 md:rounded-md">
-            <div className="w-full flex flex-col items-center justify-center ">
-              <div className="w-full h-16">
-                <textarea
-                  value={editContent.title}
-                  onChange={handleChange}
-                  name="title"
-                  className="px-2 py-[0.36rem] w-full outline-none rounded-t-md   font-semibold text-gray-700 bg-gray-50 dark:bg-[#011627] dark:text-gray-50 resize-none border-none h-full"
-                  placeholder="Title"
-                  rows={2}
-                />
-              </div>
-              <div className="dark:bg-[#011627] bg-gray-50 w-full flex items-end justify-center pb-2">
-                <hr className="w-32 border-t-0 border-b dark:border-gray-200 border-gray-500  " />
-              </div>
-              <div className="w-full relative h-[calc(var(--window-height)*78/100)]  ">
-                <textarea
-                  value={editContent.note}
-                  onChange={handleChange}
-                  name="note"
-                  className="px-2 py-2 pb-32 w-full outline-none text-gray-800 rounded-b-md bg-gray-50  dark:bg-[#011627] dark:text-gray-50 resize-none h-full"
-                  placeholder="Note"
-                  ref={editTextareaRef}
-                ></textarea>
-                {showScrollToBottomButton && (
-                  <button
-                    className=" absolute  bottom-6 right-4 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300 "
-                    onClick={scrollToBottom}
-                  >
-                    <HiOutlineArrowSmDown />
-                  </button>
-                )}
-                {showScrollToTopButton && (
-                  <button
-                    className=" absolute  bottom-6 right-4 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-600 dark:text-gray-300 "
-                    onClick={scrollToTop}
-                  >
-                    <HiOutlineArrowSmUp />
-                  </button>
-                )}
-              </div>
+
+          <Slate
+            editor={editor}
+            initialValue={editContent?.note ?? []}
+            onChange={(value) => {
+              setEditContent((prev) => ({ ...prev!, note: value }));
+            }}
+          >
+            {toolbarPosition === "top" && (
+              <EditCardToolbar
+                handleSaveEdit={handleSaveEdit}
+                setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
+                setShowHyperlinkModal={setShowHyperlinkModal}
+                setToolbarPosition={setToolbarPosition}
+                toolbarPosition={toolbarPosition}
+              />
+            )}
+            <div
+              className={`px-4 py-2 pb-32 w-full outline-none text-gray-800  bg-white font-light text-base text-left dark:md:bg-slate-800 dark:bg-slate-900 dark:text-white resize-none h-full overflow-y-auto  dark:dark-scrollbar light-scrollbar relative ${
+                toolbarPosition === "bottom" && "md:rounded-t-md"
+              }`}
+              onClick={handleEditorContentClick}
+              data-editor-parent-edit
+            >
+              <RichTextEditor
+                setShowHyperlinkModal={setShowHyperlinkModal}
+                mode="edit"
+              />
             </div>
-          </div>
+
+            {showScrollToBottomButton && (
+              <button
+                className=" absolute  bottom-6 right-4 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300 "
+                onClick={scrollToBottom}
+              >
+                <HiOutlineArrowSmDown />
+              </button>
+            )}
+            {showScrollToTopButton && (
+              <button
+                className=" absolute  bottom-6 right-4 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300 "
+                onClick={scrollToTop}
+              >
+                <HiOutlineArrowSmUp />
+              </button>
+            )}
+
+            {toolbarPosition === "bottom" && (
+              <EditCardToolbar
+                handleSaveEdit={handleSaveEdit}
+                setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
+                setShowHyperlinkModal={setShowHyperlinkModal}
+                setToolbarPosition={setToolbarPosition}
+                toolbarPosition={toolbarPosition}
+              />
+            )}
+
+            {showHyperlinkModal && (
+              <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
+            )}
+          </Slate>
         </div>
       </div>
     );

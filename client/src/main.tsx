@@ -5,7 +5,6 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import UserContextProvider from "./context/UserContext";
-import AlertState from "./context/AlertContext";
 import Layout from "./components/Layout";
 import ThemeColorUpdater from "./components/ThemeCodeUpdater";
 import OfflineProvider from "./context/OfflineContext";
@@ -13,7 +12,12 @@ import SearchProvider from "./context/SearchContext";
 import { AudioProvider } from "./context/AudioContext";
 import { BulbContextProvider } from "./context/BulbContext";
 import { CardContextProvider } from "./context/CardContext";
-import { PopupContextProvider } from "./context/PopupContext";
+import { ToastNotificationContextProvider } from "./context/ToastNotificationContext";
+import ThemeContextProvider from "./context/ThemeContext";
+import DndContextProvider from "./context/DndItemContext";
+import ToastContainer from "./components/toast/ToastContainer";
+import { DeckContextProvider } from "./context/DeckContext";
+import { StableNavigateContextProvider } from "./context/StableNavigateContext";
 
 const queryClient = new QueryClient({
   // Read more about the Network Mode in the React Query documentation.
@@ -21,36 +25,44 @@ const queryClient = new QueryClient({
 });
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <>
-    <AudioProvider>
-      <AlertState>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
+  <AudioProvider>
+    <ThemeContextProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <StableNavigateContextProvider>
             <OfflineProvider>
               <UserContextProvider>
                 <SearchProvider>
                   <ThemeColorUpdater />
                   <BulbContextProvider>
-                    <PopupContextProvider>
+                    <ToastNotificationContextProvider>
                       <Layout>
-                        <CardContextProvider>
-                          <App />
-                        </CardContextProvider>
+                        <DeckContextProvider>
+                          <CardContextProvider>
+                            <DndContextProvider>
+                              <App />
+                            </DndContextProvider>
+                          </CardContextProvider>
+                        </DeckContextProvider>
                       </Layout>
-                    </PopupContextProvider>
+                      <ToastContainer
+                        globalAutoHideDuration={5000}
+                        globalPosition="top-right"
+                      />
+                    </ToastNotificationContextProvider>
                   </BulbContextProvider>
                 </SearchProvider>
               </UserContextProvider>
             </OfflineProvider>
-          </BrowserRouter>
+          </StableNavigateContextProvider>
+        </BrowserRouter>
 
-          <ReactQueryDevtools
-            initialIsOpen={false}
-            position="bottom"
-            buttonPosition="bottom-left"
-          />
-        </QueryClientProvider>
-      </AlertState>
-    </AudioProvider>
-  </>
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          position="bottom"
+          buttonPosition="bottom-left"
+        />
+      </QueryClientProvider>
+    </ThemeContextProvider>
+  </AudioProvider>
 );

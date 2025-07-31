@@ -3,220 +3,122 @@ import {
   useState,
   useRef,
   useContext,
-  RefObject,
   memo,
   useEffect,
   useMemo,
   useCallback,
 } from "react";
-import { useNavigate } from "react-router-dom";
-import useGetDecks from "../hooks/useGetDecks";
-import useCreateDeck from "../hooks/useCreateDeck";
-import usePinDeck from "../hooks/usePinDeck";
-import { AlertContext } from "../context/AlertContext";
-import EditModalForDeck from "../components/EditModalForDeck";
+import useGetDecks from "../hooks/react-query/useGetDecks";
+import useCreateDeck from "../hooks/react-query/useCreateDeck";
+import usePinDeck from "../hooks/react-query/usePinDeck";
+import EditModalForDeck from "../components/deck/EditModalForDeck";
 import Loading from "../components/Loading";
-import { AlertData } from ".././types/types";
 import { Helmet } from "react-helmet";
-import { ThemeContext, UserContext } from "../context/UserContext";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
-import { searchContext } from "../context/SearchContext";
-import useEditDeck from "../hooks/useEditDeck";
 import { CustomError } from "../utils/customError";
 import { AudioContext } from "../context/AudioContext";
-import Bulb, { ChangeBulbColor } from "../components/Bulb";
-import DeckItems from "../components/deck/DeckItems";
+import Bulb from "../components/Bulb";
+import DeckItemsContainer from "../components/deck/DeckItemsContainer";
 import DeckCreationForm from "../components/deck/DeckCreationForm";
 import TrashCanDropZone from "../components/TrashCanDropZone";
+import { ShowToastContext } from "../context/ToastNotificationContext";
+import { DndSettersContext, DndStateContext } from "../context/DndItemContext";
+import type { DeckType } from "../types/types";
+import { v4 as uuidv4 } from "uuid";
+import { useModalBackNavigationHandler } from "../hooks/utility/useModalBackNavigationHandler";
+import NoContent from "../components/NoContent";
+import useToastOnError from "../hooks/utility/useToastOnError";
+import { DeckContext } from "../context/DeckContext";
+import DeckSkeleton from "../components/deck/skeleton/DeckSkeleton";
+import { getDeckSkeletonCounts } from "../utils/deckUtils";
 
-type PropType = {
-  bulbRef: RefObject<ChangeBulbColor>;
-};
-
-function Deck({ bulbRef }: PropType) {
-  const { setAlert } = useContext(AlertContext);
-  const inputRefElement = useRef<HTMLInputElement>(null);
-  const { data: allDecks, error, isError, isLoading, isPaused } = useGetDecks();
-  const navigate = useNavigate();
-  const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
-  // Here in createDeckResponse, you will receive the data that the server returns after the mutation.
-  const {
-    mutate: addDeck,
-    isPending: isCreatingDeck,
-    isError: isCreateDeckError,
-    error: createDeckError,
-    data: createDeckResponse,
-    reset: resetCreateDeckResponse,
-  } = useCreateDeck();
-
-  const {
-    showLogoutModal,
-    setShowLogoutModal,
-    handleShowUserInfomation,
-    divRefForUserSettings,
-  } = useContext(UserContext);
-
-  const { theme } = useContext(ThemeContext);
-  const [editData, setEditData] = useState({ deck_id: "", title: "" });
-  const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
-    useState(false);
-  const {
-    mutate: editDeck,
-    isError: isEditDeckError,
-    error: editDeckError,
-
-    reset: resetEditDeckResponse,
-  } = useEditDeck();
-  const {
-    mutate: pinDeck,
-    error: pinDeckError,
-    isError: isPinDeckError,
-
-    reset: resetPinDeckResponse,
-  } = usePinDeck();
+function Deck() {
+  const { showToast } = useContext(ShowToastContext);
+  const { allDecksState } = useContext(DndStateContext);
+  const { setAllDecksState } = useContext(DndSettersContext);
+  const { deckContainerRef } = useContext(DeckContext);
 
   const { isOnline } = useContext(OfflineContext);
   const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
-  const shouldPushStateRef = useRef<boolean>(false);
-
-  const radialGradientOverlayRef = useRef<HTMLDivElement | null>(null);
-
+  const { data: allDecks, error, isError, isLoading, isPaused } = useGetDecks();
   const {
-    showSearchBar,
-    setOpenSearchBar,
-    setAnimateCloseEditDeckModalInSearchResult,
-    openEditDeckModalForSearchResult,
-    cardDeleted,
-    setCardDeleted,
-  } = useContext(searchContext);
-  const [wasSearchBarInitiallyTrue, setWasSearchBarInitiallyTrue] =
-    useState(showSearchBar);
+    mutate: createDeck,
+    isError: isCreateDeckError,
+    error: createDeckError,
+    reset: resetCreateDeckResponse,
+  } = useCreateDeck();
 
-  const handleBrowsersBackButton = () => {
-    if (showLogoutModal) {
-      setShowLogoutModal(false);
-      return;
-    }
-    if (openEditDeckModal) {
-      setAnimateCloseEditDeckModal(true);
-    }
-    if (openEditDeckModalForSearchResult) {
-      setAnimateCloseEditDeckModalInSearchResult(true);
-      return;
-    }
-    if (showSearchBar) {
-      if (divRefForUserSettings.current?.classList.contains("scale-100")) {
-        handleShowUserInfomation();
-      }
-      setOpenSearchBar(false);
-    }
-  };
+  const { mutate: pinDeck } = usePinDeck();
 
-  useEffect(() => {
-    if (isCreateDeckError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: createDeckError?.message,
-        autoHideDuration: 5000,
-      }));
-      resetCreateDeckResponse();
-    }
-    if (isPinDeckError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: pinDeckError?.message,
-        autoHideDuration: 5000,
-      }));
-      resetPinDeckResponse();
-    }
+  const [isDecksStateReady, setIsDecksStateReady] = useState(false);
+  const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
+  const [editData, setEditData] = useState({ deckId: "", title: "" });
+  const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
+    useState(false);
+  const inputRefElement = useRef<HTMLInputElement>(null);
+  const pinnedDecksRef = useRef<DeckType[]>([]);
+  const otherDecksRef = useRef<DeckType[]>([]);
 
-    if (isEditDeckError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: editDeckError?.message,
-        autoHideDuration: 5000,
-      }));
-      resetEditDeckResponse();
-    }
-  }, [isCreateDeckError, isEditDeckError, isPinDeckError]);
+  const DeckSkeletonCounts = getDeckSkeletonCounts();
+
+  useModalBackNavigationHandler({
+    isOpen: openEditDeckModal,
+    modalKey: "editDeck",
+    closeModal: () => setAnimateCloseEditDeckModal(true),
+  });
+
+  useToastOnError({
+    isError: isCreateDeckError,
+    error: createDeckError,
+    resetFunction: resetCreateDeckResponse,
+  });
 
   useEffect(() => {
-    if (cardDeleted) {
-      setCardDeleted(false);
+    if (allDecks) {
+      setIsDecksStateReady(true);
+      setAllDecksState(allDecks);
     }
-  }, [cardDeleted]);
-
-  useEffect(() => {
-    // To avoid a weird cut in the modal bottom, we will set overflow to hidden when edit modal is open. This is because on mobile phones, when the address bar hides and shows when you scroll, it changes the height of the screen, causing the layout to sometimes shift weirdly.
-    if (openEditDeckModal) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-    // Cleanup function
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [openEditDeckModal]);
-
-  useEffect(() => {
-    const shouldPushState = showSearchBar || openEditDeckModal;
-    openEditDeckModalForSearchResult;
-    if (shouldPushState && !shouldPushStateRef.current) {
-      if (!wasSearchBarInitiallyTrue) {
-        window.history.pushState(
-          { isBackButtonNotClicked: true },
-          "",
-          document.URL
-        );
-      } else {
-        setWasSearchBarInitiallyTrue(false);
-      }
-    } else if (window?.history?.state?.isBackButtonNotClicked) {
-      navigate(-1);
-    }
-
-    const variableArray = [
-      openEditDeckModal,
-      showSearchBar,
-      openEditDeckModalForSearchResult,
-    ];
-    const trueCount = variableArray.filter((variable) => variable).length;
-
-    if (trueCount >= 2) {
-      shouldPushStateRef.current = true;
-    } else {
-      shouldPushStateRef.current = false;
-    }
-
-    window.addEventListener("popstate", handleBrowsersBackButton);
-
-    return () => {
-      window.removeEventListener("popstate", handleBrowsersBackButton);
-    };
-  }, [
-    openEditDeckModal,
-    showSearchBar,
-    openEditDeckModalForSearchResult,
-    showLogoutModal,
-  ]);
-
-  const isPinnedDeckAvailable = useMemo(() => {
-    return allDecks ? !!allDecks?.find((deck) => deck?.pinned === true) : false;
   }, [allDecks]);
 
-  const isUnPinnedDeckAvailable = useMemo(() => {
-    return allDecks
-      ? !!allDecks?.find((deck) => deck?.pinned === false)
-      : false;
-  }, [allDecks]);
+  const pinnedDecks = useMemo(() => {
+    const newPinnedDecks = allDecksState?.filter((deck) => deck.pinned) ?? [];
+
+    // Compare with the previous value stored in the ref
+    if (
+      JSON.stringify(newPinnedDecks) !== JSON.stringify(pinnedDecksRef.current)
+    ) {
+      pinnedDecksRef.current = newPinnedDecks; // Update the ref with the new value
+      return newPinnedDecks; // Return the new reference if it has changed
+    }
+
+    return pinnedDecksRef.current; // Keep the previous reference if no change
+  }, [allDecksState]);
+
+  const otherDecks = useMemo(() => {
+    const newOtherDecks = allDecksState?.filter((deck) => !deck.pinned) ?? [];
+    // Compare with the previous value stored in the ref
+    if (
+      JSON.stringify(newOtherDecks) !== JSON.stringify(otherDecksRef.current)
+    ) {
+      otherDecksRef.current = newOtherDecks; // Update the ref with the new value
+      return newOtherDecks; // Return the new reference if it has changed
+    }
+
+    return otherDecksRef.current; // Keep the previous reference if no change
+  }, [allDecksState]);
+
+  useEffect(() => {
+    if (pinnedDecks.length > 0 || otherDecks.length > 0) {
+      localStorage.setItem(
+        "DeckSkeletonCounts",
+        JSON.stringify({
+          pinned: pinnedDecks.length,
+          others: otherDecks.length,
+        })
+      );
+    }
+  }, [pinnedDecks, otherDecks]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -224,154 +126,91 @@ function Deck({ bulbRef }: PropType) {
       e.preventDefault();
 
       if (!isOnline) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "No internet connection",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
         return;
       }
 
       if (inputRefElement.current!.value.trim().length > 0) {
-        addDeck(inputRefElement.current!.value, {
-          onSuccess: () => {
-            if (isPlayingAudioAllowed) {
-              setTimeout(() => {
-                handlePlayAudio("createdSuccessfully", "/");
-              }, 100);
-            }
+        const deckId = uuidv4();
+
+        createDeck(
+          {
+            title: inputRefElement.current!.value,
+            deckId,
           },
-        });
+          {
+            onSuccess: () => {
+              if (isPlayingAudioAllowed) {
+                setTimeout(() => {
+                  handlePlayAudio("createdSuccessfully", "/");
+                }, 100);
+              }
+            },
+          }
+        );
+
         inputRefElement.current!.value = "";
       } else {
         inputRefElement.current!.value = "";
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "warning",
-          show: true,
+
+        showToast({
           message: "The deck title should be at least one character long.",
-        }));
+          severity: "warning",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
       }
     },
-    [isOnline, inputRefElement, addDeck, isPlayingAudioAllowed, handlePlayAudio]
+    [
+      isOnline,
+      inputRefElement,
+      createDeck,
+      isPlayingAudioAllowed,
+      handlePlayAudio,
+    ]
   );
 
-  useEffect(() => {
-    // Find the element you want to scroll to
-    const elementToScrollTo = document.getElementById(
-      `${createDeckResponse?._id}`
-    );
-    const overlayElement = radialGradientOverlayRef?.current;
-    // Calculate an offset to control the scrolling position
-    const yOffset = -200;
-
-    // Scroll to the element if found
-    if (elementToScrollTo) {
-      setTimeout(() => {
-        elementToScrollTo.classList.add(
-          "animate-[pulse_1.5s_ease-in-out_2]",
-          "shadow-shadow-4-sides",
-          "shadow-violet-700",
-          "border-violet-700",
-          "!text-violet-700",
-          "hover:shadow-none",
-          "dark:hover:border-violet-700",
-          "hover:border-violet-700"
-        );
-        overlayElement?.classList.add(
-          "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
-          "after:opacity-100"
-        );
-      }, 100);
-
-      // Get the bounding box of the element
-      const elementRect = elementToScrollTo.getBoundingClientRect();
-
-      // Check if the element is already in the viewport
-      if (
-        elementRect.top >= 0 &&
-        elementRect.bottom <=
-          (window.innerHeight || document.documentElement.clientHeight)
-      ) {
-        // Element is already in view, no need to scroll
-        // Remove the classes after the animation has completed
-        elementToScrollTo.addEventListener("animationend", () => {
-          elementToScrollTo.classList.remove(
-            "animate-[pulse_1.5s_ease-in-out_2]",
-            "shadow-shadow-4-sides",
-            "shadow-violet-700",
-            "border-violet-700",
-            "!text-violet-700",
-            "hover:shadow-none",
-            "dark:hover:border-violet-700",
-            "hover:border-violet-700"
-          );
-          overlayElement?.classList.remove(
-            "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
-            "after:opacity-100"
-          );
-        });
-      } else {
-        // Calculate the target scroll position
-        const targetScrollPosition = elementRect.top + window.scrollY + yOffset;
-
-        // Scroll to the target position
-        window.scrollTo({ top: targetScrollPosition, behavior: "smooth" });
-
-        // Remove the classes after the animation has completed
-        elementToScrollTo.addEventListener("animationend", () => {
-          elementToScrollTo.classList.remove(
-            "animate-[pulse_1.5s_ease-in-out_2]",
-            "shadow-shadow-4-sides",
-            "shadow-violet-700",
-            "border-violet-700",
-            "!text-violet-700",
-            "hover:shadow-none",
-            "dark:hover:border-violet-700",
-            "hover:border-violet-700"
-          );
-          overlayElement?.classList.remove(
-            "after:!bg-[radial-gradient(#6d28d9,#0c7bb3e6)]",
-            "after:opacity-100"
-          );
-        });
-      }
-      resetCreateDeckResponse();
-    }
-  }, [createDeckResponse]);
-
   const handlePin = useCallback(
-    async (id: string, pinned: boolean) => {
+    async (deckId: string, pinned: boolean) => {
       if (!isOnline) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "No internet connection",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
         return;
       }
-      pinDeck({ id, pinned: !pinned });
+      pinDeck({ deckId, pinned: !pinned });
     },
     [isOnline, pinDeck]
   );
 
   const handleEditDeck = useCallback(
-    (deck_id: string, title: string) => {
+    (deckId: string, title: string) => {
       if (!isOnline) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "No internet connection",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
         return;
       }
-      setEditData({ ...editData, deck_id, title });
+      setEditData({ ...editData, deckId, title });
       setOpenEditDeckModal(true);
     },
     [isOnline, editData]
@@ -380,14 +219,13 @@ function Deck({ bulbRef }: PropType) {
   if (isError || isPaused) {
     return (
       <ErrorDisplay
-        theme={theme}
         message={error?.message}
         status={(error as CustomError)?.statusCode}
         isPaused={isPaused}
       >
         <button
           onClick={() => window.location.reload()}
-          className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out "
+          className=" mt-4 inline-block py-2.5 font-medium text-sm leading-tight rounded active:shadow-lg text-gray-50 w-[7.3rem] bg-sky-600 hover:bg-sky-700 transition-colors duration-150 ease-in-out "
           type="button"
           aria-label="Refresh"
         >
@@ -397,53 +235,64 @@ function Deck({ bulbRef }: PropType) {
     );
   }
 
-  if (isLoading) {
+  if ((isLoading || !isDecksStateReady) && !DeckSkeletonCounts) {
     return <Loading />;
   }
 
   return (
     <>
       <Helmet>
-        <title>{showSearchBar ? "Search Results" : "Decks"}</title>
+        <title>Decks</title>
         <meta
           name="description"
           content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."
         />
+        {/* here h-[calc(100vh-64px)] 64px is the navbar height */}
       </Helmet>
-      <div className="flex flex-col gap-2 mt-8 mb-12 lg:mx-14  ">
-        <Bulb ref={bulbRef} />
-
-        <TrashCanDropZone
-          bulbRef={bulbRef}
-          droppableId="DeckDeleteArea"
-          altText="Trash can for deleting deck"
-        />
-
+      <div
+        ref={deckContainerRef}
+        className="flex flex-col gap-2 pt-8 pb-12  overflow-y-auto overflow-x-hidden scrollbar-gutter h-[calc(100vh-64px)] dark:dark-scrollbar light-scrollbar w-full"
+      >
+        <Bulb />
         <DeckCreationForm handleSubmit={handleSubmit} ref={inputRefElement} />
 
-        {allDecks &&
-        !("message" in allDecks && allDecks.message) &&
-        isPinnedDeckAvailable ? (
-          <DeckItems
-            bulbRef={bulbRef}
-            allDecks={allDecks}
+        {(isLoading || !isDecksStateReady) &&
+          DeckSkeletonCounts &&
+          DeckSkeletonCounts?.pinned > 0 && (
+            <DeckSkeleton
+              skeletonCount={DeckSkeletonCounts.pinned}
+              title="Pinned"
+            />
+          )}
+
+        {(isLoading || !isDecksStateReady) &&
+          DeckSkeletonCounts &&
+          DeckSkeletonCounts?.others > 0 && (
+            <DeckSkeleton
+              skeletonCount={DeckSkeletonCounts.pinned}
+              title="Others"
+            />
+          )}
+
+        {allDecksState &&
+        !("message" in allDecksState) &&
+        pinnedDecks.length > 0 ? (
+          <DeckItemsContainer
+            allDecks={pinnedDecks}
             handlePin={handlePin}
             handleEditDeck={handleEditDeck}
             heading="Pinned"
           />
         ) : null}
 
-        {allDecks &&
-        !("message" in allDecks && allDecks.message) &&
-        isUnPinnedDeckAvailable ? (
-          <DeckItems
-            bulbRef={bulbRef}
-            allDecks={allDecks}
+        {allDecksState &&
+        !("message" in allDecksState) &&
+        otherDecks.length > 0 ? (
+          <DeckItemsContainer
+            allDecks={otherDecks}
             handlePin={handlePin}
             handleEditDeck={handleEditDeck}
-            heading={isPinnedDeckAvailable ? "Others" : "Decks"}
-            radialGradientOverlayRef={radialGradientOverlayRef}
-            isCreatingDeck={isCreatingDeck}
+            heading={pinnedDecks.length > 0 ? "Others" : "Decks"}
           />
         ) : null}
 
@@ -455,32 +304,41 @@ function Deck({ bulbRef }: PropType) {
             setEditData={setEditData}
             animateCloseEditDeckModal={animateCloseEditDeckModal}
             setAnimateCloseEditDeckModal={setAnimateCloseEditDeckModal}
-            editDeck={editDeck}
           />
         ) : null}
 
         {allDecks?.length === 0 && (
-          <div className="fixed w-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center justify-center  flex-col pt-[3.45rem]">
-            <img
-              src={`${
-                theme === "dark"
-                  ? "/illustrations/no_decks_found_dark.svg"
-                  : "/illustrations/no_decks_found_light.svg"
-              }`}
-              alt="No decks found"
-              className="w-56 h-44 lg:w-64 lg:h-52"
-            />
-            <p className="pb-1  text-base font-bold dark:text-gray-50 text-gray-800">
-              Looks like you haven't added any decks yet.
-            </p>
-            <p className="p-1  text-base font-bold dark:text-gray-50 text-gray-800">
-              Create a new deck to get started.
-            </p>
-          </div>
+          <NoContent
+            heading="Looks like you haven't added any decks yet."
+            subheading="Create a new deck to get started."
+            imageSource="/illustrations/no_decks_found.svg"
+            imageClassNames="w-56 h-44 lg:w-64 lg:h-52"
+            imageAltText="No decks found!"
+          />
         )}
+        <TrashCanDropZone
+          droppableId="DeckDeleteArea"
+          altText="Trash can for deleting deck"
+        />
       </div>
     </>
   );
 }
 
 export default memo(Deck);
+
+// useEffect(() => {
+//   // To avoid a weird cut in the modal bottom, we will set overflow to hidden when edit modal is open. This is because on mobile phones, when the address bar hides and shows when you scroll, it changes the height of the screen, causing the layout to sometimes shift weirdly.
+//   if (openEditDeckModal) {
+//     // This prevents layout shifts caused by the scrollbar. When I set overflow: hidden on the body, it removes the scrollbar when the modal is open. When the modal is closed, the scrollbar reappears as I set overflow back to auto, which causes a layout shift. To prevent this, I add padding-right.
+//     const scrollbarWidth =
+//       window.innerWidth - document.documentElement.clientWidth;
+//     document.body.style.paddingRight = `${scrollbarWidth - 1}px`;
+//     document.body.style.overflow = "hidden";
+//   }
+//   return () => {
+
+//     document.body.style.overflow = "auto";
+//     document.body.style.paddingRight = "";
+//   };
+// }, [openEditDeckModal]);

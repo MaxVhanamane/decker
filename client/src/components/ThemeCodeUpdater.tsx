@@ -1,5 +1,6 @@
 import React, { useEffect, useContext } from "react";
-import { ThemeContext, UserContext } from "../context/UserContext";
+import { UserContext } from "../context/UserContext";
+import { ThemeContext } from "../context/ThemeContext";
 
 const ThemeColorUpdater: React.FC = () => {
   const { userInfo } = useContext(UserContext);
@@ -13,7 +14,7 @@ const ThemeColorUpdater: React.FC = () => {
 
     //  update the meta tag only if it exists
     if (metaTag) {
-      const themeColor = theme === "dark" ? "#0f172a" : "#fcfefc";
+      const themeColor = theme === "dark" ? "#0f172a" : "#ffffff";
       metaTag.setAttribute("content", themeColor);
     }
   }, [theme, userInfo]);

@@ -1,15 +1,15 @@
 import { defineConfig, loadEnv } from 'vite'
 import reactSWC from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
-import eslint from 'vite-plugin-eslint';
-
+// import eslint from 'vite-plugin-eslint';
+import { analyzer } from 'vite-bundle-analyzer'
 
 export default defineConfig(({ command, mode }) => {
   // In vite.config.ts we can't access env variables using import.meta.env.VITE_API_URL we have to use following code to access it.
   const env = loadEnv(mode, process.cwd())
   const API_URL = `${env.VITE_API_URL}`
   return {
-    plugins: [eslint(), reactSWC(), VitePWA({
+    plugins: [analyzer({ openAnalyzer: true }), reactSWC(), VitePWA({
 
       registerType: 'autoUpdate',
       devOptions: {
@@ -38,10 +38,11 @@ export default defineConfig(({ command, mode }) => {
 
             },
 
+
           },
           {
-            urlPattern: new RegExp(`${API_URL}/cards/[^/]+`),
-            handler: 'NetworkFirst', // Caching strategy for /cards/deck_id
+            urlPattern: new RegExp(`${API_URL}/cards/[^/]+(\\?.*)?$`),
+            handler: 'NetworkFirst', // Caching strategy for /cards/deckId
             options: {
               cacheName: 'cards-cache',
               expiration: {
@@ -127,7 +128,7 @@ export default defineConfig(({ command, mode }) => {
         "start_url": "/",
         "display": "standalone",
         "background_color": "#ffffff",
-        "theme_color": "#fcfefc",
+        "theme_color": "#ffffff",
         screenshots: [{ src: "/screenshots/smallscreen/decker_small_screen_homepage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Home page" }, { src: "/screenshots/smallscreen/decker_small_screen_cardspage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Cards page" }, { src: "/screenshots/smallscreen/decker_small_screen_fullscreen.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Fullscreen card view" }, { src: "/screenshots/largescreen/decker_big_screen_image_e1.png", form_factor: "wide", sizes: "960x466", "type": "image/jpg", label: "Home page " }, { src: "/screenshots/largescreen/decker_big_screen_image_e3.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Cards page" }, { src: "/screenshots/largescreen/decker_big_screen_image_e2.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Fullscreen card view" }],
       }
 

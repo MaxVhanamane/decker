@@ -1,5 +1,5 @@
 import { ReactNode, memo } from "react";
-import Navbar from "./Navbar";
+import Navbar from "./navbar/Navbar";
 import { useLocation } from "react-router-dom";
 interface Props {
   children?: ReactNode;

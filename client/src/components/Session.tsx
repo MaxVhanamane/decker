@@ -1,10 +1,14 @@
 import { memo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
+import { clearUserCache } from "../utils/deleteCache";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Session = () => {
   const Navigate = useNavigate();
-  const { setUserInfo } = useContext(UserContext);
+  const { setUserInfo, setUserEmailAddress } = useContext(UserContext);
+  const queryClient = useQueryClient();
+
   return (
     <div className="fixed top-0 left-0  w-full h-full flex items-center justify-center backdrop-blur-lg z-[70] animate-opacity_page_transition">
       <div className=" rounded-lg bg-gray-100 px-4 pt-5 pb-4 text-left shadow-xl  dark:bg-slate-800 sm:my-8 sm:w-full sm:p-6 sm:max-w-lg mx-2">
@@ -41,15 +45,18 @@ const Session = () => {
         <div className="mt-5 flex items-center justify-end gap-3 sm:mt-4">
           <button
             onClick={() => {
+              clearUserCache();
+              queryClient.clear();
+              localStorage.removeItem("userInfo");
+              localStorage.removeItem("wasPreviouslyLoggedIn");
               setUserInfo(null);
+              setUserEmailAddress(null);
               Navigate("/login", { replace: true });
             }}
             className="bg-[#459C98] dark:bg-gray-600 border dark:border-gray-400 dark:hover:bg-gray-500  hover:bg-[#378e8a] text-gray-50 font-semibold text-center py-1 px-2 rounded-md transition-[background-color] duration-300"
             tabIndex={0}
           >
-            <div className="flex w-full items-center justify-center gap-2">
-              Log in
-            </div>
+            Log in
           </button>
         </div>
       </div>

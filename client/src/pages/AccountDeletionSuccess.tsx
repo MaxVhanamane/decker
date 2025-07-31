@@ -3,6 +3,7 @@ import { useContext, useEffect } from "react";
 import { TiTick } from "react-icons/ti";
 import { useLocation } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
+
 export default function AccountDeletionSuccess() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,7 +26,7 @@ export default function AccountDeletionSuccess() {
   }, []);
 
   return accountDeletedSuccessfully ? (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-[#fcfefc]">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col gap-3 dark:bg-slate-900 bg-white">
       <div className="flex items-center justify-center rounded-full bg-green-700 text-white ">
         <p className="text-4xl">
           <TiTick />

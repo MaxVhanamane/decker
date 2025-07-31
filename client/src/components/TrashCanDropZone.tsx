@@ -1,74 +1,78 @@
-import { RefObject, memo, useContext } from "react";
-import { Droppable } from "react-beautiful-dnd";
-import { ChangeBulbColor } from "./Bulb";
-import { PopupContext } from "../context/PopupContext";
+import { memo, useContext } from "react";
+import { ShowToastContext } from "../context/ToastNotificationContext";
+import { useDroppable } from "@dnd-kit/core";
+import { CardContext } from "../context/CardContext";
+import Button from "./Button";
 
 type PropType = {
-  bulbRef?: RefObject<ChangeBulbColor>;
   droppableId: string;
   altText: string;
 };
 
-const TrashCanDropZone = memo(({ bulbRef, droppableId, altText }: PropType) => {
-  const popupRef = useContext(PopupContext);
+const TrashCanDropZone = memo(({ droppableId, altText }: PropType) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: droppableId,
+  });
+
+  const { shouldTrashCanRotate } = useContext(CardContext);
+
+  const { showToast } = useContext(ShowToastContext);
+
+  const handleClick = () => {
+    if (droppableId === "DeckDeleteArea") {
+      showToast({
+        message: "Drag and drop the deck onto the trash icon to delete it.",
+        severity: "info",
+        position: "bottom-right",
+        theme: "auto",
+        animationStyle: "scale-up",
+      });
+    } else {
+      showToast({
+        message: "Drag and drop the card onto the trash icon to delete it.",
+        severity: "info",
+        autoHideDuration: 5000,
+        position: "bottom-right",
+        theme: "auto",
+      });
+    }
+  };
   return (
-    <Droppable droppableId={droppableId}>
-      {(provided, snapshot) => {
-        if (snapshot.isDraggingOver) {
-          bulbRef?.current?.setBulbColor("red");
-        } else {
-          if (bulbRef?.current?.colorName === "red") {
-            bulbRef?.current?.resetBulbColor("red");
-          }
+    <div
+      ref={setNodeRef}
+      className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700    lg:right-4 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center  ${
+        isOver || shouldTrashCanRotate
+          ? "ring-1 ring-red-500 shadow-md shadow-red-500 z-[5001]"
+          : "ring-1 ring-sky-500/60 "
+      }`}
+    >
+      <Button
+        variant="plain"
+        withTooltip
+        tooltipAutoHideDuration={2000}
+        toolTipText={
+          droppableId === "DeckDeleteArea" ? "Delete Deck" : "Delete Card"
         }
-        return (
-          <div
-            className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700    lg:right-2 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center ${
-              snapshot.isDraggingOver
-                ? "ring-1 ring-red-500 shadow-md shadow-red-500 z-[5001]"
-                : "ring-1 dark:ring-sky-500/40 ring-teal-500/40"
-            }`}
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-          >
-            <div
-              className={` cursor-pointer transition-transform duration-300 ${
-                snapshot.isDraggingOver ? "-rotate-12 " : "transform-none"
-              } `}
-              onClick={() => {
-                if (popupRef) {
-                  if (droppableId === "DeckDeleteArea") {
-                    popupRef.current?.show(
-                      "Drag and drop the deck onto the trash icon to delete it.",
-                      5000
-                    );
-                  } else {
-                    popupRef.current?.show(
-                      "Drag and drop the card onto the trash icon to delete it.",
-                      5000
-                    );
-                  }
-                }
-              }}
-            >
-              {snapshot.isDraggingOver ? (
-                <img
-                  src="/trashcan-open.svg"
-                  alt={altText}
-                  className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
-                />
-              ) : (
-                <img
-                  src="/trashcan-close.svg"
-                  alt={altText}
-                  className="w-[30px] h-[30px]  lg:w-[35px] lg:h-[35px]"
-                />
-              )}
-            </div>
-          </div>
-        );
-      }}
-    </Droppable>
+        aria-label={`Drag and drop the ${
+          droppableId === "DeckDeleteArea" ? "deck" : "card"
+        } onto the trash icon to delete it.`}
+        size="md"
+        onClick={handleClick}
+        className={`  !transition-transform !duration-300 rounded-full p-1  ${
+          isOver || shouldTrashCanRotate ? "-rotate-12 " : "transform-none"
+        } `}
+      >
+        <img
+          src={
+            isOver || shouldTrashCanRotate
+              ? "/trashcan-open.svg"
+              : "/trashcan-close.svg"
+          }
+          alt={altText}
+          className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
+        />
+      </Button>
+    </div>
   );
 });
 

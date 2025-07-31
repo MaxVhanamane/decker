@@ -2,18 +2,20 @@ import { useState, ChangeEvent, useContext, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { request } from "../utils/fetch-utils";
 import { FcGoogle } from "react-icons/fc";
-import { AlertContext } from "../context/AlertContext";
-import { AlertData } from "../types/types";
 import { Helmet } from "react-helmet";
 import { OfflineContext } from "../context/OfflineContext";
 import { CustomError } from "../utils/customError";
+import { ShowToastContext } from "../context/ToastNotificationContext";
+import { UserContext } from "../context/UserContext";
+import { UserStore } from "../utils/userStore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setAlert } = useContext(AlertContext);
+  const { showToast } = useContext(ShowToastContext);
   const navigate = useNavigate();
   const { isOnline } = useContext(OfflineContext);
+  const { setUserInfo } = useContext(UserContext);
 
   // If a user clicks multiple times on the login button, multiple requests will be sent to the server. To avoid this, we will disable the button while the request is being processed.
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -28,46 +30,54 @@ export default function Login() {
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
     setIsLoggingIn(true);
 
     if (password.length < 8) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "Password must be at least 8 characters long.",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       setIsLoggingIn(false);
       return;
     }
 
     try {
       const data = { email, password };
-
       const response = await request.post("/login", data);
       if (response.data.success == true) {
+        setUserInfo(response.data.userInfo);
+        UserStore.saveUser({
+          profile_picture_url: response?.data?.userInfo?.profile_picture_url,
+          username: response?.data?.userInfo?.profile_picture_url,
+        });
+
         navigate("/auth/success", { replace: true });
       }
     } catch (error) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: (error as CustomError)?.message
           ? (error as CustomError)?.message
           : "An error occurred during the login process",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
     } finally {
       setIsLoggingIn(false);
     }
@@ -75,17 +85,18 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
     // window.open(`${import.meta.env.VITE_GOOGLE_AUTH_URL}`, "_self");
-    window.location.href = `${import.meta.env.VITE_GOOGLE_AUTH_URL}`;
+    window.location.replace(`${import.meta.env.VITE_GOOGLE_AUTH_URL}#auth`);
   };
 
   return (
@@ -93,26 +104,21 @@ export default function Login() {
       <Helmet>
         <title>Decker-Login</title>
       </Helmet>
-      <section className="absolute top-0 left-0 w-full h-full bg-[#fcfefc] dark:bg-slate-900">
+      <section className="absolute top-0 left-0 w-full h-full bg-white dark:bg-slate-900">
         <div className=" py-12 px-6 h-full">
           <div className="flex justify-center items-center flex-wrap h-full ">
             <div className="xl:w-6/12">
-              <div className="block   rounded-lg shadow-2xl bg-[#fcfefc] dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500 ">
+              <div className="block rounded-lg shadow-lg bg-white border-2 border-sky-500 dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500 ">
                 <div className="flex justify-center items-center g-0">
                   <div className=" px-4 md:px-0">
                     <div className="md:p-12 p-4 md:mx-6">
                       <div className="flex items-center justify-center flex-col rounded-full">
                         <img
-                          src={`${
-                            localStorage.getItem("theme") === "dark" ||
-                            localStorage.getItem("theme") === null
-                              ? "/decker_logo_dark.png"
-                              : "/decker_logo_light.png"
-                          }`}
+                          src="/decker_logo.png"
                           className="w-7 h-7 object-contain"
                           alt="decker logo"
                         />
-                        <h1 className="font-bold text-2xl text-teal-600 dark:text-sky-500 ">
+                        <h1 className="font-bold text-2xl text-sky-500 ">
                           Decker
                         </h1>
                         <h2 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">
@@ -124,7 +130,7 @@ export default function Login() {
                           <input
                             onChange={handleChange}
                             type="email"
-                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition-[border-color] ease-in-out duration-150 m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition-[border-color] ease-in-out duration-150 m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
                             id="email"
                             placeholder="Email"
                             name="email"
@@ -136,7 +142,7 @@ export default function Login() {
                           <input
                             onChange={handleChange}
                             type="password"
-                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-[#fcfefc] bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition-[border-color] duration-150 ease-in-out m-0 focus:text-gray-700 focus:bg-[#fcfefc] focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
+                            className="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-400 dark:border-gray-300/40 rounded transition-[border-color] duration-150 ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-700 focus:outline-none dark:text-gray-50 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1"
                             id="password"
                             placeholder="Password"
                             name="password"
@@ -146,7 +152,7 @@ export default function Login() {
                         </div>
                         <div className="text-center pt-1  pb-1">
                           <button
-                            className="  inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full   dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition duration-150 ease-in-out   disabled:cursor-not-allowed"
+                            className="inline-block px-6 py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-full bg-sky-600 hover:bg-sky-700 transition duration-200  disabled:cursor-not-allowed"
                             type="submit"
                             aria-label="Log in"
                             disabled={isLoggingIn}
@@ -164,7 +170,7 @@ export default function Login() {
                           </div>
                           <button
                             onClick={() => handleGoogleLogin()}
-                            className="  px-6 py-[0.35rem] text-gray-800 font-medium text-sm leading-tight  rounded   active:shadow-lg transition-[border-color] duration-150 ease-in-out w-full mb-3 flex items-center justify-center dark:text-gray-50 gap-4 border border-gray-500 dark:border-gray-100/80 hover:border hover:border-teal-500 dark:hover:border-sky-500"
+                            className="  px-6 py-[0.35rem] text-gray-800 font-medium text-sm leading-tight  rounded   active:shadow-lg transition-[border-color] duration-150 ease-in-out w-full mb-3 flex items-center justify-center dark:text-gray-50 gap-4 border border-gray-500 dark:border-gray-100/80 hover:border hover:border-sky-500"
                             type="button"
                             aria-label="Continue with Google"
                           >

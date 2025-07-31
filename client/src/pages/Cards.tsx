@@ -1,156 +1,86 @@
 import {
-  ChangeEvent,
-  FormEvent,
   useState,
   useRef,
   useContext,
-  MouseEvent,
-  FC,
   useEffect,
   useCallback,
   memo,
-  RefObject,
-  SetStateAction,
-  Dispatch,
+  useMemo,
 } from "react";
-import { useParams } from "react-router-dom";
-import useGetCards from "../hooks/useGetCards";
-import useCreateCard from "../hooks/useCreateCard";
-import useDeleteCard from "../hooks/useDeleteCard";
-import useEditCard from "../hooks/useEditCard";
-import { ThemeContext, UserContext } from "./../context/UserContext";
+import useGetCards from "../hooks/react-query/useGetCards";
+import useCreateCard from "../hooks/react-query/useCreateCard";
+import useEditCard from "../hooks/react-query/useEditCard";
+import { useStableNavigate } from "../context/StableNavigateContext";
+import { useStableParams } from "../context/stableParamsContext";
+import useDeleteCard from "../hooks/react-query/useDeleteCard";
+import useToastOnError from "../hooks/utility/useToastOnError";
+import { useIsSmallScreen } from "../hooks/utility/useIsSmallScreen";
 import { Helmet } from "react-helmet";
-import { useNavigate, useLocation } from "react-router-dom";
-import { AlertContext } from "../context/AlertContext";
-import {
-  AlertData,
-  ContentType,
-  ContentTypeForEdit,
-  UndoCardPayloadData,
-} from "../types/types";
+import type { CardContentType, ContentTypeForEdit } from "../types/types";
 import Loading from "../components/Loading";
-import ConfirmDeleteModalForCard from "../components/card/ConfirmDeleteModalForCard";
-import CardItems from "../components/card/CardItems";
-import ConfirmCloseCard from "../components/card/ConfirmCloseCard";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
-import shortid from "shortid";
-import Tips from "../components/card/Tips";
-import FullScreenCardView from "../components/card/FullScreenCardView";
+import { v4 as uuidv4 } from "uuid";
 import EditCard from "../components/card/EditCard";
 import { searchContext } from "../context/SearchContext";
-import { addCodeBlock } from "../functions/addCodeBlock";
-import { addLink } from "../functions/addLink";
-import { addUnderlineText } from "../functions/addUnderlineText";
-import { addBoldText } from "../functions/addBoldText";
-import CardToolbar from "../components/card/CardToolbar";
+import CardToolbar from "../components/card/toolbar/CardToolbar";
 import { CustomError } from "../utils/customError";
 import { AudioContext } from "../context/AudioContext";
-import useUndoCard from "../hooks/useUndoCard";
 import CardInput from "../components/card/CardInput";
 import TrashCanDropZone from "../components/TrashCanDropZone";
 import { CardContext } from "../context/CardContext";
-import { PopupContext } from "../context/PopupContext";
-// types
-// let oldContent:string //this  works
+import { ShowToastContext } from "../context/ToastNotificationContext";
+import CardContainer from "../components/card/CardContainer";
+import { DndSettersContext, DndStateContext } from "../context/DndItemContext";
+import Bulb from "../components/Bulb";
+import { useModalBackNavigationHandler } from "../hooks/utility/useModalBackNavigationHandler";
+import ConfirmationModal from "../components/ConfirmationModal";
+import NoContent from "../components/NoContent";
+import { Descendant } from "slate";
+import FullScreenCardView from "../components/card/FullScreenCardView";
+import { twMerge } from "tailwind-merge";
+import debounce from "lodash/debounce";
+import { hasValidNoteContent } from "../utils/editor/hasValidNoteContent";
+import { usePrismTheme } from "../hooks/utility/usePrismTheme";
+import { ThemeContext } from "../context/ThemeContext";
 
+// const Tips = lazy(() => import("../components/card/Tips"));
+const initialValue: Descendant[] = [
+  {
+    type: "title",
+    children: [{ text: "" }],
+  },
+  {
+    type: "paragraph",
+    children: [{ text: "" }],
+  },
+];
 type ContentTypeForPayload = {
-  title: string;
-  note: string;
+  note: Descendant[];
   cardId: string;
 };
 
-type ContentForFullScreen = ContentType & {
+type ContentForFullScreen = CardContentType & {
   cardIndex: number | null;
 };
 
 type PayloadType = {
-  deck_id: string;
+  deckId: string;
   content: ContentTypeForPayload;
 };
 
-let wasDeleteModalOpen2: boolean;
-
-interface CardsProps {
-  isMoveCardError: boolean;
-  moveCardError: Error | null;
-  resetMoveCardResponse: () => void;
-  undoButtonRefForCard: RefObject<HTMLDivElement>;
-  undoCardDetails: UndoCardPayloadData | null;
-  resetUndoCardDetailsValue: (card: UndoCardPayloadData | null) => void;
-  setUndoCardDetails: Dispatch<SetStateAction<UndoCardPayloadData | null>>;
-}
-
-const Cards: FC<CardsProps> = ({
-  isMoveCardError,
-  moveCardError,
-  resetMoveCardResponse,
-  undoButtonRefForCard,
-  undoCardDetails,
-  resetUndoCardDetailsValue,
-  setUndoCardDetails,
-}) => {
-  // States
-  const { setAlert } = useContext(AlertContext);
-  const {
-    showSearchBar,
-    setOpenSearchBar,
-    openEditDeckModalForSearchResult,
-    setAnimateCloseEditDeckModalInSearchResult,
-    cardDeleted,
-    setCardDeleted,
-  } = useContext(searchContext);
-  const {
-    divRefForUserSettings,
-    handleShowUserInfomation,
-    showLogoutModal,
-    setShowLogoutModal,
-  } = useContext(UserContext);
-  const {
-    indexOfCardForDeletion,
-    setIndexOfCardForDeletion,
-    deleteConfirmationModalForCard,
-  } = useContext(CardContext);
-  const popupRef = useContext(PopupContext);
-  const { theme } = useContext(ThemeContext);
-  const {
-    mutate: undoCardItem,
-    isError: isUndoCardError,
-    reset: resetUndoCardResponse,
-  } = useUndoCard();
-  const [wasSearchBarInitiallyTrue, setWasSearchBarInitiallyTrue] =
-    useState(showSearchBar);
+const Cards = () => {
+  const { deckId } = useStableParams();
+  const { showSearchBar } = useContext(searchContext);
+  const { setIndexOfCardForDeletion } = useContext(CardContext);
+  const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
-  const [note, setNote] = useState<string>("");
-  const [title, setTitle] = useState<string>("");
-  const [showTips, setShowTips] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
-  const [showFullScreen, setShowFullScreen] = useState(false);
-  const [height, setHeight] = useState(80);
-  const [expandTextarea, setExpandTextArea] = useState(false);
-  const [checkClose, setCheckClose] = useState(false);
-  const [startAnimation, setStartAnimation] = useState(true);
-  const [showScrollButtons, setShowScrollButtons] = useState(false);
-  const [showConfirmCloseCardModal, setShowConfirmCloseCardModal] =
-    useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [closeTipsModal, setCloseTipsModal] = useState(false);
-  const [closeEditModal, setCloseEditModal] = useState(false);
-  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
-    useState(false);
-  const [fullScreenCardData, setFullScreenCardData] =
-    useState<ContentForFullScreen>({
-      title: "",
-      note: "",
-      _id: "",
-      cardIndex: null,
-      cardId: "",
-    });
-  const [wasDeleteModalOpen, setWasDeleteModalOpen] = useState(false);
-  wasDeleteModalOpen2 = wasDeleteModalOpen;
-  const { deck_id } = useParams();
-  const location = useLocation();
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const { allCardsState } = useContext(DndStateContext);
+  const { setAllCardsState } = useContext(DndSettersContext);
+  const { theme } = useContext(ThemeContext);
+  const { setShouldTrashCanRotate, setUndoCardId } = useContext(CardContext);
+  const { mutate: deleteCard } = useDeleteCard();
   const {
     data,
     isError,
@@ -158,15 +88,8 @@ const Cards: FC<CardsProps> = ({
     isLoading,
     isPaused,
     isFetching: isFetchingCards,
-  } = useGetCards(deck_id!);
+  } = useGetCards(deckId!);
 
-  const [editContent, setEditContent] = useState<ContentTypeForEdit>({
-    title: "",
-    note: "",
-    _id: "",
-    cardIndex: null,
-    cardId: "",
-  });
   const {
     mutate: addCard,
     reset: resetCreateCardResponse,
@@ -174,710 +97,513 @@ const Cards: FC<CardsProps> = ({
     error: createCardError,
     isPending: isCreatingCard,
   } = useCreateCard();
-
   const {
     mutate: editCard,
     reset: resetEditCardResponse,
     isError: isEditCardError,
     error: editCardError,
   } = useEditCard();
-
-  const {
-    mutate: deleteCardItem,
-    reset: resetDeleteCardResponse,
-    isError: isDeleteCardError,
-    error: deleteCardError,
-  } = useDeleteCard();
-
-  // Refs
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const inputElementRef = useRef<HTMLInputElement>(null);
-  const shouldPushRef = useRef<boolean>(false);
-  const undoCardDetailsRef = useRef(undoCardDetails);
-  undoCardDetailsRef.current = undoCardDetails;
-  // Other
-  const navigate = useNavigate();
-  // just for understanding
-  //let oldContent:string  // If you declare a variable like this to store old content it might show undefined because once state changes the function rerenders and that removes the value you set. If you do not want to use state to store then you will have to place the global variable outside the functional component. I was just trying to use global variable to store oldcontent.
-  useEffect(() => {
-    if (isCreateCardError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: createCardError?.message,
-        autoHideDuration: 5000,
-      }));
-      resetCreateCardResponse();
-    }
-    if (isDeleteCardError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: deleteCardError?.message,
-        autoHideDuration: 5000,
-      }));
-      resetDeleteCardResponse();
-    }
-    if (isMoveCardError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: moveCardError
-          ? moveCardError?.message
-          : "Something went wrong!",
-        autoHideDuration: 5000,
-      }));
-      resetMoveCardResponse();
-    }
-    if (isEditCardError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: editCardError?.message,
-        autoHideDuration: 5000,
-      }));
-      resetEditCardResponse();
-    }
-    if (isUndoCardError) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message:
-          "We're sorry, but we couldn't undo your card due to a technical issue. Your card may not be restored. We apologize for any inconvenience.",
-        autoHideDuration: 7000,
-      }));
-      resetUndoCardResponse();
-    }
-  }, [
-    isCreateCardError,
-    isDeleteCardError,
-    isMoveCardError,
-    isEditCardError,
-    isUndoCardError,
-  ]);
-
-  useEffect(() => {
-    if (expandTextarea) {
-      const timeoutId = setTimeout(() => {
-        inputElementRef?.current?.classList.remove("rounded-t-md");
-      }, 1200);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [expandTextarea]);
-
-  useEffect(() => {
-    if (checkClose) {
-      inputElementRef?.current?.classList.remove(
-        "rounded-b-md",
-        "rounded-t-md"
-      );
-      inputElementRef?.current?.classList.add("duration-[1.2s]");
-
-      const timeoutId1 = setTimeout(() => {
-        inputElementRef?.current?.classList.add("rounded-t-md");
-        setCheckClose(false);
-      }, 1300);
-
-      const timeoutId2 = setTimeout(() => {
-        inputElementRef?.current?.classList.add("rounded-b-md");
-      }, 600);
-
-      const timeoutId3 = setTimeout(() => {
-        textareaRef?.current?.classList.add("opacity-0");
-      }, 950);
-
-      return () => {
-        clearTimeout(timeoutId1);
-        clearTimeout(timeoutId2);
-        clearTimeout(timeoutId3);
-      };
-    } else {
-      inputElementRef?.current?.classList.add("rounded-b-md", "rounded-t-md");
-    }
-  }, [checkClose]);
-
-  useEffect(() => {
-    if (cardDeleted) {
-      setCardDeleted(false);
-    }
-  }, [cardDeleted]);
-
-  // If user clicks on browser's back button (on mobile when he swipes back) and if some modal is open then we will close that modal instead of
-  // redirecting him to home page. if there is no modal open then we will navigate him to home page.
-  const handleBrowsersBackButton = useCallback(
-    function (event: PopStateEvent) {
-      event.preventDefault();
-      if (showLogoutModal) {
-        setShowLogoutModal(false);
-        return;
-      }
-
-      if (
-        !deleteConfirmationModalForCard?.current?.classList.contains("hidden")
-      ) {
-        setIsConfirmDeleteModalOpen(false);
-        deleteConfirmationModalForCard?.current?.classList.add("hidden");
-        return;
-      }
-
-      if (openEditDeckModalForSearchResult) {
-        setAnimateCloseEditDeckModalInSearchResult(true);
-        return;
-      }
-
-      if (showSearchBar && !showFullScreen) {
-        if (divRefForUserSettings.current?.classList.contains("scale-100")) {
-          handleShowUserInfomation();
-        }
-        setOpenSearchBar(false);
-        return;
-      }
-
-      if (showTips) {
-        setCloseTipsModal(true);
-        return;
-      }
-
-      if (openModal || showFullScreen) {
-        if (openModal) {
-          setCloseEditModal(true);
-        } else {
-          if (wasDeleteModalOpen2) {
-            setWasDeleteModalOpen(false);
-            return;
-          }
-          setStartAnimation(false);
-          setShowScrollButtons(false);
-        }
-      }
+  const [isCardsStateReady, setIsCardsStateReady] = useState(false);
+  const [note, setNote] = useState<Descendant[]>(initialValue);
+  const [showTips, setShowTips] = useState(false);
+  const [showEditModalForCard, setShowEditModalForCard] = useState(false);
+  const [showFullScreen, setShowFullScreen] = useState(false);
+  const [height, setHeight] = useState(() =>
+    window.innerWidth < 640 ? 200 : 120
+  );
+  const [expandEditor, setExpandEditor] = useState(false);
+  const [closeFullScreenWithAnimation, setCloseFullScreenWithAnimation] =
+    useState(false);
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
+  const isSmallScreen = useIsSmallScreen();
+  const [modalState, setModalState] = useState({
+    confirmCloseCardModal: {
+      show: false,
+      startClosingModalAnimation: false,
     },
-    [
-      openModal,
-      showFullScreen,
-      showTips,
-      showSearchBar,
-      openEditDeckModalForSearchResult,
-      isConfirmDeleteModalOpen,
-      showLogoutModal,
-    ]
+    confirmDeleteCardModal: {
+      show: false,
+      startClosingModalAnimation: false,
+    },
+  });
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [, setCloseTipsModal] = useState(false);
+  const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
+  const [closeEditModalWithAnimation, setCloseEditModalWithAnimation] =
+    useState(false);
+  const [fullScreenCardData, setFullScreenCardData] =
+    useState<ContentForFullScreen | null>(null);
+  const [editContent, setEditContent] = useState<ContentTypeForEdit | null>(
+    null
   );
 
+  const richTextWrapperRef = useRef<HTMLDivElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const cardToDeleteRef = useRef<
+    (CardContentType & { deletionIndex: number }) | null
+  >(null);
+
+  const navigate = useStableNavigate();
+  usePrismTheme(theme);
+  useToastOnError({
+    isError: isCreateCardError,
+    error: createCardError,
+    resetFunction: resetCreateCardResponse,
+  });
+
+  useToastOnError({
+    isError: isEditCardError,
+    error: editCardError,
+    resetFunction: resetEditCardResponse,
+  });
+
   useEffect(() => {
-    if (showFullScreen || isConfirmDeleteModalOpen || openModal) {
-      // Close the keyboard on phones when the user opens modals or enters fullscreen card view.
-      if (document?.activeElement === textareaRef?.current) {
-        textareaRef?.current?.blur();
-      } else if (document?.activeElement === inputElementRef?.current) {
-        inputElementRef?.current?.blur();
-      }
+    if (data) {
+      setIsCardsStateReady(true);
+      setAllCardsState(data);
     }
-  }, [showFullScreen, isConfirmDeleteModalOpen, openModal]);
-
-  // Here we will check if user has used browser's back button if he uses browsers back button to go back then
-  // we will first check if card is open in full screen if it is open then we will close it instead of going back to the previous page directly.
-  // This is usefull when user is accessing the site on mobile because most users swipe to go back.
-  // Update the ref whenever undoCardDetails changes
+  }, [data]);
 
   useEffect(() => {
-    const shouldPushState =
-      openModal ||
-      showFullScreen ||
-      showTips ||
-      showSearchBar ||
-      openEditDeckModalForSearchResult ||
-      isConfirmDeleteModalOpen;
-
-    if (shouldPushState && !shouldPushRef.current) {
-      if (!wasSearchBarInitiallyTrue) {
-        const url = new URL(document.URL);
-        const absolutePath = url.pathname;
-        //Using navigate() can cause the whole tree to re-render. To avoid that, I am using the History API, as it achieves what I want to achieve without re-rendering the whole tree.
-        window.history.pushState(
-          { isBackButtonNotClicked: true },
-          "",
-          absolutePath
-        );
-      } else {
-        setWasSearchBarInitiallyTrue(false);
-      }
-    }
-
-    const variableArray = [
-      openModal,
-      showFullScreen,
-      showTips,
-      showSearchBar,
-      openEditDeckModalForSearchResult,
-      isConfirmDeleteModalOpen,
-    ];
-    const trueCount = variableArray.filter((variable) => variable).length;
-
-    if (trueCount >= 2) {
-      shouldPushRef.current = true;
-    } else {
-      shouldPushRef.current = false;
-    }
-    window.addEventListener("popstate", handleBrowsersBackButton);
     return () => {
-      window.removeEventListener("popstate", handleBrowsersBackButton);
+      setShouldTrashCanRotate((prev) => {
+        if (prev) return false;
+        return prev;
+      });
+
+      setUndoCardId((prev) => {
+        if (prev) {
+          return null;
+        }
+        return prev;
+      });
     };
-  }, [
-    openModal,
-    showFullScreen,
-    showTips,
-    showSearchBar,
-    openEditDeckModalForSearchResult,
-    isConfirmDeleteModalOpen,
-    showLogoutModal,
-  ]);
+  }, []);
 
   useEffect(() => {
     if (
       showFullScreen ||
-      openModal ||
-      showConfirmCloseCardModal ||
-      isConfirmDeleteModalOpen ||
-      showTips
+      modalState.confirmDeleteCardModal.show ||
+      showEditModalForCard
     ) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
+      // Close the keyboard on phones when the user opens modals or enters fullscreen card view.
+      if (document?.activeElement === richTextWrapperRef?.current) {
+        richTextWrapperRef?.current?.blur();
+      }
     }
-    // Cleanup function
-    return () => {
-      document.body.style.overflow = "auto";
-    };
   }, [
     showFullScreen,
-    openModal,
-    showConfirmCloseCardModal,
-    isConfirmDeleteModalOpen,
-    showTips,
+    modalState.confirmDeleteCardModal.show,
+    showEditModalForCard,
   ]);
 
+  useModalBackNavigationHandler({
+    isOpen: showEditModalForCard,
+    modalKey: "editModalForCard",
+    closeModal: () => setCloseEditModalWithAnimation(true),
+  });
+
+  useModalBackNavigationHandler({
+    isOpen: modalState.confirmDeleteCardModal.show,
+    modalKey: "confirmDeleteModalForCard",
+    closeModal: () =>
+      setModalState((prev) => ({
+        ...prev,
+        confirmDeleteCardModal: {
+          show: true,
+          startClosingModalAnimation: false,
+        },
+      })),
+  });
+  useModalBackNavigationHandler({
+    isOpen: showFullScreen,
+    modalKey: "showFullScreen",
+    closeModal: () => setCloseFullScreenWithAnimation(true),
+  });
+
+  useModalBackNavigationHandler({
+    isOpen: showTips,
+    modalKey: "showTips",
+    closeModal: () => setCloseTipsModal(true),
+  });
+
+  useModalBackNavigationHandler({
+    isOpen: modalState.confirmCloseCardModal.show,
+    modalKey: "confirmCloseCardModal",
+    closeModal: () =>
+      setModalState((prev) => ({
+        ...prev,
+        confirmCloseCardModal: {
+          show: true,
+          startClosingModalAnimation: false,
+        },
+      })),
+  });
+
+  // If the user is on a large screen and expands the editor to its full height,
+  // then opens DevTools, the height remains based on the large screen.
+  // This can cause the textarea to extend beyond the visible area, requiring scrolling.
+  // This useEffect prevents that by adjusting the height accordingly.
   useEffect(() => {
-    //     scrollHeight is a property of an HTML element that represents the height of an element's content, including any overflowed content that is hidden, as a result of applying CSS overflow property. It includes padding but not the border, scrollbar or margin.
+    const debouncedResize = debounce(() => {
+      const maxHeight = window.innerHeight - 64 - 16 - 16 - 40;
+      const maxHeightSmallScreen = maxHeight - 56;
 
-    // clientHeight is a property of an HTML element that represents the height of an element's content area, including padding but excluding the border, scrollbar or margin. (which means height that is our state and clientHeight are same. as we have added py-2 there is lil difference )
-
-    if (textareaRef?.current) {
-      const textarea = textareaRef.current;
-      const maxHeightForTextArea = (window.innerHeight * 70) / 100; //giving 60 percent of screen height to the textarea.
-      if (textarea.scrollHeight === 24) {
-        return setHeight(80);
-      }
-      // We will only increase the height of the textarea when the content height is greater than the textarea's height.
-      if (
-        textarea.scrollHeight > textarea.clientHeight &&
-        maxHeightForTextArea > textarea.scrollHeight
-      ) {
-        // adding an extra 40+ to avoid weird bug. if I don't add this, then if you hit enter then while adding height it moves the content inside textarea which looks weird.
-        setHeight((previousHeight) => {
-          if (maxHeightForTextArea - previousHeight > 120) {
-            return maxHeightForTextArea > previousHeight
-              ? previousHeight + 120
-              : previousHeight;
-          } else {
-            return parseFloat(
-              (previousHeight + maxHeightForTextArea - previousHeight).toFixed(
-                2
-              )
-            );
-          }
-        });
-      }
-    }
-  }, [note]);
-
-  const increaseTextAreaHeight = useCallback(() => {
-    const textarea = textareaRef.current;
-    const maxHeightForTextArea = (window.innerHeight * 70) / 100;
-    if (maxHeightForTextArea > textarea!.clientHeight) {
-      setHeight((previousHeight) => {
-        if (maxHeightForTextArea - previousHeight > 120) {
-          return maxHeightForTextArea > previousHeight
-            ? previousHeight + 120
-            : previousHeight;
-        } else {
-          return parseFloat(
-            (previousHeight + maxHeightForTextArea - previousHeight).toFixed(2)
-          );
+      setHeight((prevHeight) => {
+        if (isSmallScreen && prevHeight > maxHeightSmallScreen) {
+          return maxHeightSmallScreen;
+        } else if (!isSmallScreen && prevHeight > maxHeight) {
+          return maxHeight;
         }
+        return prevHeight;
       });
+    }, 300);
+
+    window.addEventListener("resize", debouncedResize);
+
+    return () => {
+      window.removeEventListener("resize", debouncedResize);
+      debouncedResize.cancel?.(); // Cancel pending debounced calls
+    };
+  }, [isSmallScreen]);
+
+  const discardNoteAndCloseTextEditor = useCallback(() => {
+    setModalState((prev) => ({
+      ...prev,
+      confirmCloseCardModal: { startClosingModalAnimation: false, show: false },
+    }));
+
+    setExpandEditor(false);
+    if (isSmallScreen) {
+      setHeight(200);
+    } else {
+      setHeight(120);
     }
+    if (data && "cards" in data && data?.cards?.length === 0) {
+      setIsTransitioning(true);
+    }
+    setNote(initialValue);
+  }, [data]);
+
+  const keepNoteAndContinueEditing = useCallback(() => {
+    setModalState((prev) => ({
+      ...prev,
+      confirmCloseCardModal: { startClosingModalAnimation: false, show: false },
+    }));
   }, []);
 
-  const decreaseTextAreaHeight = useCallback(() => {
-    if (height <= 80) {
-      setHeight(80);
-    } else {
-      setHeight((previousHeight) => {
-        if (previousHeight - 120 > 80) {
-          return previousHeight - 120;
-        } else {
-          return 80;
-        }
-      });
-    }
-  }, [height]);
+  const handleOnConfirmDeleteCard = useCallback(() => {
+    setModalState((prev) => ({
+      ...prev,
+      confirmDeleteCardModal: {
+        startClosingModalAnimation: false,
+        show: false,
+      },
+    }));
+    setShowFullScreen(false);
+    const { deletionIndex, ...cardInfo } = cardToDeleteRef.current!;
+    deleteCard({
+      deckId: deckId!,
+      index: deletionIndex,
+      cardInfo,
+    });
+  }, [deleteCard, deckId]);
 
-  const adjustTextareaHeightOnPasteAndExpand = useCallback(() => {
-    const textarea = textareaRef.current;
+  const handleOnCancelDeleteCard = useCallback(() => {
+    setModalState((prev) => ({
+      ...prev,
+      confirmDeleteCardModal: {
+        startClosingModalAnimation: false,
+        show: false,
+      },
+    }));
+  }, []);
 
-    const maxHeightForTextArea = (window.innerHeight * 70) / 100;
-    if (maxHeightForTextArea > textarea!.clientHeight) {
+  const expandEditorToMaxHeight = useCallback(() => {
+    const editor = richTextWrapperRef.current;
+    // maxHeight=window.innerHeight-navbarHeight-marginTop-marginBtm-toolbarHeight
+    const maxHeightForTextArea = isSmallScreen
+      ? window.innerHeight - 64 - 16 - 16 - 40 - 56
+      : window.innerHeight - 64 - 16 - 16 - 40;
+    if (editor && maxHeightForTextArea > editor.clientHeight) {
       setHeight((previousHeight) => {
         return maxHeightForTextArea > previousHeight
           ? maxHeightForTextArea
           : previousHeight;
       });
     }
-  }, []);
+  }, [isSmallScreen]);
 
-  const handleUndoButtonClick = useCallback(() => {
-    if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
-        message: "No internet connection",
-        autoHideDuration: 5000,
+  const handleCloseTextEditor = useCallback(() => {
+    if (note && note.length > 0) {
+      setModalState((prev) => ({
+        ...prev,
+        confirmCloseCardModal: {
+          show: true,
+          startClosingModalAnimation: true,
+        },
       }));
-      return;
-    }
-
-    undoCardItem(undoCardDetailsRef.current!, {
-      onSettled: () => {
-        resetUndoCardDetailsValue(null);
-      },
-    });
-  }, [undoCardItem, isOnline, undoCardDetailsRef]);
-
-  const handleClose = useCallback(() => {
-    if (title.trim().length > 0 || note.trim().length > 0) {
-      setShowConfirmCloseCardModal(true);
     } else {
-      setExpandTextArea(false);
-      setCheckClose(true);
-      setHeight(80);
-      setNote("");
-      setTitle("");
+      setExpandEditor(false);
+      if (isSmallScreen) {
+        setHeight(200);
+      } else {
+        setHeight(120);
+      }
+      setNote(initialValue);
       if (data && "cards" in data && data?.cards?.length === 0) {
         setIsTransitioning(true);
       }
     }
-  }, [title, note, data]);
+  }, [note, data]);
   // onClick handlers
+
   const handleCreateCard = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
+    (
+      resetEditor: () => void,
+      restoreUnsavedContent: (newNote: Descendant[]) => void
+    ) => {
       if (!isOnline) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "No internet connection",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
         return;
       }
 
-      if (isFetchingCards || isCreatingCard) {
-        if (popupRef) {
-          popupRef?.current?.show(
-            "Your previous card is being saved to the server. Please wait a moment..."
-          );
-        }
+      if (isCreatingCard) {
+        showToast({
+          message:
+            "Your previous card is being saved to the server. Please wait a moment...",
+          severity: "info",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
+
         return;
       }
-      //If I don't use trim(), user can create the card  using white spaces. the trim() method is used to remove any leading and trailing white spaces from the string str
-      if (title.trim().length > 0 || note.trim().length > 0) {
-        const content = { title, note, cardId: shortid.generate() };
-        const payload: PayloadType = { deck_id: deck_id!, content };
-        // Store the current input values to reset them later
+
+      if (hasValidNoteContent(note)) {
+        const content = {
+          note,
+          cardId: uuidv4(),
+        };
         const currentNote = note;
-        const currentTitle = title;
         const heightVal = height;
-
+        const payload: PayloadType = { deckId: deckId!, content };
         addCard(payload, {
           //While saving the card, if an error occurs, we will retrieve the cleared card information and show it again so that the user doesn't lose the created card details.
           onError: () => {
-            setNote(currentNote);
-            setTitle(currentTitle);
+            // we don't have to call setNote value here as restoreUnsavedContent function calls onChange that sets the setNote to the correct value
             setHeight(heightVal);
+            restoreUnsavedContent(currentNote);
           },
         });
-        setNote("");
-        setTitle("");
-        setHeight(80);
+        resetEditor();
+        setNote(initialValue);
+        setHeight(120);
+
         if (isPlayingAudioAllowed) {
           setTimeout(() => {
             handlePlayAudio("createdSuccessfully", "/cards");
           }, 100);
         }
       } else {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "warning",
-          show: true,
+        showToast({
           message: "Title or note should contain one or more characters!",
-        }));
+          severity: "warning",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
       }
     },
     [
-      isOnline,
-      title,
       note,
-      isPlayingAudioAllowed,
+      deckId,
       height,
-      addCard,
-      deck_id,
       isCreatingCard,
       isFetchingCards,
+      isPlayingAudioAllowed,
+      isOnline,
     ]
   );
+  const handleShowFullScreen = useCallback((card: ContentForFullScreen) => {
+    setShowFullScreen(true);
+    setFullScreenCardData({ ...card });
+  }, []);
 
   const handleDelete = useCallback(
     (index: number) => {
       if (!isOnline) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "No internet connection",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
+
         return;
       }
-      setIndexOfCardForDeletion(index);
-      // This will take confirmation of user by showing him a modal.
-      if (
-        deleteConfirmationModalForCard?.current?.classList.contains("hidden")
-      ) {
-        setIsConfirmDeleteModalOpen(true);
-        deleteConfirmationModalForCard?.current?.classList.remove("hidden");
+      if (fullScreenCardData) {
+        const { cardIndex, ...rest } = fullScreenCardData;
+
+        cardToDeleteRef.current = { ...rest, deletionIndex: cardIndex! };
+
+        setIndexOfCardForDeletion(index);
+        setModalState((prev) => ({
+          ...prev,
+          confirmDeleteCardModal: {
+            startClosingModalAnimation: true,
+            show: true,
+          },
+        }));
       }
     },
-    [isOnline, setIndexOfCardForDeletion, deleteConfirmationModalForCard]
+    [isOnline, fullScreenCardData]
   );
 
   const handleEditCardButtonClick = useCallback(
     (cardItem: ContentTypeForEdit) => {
       if (!isOnline) {
-        setAlert((preval: AlertData) => ({
-          ...preval,
-          severity: "error",
-          show: true,
+        showToast({
           message: "No internet connection",
+          severity: "error",
           autoHideDuration: 5000,
-        }));
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
         return;
       }
       setEditContent(cardItem);
-      setOpenModal(true);
+      setShowEditModalForCard(true);
     },
-    [isOnline, setEditContent, setOpenModal]
+    [isOnline, showToast]
   );
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     if (!isOnline) {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "error",
-        show: true,
+      showToast({
         message: "No internet connection",
+        severity: "error",
         autoHideDuration: 5000,
-      }));
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
       return;
     }
+    if (editContent) {
+      const contentWithCardIndex = { ...editContent };
 
-    const contentWithCardIndex = { ...editContent };
-    const { cardIndex: index, ...contentWithoutCardIndex } = editContent;
-    let data = {
-      deck_id: deck_id!,
-      newContent: contentWithoutCardIndex,
-      index: index!,
-    };
+      const { cardIndex: index, note } = {
+        ...editContent,
+      };
+      let data = {
+        deckId: deckId!,
+        newContent: { note },
+        index: index!,
+      };
 
-    let fullScreenCardDataCache = fullScreenCardData;
+      let fullScreenCardDataCache = fullScreenCardData;
 
-    if (editContent.title.length > 0 || editContent.note.length > 0) {
-      // If the user saves the edited card and encounters an error during the saving process, this causes the user to lose all the data they created. This is because once the user clicks on the 'Save Card' button, I clear the edited content from the state and close the edit modal. To prevent data loss on error, we will open the modal again and show the lost data.
-      editCard(data, {
-        onError: () => {
-          setEditContent(contentWithCardIndex),
-            setOpenModal(true),
-            setCloseEditModal(false);
-          // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
-          if (showFullScreen) {
-            setFullScreenCardData({ ...fullScreenCardDataCache });
-          }
-        },
-      });
-      setCloseEditModal(true);
+      if (editContent && hasValidNoteContent(editContent.note)) {
+        // If the user saves the edited card and encounters an error during the saving process, this causes the user to lose all the data they created. This is because once the user clicks on the 'Save Card' button, I clear the edited content from the state and close the edit modal. To prevent data loss on error, we will open the modal again and show the lost data.
 
-      // It's okay not to reset the setEditContent because the next time I open a new card in edit mode, I will have the new data.
-      // setEditContent({
-      //   title: "",
-      //   note: "",
-      //   _id: "",
-      //   cardIndex: null,
-      //   cardId: "",
-      // });
+        editCard(data, {
+          onError: () => {
+            setEditContent(contentWithCardIndex),
+              setShowEditModalForCard(true),
+              setCloseEditModalWithAnimation(false);
+            // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
+            if (showFullScreen && fullScreenCardDataCache) {
+              setFullScreenCardData({ ...fullScreenCardDataCache });
+            }
+          },
+        });
+        setCloseEditModalWithAnimation(true);
 
-      // If the user opens the full screen card view and then clicks on the edit card button, we will display the updated data on full screen once the user saves the edited card.
+        // If the user opens the full screen card view and then clicks on the edit card button, we will display the updated data on full screen once the user saves the edited card.
 
-      if (showFullScreen) {
-        // Last time, when this function was created, it captured the value of the editContent state, and now we have that value available in the editContent here.
-        setFullScreenCardData({ ...editContent });
+        if (showFullScreen) {
+          // Last time, when this function was created, it captured the value of the editContent state, and now we have that value available in the editContent here.
+          setFullScreenCardData({ ...editContent });
+        }
+      } else {
+        showToast({
+          message: "Title or note should contain one or more characters!",
+          severity: "warning",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
       }
-    } else {
-      setAlert((preval: AlertData) => ({
-        ...preval,
-        severity: "warning",
-        show: true,
-        message: "Title or note should contain one or more characters!",
-      }));
     }
+  }, [
+    showFullScreen,
+    showToast,
+    editCard,
+    editContent,
+    isOnline,
+    fullScreenCardData,
+  ]);
 
-    if (window?.history?.state?.isBackButtonNotClicked) {
-      navigate(-1);
+  const hasCards =
+    allCardsState &&
+    "cards" in allCardsState &&
+    allCardsState?.cards?.length > 0;
+
+  const handleTransitionEnd = useCallback(() => {
+    if (data && "cards" in data && data?.cards?.length === 0) {
+      setIsTransitioning(false);
     }
-  };
+  }, [data]);
 
-  // Memoized handleChange function
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setEditContent((prevContent) => ({
-        ...prevContent,
-        [name]: value,
-      }));
-    },
-    [setEditContent]
-  );
-
-  const handleShowFullScreen = useCallback(
-    (card: ContentForFullScreen) => {
-      setShowFullScreen(true);
-      setFullScreenCardData({ ...card });
-    },
-    [setShowFullScreen, setFullScreenCardData]
-  );
-
-  const addBoldTextWrapper = useCallback(
-    (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
-      addBoldText({
-        e,
-        textareaRef,
-        note,
-        setNote,
-        editTextareaRef,
-        editContent,
-        setEditContent,
-      });
-    },
+  const cardToolbar = useMemo(
+    () => (
+      <CardToolbar
+        setShowTips={setShowTips}
+        expandEditorToMaxHeight={expandEditorToMaxHeight}
+        handleCloseTextEditor={handleCloseTextEditor}
+        isCreatingCard={isCreatingCard}
+        isFetchingCards={isFetchingCards}
+        tabbable={expandEditor}
+        setShowHyperlinkModal={setShowHyperlinkModal}
+        mode="create"
+      />
+    ),
     [
-      note,
-      setNote,
-      textareaRef,
-      editTextareaRef,
-      editContent,
-      setEditContent,
-      addBoldText,
+      setShowTips,
+      expandEditorToMaxHeight,
+      handleCloseTextEditor,
+      isCreatingCard,
+      isFetchingCards,
+      expandEditor,
+      setShowHyperlinkModal,
     ]
   );
-
-  const addUnderlineTextWrapper = useCallback(
-    (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
-      addUnderlineText({
-        e,
-        textareaRef,
-        editTextareaRef,
-        note,
-        setNote,
-        editContent,
-        setEditContent,
-      });
-    },
-    [
-      note,
-      setNote,
-      editContent,
-      setEditContent,
-      textareaRef,
-      editTextareaRef,
-      addUnderlineText,
-    ]
-  );
-
-  const addLinkWrapper = useCallback(
-    (event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
-      addLink({
-        e: event,
-        textareaRef,
-        note,
-        setNote,
-        editTextareaRef,
-        editContent,
-        setEditContent,
-      });
-    },
-    [
-      textareaRef,
-      note,
-      setNote,
-      editTextareaRef,
-      editContent,
-      setEditContent,
-      addLink,
-    ]
-  );
-
-  const addCodeBlockWrapper = useCallback(
-    (event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
-      addCodeBlock({
-        e: event,
-        note,
-        setNote,
-        editContent,
-        setEditContent,
-        textareaRef,
-        editTextareaRef,
-      });
-    },
-    [
-      addCodeBlock,
-      note,
-      setNote,
-      editContent,
-      setEditContent,
-      textareaRef,
-      editTextareaRef,
-    ]
-  );
-
-  if (isLoading) {
-    return <Loading />;
-  }
 
   if (isError || isPaused) {
     return (
       <ErrorDisplay
-        theme={theme}
         message={error?.message}
         status={(error as CustomError)?.statusCode}
         isPaused={isPaused}
       >
         <button
           onClick={() => navigate("/")}
-          className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
+          className=" mt-4  inline-block  py-2.5 font-medium text-sm leading-tight  rounded  active:shadow-lg text-gray-50   w-[7.3rem]  bg-sky-600 hover:bg-sky-700 transition-colors duration-200  "
           type="button"
           aria-label="Home"
         >
@@ -885,6 +611,10 @@ const Cards: FC<CardsProps> = ({
         </button>
       </ErrorDisplay>
     );
+  }
+
+  if (isLoading || !isCardsStateReady) {
+    return <Loading />;
   }
 
   return (
@@ -903,143 +633,131 @@ const Cards: FC<CardsProps> = ({
         />
       </Helmet>
 
-      {showTips && (
-        <Tips
-          setShowTips={setShowTips}
-          closeTipsModal={closeTipsModal}
-          setCloseTipsModal={setCloseTipsModal}
-        />
-      )}
-
-      <TrashCanDropZone
-        droppableId="cardDeleteArea"
-        altText="Trash can for deleting card"
-      />
-
-      <div className="flex flex-col gap-2 w-full  relative overflow-auto h-screen  ">
-        <CardInput
-          expandTextarea={expandTextarea}
-          handleCreateCard={handleCreateCard}
-          data={data}
-          setIsTransitioning={setIsTransitioning}
-          setExpandTextArea={setExpandTextArea}
-          setTitle={setTitle}
-          title={title}
-          note={note}
-          setNote={setNote}
-          adjustTextareaHeightOnPasteAndExpand={
-            adjustTextareaHeightOnPasteAndExpand
-          }
-          height={height}
-          textareaRef={textareaRef}
-          inputElementRef={inputElementRef}
-        >
-          <CardToolbar
-            addLinkWrapper={addLinkWrapper}
-            addBoldTextWrapper={addBoldTextWrapper}
-            addCodeBlockWrapper={addCodeBlockWrapper}
-            addUnderlineTextWrapper={addUnderlineTextWrapper}
+      {/* {showTips && (
+        <Suspense fallback={<Loading />}>
+          <Tips
             setShowTips={setShowTips}
-            increaseTextAreaHeight={increaseTextAreaHeight}
-            decreaseTextAreaHeight={decreaseTextAreaHeight}
-            adjustTextareaHeightOnPasteAndExpand={
-              adjustTextareaHeightOnPasteAndExpand
-            }
-            handleClose={handleClose}
-            isCreatingCard={isCreatingCard}
-            isFetchingCards={isFetchingCards}
+            closeTipsModal={closeTipsModal}
+            setCloseTipsModal={setCloseTipsModal}
           />
+        </Suspense>
+      )} */}
+
+      <div className="flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-[calc(100vh-64px)] ">
+        <CardInput
+          expandEditor={expandEditor}
+          handleCreateCard={handleCreateCard}
+          setExpandEditor={setExpandEditor}
+          setNote={setNote}
+          expandEditorToMaxHeight={expandEditorToMaxHeight}
+          height={height}
+          richTextWrapperRef={richTextWrapperRef}
+          setShowHyperlinkModal={setShowHyperlinkModal}
+          showHyperlinkModal={showHyperlinkModal}
+          setHeight={setHeight}
+          handleTransitionEnd={handleTransitionEnd}
+        >
+          {cardToolbar}
         </CardInput>
 
-        {data && "cards" in data && data?.cards?.length > 0 ? (
-          <CardItems
-            handleDelete={handleDelete}
-            handleEditCardButtonClick={handleEditCardButtonClick}
-            handleShowFullScreen={handleShowFullScreen}
-            data={data}
-          />
-        ) : !expandTextarea && !isTransitioning ? (
-          <div className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-semibold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full -mt-[1.725rem] animate-quickOpacity">
-            <img
-              src={`${
-                theme === "dark"
-                  ? "/illustrations/no_cards_found_dark.svg"
-                  : "/illustrations/no_cards_found_light.svg"
-              }`}
-              alt="No cards found"
-              className=" w-44 h-44  "
-            />
-            <p className="p-1 mt-1 text-base">
-              Looks like you haven't added any cards yet.
-            </p>
-            <button
-              onClick={() => {
-                setExpandTextArea(true);
-                if (isPlayingAudioAllowed) {
-                  setTimeout(() => {
-                    handlePlayAudio("open", "/cards");
-                  }, 100);
+        {hasCards ? (
+          <div
+            className={twMerge(
+              "flex items-center flex-col justify-center transition-transform duration-1000 md:delay-[0s] will-change-transform",
+              expandEditor ? "delay-0" : "delay-1000"
+            )}
+            style={{
+              transform: `translateY(${(() => {
+                if (expandEditor) {
+                  if (isSmallScreen) {
+                    return height === 200 ? "100px" : `${height - 90}px`;
+                  } else {
+                    return height === 120 ? "0px" : `${height - 120}px`;
+                  }
+                } else {
+                  return isSmallScreen ? "-66px" : "-80px";
                 }
-              }}
-              className=" mt-4  inline-block  py-2 lg:py-2.5 font-medium text-sm leading-tight  rounded-md  active:shadow-lg text-gray-50   w-fit px-2  dark:bg-sky-600 bg-teal-600 hover:bg-teal-700 dark:hover:bg-sky-700 transition-colors duration-150 ease-in-out  "
-              type="button"
-              aria-label="Craft an Elegant Note"
-            >
-              Craft an Elegant Note
-            </button>
+              })()})`,
+            }}
+          >
+            <h1 className="font-bold text-xl text-gray-800 mb-10 dark:text-gray-50">
+              {data?.title}{" "}
+            </h1>
+            <CardContainer
+              handleEditCardButtonClick={handleEditCardButtonClick}
+              handleShowFullScreen={handleShowFullScreen}
+              cards={allCardsState?.cards || []}
+            />
           </div>
+        ) : !expandEditor && !isTransitioning ? (
+          <NoContent
+            imageSource="/illustrations/no_cards_found.svg"
+            heading="Looks like you haven't added any cards yet."
+            buttonLabel="Craft an Elegant Note"
+            onButtonClick={() => {
+              setExpandEditor(true);
+              if (isPlayingAudioAllowed) {
+                setTimeout(() => {
+                  handlePlayAudio("open", "/cards");
+                }, 100);
+              }
+            }}
+            imageAltText="No cards found!"
+          />
         ) : null}
+        {/* Here, I am placing the Bulb component after the CardContainer because transform or will-change creates a new stacking context, causing the Bulb to get hidden behind it. This makes it unclickable. However, placing the Bulb component after the CardContainer solves the problem. */}
+        <Bulb />
+        <TrashCanDropZone
+          droppableId="CardDeleteArea"
+          altText="Trash can for deleting card"
+        />
       </div>
 
-      <ConfirmDeleteModalForCard
-        indexOfCardForDeletion={indexOfCardForDeletion!}
-        deleteCardItem={deleteCardItem}
-        setIsConfirmDeleteModalOpen={setIsConfirmDeleteModalOpen}
-        setWasDeleteModalOpen={setWasDeleteModalOpen}
-        showFullScreen={showFullScreen}
-        setUndoCardDetails={setUndoCardDetails}
-        undoButtonRefForCard={undoButtonRefForCard}
-        handleUndoButtonClick={handleUndoButtonClick}
-      />
-      {showConfirmCloseCardModal ? (
-        <ConfirmCloseCard
-          setShowConfirmCloseCardModal={setShowConfirmCloseCardModal}
-          showConfirmCloseCardModal={showConfirmCloseCardModal}
-          setExpandTextArea={setExpandTextArea}
-          setCheckClose={setCheckClose}
-          setHeight={setHeight}
-          setNote={setNote}
-          setTitle={setTitle}
+      {modalState.confirmCloseCardModal.show && (
+        <ConfirmationModal
+          message="Are you sure you want to close? The card you are creating will be lost."
+          onCancel={keepNoteAndContinueEditing}
+          onConfirm={discardNoteAndCloseTextEditor}
+          showConfirmationModal={modalState.confirmCloseCardModal.show}
+          startClosingModalAnimation={
+            modalState.confirmCloseCardModal.startClosingModalAnimation
+          }
         />
-      ) : null}
+      )}
+      {modalState.confirmDeleteCardModal.show && (
+        <ConfirmationModal
+          message="Are you sure you want to delete this card?"
+          onCancel={handleOnCancelDeleteCard}
+          onConfirm={handleOnConfirmDeleteCard}
+          showConfirmationModal={modalState.confirmDeleteCardModal.show}
+          startClosingModalAnimation={
+            modalState.confirmDeleteCardModal.startClosingModalAnimation
+          }
+        />
+      )}
 
       {showFullScreen && (
         <FullScreenCardView
           fullScreenCardData={fullScreenCardData}
-          location={location}
           setShowFullScreen={setShowFullScreen}
           handleEditCardButtonClick={handleEditCardButtonClick}
           handleDelete={handleDelete}
-          startAnimation={startAnimation}
-          setStartAnimation={setStartAnimation}
+          closeFullScreenWithAnimation={closeFullScreenWithAnimation}
+          setCloseFullScreenWithAnimation={setCloseFullScreenWithAnimation}
           setShowScrollButtons={setShowScrollButtons}
           showScrollButtons={showScrollButtons}
         />
       )}
-      {openModal ? (
+      {showEditModalForCard ? (
         <EditCard
-          setOpenModal={setOpenModal}
-          addLink={addLinkWrapper}
-          addCodeBlock={addCodeBlockWrapper}
-          addBoldText={addBoldTextWrapper}
-          addUnderlineText={addUnderlineTextWrapper}
+          setShowEditModalForCard={setShowEditModalForCard}
           editContent={editContent}
-          handleChange={handleChange}
+          setEditContent={setEditContent}
           handleSaveEdit={handleSaveEdit}
           ref={editTextareaRef}
-          openModal={openModal}
-          setCloseEditModal={setCloseEditModal}
-          closeEditModal={closeEditModal}
+          showEditModalForCard={showEditModalForCard}
+          setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
+          closeEditModalWithAnimation={closeEditModalWithAnimation}
         />
       ) : null}
     </>
