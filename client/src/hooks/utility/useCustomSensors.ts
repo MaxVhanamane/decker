@@ -3,13 +3,16 @@ import { useRef } from "react";
 
 const useCustomSensors = () => {
     const sensors = useRef([
-        useSensor(MouseSensor, { activationConstraint: { distance: 0 } }),
-        useSensor(TouchSensor, { activationConstraint: { distance: 0 } }),
-        // useSensor(PointerSensor, { activationConstraint: { distance: 0 } }),
+        useSensor(MouseSensor, { activationConstraint: { distance: 3, delay: 100, } }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,   // wait 250ms before drag
+                distance: 3 // small movement allowed while holding
+            }
+        }),
         useSensor(KeyboardSensor),
     ]).current;
 
-    // Return the sensors using useSensors hook
     return useSensors(...sensors);
 };
 

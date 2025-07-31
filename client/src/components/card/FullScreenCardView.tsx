@@ -198,7 +198,7 @@ const FullScreenCardView = ({
             className={` w-full flex items-center
                justify-center md:w-[42rem] `}
           >
-            <div className=" flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 ">
+            <div className=" flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 px-2 md:px-0">
               <div>
                 <Button
                   variant="plain"

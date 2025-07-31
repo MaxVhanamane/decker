@@ -201,7 +201,7 @@ const Navbar = () => {
         <div className="flex gap-3 items-center justify-center ">
           <ul className="flex items-center justify-center md:gap-3">
             {userInfo && (
-              <li className="flex items-center justify-center">
+              <li className="flex items-center justify-center z-10">
                 {showSearchBar && <SearchBar />}
                 <Button
                   variant="plain"

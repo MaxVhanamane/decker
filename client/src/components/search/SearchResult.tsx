@@ -156,7 +156,7 @@ const SearchResult = ({
               alt="Server down"
               className="w-40 h-28"
             />
-            <div className="font-semibold text-base">
+            <div className="font-semibold text-sm">
               <p>
                 Uh-oh! Couldn't fetch the decks and cards data for searching.
               </p>
