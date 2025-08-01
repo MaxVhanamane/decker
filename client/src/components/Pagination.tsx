@@ -103,7 +103,7 @@ const Pagination: React.FC<PaginationProps> = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="w-full md:px-4 px-2 mb-48">
+    <div className="w-full md:px-4 px-2 mb-20">
       {/* Regular Pagination */}
       <div
         className={twMerge(

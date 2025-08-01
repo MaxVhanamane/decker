@@ -89,6 +89,7 @@ const SearchBar = () => {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
+      searchBarRef?.current?.blur();
     } else if (e.key === "Escape") {
       setAnimateSearchBar(false);
       setInputValue("");

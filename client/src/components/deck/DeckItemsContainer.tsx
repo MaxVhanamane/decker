@@ -38,7 +38,7 @@ const DeckItemsContainer = memo(
     return (
       <section
         className={` ${
-          heading !== "Pinned" ? "mb-24" : "lg:mb-10"
+          heading !== "Pinned" ? "mb-20" : "lg:mb-10"
         } mx-1  animate-opacity_page_transition w-full`}
       >
         <SortableContext

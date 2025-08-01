@@ -14,6 +14,14 @@ const autoScroll = {
   acceleration: 2,
   enabled: true,
   layoutShiftCompensation: false,
+  canScroll: (element: Element) => {
+    // Prevent scrolling on html, body,
+    if (element === document.documentElement || element === document.body) {
+      return false;
+    }
+
+    return true;
+  },
 };
 const isFirefox = /firefox/i.test(navigator.userAgent);
 

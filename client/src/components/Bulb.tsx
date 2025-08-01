@@ -14,6 +14,7 @@ import {
   BulbContext,
 } from "../context/BulbContext";
 import type { bulbColors } from "../types/types";
+import { ThemeContext } from "../context/ThemeContext";
 
 export type ChangeBulbColor = {
   setBulbColor: (color: bulbColors) => void;
@@ -82,10 +83,12 @@ const Bulb = memo(() => {
   const bulbContainerRef = useRef<HTMLDivElement | null>(null);
   const spanOneRef = useRef<HTMLSpanElement | null>(null);
   const tungstenWireRef = useRef<SVGGElement | null>(null);
+  const wireRef = useRef<HTMLDivElement | null>(null);
   const spanTwoRef = useRef<HTMLSpanElement | null>(null);
   const [swingBulb, setSwingBulb] = useState(false);
   const { showBulb, bulbRef } = useContext(BulbContext);
   const { bulbBrightness } = useContext(BrightnessContext);
+  const { theme } = useContext(ThemeContext);
   const { setAnimationPlayed, animationPlayed } =
     useContext(BulbAnimationContext);
   const activeColorRef = useRef<bulbColors | "">("");
@@ -184,7 +187,7 @@ const Bulb = memo(() => {
   }, [bulbBrightness, getShadowBlur, getIntensityMultiplier]);
   // Apply intensity effect to the bulb
   const applyIntensityEffect = useCallback(() => {
-    if (bulbContainerRef.current) {
+    if (bulbContainerRef.current && wireRef.current) {
       const multiplier = getIntensityMultiplier();
       const { blur, spread } = getShadowBlur();
 
@@ -193,6 +196,9 @@ const Bulb = memo(() => {
         0.2,
         multiplier
       ).toString();
+      if (theme === "light") {
+        wireRef.current.style.opacity = Math.max(0.2, multiplier).toString();
+      }
 
       // Apply dynamic shadow based on intensity and active color
       if (activeColorRef.current && colorConfig[activeColorRef.current]) {
@@ -271,9 +277,10 @@ const Bulb = memo(() => {
         showBulb ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
-      {/* <div className="relative w-1 md:h-28 h-[7.5rem] left-1/2 -translate-x-1/2 dark:bg-[#080e23] bg-gray-700 z-30 transition-all duration-300 "></div> */}
-      {/* Bulb wire */}
-      <div className="relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-all duration-300">
+      <div
+        ref={wireRef}
+        className="relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-all duration-300"
+      >
         <svg viewBox="0 0 100 800" className="w-full h-full">
           <path
             d="M50,0 
@@ -290,7 +297,7 @@ const Bulb = memo(() => {
             strokeWidth="14"
             fill="none"
             strokeLinecap="round"
-            className="dark:stroke-[#080e23] stroke-gray-700"
+            className="dark:stroke-[#080e23] stroke-gray-600"
           />
         </svg>
       </div>
@@ -303,7 +310,7 @@ const Bulb = memo(() => {
           e.stopPropagation();
           setAnimationPlayed(true);
         }}
-        className={`relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-700 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer transition-all duration-300 before:transition-all before:duration-300  ${
+        className={`mt-0.5 relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-600 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer transition-all duration-300 before:transition-all before:duration-300  ${
           showBulb && !animationPlayed
             ? "dark:animate-flickerDark animate-flickerLight dark:before:animate-flickerBgDark before:animate-flickerBgLight"
             : "bg-[#38bdf8] shadow-[0px_0px_175px_100px_#0284c7] before:bg-[#38bdf8]"
@@ -337,8 +344,8 @@ const Bulb = memo(() => {
               : ""
           }`}
         ></span>
-        <div className="flex items-center justify-center flex-col absolute -top-[12px] left-1/2 -translate-x-1/2">
-          <div className="h-[22px] w-[7px] border-[1px] border-[#080e23] border-t-0 opacity-40 absolute -top-0.5 rounded-md"></div>
+        <div className="flex items-center justify-center flex-col absolute -top-[10.5px] left-1/2 -translate-x-1/2">
+          <div className="h-[22px] w-[7px] border-[1px] border-[#080e23] border-t-0 opacity-40 absolute -top-0.5 rounded-b-md"></div>
           <div className="absolute -top-0.5 ">
             <svg width="24" height="45" viewBox="50 0 40 100">
               <g
@@ -353,26 +360,6 @@ const Bulb = memo(() => {
                   "animate-flickerStrokeTungsten"
                 }`}
               >
-                {/* Support posts */}
-                {/* <line
-                    x1="58"
-                    y1="0"
-                    x2="58"
-                    y2="90"
-                    className="stroke-gray-900"
-                    strokeWidth="1"
-                    opacity={0.8}
-                  />
-                  <line
-                    x1="82"
-                    y1="0"
-                    x2="82"
-                    y2="90"
-                    className="stroke-gray-900"
-                    strokeWidth="1"
-                    opacity={0.8}
-                  /> */}
-
                 <line
                   x1="63"
                   y1="0"
@@ -412,19 +399,6 @@ const Bulb = memo(() => {
                   opacity={0.4}
                 />
 
-                {/* Filament coils */}
-                {/* <path
-                    d="M 58 75 Q 62 65, 66 75 Q 70 65, 74 75 Q 78 65, 82 75"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M 58 80 Q 62 90, 66 80 Q 70 90, 74 80 Q 78 90, 82 80"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M 58 85 Q 62 75, 66 85 Q 70 75, 74 85 Q 78 75, 82 85"
-                    strokeWidth="1.5"
-                  /> */}
                 <path
                   d="M 48 90 
      Q 58 100, 64 90 
@@ -432,28 +406,9 @@ const Bulb = memo(() => {
      Q 82 100, 92 90"
                   strokeWidth="3"
                 />
-
-                {/* Connecting wires */}
-                {/* <path
-                    d="M 58 75 Q 65 70, 70 75 Q 75 70, 82 75"
-                    strokeWidth="1.5"
-                  /> */}
               </g>
             </svg>
           </div>
-          {/* 
-            <div
-              className={`w-[11px] border-t-0 border-b-0 border h-7 ${colorConfig["cyan"].tungstenWireBorder}`}
-            ></div>
-            <div
-              className={`relative border border-solid ${colorConfig["cyan"].tungstenWireBorder} w-[11px] h-[5.5px] rounded-[50%] z-20 -top-[1.5px]`}
-            ></div>
-            <div
-              className={`relative border border-solid ${colorConfig["cyan"].tungstenWireBorder} w-[11px] h-[5.5px] rounded-[50%] z-20 -top-[3.5px]`}
-            ></div>
-            <div
-              className={`relative border border-solid ${colorConfig["cyan"].tungstenWireBorder} w-[11px] h-[5.5px] rounded-[50%] z-20 -top-[6.5px]`}
-            ></div> */}
         </div>
       </div>
     </div>

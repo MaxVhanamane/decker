@@ -205,7 +205,7 @@ const DeckAndCardResult = ({
       {foundCards.length > 0 && (
         <div className="animate-quickOpacity mb-4 lg:mx-24">
           <p
-            className={`text-left text-md font-semibold text-gray-800 dark:text-gray-50  m-4  ${
+            className={`text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4  ${
               foundDecks.length > 0 ? "mt-10" : "mt-[1.3rem] "
             }`}
           >

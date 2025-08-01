@@ -124,6 +124,16 @@
     href="splash_screens/8.3__iPad_Mini_portrait.png">
   <title>Decker</title>
   <!-- <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script> -->
+  <script>
+    if (localStorage.theme === 'dark' ||
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark')
+      document.documentElement.style.backgroundColor = '#0f172a'
+    } else {
+      document.documentElement.style.backgroundColor = '#ffffff'
+    }
+  </script>
+
 </head>
 
 <body
