@@ -38,6 +38,7 @@ const SortableDeckItem = memo(
         transition,
         transform: CSS.Transform.toString(transform),
         opacity: isDragging ? 0 : 1,
+        touchAction: "none",
       };
     }, [transition, transform, isDragging, deck]);
 
