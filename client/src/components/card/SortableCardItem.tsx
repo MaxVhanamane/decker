@@ -68,7 +68,7 @@ const SortableCardItem = ({
       transition,
       transform: CSS.Transform.toString(transform),
       opacity: isDragging ? 0 : 1,
-      touchAction: "none",
+      touchAction: "pan-y",
     };
   }, [transition, transform, isDragging]);
   return (

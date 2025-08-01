@@ -10,14 +10,11 @@ const useCustomSensors = () => {
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 500,     // Longer delay for mobile - gives time to start scroll
-                distance: 10,   // More distance tolerance
-                tolerance: {
-                    x: 5,       // Allow 5px horizontal movement
-                    y: 5        // Allow 5px vertical movement
-                }
+                delay: 300,   // enough to distinguish tap vs drag
+                distance: 8   // user must move ~8px to trigger drag
             }
-        }),
+        })
+        ,
         useSensor(KeyboardSensor),
     ]).current;
 
