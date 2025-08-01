@@ -10,8 +10,8 @@ const useCustomSensors = () => {
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 300,   // enough to distinguish tap vs drag
-                distance: 8   // user must move ~8px to trigger drag
+                delay: 300,
+                tolerance: { x: 5, y: 5 }
             }
         })
         ,
