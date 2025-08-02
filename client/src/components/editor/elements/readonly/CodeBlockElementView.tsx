@@ -137,7 +137,6 @@ const getVisibleCodeLines = (
   return { visibleCode: result, lastVisibleLineIndex };
 };
 
-// ROBUST RENDERING APPROACH - handles all edge cases
 const renderHighlightedCodeLine = (
   line: CodeBlockElementType,
   language: string
@@ -212,11 +211,11 @@ const getGrammarSafely = (language: string): Grammar | null => {
   const normalizedLang =
     aliases[language.toLowerCase()] || language.toLowerCase();
 
-  // Try to get the grammar
+  // get the grammar
   const grammar = languages[normalizedLang];
 
   if (!grammar) {
-    // Try common fallbacks
+    // common fallbacks
     const fallbacks = ["javascript", "markup", "clike"];
     for (const fallback of fallbacks) {
       if (languages[fallback]) {

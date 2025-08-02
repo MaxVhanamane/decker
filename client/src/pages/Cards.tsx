@@ -71,7 +71,7 @@ type PayloadType = {
 
 const Cards = () => {
   const { deckId } = useStableParams();
-  const { showSearchBar } = useContext(searchContext);
+  const { animateSearchBar } = useContext(searchContext);
   const { setIndexOfCardForDeletion } = useContext(CardContext);
   const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
@@ -86,7 +86,6 @@ const Cards = () => {
     isError,
     error,
     isLoading,
-    isPaused,
     isFetching: isFetchingCards,
   } = useGetCards(deckId!);
 
@@ -594,12 +593,11 @@ const Cards = () => {
     ]
   );
 
-  if (isError || isPaused) {
+  if (isError) {
     return (
       <ErrorDisplay
         message={error?.message}
         status={(error as CustomError)?.statusCode}
-        isPaused={isPaused}
       >
         <button
           onClick={() => navigate("/")}
@@ -621,16 +619,12 @@ const Cards = () => {
     <>
       <Helmet>
         <title>
-          {showSearchBar
+          {animateSearchBar
             ? "Search result"
             : data && "title" in data
             ? `${data?.title}-cards`
             : "Error"}
         </title>
-        <meta
-          name="description"
-          content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."
-        />
       </Helmet>
 
       {/* {showTips && (

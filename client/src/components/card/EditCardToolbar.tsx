@@ -34,7 +34,7 @@ const EditCardToolbar = ({
   }, [toolbarPosition]);
   return (
     <div
-      className={`w-full md:h-14 h-20 dark:md:bg-slate-700 dark:bg-slate-900  bg-white  flex items-center justify-center   border-gray-400/40 dark:border-gray-300/10  md:bg-gray-100 flex-shrink-0   ${
+      className={`w-full md:h-14 h-20 dark:md:bg-slate-700 dark:bg-slate-900  bg-white  flex items-center justify-center   border-gray-400/40 dark:border-gray-300/10 md:bg-gray-100 flex-shrink-0   ${
         toolbarPosition === "top"
           ? "md:rounded-t-md border-b"
           : "md:rounded-b-md border-t"

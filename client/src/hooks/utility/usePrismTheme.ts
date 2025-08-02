@@ -1,4 +1,3 @@
-// hooks/usePrismTheme.ts
 import { useEffect } from "react";
 
 export const usePrismTheme = (theme: "dark" | "light") => {
@@ -17,10 +16,8 @@ export const usePrismTheme = (theme: "dark" | "light") => {
         linkTag.href =
             theme === "dark"
                 ? "/themes/prism-dracula.css"
-                : "/themes/prism-light.css"; // e.g., prism.css
+                : "/themes/prism-light.css";
 
-        return () => {
-            // Optional: remove or clean up if needed
-        };
+
     }, [theme]);
 };

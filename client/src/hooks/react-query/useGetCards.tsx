@@ -32,6 +32,7 @@ const useGetCards = (deckId: string) => {
     refetchOnReconnect: true, // Refetch on network reconnect
     retry: 0, // no retry on network errorMessage
     gcTime: 10800000, // 3
+    networkMode: "offlineFirst",
   });
 };
 

@@ -1,5 +1,5 @@
 import { Descendant } from "slate";
-import { useState, useEffect, JSX } from "react";
+import { useState, useEffect, JSX, Dispatch } from "react";
 import ColorBarView from "./editor/elements/readonly/ColorBarView";
 import DividerView from "./editor/elements/readonly/DividerView";
 import { HighlightView } from "./editor/leaf/readonly/HighlightView";
@@ -21,7 +21,6 @@ import TitleElementView from "./editor/elements/readonly/TitleElementView";
 import LinkElementView from "./editor/elements/readonly/LinkElementView";
 import { CodeBlockElementView } from "./editor/elements/readonly/CodeBlockElementView";
 
-// Your original leaf rendering - unchanged
 export const renderLeaf = (leaf: CustomTextType): JSX.Element => {
   let content: JSX.Element = <>{leaf.text}</>;
   if (leaf.bold) {
@@ -56,7 +55,6 @@ export const renderLeaf = (leaf: CustomTextType): JSX.Element => {
   return content;
 };
 
-// Modified to support typing effect
 export const renderTextChildren = (
   children: Descendant[],
   visibleChars?: number
@@ -298,16 +296,27 @@ export const renderContent = (
     });
 };
 
-//  typing effect hook
+// typing effect hook
 const useTypingEffect = (
   totalChars: number,
   speed: number = 10,
-  enabled: boolean = false
+  enabled: boolean = false,
+  skipTyping: boolean = false,
+  setSkipTyping: Dispatch<React.SetStateAction<boolean>>
 ) => {
   const [visibleChars, setVisibleChars] = useState(enabled ? 0 : totalChars);
   const [isComplete, setIsComplete] = useState(!enabled);
+  // Reset typing when enabled becomes true
 
-  //  Reset typing when enabled becomes true
+  useEffect(() => {
+    if (skipTyping) {
+      setVisibleChars(totalChars);
+      setIsComplete(true);
+      setSkipTyping(false);
+      return;
+    }
+  }, [skipTyping]);
+
   useEffect(() => {
     if (enabled) {
       setVisibleChars(0);
@@ -317,7 +326,6 @@ const useTypingEffect = (
       setIsComplete(true);
     }
   }, [enabled, totalChars]);
-
   useEffect(() => {
     if (!enabled || visibleChars >= totalChars) {
       setIsComplete(true);
@@ -334,21 +342,26 @@ const useTypingEffect = (
   return { visibleChars, isComplete };
 };
 
-// Enhanced ContentRenderer with simple typing effect
 export const ContentRenderer = ({
   content,
   enableTyping,
+  skipTyping,
+  setSkipTyping,
   typingSpeed = 10,
 }: {
   content: Descendant[];
+  skipTyping?: boolean;
   enableTyping?: boolean;
+  setSkipTyping: Dispatch<React.SetStateAction<boolean>>;
   typingSpeed?: number;
 }) => {
   const totalChars = getTotalChars(content);
   const { visibleChars } = useTypingEffect(
     totalChars,
     typingSpeed,
-    enableTyping
+    enableTyping,
+    skipTyping,
+    setSkipTyping
   );
 
   return (

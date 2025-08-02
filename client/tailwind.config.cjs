@@ -39,8 +39,9 @@ module.exports = {
       },
       backgroundImage: ({ theme }) => ({
         BgForDarkMode: `linear-gradient(to right,#020617,${theme('colors.slate.700')},${theme('colors.slate.900')})`,
-        BgDarkModeSmall: `linear-gradient(to right,${theme('colors.slate.900')},${theme('colors.slate.800')},${theme('colors.slate.700')})`,
+        BgDarkModeSmall: `linear-gradient(135deg, ${theme('colors.slate.900')}, ${theme('colors.slate.800')}, ${theme('colors.gray.900')})`,
         lightBg: `linear-gradient(to right,${theme('colors.slate.300')},${theme('colors.slate.200')},${theme('colors.slate.100')})`,
+        lightBgSmall: `linear-gradient(135deg,${theme('colors.sky.200')},${theme('colors.slate.200')},${theme('colors.sky.200')})`,
         radialGradient: 'radial-gradient(#0284c7,rgba(12, 123, 179, 0))',
       }),
       keyframes: {

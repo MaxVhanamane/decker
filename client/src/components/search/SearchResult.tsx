@@ -18,6 +18,8 @@ import useGetSearchResult, {
 import Pagination from "../Pagination";
 import { DeckCardSearchResult, DeckSearchResult } from "../../types/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePrismTheme } from "../../hooks/utility/usePrismTheme";
+import { ThemeContext } from "../../context/ThemeContext";
 
 // types
 type SearchResultProps = {
@@ -46,7 +48,6 @@ const SearchResult = ({
     isError,
     error,
     isLoading,
-    isPaused,
   } = useGetSearchResult({
     limit: 20,
     page,
@@ -55,6 +56,8 @@ const SearchResult = ({
   const queryClient = useQueryClient();
 
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+  usePrismTheme(theme);
 
   useEffect(() => {
     if (searchCount > 0 && searchQuery) {
@@ -146,7 +149,7 @@ const SearchResult = ({
     );
   }
 
-  if (isError || isPaused) {
+  if (isError) {
     return (
       <div className="fixed inset-0 top-[64px] dark:bg-slate-900 bg-white z-10">
         <div className=" w-full  h-full flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-2 px-3">

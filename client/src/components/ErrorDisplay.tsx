@@ -5,16 +5,15 @@ interface ErrorDisplayProps {
   message: string | undefined | null;
   children?: ReactNode;
   status: number | undefined;
-  isPaused?: boolean;
 }
 
 const ErrorDisplay = memo(
-  ({ message, children, status, isPaused }: ErrorDisplayProps) => {
+  ({ message, children, status }: ErrorDisplayProps) => {
     if (
       message === "Your session has expired. Please log in again to condtinue."
     ) {
       return <Navigate to="/sessionexpired" state={{ authFailed: true }} />;
-    } else if (message === "No internet connection" || isPaused) {
+    } else if (message === "No internet connection") {
       return (
         <div className="relative w-full -translate-y-16 h-screen flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4 px-3">
           <img
@@ -22,7 +21,7 @@ const ErrorDisplay = memo(
             alt="No internet "
             className="w-28 h-28 "
           />
-          <p className="font-semibold text-base"> No internet connection.</p>
+          <p className="font-semibold text-sm"> No internet connection.</p>
           {children}
         </div>
       );
@@ -34,7 +33,7 @@ const ErrorDisplay = memo(
             alt="Server down "
             className=" w-40 h-36 "
           />
-          <div className="font-semibold text-base">
+          <div className="font-semibold text-sm">
             <p> An error occurred on the server.</p>
             <p> Please try again later.</p>
           </div>
@@ -51,7 +50,7 @@ const ErrorDisplay = memo(
             alt="Error "
             className=" w-40 h-40 "
           />
-          <p className="font-semibold text-base lg:w-96"> {errorMessage}</p>
+          <p className="font-semibold text-sm lg:w-96"> {errorMessage}</p>
           {children}
         </div>
       );

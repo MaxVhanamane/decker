@@ -65,7 +65,9 @@ const SearchBar = () => {
     setAnimateSearchBar(false);
     setInputValue("");
     setSearchQuery("");
-    navigate(`cards/${deckId}`);
+    setTimeout(() => {
+      navigate(`cards/${deckId}`);
+    }, 100);
   }, []);
 
   const handleSearch = () => {

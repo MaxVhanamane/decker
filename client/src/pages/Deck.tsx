@@ -32,16 +32,17 @@ import useToastOnError from "../hooks/utility/useToastOnError";
 import { DeckContext } from "../context/DeckContext";
 import DeckSkeleton from "../components/deck/skeleton/DeckSkeleton";
 import { getDeckSkeletonCounts } from "../utils/deckUtils";
+import { ThemeContext } from "../context/ThemeContext";
 
 function Deck() {
   const { showToast } = useContext(ShowToastContext);
   const { allDecksState } = useContext(DndStateContext);
   const { setAllDecksState } = useContext(DndSettersContext);
   const { deckContainerRef } = useContext(DeckContext);
-
+  const { theme } = useContext(ThemeContext);
   const { isOnline } = useContext(OfflineContext);
   const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
-  const { data: allDecks, error, isError, isLoading, isPaused } = useGetDecks();
+  const { data: allDecks, error, isError, isLoading } = useGetDecks();
   const {
     mutate: createDeck,
     isError: isCreateDeckError,
@@ -216,12 +217,11 @@ function Deck() {
     [isOnline, editData]
   );
 
-  if (isError || isPaused) {
+  if (isError) {
     return (
       <ErrorDisplay
         message={error?.message}
         status={(error as CustomError)?.statusCode}
-        isPaused={isPaused}
       >
         <button
           onClick={() => window.location.reload()}
@@ -243,11 +243,18 @@ function Deck() {
     <>
       <Helmet>
         <title>Decks</title>
-        <meta
-          name="description"
-          content="Organize and manage your information with ease using our customizable decks.create different decks to keep all your important information in one place."
-        />
         {/* here h-[calc(100vh-64px)] 64px is the navbar height */}
+        {/* Android Chrome top bar */}
+        <meta
+          name="theme-color"
+          content={theme === "dark" ? "#0f172a" : "#ffffff"}
+        />
+
+        {/* iOS Safari top bar */}
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
       </Helmet>
       <div
         ref={deckContainerRef}

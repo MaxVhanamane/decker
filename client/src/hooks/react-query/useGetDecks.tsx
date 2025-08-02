@@ -48,5 +48,6 @@ export default function useGetDecks() {
     // no retry on network errors
     retry: 0,
     gcTime: 10800000, // 3 hours
+    networkMode: "offlineFirst",
   });
 }

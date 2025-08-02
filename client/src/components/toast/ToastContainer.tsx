@@ -77,7 +77,7 @@ const ToastContainer = ({
   return (
     <div className="fixed inset-0 pointer-events-none z-[90] ">
       {isSmallScreen && topMessages.length > 0 && (
-        <div className="absolute top-1 flex flex-col items-center  gap-2 w-full h-[80vh] py-5 px-1 ">
+        <div className="absolute top-1 flex flex-col items-center  gap-2 w-full h-[80vh] py-5 px-4 ">
           <ol
             className=" flex items-center justify-center gap-2 flex-col pointer-events-auto overflow-y-auto overflow-x-hidden"
             role="region"
@@ -97,7 +97,7 @@ const ToastContainer = ({
         </div>
       )}
       {isSmallScreen && bottomMessages.length > 0 && (
-        <div className="absolute bottom-2 flex flex-col-reverse gap-2 items-center w-full h-[80vh]  py-5 px-1">
+        <div className="absolute bottom-2 flex flex-col-reverse gap-2 items-center w-full h-[80vh]  py-5 px-4">
           <ol
             className="flex items-center justify-center gap-2 flex-col-reverse pointer-events-auto overflow-y-auto overflow-x-hidden"
             role="region"

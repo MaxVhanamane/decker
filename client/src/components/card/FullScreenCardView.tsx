@@ -66,7 +66,9 @@ const FullScreenCardView = ({
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
     useState(false);
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
-
+  const [skipTyping, setSkipTyping] = useState(() =>
+    showTypewriterEffect ? false : true
+  );
   const divRef = useRef<HTMLDivElement>(null);
   const bottomElementRef = useRef<HTMLDivElement>(null);
   const topElementRef = useRef<HTMLDivElement>(null);
@@ -138,11 +140,15 @@ const FullScreenCardView = ({
       fullScreenCardData?.cardIndex !== null
     ) {
       handleDelete(fullScreenCardData.cardIndex);
+      setSkipTyping(true);
     }
   }, [fullScreenCardData, handleDelete]);
 
   const handleEditCard = useCallback(() => {
-    if (fullScreenCardData) handleEditCardButtonClick(fullScreenCardData);
+    if (fullScreenCardData) {
+      handleEditCardButtonClick(fullScreenCardData);
+      setSkipTyping(true);
+    }
   }, [fullScreenCardData, handleEditCardButtonClick]);
 
   const handleToggleBgColor = useCallback(() => {
@@ -182,11 +188,11 @@ const FullScreenCardView = ({
     <>
       <article
         onAnimationEnd={handleOnAnimationEnd}
-        className={`transition-transform duration-500 fixed inset-0  bg-white    ${
+        className={`transition-transform duration-500 fixed inset-0      ${
           toggleGradient
-            ? "dark:bg-BgDarkModeSmall bg-lightBg dark:lg:bg-BgForDarkMode"
-            : ""
-        }   dark:bg-slate-900  z-[80] flex flex-col items-center  ${
+            ? "dark:bg-BgDarkModeSmall  dark:lg:bg-BgForDarkMode lg:bg-lightBg  bg-lightBgSmall"
+            : "dark:bg-slate-900 bg-white"
+        }     z-[80] flex flex-col items-center  ${
           !closeFullScreenWithAnimation
             ? "animate-translateFromLeftToRight  lg:animate-[opacity_0.2s_linear_1]  "
             : "animate-translateFromRightToLeft lg:animate-opacityFadeOut"
@@ -292,6 +298,8 @@ const FullScreenCardView = ({
                 <NoteSection
                   note={fullScreenCardData?.note ?? []}
                   showTypewriterEffect={showTypewriterEffect}
+                  skipTyping={skipTyping}
+                  setSkipTyping={setSkipTyping}
                 />
                 <div ref={bottomElementRef} />
               </div>
