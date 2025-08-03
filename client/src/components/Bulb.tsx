@@ -6,6 +6,7 @@ import {
   useContext,
   memo,
   useEffect,
+  useMemo,
 } from "react";
 
 import {
@@ -15,12 +16,18 @@ import {
 } from "../context/BulbContext";
 import type { bulbColors } from "../types/types";
 import { ThemeContext } from "../context/ThemeContext";
+import { twMerge } from "tailwind-merge";
 
 export type ChangeBulbColor = {
   setBulbColor: (color: bulbColors) => void;
   removeBulbColor: (color: bulbColors) => void;
   readonly colorName: bulbColors | "";
 };
+
+type BulbProps = {
+  shouldDimBulb?: boolean;
+};
+
 // Color configuration with RGB values for shadows
 const colorConfig = {
   red: {
@@ -79,7 +86,7 @@ const colorConfig = {
   },
 };
 
-const Bulb = memo(() => {
+const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
   const bulbContainerRef = useRef<HTMLDivElement | null>(null);
   const spanOneRef = useRef<HTMLSpanElement | null>(null);
   const tungstenWireRef = useRef<SVGGElement | null>(null);
@@ -87,11 +94,69 @@ const Bulb = memo(() => {
   const spanTwoRef = useRef<HTMLSpanElement | null>(null);
   const [swingBulb, setSwingBulb] = useState(false);
   const { showBulb, bulbRef } = useContext(BulbContext);
-  const { bulbBrightness } = useContext(BrightnessContext);
+  const { bulbBrightness, setBulbBrightness } = useContext(BrightnessContext);
   const { theme } = useContext(ThemeContext);
   const { setAnimationPlayed, animationPlayed } =
     useContext(BulbAnimationContext);
   const activeColorRef = useRef<bulbColors | "">("");
+
+  // Helper function to adjust color opacity based on intensity
+  const getIntensityMultiplier = useCallback(() => {
+    const minInput = 10;
+    const maxInput = 100;
+
+    const minOutput = 0.5;
+    const maxOutput = 1.0;
+
+    const normalized = (bulbBrightness - minInput) / (maxInput - minInput); // 0 to 1
+    return minOutput + normalized * (maxOutput - minOutput);
+  }, [bulbBrightness]);
+
+  // Helper function to get shadow blur based on intensity
+  const getShadowBlur = useCallback(() => {
+    const baseBlur = 175;
+    const baseSpread = 100;
+    const multiplier = getIntensityMultiplier();
+    return {
+      blur: Math.round(baseBlur * multiplier),
+      spread: Math.round(baseSpread * multiplier),
+    };
+  }, [getIntensityMultiplier]);
+
+  // Calculate initial styles based on current intensity
+  const initialBulbStyles = useMemo(() => {
+    if (!showBulb) {
+      return {};
+    }
+
+    const multiplier = getIntensityMultiplier();
+    const { blur, spread } = getShadowBlur();
+
+    return {
+      opacity: Math.max(0.2, multiplier),
+      boxShadow: `0px 0px ${blur}px ${spread}px rgba(2, 132, 199, ${multiplier})`,
+    };
+  }, [showBulb, getIntensityMultiplier, getShadowBlur]);
+
+  useEffect(() => {
+    if (shouldDimBulb) {
+      setBulbBrightness(10);
+      return;
+    }
+    const savedBrightness = Number(localStorage.getItem("bulbBrightness"));
+
+    // Validate brightness: must be a number between 10 and 100
+    if (
+      !isNaN(savedBrightness) &&
+      savedBrightness >= 10 &&
+      savedBrightness <= 100
+    ) {
+      setBulbBrightness(savedBrightness);
+    } else {
+      localStorage.setItem("bulbBrightness", "50");
+      setBulbBrightness(50);
+    }
+  }, [shouldDimBulb]);
 
   useEffect(() => {
     // When bulb is flickering and user starts draggin item it changes to some color as in the background animation is still running when it ends it resets the set color of bulb even if you are draggin a bulb to solve that issue I am turning off the flickring animation if user starts draggin when flickering is still going on.
@@ -105,30 +170,6 @@ const Bulb = memo(() => {
       );
     }
   }, [animationPlayed, activeColorRef.current]);
-
-  // Helper function to adjust color opacity based on intensity
-  const getIntensityMultiplier = useCallback(() => {
-    // 10 maps to 0.5 (i.e. old 50%), 100 maps to 1.0 (old 100%)
-    const minInput = 10;
-    const maxInput = 100;
-
-    const minOutput = 0.5; // represents old 50%
-    const maxOutput = 1.0; // represents old 100%
-
-    const normalized = (bulbBrightness - minInput) / (maxInput - minInput); // 0 to 1
-    return minOutput + normalized * (maxOutput - minOutput); // remapped output
-  }, [bulbBrightness]);
-
-  // Helper function to get shadow blur based on intensity
-  const getShadowBlur = useCallback(() => {
-    const baseBlur = 175;
-    const baseSpread = 100;
-    const multiplier = getIntensityMultiplier();
-    return {
-      blur: Math.round(baseBlur * multiplier),
-      spread: Math.round(baseSpread * multiplier),
-    };
-  }, [getIntensityMultiplier]);
 
   const removeColor = useCallback((color: bulbColors) => {
     const config = colorConfig[color];
@@ -160,6 +201,7 @@ const Bulb = memo(() => {
     spanOneRef.current?.classList.add(config.spanShadowLeft);
     spanTwoRef.current?.classList.add(config.spanShadowRight);
   }, []);
+
   // Set CSS custom properties for animation to respect brightness
   useEffect(() => {
     if (bulbContainerRef.current) {
@@ -185,6 +227,7 @@ const Bulb = memo(() => {
       );
     }
   }, [bulbBrightness, getShadowBlur, getIntensityMultiplier]);
+
   // Apply intensity effect to the bulb
   const applyIntensityEffect = useCallback(() => {
     if (bulbContainerRef.current && wireRef.current) {
@@ -217,7 +260,7 @@ const Bulb = memo(() => {
         }
       }
     }
-  }, [getIntensityMultiplier, getShadowBlur, activeColorRef.current]);
+  }, [getIntensityMultiplier, getShadowBlur, activeColorRef.current, theme]);
 
   // Apply intensity whenever it changes
   useEffect(() => {
@@ -263,7 +306,7 @@ const Bulb = memo(() => {
         return activeColorRef.current || "";
       },
     }),
-    [animationPlayed, applyIntensityEffect]
+    [animationPlayed, applyIntensityEffect, addColor, removeColor]
   );
 
   return (
@@ -271,15 +314,16 @@ const Bulb = memo(() => {
       onAnimationEnd={() => {
         setSwingBulb(false);
       }}
-      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500  ${
+      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500 pointer-events-none ${
         swingBulb ? "animate-swingBulb" : ""
-      }  origin-top ${
-        showBulb ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
+      }  origin-top ${showBulb ? "opacity-100" : "opacity-0 "}`}
     >
       <div
         ref={wireRef}
-        className="relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-all duration-300"
+        className={twMerge(
+          "relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-all duration-300",
+          shouldDimBulb && "opacity-50"
+        )}
       >
         <svg viewBox="0 0 100 800" className="w-full h-full">
           <path
@@ -310,10 +354,11 @@ const Bulb = memo(() => {
           e.stopPropagation();
           setAnimationPlayed(true);
         }}
-        className={`mt-0.5 relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-600 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer transition-all duration-300 before:transition-all before:duration-300  ${
+        style={initialBulbStyles}
+        className={`mt-0.5 relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-600 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer transition-all duration-300 before:transition-all before:duration-300 pointer-events-auto  ${
           showBulb && !animationPlayed
             ? "dark:animate-flickerDark animate-flickerLight dark:before:animate-flickerBgDark before:animate-flickerBgLight"
-            : "bg-[#38bdf8] shadow-[0px_0px_175px_100px_#0284c7] before:bg-[#38bdf8]"
+            : "bg-[#38bdf8] before:bg-[#38bdf8]"
         } top-7 ${
           !showBulb
             ? "dark:before:!bg-gray-800 dark:!bg-gray-800 bg-gray-400 before:bg-gray-400 shadow-none "

@@ -311,8 +311,6 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           renderLeaf={renderLeaf}
           onKeyDown={onKeyDown}
           scrollSelectionIntoView={handleScrollSelectionIntoView}
-          placeholder="Enter some rich text…"
-          spellCheck
           className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words break-all whitespace-pre-wrap"
         />
         <div className="h-10 flex-shrink-0 " />

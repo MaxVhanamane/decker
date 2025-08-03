@@ -6,7 +6,6 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import UserContextProvider from "./context/UserContext";
 import Layout from "./components/Layout";
-import ThemeColorUpdater from "./components/ThemeCodeUpdater";
 import OfflineProvider from "./context/OfflineContext";
 import SearchProvider from "./context/SearchContext";
 import { AudioProvider } from "./context/AudioContext";
@@ -33,7 +32,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <OfflineProvider>
               <UserContextProvider>
                 <SearchProvider>
-                  <ThemeColorUpdater />
                   <BulbContextProvider>
                     <ToastNotificationContextProvider>
                       <Layout>

@@ -1,6 +1,6 @@
 import { config } from "dotenv"
 import express, { NextFunction, Request, Response } from "express"
-import mongoose, { Error, isValidObjectId } from "mongoose";
+import mongoose, { Error } from "mongoose";
 import DeckModel from './models/deck';
 import cors from "cors"
 import session from "express-session";
@@ -24,7 +24,7 @@ import compression from "compression"
 import { SearchService } from "./services/searchService";
 import type { DeckProjection } from "./types/types";
 import { extractTextFromSlateNodes } from "./utils/extractTextFromSlateNodes";
-import DeletedDeck from "./models/DeletedDeck";
+
 config()
 declare module 'express-session' {
   interface SessionData {
@@ -113,6 +113,41 @@ app.use(cookieParser())
 app.use(passport.initialize())
 // allow passport to use "express-session".
 app.use(passport.session())
+
+const isDev = process.env.NODE_ENV === 'development';
+
+// Database connection middleware for production/serverless
+async function dbMiddleware(req: Request, res: Response, next: NextFunction) {
+  try {
+    await connectToMongoDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(503).json({
+      error: 'Service temporarily unavailable',
+      code: 'DB_CONNECTION_FAILED'
+    });
+  }
+}
+
+// Only use middleware in production (Vercel)
+if (!isDev) {
+  app.use(dbMiddleware);
+}
+
+// Development: Connect once at startup
+if (isDev) {
+  connectToMongoDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Development server running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB in development:', err);
+      process.exit(1);
+    });
+}
 
 // local strategy 
 passport.use(new LocalStrategy(
@@ -227,15 +262,8 @@ passport.deserializeUser(async (id: string, done: (err: any, user?: UserDetails 
 });
 
 
-// Connect to MongoDB and start the server
-connectToMongoDB()
-  .then(() => {
-    app.listen(process.env.PORT || PORT, () => {
 
-      console.log("Server is running on port " + PORT);
-    });
-  })
-  .catch((err) => console.error(err));
+
 
 
 app.get('/checkonlinestatus', cors({ origin: true }), async function (req: Request, res: Response) {
@@ -474,20 +502,7 @@ app.put('/deck/editdeck/:deckId', fetchUserDetails, async (req: Request, res: Re
 
 })
 
-// app.delete('/deck/:deckId', fetchUserDetails, async (req: Request, res: Response) => {
-//   try {
 
-//     const deletedDeckInfo = await DeckModel.findOneAndDelete({ deckId: req.params.deckId })
-
-//     //Sending an email and including the date is important because if the user decides to undo the deck and add it again to the database, we will need those details.
-//     const modifiedDeckInfo = { deckId: deletedDeckInfo?.deckId, title: deletedDeckInfo?.title, pinned: deletedDeckInfo?.pinned, email: deletedDeckInfo?.email, date: deletedDeckInfo?.date, cards: deletedDeckInfo?.cards, createdAt: deletedDeckInfo?.createdAt, updatedAt: deletedDeckInfo?.updatedAt }
-//     res.status(200).json({ modifiedDeckInfo, success: true })
-//   }
-//   catch (error) {
-//     res.status(500).json({ message: "An unexpected error occurred while deleting the deck. Please try again later!", success: false })
-//   }
-
-// })
 
 app.delete('/deck/:deckId', fetchUserDetails, async (req, res) => {
   try {

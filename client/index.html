@@ -6,9 +6,9 @@
   <meta name="description"
     content="Decker helps you capture and organize ideas effortlessly. Create decks for topics, add beautifully formatted cards with our rich editor, and easily drag, drop, and reorder everything. Perfect for notes, study, and personal knowledge." />
   <link rel="icon" type="image/x-icon" href="/favicons/favicon.ico">
-  <meta name="theme-color" content="" />
+  <meta name="theme-color" content="#0f172a" />
   <meta name="google-site-verification" content="aAYzyO3i4NSd3T7mUysyHOYJglv6TdVAenqinILO1yk" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, user-scalable=no" />
   <meta name="keywords"
     content="Decker app, deck-based notes, note-taking, blog-style notes, create cards, rich text editing, drag and drop, offline notes, progressive web app, PWA, customizable notes, syntax highlighting, interactive notes, draggable cards">
 
@@ -129,17 +129,27 @@
   <meta property="og:image" content="https://decker.vercel.app/decker_logo.png" />
   <meta property="og:url" content="https://decker.vercel.app" />
   <meta property="og:type" content="website" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Decker</title>
   <!-- <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script> -->
   <script>
-    if (localStorage.theme === 'dark' ||
-      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark')
-      document.documentElement.style.backgroundColor = '#0f172a'
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.backgroundColor = '#0f172a';
+
+      // Update PWA status bar color
+      var metaTag = document.querySelector('meta[name="theme-color"]');
+      if (metaTag) metaTag.setAttribute('content', '#0f172a');
     } else {
-      document.documentElement.style.backgroundColor = '#ffffff'
+      document.documentElement.style.backgroundColor = '#ffffff';
+
+      // Update PWA status bar color
+      var metaTag = document.querySelector('meta[name="theme-color"]');
+      if (metaTag) metaTag.setAttribute('content', '#ffffff');
     }
   </script>
+
+
 
 </head>
 

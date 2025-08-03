@@ -49,10 +49,14 @@ const ThemeContextProvider = ({ children }: { children: ReactNode }) => {
 
     // Disable transitions temporarily
     root.classList.add("disable-transition");
-
     // Set background color based on theme
-    root.style.backgroundColor = isDarkMode ? "#0f172a" : "#ffffff";
-
+    const bgColor = isDarkMode ? "#0f172a" : "#ffffff";
+    root.style.backgroundColor = bgColor;
+    // Update meta theme-color. it changes status bar color on mobile devices
+    const metaTag = document.querySelector(
+      'meta[name="theme-color"]'
+    ) as HTMLMetaElement;
+    if (metaTag) metaTag.setAttribute("content", bgColor);
     // Toggle dark mode class
     root.classList.toggle("dark", isDarkMode);
 

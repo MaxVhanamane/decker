@@ -612,7 +612,12 @@ const Cards = () => {
   }
 
   if (isLoading || !isCardsStateReady) {
-    return <Loading />;
+    return (
+      <>
+        <Loading />
+        <Bulb />
+      </>
+    );
   }
 
   return (
@@ -700,7 +705,7 @@ const Cards = () => {
           />
         ) : null}
         {/* Here, I am placing the Bulb component after the CardContainer because transform or will-change creates a new stacking context, causing the Bulb to get hidden behind it. This makes it unclickable. However, placing the Bulb component after the CardContainer solves the problem. */}
-        <Bulb />
+        <Bulb shouldDimBulb={isSmallScreen && expandEditor} />
         <TrashCanDropZone
           droppableId="CardDeleteArea"
           altText="Trash can for deleting card"

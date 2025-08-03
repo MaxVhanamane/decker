@@ -158,14 +158,14 @@ const CardInput = ({
     height,
   ]);
 
-  const saveToLocalStorage = useCallback((value: Descendant[]) => {
-    try {
-      const content = JSON.stringify(value);
-      localStorage.setItem("content", content);
-    } catch (error) {
-      console.warn("Failed to save to localStorage:", error);
-    }
-  }, []);
+  // const saveToLocalStorage = useCallback((value: Descendant[]) => {
+  //   try {
+  //     const content = JSON.stringify(value);
+  //     localStorage.setItem("content", content);
+  //   } catch (error) {
+  //     console.warn("Failed to save to localStorage:", error);
+  //   }
+  // }, []);
 
   const ensureValidEditor = useCallback(() => {
     if (editor.children.length === 0) {
@@ -186,14 +186,14 @@ const CardInput = ({
       //   setShowHoveringToolbar(true);
       // }
 
-      // Check if there are content changes (not just selection changes)
-      const isAstChange = editor.operations.some(
-        (op) => "set_selection" !== op.type
-      );
+      // // Check if there are content changes (not just selection changes)
+      // const isAstChange = editor.operations.some(
+      //   (op) => "set_selection" !== op.type
+      // );
 
-      if (isAstChange) {
-        saveToLocalStorage(value);
-      }
+      // if (isAstChange) {
+      //   saveToLocalStorage(value);
+      // }
 
       // Ensure at least one valid node exists
       ensureValidEditor();
@@ -204,14 +204,7 @@ const CardInput = ({
         adjustEditorHeight();
       }
     },
-    [
-      editor,
-      saveToLocalStorage,
-      ensureValidEditor,
-      setNote,
-      adjustEditorHeight,
-      isMaxHeightReached,
-    ]
+    [editor, ensureValidEditor, setNote, adjustEditorHeight, isMaxHeightReached]
   );
   const resetEditor = useCallback(() => {
     // Directly replace the children
@@ -382,7 +375,7 @@ const CardInput = ({
               <div
                 onClick={handleEditorContentClick}
                 className={twMerge(
-                  "transition-all duration-500 relative h-full w-full px-4 rounded-md  ",
+                  "transition-all duration-500 relative h-full w-full px-4 rounded-md",
                   expandEditor ? "opacity-100" : "opacity-0",
                   shouldShowScrollbar
                     ? "animate-scrollbar-delayed dark:dark-scrollbar light-scrollbar scrollbar-gutter"

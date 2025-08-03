@@ -235,7 +235,7 @@ const Toast = ({
       />
       <p
         ref={paragraphRef}
-        className="text-base font-sans font-normal text-left flex-1"
+        className="text-base font-sans font-normal text-left "
       >
         {message}
       </p>

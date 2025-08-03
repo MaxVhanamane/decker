@@ -1,37 +1,42 @@
 import { RenderElementProps, useSlateStatic } from "slate-react";
-import { Element as SlateElement, Text } from "slate";
+import { Text } from "slate";
 import { memo } from "react";
 
 const ParagraphElement = memo(
   ({ element, attributes, children }: RenderElementProps) => {
     const editor = useSlateStatic();
 
-    const isSingleParagraphBelowTitle =
-      editor.children.length === 2 &&
-      SlateElement.isElement(editor.children[0]) &&
-      editor.children[0].type === "title" &&
-      SlateElement.isElement(editor.children[1]) &&
-      editor.children[1].type === "paragraph" &&
-      editor.children[1] === element;
+    // Early exit: if there are more than 2 elements, this can't be the paragraph to show placeholder text.
+    if (editor.children.length !== 2) {
+      return (
+        <p {...attributes} className="relative outline-none">
+          {children}
+        </p>
+      );
+    }
 
+    // Early exit: if this isn't the second element, return immediately
+    if (editor.children[1] !== element) {
+      return (
+        <p {...attributes} className="relative outline-none">
+          {children}
+        </p>
+      );
+    }
+
+    // Only now check if empty (this will only run for the special paragraph)
     const isEmpty =
       element.children.length === 1 &&
       Text.isText(element.children[0]) &&
       element.children[0].text === "";
 
     return (
-      <p {...attributes} className="relative outline-none ">
-        {isSingleParagraphBelowTitle && isEmpty && (
-          <span
-            contentEditable={false}
-            className="absolute left-0 top-0 text-gray-400 pointer-events-none select-none  "
-            style={{
-              padding: "0.125rem 0",
-            }}
-          >
-            Write your note, use '/' for commands...
-          </span>
-        )}
+      <p
+        {...attributes}
+        className="relative outline-none paragraph-with-placeholder"
+        data-placeholder="Write your note, use '/' for commands..."
+        data-is-empty={isEmpty.toString()}
+      >
         {children}
       </p>
     );

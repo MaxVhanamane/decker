@@ -231,9 +231,9 @@ const SearchResult = ({
         </>
       ) : (
         <div
-          className={`relative flex items-center justify-center  z-50 w-screen text-base font-semibold animate-quickOpacity h-[var(--window-height)] `}
+          className={`relative flex items-center justify-center z-50 w-screen text-base  animate-quickOpacity h-[var(--window-height)] `}
         >
-          <div className="relative flex items-center justify-center flex-col  -top-[4rem] gap-2 ">
+          <div className="relative flex items-center justify-center flex-col  lg:-top-[4rem] -top-[7rem] gap-2 ">
             <img
               src="/illustrations/no_result_found.svg"
               alt="No result found image"

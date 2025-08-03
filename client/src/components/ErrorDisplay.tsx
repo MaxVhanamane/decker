@@ -1,5 +1,6 @@
-import { ReactNode, memo } from "react";
+import { ReactNode, memo, useContext } from "react";
 import { Navigate } from "react-router-dom";
+import { OfflineContext } from "../context/OfflineContext";
 
 interface ErrorDisplayProps {
   message: string | undefined | null;
@@ -9,11 +10,12 @@ interface ErrorDisplayProps {
 
 const ErrorDisplay = memo(
   ({ message, children, status }: ErrorDisplayProps) => {
+    const { isOnline } = useContext(OfflineContext);
     if (
       message === "Your session has expired. Please log in again to condtinue."
     ) {
       return <Navigate to="/sessionexpired" state={{ authFailed: true }} />;
-    } else if (message === "No internet connection") {
+    } else if (message === "No internet connection" || !isOnline) {
       return (
         <div className="relative w-full -translate-y-16 h-screen flex flex-col items-center justify-center text-gray-800 dark:text-gray-50 gap-4 px-3">
           <img

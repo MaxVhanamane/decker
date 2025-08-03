@@ -188,7 +188,7 @@ const FullScreenCardView = ({
     <>
       <article
         onAnimationEnd={handleOnAnimationEnd}
-        className={`transition-transform duration-500 fixed inset-0      ${
+        className={`transition-transform duration-500 fixed inset-0 ${
           toggleGradient
             ? "dark:bg-BgDarkModeSmall  dark:lg:bg-BgForDarkMode lg:bg-lightBg  bg-lightBgSmall"
             : "dark:bg-slate-900 bg-white"

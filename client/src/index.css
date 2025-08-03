@@ -138,12 +138,41 @@
     /* IE/Edge */
   }
 
+  /* Editor placeholder text  */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
     /* Chrome, Safari, Edge */
   }
 
+  .paragraph-with-placeholder[data-is-empty="true"]::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: rgb(156 163 175);
+    pointer-events: none;
+    user-select: none;
+    padding: 0.125rem 0;
+  }
 
+  .paragraph-with-placeholder:not([data-is-empty="true"])::before {
+    display: none;
+  }
+
+  .title-with-placeholder[data-is-empty="true"]::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: rgb(156 163 175);
+    pointer-events: none;
+    user-select: none;
+    padding: 0.125rem 0;
+  }
+
+  .title-with-placeholder:not([data-is-empty="true"])::before {
+    display: none;
+  }
 
   .scrollbar-small::-webkit-scrollbar {
     width: 8px;
