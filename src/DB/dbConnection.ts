@@ -16,19 +16,19 @@ if (!cached) {
     cached = global.mongooseCache = { conn: null, promise: null };
 }
 
-const MONGODB_OPTIONS = {
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 10000,
-    maxPoolSize: 10,
-    minPoolSize: 1,
-    bufferCommands: false,
-} as const;
+// const MONGODB_OPTIONS = {
+//     serverSelectionTimeoutMS: 5000,
+//     socketTimeoutMS: 45000,
+//     connectTimeoutMS: 10000,
+//     maxPoolSize: 10,
+//     minPoolSize: 1,
+//     bufferCommands: false,
+// } as const;
 
 async function connectWithRetry(maxRetries: number = 2): Promise<typeof mongoose> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const connection = await mongoose.connect(process.env.MONGO_URI!, MONGODB_OPTIONS);
+            const connection = await mongoose.connect(process.env.MONGO_URI!);
             console.log("MongoDB connected successfully");
             return connection;
         } catch (error) {

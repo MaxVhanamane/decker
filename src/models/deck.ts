@@ -36,7 +36,7 @@ const DeckSchema = new Schema({
   cards: [CardSchema],          // Direct cards for simple use
   chapters: [ChapterSchema],    // Optional organization
   pinned: { type: Boolean, default: false },
-  email: { type: Schema.Types.ObjectId, ref: "Users" },
+  email: { type: Schema.Types.ObjectId, ref: "User" },
   date: { type: Date },
   // Soft delete fields
   deletedAt: { type: Date },        // Only exists when document is deleted

@@ -301,6 +301,29 @@ const RichTextEditor = (props: RichTextEditorProps) => {
     []
   );
 
+  const handleRemovePlaceholderText = (e: InputEvent) => {
+    const { selection } = editor;
+    if (!selection) return;
+    //  Only run this for *real text insertions*.
+    //    Backspace/Delete also trigger onDOMBeforeInput, but if we flipped
+    //    `data-is-empty` to false during those, the placeholder would disappear
+    //    even when the node is still empty. This avoids that bug.
+    if (e.inputType !== "insertText" && e.inputType !== "insertCompositionText")
+      return;
+
+    const [elementNode, path] =
+      Editor.above(editor, {
+        match: (n) => SlateElement.isElement(n),
+      }) || [];
+
+    if (!elementNode || (path && path[0] > 1)) return;
+
+    const domNode = ReactEditor.toDOMNode(editor, elementNode);
+    if (domNode.getAttribute("data-is-empty") === "true") {
+      domNode.setAttribute("data-is-empty", "false");
+    }
+  };
+
   return (
     <>
       <SetNodeToDecorations />
@@ -309,6 +332,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           renderElement={renderElement}
           decorate={decorate}
           renderLeaf={renderLeaf}
+          onDOMBeforeInput={handleRemovePlaceholderText}
           onKeyDown={onKeyDown}
           scrollSelectionIntoView={handleScrollSelectionIntoView}
           className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words break-all whitespace-pre-wrap"

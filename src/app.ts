@@ -118,17 +118,23 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // Database connection middleware for production/serverless
 async function dbMiddleware(req: Request, res: Response, next: NextFunction) {
+  //  Skip if already connected
+  if (mongoose.connection.readyState === 1) {
+    console.log("Already connected to the database")
+    return next();
+  }
+
+  // Otherwise, connect
   try {
     await connectToMongoDB();
+    console.log("Connecting to the database")
     next();
   } catch (error) {
     console.error('Database connection failed:', error);
-    res.status(503).json({
-      error: 'Service temporarily unavailable',
-      code: 'DB_CONNECTION_FAILED'
-    });
+    res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 }
+
 
 // Only use middleware in production (Vercel)
 if (!isDev) {
@@ -868,12 +874,6 @@ app.post("/signup", async (req: Request, res: Response) => {
 
 
 })
-
-
-
-
-
-
 
 function generateOTP(): number {
   // Declare a variable to store the OTP

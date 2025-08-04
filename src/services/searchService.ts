@@ -105,7 +105,7 @@ export class SearchService {
                 { 'chapters.cards.searchableContent': searchRegex },
                 { 'cards.searchableContent': searchRegex }
             ]
-        }).lean() as Deck[];
+        }).lean()
 
         const allResults: SearchResult[] = [];
 

@@ -159,7 +159,8 @@
     display: none;
   }
 
-  .title-with-placeholder[data-is-empty="true"]::before {
+  /* Placeholder text */
+  .slate-placeholder::before {
     content: attr(data-placeholder);
     position: absolute;
     left: 0;
@@ -168,11 +169,17 @@
     pointer-events: none;
     user-select: none;
     padding: 0.125rem 0;
+    display: block;
   }
 
-  .title-with-placeholder:not([data-is-empty="true"])::before {
+  .slate-placeholder[data-is-empty="true"]::before {
+    display: block;
+  }
+
+  .slate-placeholder[data-is-empty="false"]::before {
     display: none;
   }
+
 
   .scrollbar-small::-webkit-scrollbar {
     width: 8px;
