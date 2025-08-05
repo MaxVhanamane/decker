@@ -91,15 +91,6 @@ const RichTextEditor = (props: RichTextEditorProps) => {
 
     if (!selection || !ReactEditor.isFocused(editor)) return;
 
-    if (
-      event.key === "/" &&
-      !isInsideCodeBlock(editor) &&
-      !showCommandPalette
-    ) {
-      openCommandPalette();
-      return;
-    }
-
     if (showCommandPalette) {
       if (event.key === "ArrowUp") {
         // Turn off the default behavior where the cursor moves up when up arrow is pressed, and instead just change the index to navigate through the command palette.
@@ -301,26 +292,48 @@ const RichTextEditor = (props: RichTextEditorProps) => {
     []
   );
 
-  const handleRemovePlaceholderText = (e: InputEvent) => {
+  const handleOnDOMBeforeInput = (e: InputEvent) => {
     const { selection } = editor;
     if (!selection) return;
-    //  Only run this for *real text insertions*.
-    //    Backspace/Delete also trigger onDOMBeforeInput, but if we flipped
-    //    `data-is-empty` to false during those, the placeholder would disappear
-    //    even when the node is still empty. This avoids that bug.
-    if (e.inputType !== "insertText" && e.inputType !== "insertCompositionText")
+    if (e.data === "/" && !isInsideCodeBlock(editor) && !showCommandPalette) {
+      requestAnimationFrame(() => {
+        openCommandPalette();
+      });
       return;
+    }
+    //  Only run this for *real text insertions*.
+    //  Backspace/Delete also trigger onDOMBeforeInput, but if we flipped
+    // `data-is-empty` to false during those, the placeholder would disappear
+    //  even when the node is still empty. This avoids that bug.
+    if (
+      e.inputType !== "insertText" &&
+      e.inputType !== "insertCompositionText"
+    ) {
+      return;
+    }
 
+    // Find the nearest element block node (e.g., title or paragraph)
     const [elementNode, path] =
       Editor.above(editor, {
-        match: (n) => SlateElement.isElement(n),
+        match: SlateElement.isElement,
       }) || [];
 
-    if (!elementNode || (path && path[0] > 1)) return;
+    if (!elementNode || !path) return;
+
+    // Only apply this logic to the first two elements (title at index 0, paragraph at index 1)
+    const index = path[0];
+    if (index > 1) return;
 
     const domNode = ReactEditor.toDOMNode(editor, elementNode);
-    if (domNode.getAttribute("data-is-empty") === "true") {
-      domNode.setAttribute("data-is-empty", "false");
+
+    // Remove placeholder if it's currently marked empty
+    if (index === 0 && domNode.getAttribute("data-is-empty-title") === "true") {
+      domNode.setAttribute("data-is-empty-title", "false");
+    } else if (
+      index === 1 &&
+      domNode.getAttribute("data-is-empty-paragraph") === "true"
+    ) {
+      domNode.setAttribute("data-is-empty-paragraph", "false");
     }
   };
 
@@ -332,7 +345,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           renderElement={renderElement}
           decorate={decorate}
           renderLeaf={renderLeaf}
-          onDOMBeforeInput={handleRemovePlaceholderText}
+          onDOMBeforeInput={handleOnDOMBeforeInput}
           onKeyDown={onKeyDown}
           scrollSelectionIntoView={handleScrollSelectionIntoView}
           className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words break-all whitespace-pre-wrap"

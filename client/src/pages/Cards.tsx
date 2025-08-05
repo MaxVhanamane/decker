@@ -334,7 +334,7 @@ const Cards = () => {
   }, [isSmallScreen]);
 
   const handleCloseTextEditor = useCallback(() => {
-    if (note && note.length > 0) {
+    if (hasValidNoteContent(note)) {
       setModalState((prev) => ({
         ...prev,
         confirmCloseCardModal: {
@@ -404,10 +404,9 @@ const Cards = () => {
             restoreUnsavedContent(currentNote);
           },
         });
-        resetEditor();
         setNote(initialValue);
+        resetEditor();
         setHeight(120);
-
         if (isPlayingAudioAllowed) {
           setTimeout(() => {
             handlePlayAudio("createdSuccessfully", "/cards");
@@ -658,37 +657,35 @@ const Cards = () => {
         >
           {cardToolbar}
         </CardInput>
-
-        {hasCards ? (
-          <div
-            className={twMerge(
-              "flex items-center flex-col justify-center transition-transform duration-1000 md:delay-[0s] will-change-transform",
-              expandEditor ? "delay-0" : "delay-1000"
-            )}
-            style={{
-              transform: `translateY(${(() => {
-                if (expandEditor) {
-                  if (isSmallScreen) {
-                    return height === 200 ? "100px" : `${height - 90}px`;
-                  } else {
-                    return height === 120 ? "0px" : `${height - 120}px`;
-                  }
+        <div
+          className={twMerge(
+            "flex items-center flex-col justify-center transition-transform duration-1000 md:delay-[0s] will-change-transform",
+            expandEditor ? "delay-0" : "delay-1000"
+          )}
+          style={{
+            transform: `translateY(${(() => {
+              if (expandEditor) {
+                if (isSmallScreen) {
+                  return height === 200 ? "100px" : `${height - 90}px`;
                 } else {
-                  return isSmallScreen ? "-66px" : "-80px";
+                  return height === 120 ? "0px" : `${height - 120}px`;
                 }
-              })()})`,
-            }}
-          >
-            <h1 className="font-bold text-xl text-gray-800 mb-10 dark:text-gray-50">
-              {data?.title}{" "}
-            </h1>
-            <CardContainer
-              handleEditCardButtonClick={handleEditCardButtonClick}
-              handleShowFullScreen={handleShowFullScreen}
-              cards={allCardsState?.cards || []}
-            />
-          </div>
-        ) : !expandEditor && !isTransitioning ? (
+              } else {
+                return isSmallScreen ? "-66px" : "-80px";
+              }
+            })()})`,
+          }}
+        >
+          <h1 className="font-bold text-xl text-gray-800 mb-10 dark:text-gray-50">
+            {hasCards && data?.title}
+          </h1>
+          <CardContainer
+            handleEditCardButtonClick={handleEditCardButtonClick}
+            handleShowFullScreen={handleShowFullScreen}
+            cards={allCardsState?.cards || []}
+          />
+        </div>
+        {!hasCards && !expandEditor && !isTransitioning && (
           <NoContent
             imageSource="/illustrations/no_cards_found.svg"
             heading="Looks like you haven't added any cards yet."
@@ -703,7 +700,7 @@ const Cards = () => {
             }}
             imageAltText="No cards found!"
           />
-        ) : null}
+        )}
         {/* Here, I am placing the Bulb component after the CardContainer because transform or will-change creates a new stacking context, causing the Bulb to get hidden behind it. This makes it unclickable. However, placing the Bulb component after the CardContainer solves the problem. */}
         <Bulb shouldDimBulb={isSmallScreen && expandEditor} />
         <TrashCanDropZone

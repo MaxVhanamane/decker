@@ -23,9 +23,9 @@ const ParagraphElement = memo(
     return (
       <p
         {...attributes}
-        className="relative outline-none slate-placeholder"
+        className="relative outline-none slate-placeholder-paragraph"
         data-placeholder="Write your note, use '/' for commands..."
-        data-is-empty={isEmpty.toString()}
+        data-is-empty-paragraph={isEmpty.toString()}
       >
         {children}
       </p>

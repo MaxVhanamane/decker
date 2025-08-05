@@ -58,7 +58,7 @@ const TrashCanDropZone = memo(({ droppableId, altText }: PropType) => {
         } onto the trash icon to delete it.`}
         size="md"
         onClick={handleClick}
-        className={`  !transition-transform !duration-300 rounded-full p-1  ${
+        className={`  !transition-transform !duration-200 rounded-full p-1 active:scale-95  ${
           isOver || shouldTrashCanRotate ? "-rotate-12 " : "transform-none"
         } `}
       >

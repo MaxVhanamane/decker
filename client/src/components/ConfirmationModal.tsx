@@ -4,7 +4,7 @@ import Button from "./Button";
 
 type ConfirmationModalProps = {
   showConfirmationModal: boolean;
-  onConfirm: () => void;
+  onConfirm: (resetEditor: () => void) => void;
   onCancel: () => void;
   message: string;
   startClosingModalAnimation: boolean;

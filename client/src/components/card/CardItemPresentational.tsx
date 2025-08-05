@@ -98,11 +98,11 @@ const CardItemPresentational = ({
           <div className="text-xs text-gray-400 ">
             <span>{formatDate(card.createdAt)}</span>
           </div>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-3">
             <div className=" dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/deleteCardBtn">
               <button
                 type="button"
-                className="text-red-500  outline-none  rounded-tr p-[0.2rem]  text-center  transition-all duration-500 hover:text-red-600 "
+                className="text-gray-600 dark:text-slate-300  hover:text-gray-700 dark:hover:text-slate-400  outline-none  rounded-tr p-[0.2rem]  text-center  transition-all duration-500  "
                 aria-label="Delete Card"
               >
                 <MdOutlineDeleteOutline />
@@ -111,7 +111,7 @@ const CardItemPresentational = ({
             <div className=" dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/editBtn">
               <button
                 type="button"
-                className="text-blue-500 dark:hover:text-sky-600 p-[0.2rem] hover:text-blue-600 text-base outline-none rounded-tr   text-center dark:text-sky-400 transition-all duration-500 "
+                className="text-gray-600 dark:text-slate-300  hover:text-gray-700 dark:hover:text-slate-400 p-[0.2rem] text-base outline-none rounded-tr   text-center  transition-all duration-500 "
                 aria-label="Edit Card"
               >
                 <BiEdit />

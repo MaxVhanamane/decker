@@ -132,7 +132,7 @@ const ToastContainer = ({
                 : position === "bottom-left"
                 ? "absolute bottom-4 left-0 px-4 h-[80vh] py-6 "
                 : position === "bottom-right"
-                ? "absolute bottom-4 right-0 px-4 h-[80vh]  py-6"
+                ? "absolute bottom-9 right-0 px-4 h-[80vh]  py-6"
                 : position === "bottom-center"
                 ? "absolute bottom-0 left-1/2 -translate-x-1/2 h-[80vh]  py-2"
                 : ""

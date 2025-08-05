@@ -28,7 +28,6 @@ export const NodeQueries = {
 
     }
 
-
     ,
     getActiveColorOnSelectedNode(editor: Editor) {
         const { selection } = editor;

@@ -8,6 +8,7 @@ import {
   useRef,
   useMemo,
   useCallback,
+  useEffect,
 } from "react";
 import { BsChevronExpand } from "react-icons/bs";
 import { AudioContext } from "../../context/AudioContext";
@@ -35,8 +36,9 @@ import { withHistory } from "slate-history";
 import { withUnwrapEmptyInlines } from "../../utils/editor/plugins/withUnwrapEmptyInlines";
 import { useIsSmallScreen } from "../../hooks/utility/useIsSmallScreen";
 import { withExitInlineOnSpace } from "../../utils/editor/plugins/withExitInlineOnSpace";
+import useResetEditor from "../../hooks/editor/useResetEditor";
 
-const initialValue: Descendant[] = [
+export const initialValue: Descendant[] = [
   {
     type: "title",
     children: [{ text: "" }],
@@ -84,6 +86,7 @@ const CardInput = ({
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
   const hasEditorOpened = useRef(false);
   const isHeightTransitioning = useRef(true);
+
   // Memoize editor creation to prevent recreation on every render
   const editor = useMemo(() => {
     return withResetToParagraphOnBackspaceWhenEmpty(
@@ -106,6 +109,13 @@ const CardInput = ({
       )
     );
   }, []);
+  const { resetEditor } = useResetEditor(editor);
+
+  useEffect(() => {
+    if (!expandEditor) {
+      resetEditor();
+    }
+  }, [expandEditor, resetEditor]);
 
   const { maxHeight, maxHeightSmallScreen } = useMemo(() => {
     const baseHeight = window.innerHeight - 64 - 16 - 16 - 40;
@@ -167,15 +177,6 @@ const CardInput = ({
   //   }
   // }, []);
 
-  const ensureValidEditor = useCallback(() => {
-    if (editor.children.length === 0) {
-      Transforms.insertNodes(editor, {
-        type: "paragraph",
-        children: [{ text: "" }],
-      });
-    }
-  }, [editor]);
-
   const handleChange = useCallback(
     (value: Descendant[]) => {
       // if (
@@ -196,7 +197,6 @@ const CardInput = ({
       // }
 
       // Ensure at least one valid node exists
-      ensureValidEditor();
       setNote(value);
 
       // Handle editor height adjustment
@@ -204,21 +204,8 @@ const CardInput = ({
         adjustEditorHeight();
       }
     },
-    [editor, ensureValidEditor, setNote, adjustEditorHeight, isMaxHeightReached]
+    [editor, setNote, adjustEditorHeight, isMaxHeightReached]
   );
-  const resetEditor = useCallback(() => {
-    // Directly replace the children
-    editor.children = initialValue;
-
-    // Normalize to ensure consistent state
-    Editor.normalize(editor, { force: true });
-
-    // Trigger onChange to update the state
-    editor.onChange();
-
-    // Set selection to start
-    Transforms.select(editor, Editor.start(editor, []));
-  }, [editor]);
 
   const restoreUnsavedContent = (newContent: Descendant[]) => {
     // Set the children directly
@@ -235,7 +222,7 @@ const CardInput = ({
       e.preventDefault();
       handleCreateCard(resetEditor, restoreUnsavedContent);
     },
-    [handleCreateCard]
+    [handleCreateCard, resetEditor]
   );
 
   const handleEditorClick = useCallback(() => {
@@ -298,8 +285,18 @@ const CardInput = ({
             ReactEditor.focus(editor);
           }
         } catch (error) {
-          // Handle case where DOM node can't be found
-          console.debug("Could not get DOM node for click handling");
+          //Insert a paragraph anyway to keep the UX smooth
+          const newParagraph: CustomElementType = {
+            type: "paragraph",
+            children: [{ text: "" }],
+          };
+
+          const insertPath = [editor.children.length];
+          Transforms.insertNodes(editor, newParagraph, { at: insertPath });
+
+          const point = Editor.start(editor, insertPath);
+          Transforms.select(editor, { anchor: point, focus: point });
+          ReactEditor.focus(editor);
         }
       }
     },

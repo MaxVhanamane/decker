@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import reactSWC from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
-// import eslint from 'vite-plugin-eslint';
 import { analyzer } from 'vite-bundle-analyzer'
 
 export default defineConfig(({ command, mode }) => {
@@ -55,20 +54,7 @@ export default defineConfig(({ command, mode }) => {
             },
 
           },
-          {
-            urlPattern: new RegExp(`${API_URL}/decks-and-cards$`),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'search-cache',
-              expiration: {
-                maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // cache expiration time
-              },
-              cacheableResponse: {
-                statuses: [200],
-              },
-            },
-          },
+
           {
             urlPattern: new RegExp(`${API_URL}/getuser$`),
             handler: 'NetworkFirst',
@@ -131,7 +117,6 @@ export default defineConfig(({ command, mode }) => {
         "theme_color": "#ffffff",
         screenshots: [{ src: "/screenshots/smallscreen/decker_small_screen_homepage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Home page" }, { src: "/screenshots/smallscreen/decker_small_screen_cardspage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Cards page" }, { src: "/screenshots/smallscreen/decker_small_screen_fullscreen.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Fullscreen card view" }, { src: "/screenshots/largescreen/decker_big_screen_image_e1.png", form_factor: "wide", sizes: "960x466", "type": "image/jpg", label: "Home page " }, { src: "/screenshots/largescreen/decker_big_screen_image_e3.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Cards page" }, { src: "/screenshots/largescreen/decker_big_screen_image_e2.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Fullscreen card view" }],
       }
-
 
     }),],
   }

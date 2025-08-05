@@ -154,13 +154,13 @@ const UserMenu = ({ setModalState }: PropType) => {
       <div
         ref={containerRef}
         className={twMerge(
-          "absolute -left-64 top-14 transition duration-300 ease-in-out z-[90] w-64  outline-none",
+          "absolute -left-64 top-14 transition-[opacity,transform] shadow duration-300 ease-in-out z-[90] w-64 outline-none",
           showUserProfile
             ? "opacity-100 translate-x-0"
             : "opacity-0 -translate-x-4 pointer-events-none"
         )}
       >
-        <div className="ring-1 ring-sky-500/75 relative shadow-xl bg-white rounded-lg dark:bg-slate-900 mx-auto">
+        <div className="ring-1 border-sky-500/60 relative shadow-xl bg-white rounded-lg dark:bg-slate-900 mx-auto">
           <Button
             tabIndex={showUserProfile ? 0 : -1}
             variant="unstyled"
@@ -173,43 +173,48 @@ const UserMenu = ({ setModalState }: PropType) => {
             <RiCloseFill />
           </Button>
 
-          <h2 className="py-2 font-bold text-gray-700 dark:text-gray-50">
-            My account
+          <h2 className="py-2 font-semibold text-gray-700 dark:text-gray-50">
+            Account Settings
           </h2>
 
-          <hr className="border-sky-500/75" />
+          <hr className="border-sky-500/60" />
 
           <div className="p-2">
             <ul className="flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 ">
               <li className="flex gap-1 whitespace-nowrap w-fit px-1">
                 <div className="relative group flex items-center justify-center gap-1">
-                  <span className="font-semibold ">username:</span>
-                  <span className="truncate text-ellipsis overflow-hidden max-w-[12rem]">
-                    {userInfo?.username || "N/A"}
-                  </span>
+                  <p className="truncate text-ellipsis overflow-hidden max-w-[14rem]">
+                    username:{" "}
+                    <span className=" text-sm">
+                      {userInfo?.username || "N/A"}
+                    </span>
+                  </p>
+
                   <div
                     className="absolute bottom-full left-0 mt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
              bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 
              text-xs rounded shadow-md py-2 px-3 z-10 
-             max-w-[15rem] -translate-x-1 w-max break-words whitespace-normal 
-             transition-opacity duration-300"
+             max-w-[15rem] w-max break-words whitespace-normal 
+             "
                   >
                     {userInfo?.username || "N/A"}
                   </div>
                 </div>
               </li>
-              <li className="flex gap-1 whitespace-nowrap">
-                <div className="relative group flex items-center justify-center gap-1 px-1">
-                  <span className="font-semibold  w-fit">email:</span>{" "}
-                  <span className="truncate text-ellipsis overflow-hidden max-w-[12rem] inline-block">
-                    {userEmailAddress || "N/A"}
-                  </span>
+              <li className="flex gap-1 whitespace-nowrap w-fit px-1">
+                <div className="relative group flex items-center justify-center gap-1">
+                  <p className="truncate text-ellipsis overflow-hidden max-w-[14rem]">
+                    email:{" "}
+                    <span className=" text-sm">
+                      {userEmailAddress || "N/A"}
+                    </span>
+                  </p>
                   <div
                     className="absolute top-full left-0 mt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
              bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 
              text-xs rounded shadow-md py-2 px-3 z-10 
-             max-w-[15rem] -translate-x-1 w-max break-words whitespace-normal 
-             transition-opacity duration-300"
+             max-w-[15rem]  w-max break-words whitespace-normal 
+          "
                   >
                     {userEmailAddress || "N/A"}
                   </div>
@@ -218,14 +223,14 @@ const UserMenu = ({ setModalState }: PropType) => {
             </ul>
           </div>
 
-          <hr className="border-sky-500/75" />
+          <hr className="border-sky-500/60" />
 
           <div className="flex items-start justify-start flex-col p-2 gap-2 ">
             <Button
               tabIndex={showUserProfile ? 0 : -1}
               variant="unstyled"
               onClick={handleDeleteAccount}
-              className="font-semibold  rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 px-1 transition-[color] duration-300 cursor-pointer "
+              className="rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 px-1 transition-[color] duration-300 cursor-pointer "
               aria-label="Delete My Account"
             >
               <AiOutlineDelete /> Delete My Account
@@ -239,13 +244,13 @@ const UserMenu = ({ setModalState }: PropType) => {
                 showInstallAppButton
                   ? "flex items-center justify-center gap-2"
                   : "hidden",
-                "font-semibold rounded text-center px-1 dark:text-gray-50 dark:hover:text-gray-300 text-gray-700 hover:text-gray-600 cursor-pointer"
+                " rounded text-center px-1 dark:text-gray-50 dark:hover:text-gray-300 text-gray-700 hover:text-gray-600 cursor-pointer"
               )}
               aria-label="install app button"
             >
               <MdInstallMobile className="lg:hidden dark:text-gray-50 dark:hover:text-gray-300  text-gray-500 hover:text-gray-600 " />
-              <MdInstallDesktop className="hidden lg:block text-lg" /> Install
-              Decker
+              <MdInstallDesktop className="hidden lg:block text-base" />
+              <span>Install Decker</span>
             </Button>
 
             {shouldShowHomeButton ? (
@@ -253,7 +258,7 @@ const UserMenu = ({ setModalState }: PropType) => {
                 tabIndex={showUserProfile ? 0 : -1}
                 variant="unstyled"
                 onClick={handleHomeNavigation}
-                className="md:hidden font-semibold px-1 rounded text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 cursor-pointer flex items-center justify-center gap-2"
+                className="md:hidden  px-1 rounded text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 cursor-pointer flex items-center justify-center gap-2"
                 aria-label="Home"
               >
                 <HiOutlineHome /> Home
@@ -264,7 +269,7 @@ const UserMenu = ({ setModalState }: PropType) => {
               tabIndex={showUserProfile ? 0 : -1}
               variant="unstyled"
               onClick={handleLogout}
-              className="font-semibold  rounded px-1  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer  flex items-center justify-center gap-2"
+              className="  rounded px-1  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 transition-[color] duration-300 cursor-pointer  flex items-center justify-center gap-2"
               aria-label="Logout"
             >
               <RiLogoutCircleRLine />

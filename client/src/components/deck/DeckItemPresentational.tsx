@@ -62,7 +62,7 @@ const DeckItemPresentational = ({
         size="md"
         className="absolute  dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
       >
-        <p className=" rounded-tr text-sm px-1  text-center  text-red-500 group-hover/Btn:scale-95">
+        <p className=" rounded-tr text-sm px-1  text-center  text-gray-600 dark:text-slate-400 group-hover/Btn:scale-95">
           <BsFillPinFill className="text-[0.9rem]" />
         </p>
       </Button>
@@ -73,7 +73,7 @@ const DeckItemPresentational = ({
           size="md"
           className="absolute z-50 right-2 top-2 hover:scale-95 rounded-full p-[0.1rem]  "
         >
-          <BsThreeDotsVertical />
+          <BsThreeDotsVertical className="dark:text-slate-400 text-gray-600" />
         </Button>
       </div>
 

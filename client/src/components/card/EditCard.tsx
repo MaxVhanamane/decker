@@ -307,7 +307,7 @@ const EditCard = forwardRef<HTMLTextAreaElement, EditCardProps>(
               />
             )}
             <div
-              className={`px-4 py-2 pb-32 w-full outline-none text-gray-800  bg-white font-light text-base text-left dark:md:bg-slate-800 dark:bg-slate-900 dark:text-white resize-none h-full overflow-y-auto  dark:dark-scrollbar light-scrollbar relative ${
+              className={`px-4 py-2 pb-32 w-full outline-none text-gray-800  bg-white font-light text-base text-left dark:md:bg-slate-800 dark:bg-slate-900 dark:text-white resize-none h-full overflow-y-auto  dark:dark-scrollbar light-scrollbar scrollbar-gutter relative ${
                 toolbarPosition === "bottom" && "md:rounded-t-md"
               }`}
               onClick={handleEditorContentClick}

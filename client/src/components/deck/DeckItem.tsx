@@ -1,8 +1,7 @@
 import { useContext, useEffect, useRef, useState, memo, JSX } from "react";
 import type { DeckType } from "../../types/types";
 import Button from "../Button";
-import { BsFillPinFill, BsThreeDotsVertical, BsTrash } from "react-icons/bs";
-import { BiEdit } from "react-icons/bi";
+import { BsFillPinFill, BsThreeDotsVertical } from "react-icons/bs";
 import { formatDate } from "../../functions/formatDate";
 import { Link } from "react-router-dom";
 import { BulbContext } from "../../context/BulbContext";
@@ -10,7 +9,7 @@ import { twMerge } from "tailwind-merge";
 import { DeckContext } from "../../context/DeckContext";
 import { useClickOutside } from "../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
-import useDeleteDeck from "../../hooks/react-query/useDeleteDeck";
+import DeckMoreOptions from "./DeckMoreOptions";
 
 type PropTypes = {
   handleEditDeck: (deckId: string, title: string) => void;
@@ -38,11 +37,11 @@ const DeckItem = ({
     useContext(DeckContext);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const moreOptionsRef = useRef<HTMLDivElement | null>(null);
   const deckItemRef = useRef<HTMLDivElement | null>(null);
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
   const { bulbRef, removeBulbColorAfterTimeout } = useContext(BulbContext);
-  const { mutate: deleteDeck } = useDeleteDeck();
   useClickOutside(dropdownRef, showMoreOptions, () => {
     setShowMoreOptions(false);
   });
@@ -127,13 +126,14 @@ const DeckItem = ({
         }}
         className="absolute  dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
       >
-        <p className=" rounded-tr text-sm px-1  text-center  text-red-600 group-hover/Btn:scale-95">
+        <p className=" rounded-tr text-sm px-1  text-center  text-gray-600 dark:text-slate-400 group-hover/Btn:scale-95">
           <BsFillPinFill className="text-[0.9rem]" />
         </p>
       </Button>
 
       <div ref={dropdownRef}>
         <Button
+          ref={triggerRef}
           variant="plain"
           size="md"
           aria-label="Show more options"
@@ -143,80 +143,19 @@ const DeckItem = ({
           toolTipPosition="bottom"
           type="button"
           onClick={() => setShowMoreOptions((prevValue) => !prevValue)}
-          className="absolute z-50 right-2 top-2 hover:scale-95 rounded-full p-[0.1rem]  "
+          className="absolute z-50 right-2 top-2 hover:scale-95 rounded-full p-[0.1rem]"
         >
-          <BsThreeDotsVertical />
+          <BsThreeDotsVertical className="dark:text-slate-400 text-gray-600" />
         </Button>
 
         {showMoreOptions && (
-          <div
-            ref={moreOptionsRef}
-            className="absolute z-[100] -right-5 top-9 flex items-start justify-center flex-col gap-2 dark:bg-slate-800 bg-gray-200 rounded-md py-2 px-3 w-32 border border-slate-400 select-none"
-          >
-            <div className="absolute z-20 -top-[0.8px] right-[1.85rem] h-[1px] dark:bg-slate-800 bg-gray-200 w-[13.1px]"></div>
-            <svg
-              className="absolute z-10 top-[-10px] right-7"
-              width="16"
-              height="10"
-              viewBox="0 0 16 10"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M8 0L16 10H0L8 0Z"
-                className="dark:fill-slate-800 fill-gray-200"
-              />
-
-              <line
-                x1="8"
-                y1="0"
-                x2="0"
-                y2="10"
-                strokeWidth="1"
-                className="stroke-slate-400"
-              />
-
-              <line
-                x1="8"
-                y1="0"
-                x2="16"
-                y2="10"
-                strokeWidth="1"
-                className="stroke-slate-400"
-              />
-            </svg>
-
-            <Button
-              variant="plain"
-              size="md"
-              aria-label="Edit Deck"
-              type="button"
-              onClick={() => handleEditDeck(deck.deckId, deck.title)}
-              className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
-            >
-              <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
-                <BiEdit /> Edit
-              </p>
-            </Button>
-
-            <Button
-              variant="plain"
-              size="md"
-              aria-label="Delete Deck"
-              type="button"
-              onClick={() =>
-                deleteDeck({
-                  deckId: deck.deckId,
-                  searchParams,
-                })
-              }
-              className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
-            >
-              <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
-                <BsTrash /> Delete
-              </p>
-            </Button>
-          </div>
+          <DeckMoreOptions
+            deck={deck}
+            handleEditDeck={handleEditDeck}
+            moreOptionsRef={moreOptionsRef}
+            searchParams={searchParams}
+            triggerRef={triggerRef}
+          />
         )}
       </div>
 
