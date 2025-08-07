@@ -56,10 +56,13 @@ const ThemeContextProvider = ({ children }: { children: ReactNode }) => {
     const metaTag = document.querySelector(
       'meta[name="theme-color"]'
     ) as HTMLMetaElement;
-    if (metaTag) metaTag.setAttribute("content", bgColor);
     // Toggle dark mode class
     root.classList.toggle("dark", isDarkMode);
-
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (metaTag) metaTag.setAttribute("content", bgColor);
+      });
+    });
     const frameId = requestAnimationFrame(() => {
       root.classList.remove("disable-transition");
     });

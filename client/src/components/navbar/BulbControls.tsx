@@ -84,9 +84,9 @@ const BulbControls = () => {
         className="rounded-full p-[0.4rem] w-10 h-10 dark:hover:bg-gray-700 hover:bg-gray-100 "
       >
         {showBulb ? (
-          <BsLightbulb className={`dark:text-gray-100 text-gray-500 `} />
+          <BsLightbulb className={`dark:text-gray-200 text-gray-500 `} />
         ) : (
-          <BsLightbulbOff className={`dark:text-gray-100 text-gray-500 `} />
+          <BsLightbulbOff className={`dark:text-gray-200 text-gray-500 `} />
         )}
       </Button>
 

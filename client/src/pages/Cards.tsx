@@ -14,7 +14,7 @@ import { useStableNavigate } from "../context/StableNavigateContext";
 import { useStableParams } from "../context/stableParamsContext";
 import useDeleteCard from "../hooks/react-query/useDeleteCard";
 import useToastOnError from "../hooks/utility/useToastOnError";
-import { useIsSmallScreen } from "../hooks/utility/useIsSmallScreen";
+
 import { Helmet } from "react-helmet";
 import type { CardContentType, ContentTypeForEdit } from "../types/types";
 import Loading from "../components/Loading";
@@ -43,6 +43,7 @@ import debounce from "lodash/debounce";
 import { hasValidNoteContent } from "../utils/editor/hasValidNoteContent";
 import { usePrismTheme } from "../hooks/utility/usePrismTheme";
 import { ThemeContext } from "../context/ThemeContext";
+import { useIsDeviceType } from "../hooks/utility/useIsDeviceType";
 
 // const Tips = lazy(() => import("../components/card/Tips"));
 const initialValue: Descendant[] = [
@@ -114,7 +115,7 @@ const Cards = () => {
   const [closeFullScreenWithAnimation, setCloseFullScreenWithAnimation] =
     useState(false);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
-  const isSmallScreen = useIsSmallScreen();
+  const isSmallScreen = useIsDeviceType("phone");
   const [modalState, setModalState] = useState({
     confirmCloseCardModal: {
       show: false,

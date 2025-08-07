@@ -219,7 +219,7 @@ const FullScreenCardView = ({
               </div>
               <div className="flex items-center justify-center gap-1 ">
                 <div>
-                  <ThemeToggler ParentComponentName="FullScreenCardView" />
+                  <ThemeToggler />
                 </div>
 
                 <Button
@@ -229,7 +229,7 @@ const FullScreenCardView = ({
                   toolTipText="Toggle typing effect"
                   withTooltip
                   type="button"
-                  className="text-blue-500 dark:text-sky-500 dark:hover:text-gray-300 hover:text-blue-600 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  "
+                  className="text-gray-600 dark:text-gray-200  dark:hover:!text-gray-100 hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  "
                   onClick={() => {
                     if (showTypewriterEffect) {
                       localStorage.setItem("showTypewriterEffect", "false");
@@ -251,7 +251,7 @@ const FullScreenCardView = ({
                   aria-label="Delete Card"
                   toolTipText="Delete Card"
                   withTooltip
-                  className="text-blue-500 dark:text-sky-500   dark:hover:bg-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 hover:text-blue-600 rounded-full p-[0.4rem] text-xl"
+                  className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100  hover:text-gray-700   dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] text-xl"
                   onClick={handleDeleteCard}
                 >
                   {buttons.Delete.label}
@@ -264,7 +264,7 @@ const FullScreenCardView = ({
                   aria-label="Edit Card"
                   toolTipText="Edit Card"
                   withTooltip
-                  className="text-blue-500  dark:hover:bg-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 hover:text-blue-600 rounded-full p-[0.4rem] dark:text-sky-500 text-xl"
+                  className="text-gray-600 dark:text-gray-200  dark:hover:!text-gray-100  hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100  rounded-full p-[0.4rem] text-xl"
                   onClick={handleEditCard}
                 >
                   {buttons.Edit.label}
@@ -277,7 +277,7 @@ const FullScreenCardView = ({
                   aria-label="Toggle Background Color"
                   toolTipText="Toggle Background Color"
                   withTooltip
-                  className="text-blue-500   dark:hover:text-gray-300 hover:text-blue-600 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] dark:text-sky-500 text-2xl "
+                  className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100  hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  text-2xl "
                   onClick={handleToggleBgColor}
                 >
                   {toggleGradient

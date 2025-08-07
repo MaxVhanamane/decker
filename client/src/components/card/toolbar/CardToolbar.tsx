@@ -23,7 +23,6 @@ import { ListStyleDropdown } from "../../editor/dropdowns/ListStyleDropdown";
 import { ColorBarDropdown } from "../../editor/dropdowns/ColorBarDropdown";
 import HighlightDropdown from "../../editor/dropdowns/HighlightDropdown";
 import { NodeQueries } from "../../../utils/editor/nodeQueries";
-import { useIsSmallScreen } from "../../../hooks/utility/useIsSmallScreen";
 import { MobileView } from "./MobileView";
 import { DesktopView } from "./DesktopView";
 import {
@@ -32,6 +31,7 @@ import {
   getEditActionButtons,
   getMarkButtons,
 } from "../../../utils/editor/editorButtonConfigs";
+import { useIsDeviceType } from "../../../hooks/utility/useIsDeviceType";
 
 // Common props shared between both modes
 interface CommonProps {
@@ -83,7 +83,7 @@ const CardToolbar = (props: CardToolbarProps) => {
     handleList,
   } = useEditorActions();
 
-  const isSmallScreen = useIsSmallScreen();
+  const isSmallScreen = useIsDeviceType("phone");
 
   // Dropdown state
   const [showDividerOptions, setShowDividerOptions] = useState(false);

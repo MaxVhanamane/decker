@@ -88,7 +88,7 @@ const ThemeToggler: FC<PropType> = memo(({ ParentComponentName }) => {
                 className={`p-[0.15rem] w-6 h-6 transition-all duration-300 ${
                   ParentComponentName === "FullScreenCardView"
                     ? "text-sky-500 group-hover:text-gray-200  "
-                    : "text-gray-100"
+                    : "text-gray-200"
                 }  `}
               />
             </Button>

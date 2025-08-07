@@ -34,9 +34,9 @@ import { withVoidElements } from "../../utils/editor/plugins/withVoidElements";
 import { withClearEmptyMarks } from "../../utils/editor/plugins/withClearEmptyMarks";
 import { withHistory } from "slate-history";
 import { withUnwrapEmptyInlines } from "../../utils/editor/plugins/withUnwrapEmptyInlines";
-import { useIsSmallScreen } from "../../hooks/utility/useIsSmallScreen";
 import { withExitInlineOnSpace } from "../../utils/editor/plugins/withExitInlineOnSpace";
 import useResetEditor from "../../hooks/editor/useResetEditor";
+import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
 
 export const initialValue: Descendant[] = [
   {
@@ -81,7 +81,7 @@ const CardInput = ({
   setShowHyperlinkModal,
   handleTransitionEnd,
 }: PropType) => {
-  const isSmallScreen = useIsSmallScreen();
+  const isSmallScreen = useIsDeviceType("phone");
   const editorRef = useRef<HTMLDivElement>(null);
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
   const hasEditorOpened = useRef(false);

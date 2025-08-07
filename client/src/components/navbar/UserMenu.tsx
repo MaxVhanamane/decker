@@ -3,6 +3,7 @@ import {
   memo,
   SetStateAction,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -20,6 +21,7 @@ import { FaRegUser } from "react-icons/fa";
 import { twMerge } from "tailwind-merge";
 import { useClickOutside } from "../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
+import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
 
 type PropType = {
   setModalState: Dispatch<
@@ -33,14 +35,21 @@ const UserMenu = ({ setModalState }: PropType) => {
   const { userInfo, showInstallAppButton, handleInstallApp, userEmailAddress } =
     useContext(UserContext);
   const { isOnline } = useContext(OfflineContext);
+  const [showComplete, setShowComplete] = useState({
+    email: false,
+    username: false,
+  });
+  const { showSearchBar, setShowSearchBar, setAnimateSearchBar } =
+    useContext(searchContext);
   const { showToast } = useContext(ShowToastContext);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const { showSearchBar, setShowSearchBar, setAnimateSearchBar } =
-    useContext(searchContext);
+  const isTouchDevice = useIsDeviceType("tablet");
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const emailTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const usernameTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleProfileToggle = () => {
     setShowUserProfile((prev) => !prev);
@@ -112,6 +121,13 @@ const UserMenu = ({ setModalState }: PropType) => {
     enabled: showUserProfile,
   });
 
+  useEffect(() => {
+    return () => {
+      if (emailTimerRef.current) clearTimeout(emailTimerRef.current);
+      if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+    };
+  }, []);
+
   useClickOutside(
     containerRef,
     showUserProfile,
@@ -122,6 +138,34 @@ const UserMenu = ({ setModalState }: PropType) => {
     },
     { excludeRefs: [buttonRef] }
   );
+
+  const handleEmailClick = () => {
+    if (isTouchDevice) {
+      if (emailTimerRef.current) {
+        clearTimeout(emailTimerRef.current);
+      }
+      setShowComplete((prev) => ({ username: false, email: !prev.email }));
+      if (!showComplete.email) {
+        emailTimerRef.current = setTimeout(() => {
+          setShowComplete((prev) => ({ ...prev, email: false }));
+        }, 3000);
+      }
+    }
+  };
+
+  const handleUsernameClick = () => {
+    if (isTouchDevice) {
+      if (usernameTimerRef.current) {
+        clearTimeout(usernameTimerRef.current);
+      }
+      setShowComplete((prev) => ({ username: !prev.username, email: false }));
+      if (!showComplete.username) {
+        usernameTimerRef.current = setTimeout(() => {
+          setShowComplete((prev) => ({ ...prev, username: false }));
+        }, 3000);
+      }
+    }
+  };
 
   return (
     <>
@@ -183,7 +227,10 @@ const UserMenu = ({ setModalState }: PropType) => {
             <ul className="flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 ">
               <li className="flex gap-1 whitespace-nowrap w-fit px-1">
                 <div className="relative group flex items-center justify-center gap-1">
-                  <p className="truncate text-ellipsis overflow-hidden max-w-[14rem]">
+                  <p
+                    className="truncate text-ellipsis overflow-hidden max-w-[14rem]"
+                    onClick={handleUsernameClick}
+                  >
                     username:{" "}
                     <span className=" text-sm">
                       {userInfo?.username || "N/A"}
@@ -191,11 +238,10 @@ const UserMenu = ({ setModalState }: PropType) => {
                   </p>
 
                   <div
-                    className="absolute bottom-full left-0 mt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
-             bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 
-             text-xs rounded shadow-md py-2 px-3 z-10 
-             max-w-[15rem] w-max break-words whitespace-normal 
-             "
+                    className={twMerge(
+                      "absolute bottom-full left-0 mt-1 opacity-0 bg-gray-800 text-white group-hover:opacity-100 dark:bg-gray-100 dark:text-slate-900 text-xs rounded shadow-md py-2 px-3 z-10 max-w-[15rem] w-max break-words whitespace-normal ",
+                      showComplete.username && "opacity-100"
+                    )}
                   >
                     {userInfo?.username || "N/A"}
                   </div>
@@ -203,18 +249,20 @@ const UserMenu = ({ setModalState }: PropType) => {
               </li>
               <li className="flex gap-1 whitespace-nowrap w-fit px-1">
                 <div className="relative group flex items-center justify-center gap-1">
-                  <p className="truncate text-ellipsis overflow-hidden max-w-[14rem]">
+                  <p
+                    className="truncate text-ellipsis overflow-hidden max-w-[14rem]"
+                    onClick={handleEmailClick}
+                  >
                     email:{" "}
                     <span className=" text-sm">
                       {userEmailAddress || "N/A"}
                     </span>
                   </p>
                   <div
-                    className="absolute top-full left-0 mt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
-             bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 
-             text-xs rounded shadow-md py-2 px-3 z-10 
-             max-w-[15rem]  w-max break-words whitespace-normal 
-          "
+                    className={twMerge(
+                      "absolute top-full left-0 mt-1 opacity-0 group-hover:opacity-100 bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 text-xs rounded shadow-md py-2 px-3 z-10 max-w-[15rem]  w-max break-words whitespace-normal",
+                      showComplete.email && "opacity-100 "
+                    )}
                   >
                     {userEmailAddress || "N/A"}
                   </div>

@@ -226,7 +226,7 @@ const Navbar = () => {
                 } `}
               >
                 <HiOutlineSearch
-                  className={`text-xl dark:text-gray-100 text-gray-500  `}
+                  className={`text-xl dark:text-gray-200 text-gray-500  `}
                 />
               </Button>
             </li>
@@ -259,7 +259,7 @@ const Navbar = () => {
                     }}
                     className="rounded-full p-[0.4rem] w-10 h-10 dark:hover:bg-gray-700 hover:bg-gray-100 leading-none"
                   >
-                    <HiMiniSpeakerWave className="dark:text-gray-100 text-gray-500 text-xl" />
+                    <HiMiniSpeakerWave className="dark:text-gray-200 text-gray-500 text-xl" />
                   </Button>
                 ) : (
                   <Button
@@ -286,7 +286,7 @@ const Navbar = () => {
                       height="1.25rem"
                       width="1.25rem"
                       xmlns="http://www.w3.org/2000/svg"
-                      className="dark:text-gray-100 text-gray-500 text-xl"
+                      className="dark:text-gray-200 text-gray-500 text-xl"
                     >
                       <path d="M10 3.75a.75.75 0 00-1.264-.546L4.703 7H3.167a.75.75 0 00-.7.48A6.985 6.985 0 002 10c0 .887.165 1.737.468 2.52.111.29.39.48.7.48h1.535l4.033 3.796A.75.75 0 0010 16.25V3.75zM15.95 5.05"></path>
                     </svg>

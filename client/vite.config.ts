@@ -113,8 +113,8 @@ export default defineConfig(({ command, mode }) => {
         ],
         "start_url": "/",
         "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#ffffff",
+        "background_color": "#0f172a",
+        "theme_color": "#0f172a",
         screenshots: [{ src: "/screenshots/smallscreen/decker_small_screen_homepage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Home page" }, { src: "/screenshots/smallscreen/decker_small_screen_cardspage.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Cards page" }, { src: "/screenshots/smallscreen/decker_small_screen_fullscreen.png", form_factor: "narrow", sizes: "345x615", "type": "image/png", label: "Fullscreen card view" }, { src: "/screenshots/largescreen/decker_big_screen_image_e1.png", form_factor: "wide", sizes: "960x466", "type": "image/jpg", label: "Home page " }, { src: "/screenshots/largescreen/decker_big_screen_image_e3.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Cards page" }, { src: "/screenshots/largescreen/decker_big_screen_image_e2.png", form_factor: "wide", sizes: "960x466", "type": "image/png", label: "Fullscreen card view" }],
       }
 
