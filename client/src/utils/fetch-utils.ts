@@ -12,9 +12,6 @@ interface RequestOptions {
 }
 
 
-
-
-
 export const request = {
     baseURL: `${import.meta.env.VITE_API_URL}`,
     withCredentials: true,
@@ -37,10 +34,18 @@ export const request = {
 
         } catch (fetchError) {
             // This if block catches errors that may occur while parsing the JSON response.
+
             if (fetchError instanceof SyntaxError) {
                 throw new CustomError("An unexpected error occurred. Please try refreshing the page or try again later.", 500);
             }
-
+            if (
+                typeof fetchError === "object" &&
+                fetchError !== null &&
+                "name" in fetchError &&
+                (fetchError as any).name === "AbortError"
+            ) {
+                throw fetchError;
+            }
             if ((fetchError as CustomError).message === "Failed to fetch") {
 
                 throw new CustomError("Network error or server offline. Please check your connection.", 0)

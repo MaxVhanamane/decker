@@ -19,7 +19,6 @@ import { DeckContextProvider } from "./context/DeckContext";
 import { StableNavigateContextProvider } from "./context/StableNavigateContext";
 
 const queryClient = new QueryClient({
-  // Read more about the Network Mode in the React Query documentation.
   defaultOptions: { queries: { networkMode: "offlineFirst" } },
 });
 

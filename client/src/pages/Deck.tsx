@@ -58,6 +58,8 @@ function Deck() {
   const inputRefElement = useRef<HTMLInputElement>(null);
   const pinnedDecksRef = useRef<DeckType[]>([]);
   const otherDecksRef = useRef<DeckType[]>([]);
+  // Don't show an error screen if it is due to aborting the request.
+  const isCancelledError = error?.message === "CancelledError";
 
   const DeckSkeletonCounts = getDeckSkeletonCounts();
 
@@ -215,7 +217,7 @@ function Deck() {
     [isOnline, editData]
   );
 
-  if (isError) {
+  if (isError && !isCancelledError) {
     return (
       <ErrorDisplay
         message={error?.message}

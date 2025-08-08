@@ -154,7 +154,7 @@ const Navbar = () => {
               theme === "dark" || theme === null
                 ? "text-gray-50"
                 : "text-gray-700"
-            } font-bold text-base sm:text-xl leading-7 sm:leading-normal  ${
+            } font-bold text-lg sm:text-xl leading-7 sm:leading-normal  ${
               !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
             }`}
           >

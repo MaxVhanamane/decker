@@ -43,7 +43,7 @@ const TrashCanDropZone = memo(({ droppableId, altText }: PropType) => {
       className={`fixed lg:bottom-2 bg-gray-200 dark:bg-gray-700    lg:right-4 bottom-2 right-2   z-50 rounded-full w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center  ${
         isOver || shouldTrashCanRotate
           ? "ring-1 ring-red-500 shadow-md shadow-red-500 z-[5001]"
-          : "ring-1 ring-sky-500/60 "
+          : "ring-1 ring-slate-400/60 "
       }`}
     >
       <Button

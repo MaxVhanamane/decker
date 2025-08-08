@@ -80,7 +80,10 @@ const DeckMoreOptions = ({
       ref={moreOptionsRef}
       className="absolute z-[100] -right-[19.5px] top-9 flex items-start justify-center flex-col gap-2 dark:bg-slate-800 bg-gray-200 rounded-md py-2 px-3 w-32 border border-slate-400 select-none"
     >
-      {/* <div className="absolute z-20 -top-[0.8px] right-[1.85rem] h-[1px] dark:bg-slate-800 bg-gray-200 w-[13.1px]"></div> */}
+      <div
+        className="absolute z-20 -top-[0.8px] md:hidden h-[1px] dark:bg-slate-800 bg-gray-200 w-[13.1px]"
+        style={{ left: arrowLeft != null ? arrowLeft + 2 : "auto" }}
+      ></div>
       <svg
         className="absolute z-10 top-[-10px]"
         style={{ left: arrowLeft ?? "auto" }}

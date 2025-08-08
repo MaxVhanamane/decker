@@ -299,7 +299,6 @@ app.get('/decks', fetchUserDetails, async (req: Request, res: Response,) => {
         }
       }
     ]);
-
     res.status(200).json(decks)
 
   }
@@ -349,19 +348,6 @@ app.post("/reorder-deck", async (req: Request, res: Response,) => {
     res.status(200).json({ message: 'Deck moved and saved successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error moving deck', error });
-  }
-
-})
-
-app.get('/decks-and-cards', fetchUserDetails, async (req: Request, res: Response) => {
-  try {
-    const user = req?.user
-    const decks = await DeckModel.find({ email: user?._id }, { title: 1, cards: 1, pinned: 1, createdAt: 1, _id: 0, deckId: 1 }).sort({ date: -1 });
-    res.status(200).json(decks)
-
-  }
-  catch (error) {
-    res.status(500).json({ message: "Internal server error!" })
   }
 
 })

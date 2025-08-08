@@ -90,6 +90,8 @@ const Cards = () => {
     isFetching: isFetchingCards,
   } = useGetCards(deckId!);
 
+  const isCancelledError = error?.message === "CancelledError";
+
   const {
     mutate: addCard,
     reset: resetCreateCardResponse,
@@ -593,7 +595,7 @@ const Cards = () => {
     ]
   );
 
-  if (isError) {
+  if (isError && !isCancelledError) {
     return (
       <ErrorDisplay
         message={error?.message}
