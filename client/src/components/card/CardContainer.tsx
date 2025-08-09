@@ -80,16 +80,7 @@ const CardContainer = ({
       gridContainerWidth = 1070;
       eachRowHeight = 168;
       // Calculate width for each column:
-      // - 5 this is so that the scrollbar doen't appear close to container
-      eachColumnWidth = Math.floor(gridContainerWidth / columnsPerRow - 7);
-      // Use 70% of viewport height, clamped between 500px and 800px
-      gridContainerHeight = Math.min(Math.max(viewportHeight * 0.7, 500), 800);
-    } else if (containerWidth >= 1070) {
-      // large screens
-      gridContainerWidth = 1070;
-      eachRowHeight = 168;
-      // Calculate width for each column:
-      // - 5 this is so that the scrollbar doen't appear close to container
+      // - 7 this is so that the scrollbar doen't appear close to container
       eachColumnWidth = Math.floor(gridContainerWidth / columnsPerRow - 7);
       // Use 70% of viewport height, clamped between 500px and 800px
       gridContainerHeight = Math.min(Math.max(viewportHeight * 0.7, 500), 800);

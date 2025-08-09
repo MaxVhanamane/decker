@@ -51,10 +51,6 @@ export const initialValue: Descendant[] = [
 
 type PropType = {
   expandEditor: boolean;
-  handleCreateCard: (
-    resetEditor: () => void,
-    restoreUnsavedContent: (newNote: Descendant[]) => void
-  ) => void;
   setExpandEditor: Dispatch<SetStateAction<boolean>>;
   setNote: Dispatch<SetStateAction<Descendant[]>>;
   expandEditorToMaxHeight: () => void;
@@ -69,7 +65,6 @@ type PropType = {
 
 const CardInput = ({
   expandEditor,
-  handleCreateCard,
   setExpandEditor,
   setNote,
   expandEditorToMaxHeight,
@@ -116,6 +111,12 @@ const CardInput = ({
       resetEditor();
     }
   }, [expandEditor, resetEditor]);
+
+  useEffect(() => {
+    if (showHyperlinkModal) {
+      expandEditorToMaxHeight();
+    }
+  }, [showHyperlinkModal, expandEditorToMaxHeight]);
 
   const { maxHeight, maxHeightSmallScreen } = useMemo(() => {
     const baseHeight = window.innerHeight - 64 - 16 - 16 - 40;
@@ -205,24 +206,6 @@ const CardInput = ({
       }
     },
     [editor, setNote, adjustEditorHeight, isMaxHeightReached]
-  );
-
-  const restoreUnsavedContent = (newContent: Descendant[]) => {
-    // Set the children directly
-    editor.children = newContent;
-
-    // Reset selection to avoid invalid selection errors
-    editor.selection = null;
-
-    // Trigger onChange to update React state and re-render
-    editor.onChange();
-  };
-  const handleFormSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      handleCreateCard(resetEditor, restoreUnsavedContent);
-    },
-    [handleCreateCard, resetEditor]
   );
 
   const handleEditorClick = useCallback(() => {
@@ -317,10 +300,7 @@ const CardInput = ({
           <div id="dropdownPortalContainer" className="pointer-events-auto" />
         </div>
 
-        <form
-          onSubmit={handleFormSubmit}
-          className="flex flex-col gap-4 justify-center items-center relative"
-        >
+        <div className="flex flex-col gap-4 justify-center items-center relative">
           <div
             className={twMerge(
               "flex flex-col relative transition-[transform] duration-1000 will-change-[transform]",
@@ -408,7 +388,7 @@ const CardInput = ({
               <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
             )}
           </div>
-        </form>
+        </div>
       </div>
     </Slate>
   );

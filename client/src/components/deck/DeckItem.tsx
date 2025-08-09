@@ -201,7 +201,7 @@ const DeckItem = ({
             }}
             className="outline-none focus-visible:ring-2 dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 inline-block w-full rounded-sm"
           >
-            <p className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full  ">
+            <p className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full select-none">
               {highlightedTitle ? highlightedTitle : deck.title}
             </p>
           </Link>

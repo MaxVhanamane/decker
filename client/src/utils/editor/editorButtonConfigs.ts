@@ -62,6 +62,7 @@ type GetActionButtonsParams = {
     isFetchingCards: boolean;
     isCreatingCard: boolean;
     tabbable: boolean;
+    handleCreateCardHandler: () => void;
 };
 
 type getEditActionButtonsParams = {
@@ -97,6 +98,7 @@ export const getMarkButtons = ({
             name: "addUnderlineTextToAddCard",
             onClickHandler: handleUnderline,
             toolTipText: "Underline text",
+            subTooltipText: "ctrl+U",
             icon: BsTypeUnderline,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -107,6 +109,7 @@ export const getMarkButtons = ({
             name: "addBoldTextToAddCard",
             onClickHandler: handleBold,
             toolTipText: "Bold text",
+            subTooltipText: "ctrl+B",
             icon: AiOutlineBold,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -118,6 +121,7 @@ export const getMarkButtons = ({
             name: "addItalicTextToAddCard",
             onClickHandler: handleItalic,
             toolTipText: "Italic text",
+            subTooltipText: "ctrl+I",
             icon: RxFontItalic,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -172,6 +176,7 @@ export const getBlockButtons = ({
                 }
             },
             toolTipText: "Insert link",
+            subTooltipText: "ctrl+K",
             icon: AiOutlineLink,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -183,6 +188,7 @@ export const getBlockButtons = ({
             name: "addCodeSnippetToAddCard",
             onClickHandler: handleCode,
             toolTipText: "Insert code snippet",
+            subTooltipText: "ctrl+`",
             icon: BiCodeCurly,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -194,6 +200,7 @@ export const getBlockButtons = ({
             name: "addLargeSizeHeading",
             onClickHandler: handleH1,
             toolTipText: "Large size Heading",
+            subTooltipText: "ctrl+1",
             icon: LuHeading1,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -205,6 +212,7 @@ export const getBlockButtons = ({
             name: "addMediumSizeHeading",
             onClickHandler: handleH2,
             toolTipText: "Medium size Heading",
+            subTooltipText: "ctrl+2",
             icon: LuHeading2,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -216,6 +224,7 @@ export const getBlockButtons = ({
             name: "addQuote",
             onClickHandler: handleQuote,
             toolTipText: "Quote",
+            subTooltipText: "ctrl+Q",
             icon: RiDoubleQuotesL,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
@@ -325,6 +334,7 @@ export const getEditActionButtons = ({
 
 
 export const getActionButtons = ({
+    handleCreateCardHandler,
     expandEditorToMaxHeight,
     handleCloseTextEditor,
     handlePlayAudio,
@@ -375,7 +385,8 @@ export const getActionButtons = ({
             className: ` text-cyan-500 hover:text-cyan-600 text-[1.2rem] rounded-sm ${isFetchingCards || isCreatingCard ? "text-gray-300 dark:text-gray-500" : ""
                 }`,
             tabIndex: tabbable ? 0 : -1,
-            withTooltip: true
+            withTooltip: true,
+            onClickHandler: handleCreateCardHandler
 
         },
     ];

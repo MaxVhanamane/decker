@@ -122,6 +122,7 @@ export type MarkButtonConfig = {
     name: string;
     onClickHandler: () => void;
     toolTipText: string;
+    subTooltipText?: string;
     withTooltip: boolean;
     icon: IconType;
     className: string;
@@ -145,6 +146,7 @@ export type BlockButtonConfig = {
     name: string;
     onClickHandler: () => void;
     toolTipText: string;
+    subTooltipText?: string;
     withTooltip: boolean;
     icon: IconType;
     className: string;

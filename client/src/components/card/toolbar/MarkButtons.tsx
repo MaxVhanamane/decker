@@ -8,6 +8,7 @@ import { twMerge } from "tailwind-merge";
 import { CustomEditor } from "../../../utils/editor/customEditor";
 import { NodeQueries } from "../../../utils/editor/nodeQueries";
 import { memo, useCallback } from "react";
+import { isTouchOnlyDevice } from "../../../functions/isTouchOnlyDevice";
 
 type MarkButtonProps = {
   markButtons: MarkButtonConfig[];
@@ -65,6 +66,7 @@ export const MarkButtons = memo(
               mode={mode}
               onClickHandler={button.onClickHandler}
               toolTipText={button.toolTipText}
+              subTooltipText={isTouchOnlyDevice() ? "" : button?.subTooltipText}
               withTooltip={button.withTooltip}
               tabIndex={button.tabIndex}
               key={button.name}

@@ -88,7 +88,7 @@ const DeckItemPresentational = ({
               : "entries"}
           </span>
         </div>
-        <p className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full  ">
+        <p className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full select-none ">
           {deck.title}
         </p>
       </div>

@@ -15,6 +15,7 @@ type PropType = HTMLButtonPropsWithoutRef & {
   name: string;
   onClickHandler?: (e: eventType) => void;
   toolTipText: string;
+  subTooltipText?: string;
   Icon: IconType;
   className: string;
   tabIndex: number;
@@ -34,6 +35,7 @@ const CardToolbarButton = forwardRef<HTMLButtonElement, PropType>(
       name,
       onClickHandler,
       toolTipText,
+      subTooltipText,
       Icon,
       className,
       tabIndex,
@@ -96,6 +98,7 @@ const CardToolbarButton = forwardRef<HTMLButtonElement, PropType>(
           "relative"
         )}
         toolTipText={toolTipText}
+        subTooltipText={subTooltipText}
         withTooltip={withTooltip}
         type={name !== "Create Card" ? "button" : "submit"}
         name={name}

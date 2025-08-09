@@ -277,7 +277,7 @@ const CardItem = memo(
           </div>
         </div>
 
-        <p className="text-base text-gray-700 dark:text-white mb-1 p-1 line-clamp-1 break-words break-all ">
+        <p className="text-base text-gray-700 dark:text-white mb-1 p-1 line-clamp-1 break-words break-all select-none">
           {cardTitle ? (
             cardTitle
           ) : (
@@ -287,7 +287,7 @@ const CardItem = memo(
           )}
         </p>
 
-        <div className="text-sm  text-gray-800 dark:text-gray-100 p-1  break-words break-all font-light ">
+        <div className="text-sm  text-gray-800 dark:text-gray-100 p-1  break-words break-all font-light select-none">
           <p className="line-clamp-3">
             {note.trim().length > 0 ? (
               note

@@ -3,6 +3,7 @@ import React, {
   memo,
   SetStateAction,
   useCallback,
+  useContext,
   useState,
 } from "react";
 
@@ -26,6 +27,8 @@ import { useCommandPalette } from "../../hooks/editor/useCommandPalette";
 import LinkTooltip from "./LinkTooltip";
 import { isInsideCodeBlock } from "../../utils/editor/isInsideCodeBlock";
 import { SetNodeToDecorations } from "./SetNodeToDecorations";
+import { ShowToastContext } from "../../context/ToastNotificationContext";
+import { useEditorActions } from "../../hooks/editor/useEditorActions";
 
 export interface TokenRange extends Range {
   token: boolean;
@@ -85,6 +88,8 @@ const RichTextEditor = (props: RichTextEditorProps) => {
     hasSubmenu,
     toggleSubmenu,
   } = useCommandPalette(editor, expandEditorToMaxHeight);
+  const { handleLink } = useEditorActions();
+  const { showToast } = useContext(ShowToastContext);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const { selection } = editor;
@@ -141,29 +146,75 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       }
     }
 
-    if (!event.ctrlKey) return;
+    // Support both Ctrl (Windows/Linux) and Meta ⌘ (Mac)
+    if (!(event.ctrlKey || event.metaKey)) return;
 
-    switch (event.key) {
+    switch (event.key.toLowerCase()) {
       case "`": {
-        // Prevent the "`" from being inserted by default.
+        // Code Block (Ctrl/⌘ + `)
         event.preventDefault();
         CustomEditor.toggleBlock(editor, "code-block");
         break;
       }
 
       case "b": {
+        // Bold (Ctrl/⌘ + B)
         event.preventDefault();
         CustomEditor.toggleMark(editor, "bold");
         break;
       }
+
       case "u": {
+        // Underline (Ctrl/⌘ + U)
         event.preventDefault();
         CustomEditor.toggleMark(editor, "underline");
         break;
       }
-      case "l": {
+
+      case "i": {
+        // Italic (Ctrl/⌘ + I)
         event.preventDefault();
-        CustomEditor.toggleBlock(editor, "link");
+        CustomEditor.toggleMark(editor, "italic");
+        break;
+      }
+
+      // Headings (Ctrl/⌘ + 1 for H1, Ctrl/⌘ + 2 for H2)
+      case "1": {
+        event.preventDefault();
+        CustomEditor.toggleBlock(editor, "h1");
+        break;
+      }
+      case "2": {
+        event.preventDefault();
+        CustomEditor.toggleBlock(editor, "h2");
+        break;
+      }
+
+      // Blockquote (Ctrl/⌘ + Q)
+      case "q": {
+        event.preventDefault();
+        CustomEditor.toggleBlock(editor, "blockquote");
+        break;
+      }
+      case "k": {
+        event.preventDefault();
+        if (CustomEditor.isBlockActive(editor, "link")) {
+          handleLink();
+        } else {
+          const { selection } = editor;
+          if (selection && !Range.isCollapsed(selection)) {
+            props.setShowHyperlinkModal(true);
+          } else {
+            showToast({
+              message: "Please select some text to convert it into a link.",
+              severity: "warning",
+              autoHideDuration: 5000,
+              position: "top-center",
+              animationStyle: "scale-up",
+              theme: "auto",
+            });
+          }
+        }
         break;
       }
     }

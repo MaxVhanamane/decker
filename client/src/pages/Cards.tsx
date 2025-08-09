@@ -578,6 +578,7 @@ const Cards = () => {
         expandEditorToMaxHeight={expandEditorToMaxHeight}
         handleCloseTextEditor={handleCloseTextEditor}
         isCreatingCard={isCreatingCard}
+        handleCreateCard={handleCreateCard}
         isFetchingCards={isFetchingCards}
         tabbable={expandEditor}
         setShowHyperlinkModal={setShowHyperlinkModal}
@@ -647,7 +648,6 @@ const Cards = () => {
       <div className="flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-[calc(100vh-64px)] ">
         <CardInput
           expandEditor={expandEditor}
-          handleCreateCard={handleCreateCard}
           setExpandEditor={setExpandEditor}
           setNote={setNote}
           expandEditorToMaxHeight={expandEditorToMaxHeight}

@@ -32,6 +32,8 @@ import {
   getMarkButtons,
 } from "../../../utils/editor/editorButtonConfigs";
 import { useIsDeviceType } from "../../../hooks/utility/useIsDeviceType";
+import { Descendant } from "slate";
+import useResetEditor from "../../../hooks/editor/useResetEditor";
 
 // Common props shared between both modes
 interface CommonProps {
@@ -47,6 +49,10 @@ interface CreateModeProps extends CommonProps {
   handleCloseTextEditor: () => void;
   isCreatingCard: boolean;
   isFetchingCards: boolean;
+  handleCreateCard: (
+    resetEditor: () => void,
+    restoreUnsavedContent: (newNote: Descendant[]) => void
+  ) => void;
 }
 
 // Edit mode specific props
@@ -82,6 +88,7 @@ const CardToolbar = (props: CardToolbarProps) => {
     handleColorBar,
     handleList,
   } = useEditorActions();
+  const { resetEditor } = useResetEditor(editor);
 
   const isSmallScreen = useIsDeviceType("phone");
 
@@ -101,6 +108,8 @@ const CardToolbar = (props: CardToolbarProps) => {
   // const setShowTips = mode === "create" ? props.setShowTips : undefined;
   const expandEditorToMaxHeight =
     mode === "create" ? props.expandEditorToMaxHeight : undefined;
+  const handleCreateCard =
+    mode === "create" ? props.handleCreateCard : undefined;
   const handleCloseTextEditor =
     mode === "create" ? props.handleCloseTextEditor : undefined;
   const isCreatingCard = mode === "create" ? props.isCreatingCard : undefined;
@@ -118,6 +127,26 @@ const CardToolbar = (props: CardToolbarProps) => {
   //     setShowTips(true);
   //   }
   // }, [mode, setShowTips]);
+
+  const restoreUnsavedContent = useCallback(
+    (newContent: Descendant[]) => {
+      // Set the children directly
+      editor.children = newContent;
+
+      // Reset selection to avoid invalid selection errors
+      editor.selection = null;
+
+      // Trigger onChange to update React state and re-render
+      editor.onChange();
+    },
+    [editor]
+  );
+
+  const handleCreateCardHandler = useCallback(() => {
+    if (handleCreateCard) {
+      handleCreateCard(resetEditor, restoreUnsavedContent);
+    }
+  }, [handleCreateCard, resetEditor, restoreUnsavedContent]);
 
   // Mark buttons configuration
   const markButtons = useMemo(
@@ -188,6 +217,7 @@ const CardToolbar = (props: CardToolbarProps) => {
   const actionButtons = useMemo(() => {
     if (mode === "create") {
       return getActionButtons({
+        handleCreateCardHandler: handleCreateCardHandler!,
         expandEditorToMaxHeight: expandEditorToMaxHeight!,
         handleCloseTextEditor: handleCloseTextEditor!,
         handlePlayAudio,

@@ -18,6 +18,7 @@ type ButtonProps = React.DetailedHTMLProps<
   size?: "sm" | "md" | "lg";
   withTooltip?: boolean;
   toolTipText?: string;
+  subTooltipText?: string;
   toolTipPosition?: ToolTipPositionType;
   tooltipAutoHideDuration?: number | "infinity";
   hideTooltip?: boolean;
@@ -62,6 +63,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       rounded,
       children,
       toolTipText,
+      subTooltipText,
       size,
       variant,
       className,
@@ -80,6 +82,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return toolTipText && withTooltip ? (
       <Tooltip
         toolTipText={toolTipText}
+        subTooltipText={subTooltipText}
         toolTipPosition={toolTipPosition}
         tooltipAutoHideDuration={tooltipAutoHideDuration}
         containerRef={buttonRef}

@@ -52,6 +52,7 @@ const arrowStyles: { [key in ToolTipPositionType]: React.CSSProperties } = {
 
 type TooltipProps = {
   toolTipText: string;
+  subTooltipText?: string;
   children: ReactNode;
   toolTipPosition?: ToolTipPositionType;
   tooltipAutoHideDuration?: number | "infinity";
@@ -72,6 +73,7 @@ const Tooltip = memo(
   ({
     children,
     toolTipText,
+    subTooltipText,
     toolTipPosition = "bottom",
     tooltipAutoHideDuration = 3000,
     hideTooltip,
@@ -296,6 +298,9 @@ const Tooltip = memo(
               }}
             >
               <p className="z-20 relative text-center">{toolTipText}</p>
+              <p className="z-20 relative text-center text-xs font-light">
+                {subTooltipText}
+              </p>
 
               <div
                 className={twMerge(

@@ -8,6 +8,7 @@ import { CustomEditor } from "../../../utils/editor/customEditor";
 import { NodeQueries } from "../../../utils/editor/nodeQueries";
 import { twMerge } from "tailwind-merge";
 import { useCallback } from "react";
+import { isTouchOnlyDevice } from "../../../functions/isTouchOnlyDevice";
 
 type BlockButtonProps = {
   blockButtons: BlockButtonConfig[];
@@ -64,6 +65,14 @@ export const BlockButtons = ({
               NodeQueries.isInRestrictedBlockExceptSelf(editor, button.format)
                 ? "Formatting unavailable in the title."
                 : button.toolTipText
+            }
+            subTooltipText={
+              NodeQueries.isInRestrictedBlockExceptSelf(
+                editor,
+                button.format
+              ) || isTouchOnlyDevice()
+                ? ""
+                : button?.subTooltipText
             }
             withTooltip={button.withTooltip}
             tabIndex={button.tabIndex}

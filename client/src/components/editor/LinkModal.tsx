@@ -10,6 +10,7 @@ import Button from "../Button";
 import { CustomEditor } from "../../utils/editor/customEditor";
 import { useSlateStatic } from "slate-react";
 import { useClickOutside } from "../../hooks/utility/useClickOutside";
+import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 
 type LinkModalProps = {
   setShowHyperlinkModal: Dispatch<SetStateAction<boolean>>;
@@ -23,6 +24,18 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
   };
   const editor = useSlateStatic();
   useClickOutside(linkModalRef, true, () => setShowHyperlinkModal(false));
+  useFocusTrap(linkModalRef, "both", {
+    onEscape: () => {
+      setShowHyperlinkModal(false);
+      setUrl("");
+    },
+  });
+  const handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setShowHyperlinkModal(false);
+      if (url) CustomEditor.toggleLink(editor, "link", url);
+    }
+  };
   return (
     <div
       ref={linkModalRef}
@@ -34,24 +47,29 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
         </h2>
 
         <input
+          onKeyDown={handleEnterKey}
           name="url"
+          type="text"
           onChange={handleHyperlink}
           placeholder="https://example.com"
           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-white outline-none focus:ring-2 dark:focus:ring-gray-500 focus:ring-gray-200 transition duration-200"
+          autoFocus
         />
 
         <div className="flex justify-end gap-3 pt-2">
           <Button
+            type="button"
             variant="unstyled"
             onClick={() => {
               setShowHyperlinkModal(false);
               if (url) CustomEditor.toggleLink(editor, "link", url);
             }}
-            className="rounded-md px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white transition"
+            className="rounded-md px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white transition"
           >
             Add Link
           </Button>
           <Button
+            type="button"
             variant="unstyled"
             onClick={() => {
               setShowHyperlinkModal(false);
