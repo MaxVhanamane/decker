@@ -24,6 +24,7 @@ type PropTypes = {
     cardId: string;
     _id: string;
     createdAt: string;
+    order: number;
   };
   index: number;
 };
@@ -53,6 +54,7 @@ const SortableCardItem = ({
         createdAt: card?.createdAt,
         cardId: card?.cardId,
         _id: card?._id,
+        order: card?.order,
       },
       index,
       deckId,

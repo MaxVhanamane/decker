@@ -17,8 +17,12 @@ type SuccessResponseType = {
 const undoCard = async (
   undoCardInfo: UndoCardPayloadData
 ): Promise<SuccessResponseType | CustomError> => {
+  const undoCardDetails = {
+    deckId: undoCardInfo.deckId,
+    ...undoCardInfo.content,
+  };
   try {
-    const data = await request.put("/card/undocard", undoCardInfo);
+    const data = await request.put("/card/undocard", { undoCardDetails });
 
     return data?.data;
   } catch (error) {
@@ -60,10 +64,10 @@ const useUndoCard = () => {
         ["cards", data.deckId],
         (oldQueryData) => {
           if (oldQueryData) {
-            const newArray = [...oldQueryData.cards];
-            newArray.splice(data.index, 0, {
-              ...data.content,
-            });
+            const newArray = [...oldQueryData.cards, data.content].sort(
+              (a, b) => b.order - a.order
+            );
+
             return { ...oldQueryData, cards: newArray };
           }
         }

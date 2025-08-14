@@ -34,10 +34,10 @@ type ContentType = {
   note: Descendant[];
   cardId: string;
   createdAt: string;
+  order: number;
 };
 
 type ContentForFullScreen = ContentType & {
-  cardIndex: number | null;
   deckId: string;
 };
 
@@ -120,26 +120,23 @@ const SearchResultCardFullScreenView = ({
     },
   });
 
-  const handleDelete = useCallback(
-    (index: number) => {
-      if (!isOnline) {
-        showToast({
-          message: "No internet connection",
-          severity: "error",
-          autoHideDuration: 5000,
-          position: "top-center",
-          animationStyle: "scale-up",
-          theme: "auto",
-        });
-        return;
-      }
-      index;
-      setModalState({
-        confirmDeleteCardModal: { show: true, startModalAnimation: true },
+  const handleDelete = useCallback(() => {
+    if (!isOnline) {
+      showToast({
+        message: "No internet connection",
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
       });
-    },
-    [isOnline]
-  );
+      return;
+    }
+
+    setModalState({
+      confirmDeleteCardModal: { show: true, startModalAnimation: true },
+    });
+  }, [isOnline]);
 
   const handleEditCardButtonClick = useCallback(
     (cardItem: ContentTypeForEdit) => {
@@ -185,11 +182,11 @@ const SearchResultCardFullScreenView = ({
     }
 
     const contentWithCardIndex = { ...editContent };
-    const { cardIndex, note } = editContent;
+    const { cardId, note } = editContent;
     const data = {
       deckId: deckId!,
       newContent: { note },
-      index: cardIndex!,
+      cardId: cardId!,
     };
 
     const fullScreenCardDataCache = fullScreenCardData;
@@ -246,11 +243,11 @@ const SearchResultCardFullScreenView = ({
     setShowFullScreen(false);
     deleteCard({
       deckId: deckId!,
-      index: fullScreenCardData.cardIndex!,
       cardInfo: {
         cardId: fullScreenCardData?.cardId,
         note: fullScreenCardData?.note,
         createdAt: fullScreenCardData?.createdAt,
+        order: fullScreenCardData?.order,
       },
       searchParams,
     });

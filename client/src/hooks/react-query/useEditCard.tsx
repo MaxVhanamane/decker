@@ -9,7 +9,7 @@ type editCardPayloadType = {
   newContent: {
     note: Descendant[];
   };
-  index: number;
+  cardId: string;
   searchParams?: {
     query: string;
     page: number;
@@ -26,7 +26,7 @@ const editCard = async (
 ): Promise<SuccessResponseType | CustomError> => {
   try {
     const data = await request.patch(`/card/${cardData.deckId}`, {
-      index: cardData.index,
+      cardId: cardData.cardId,
       newContent: {
         note: cardData.newContent.note,
       },
@@ -68,14 +68,18 @@ const useEditCard = () => {
         (oldQueryData) => {
           if (oldQueryData) {
             const newArray = [...oldQueryData.cards];
-            const oldCardData = newArray[data?.index];
-            const updatedCardData = {
-              ...oldCardData,
-              note: data?.newContent.note,
-            };
+            const updatedCardData = newArray.map((card) => {
+              if (card.cardId === data.cardId) {
+                return {
+                  ...card,
+                  note: data?.newContent.note,
+                };
+              } else {
+                return card;
+              }
+            });
 
-            newArray.splice(data.index, 1, updatedCardData);
-            return { ...oldQueryData, cards: newArray };
+            return { ...oldQueryData, cards: updatedCardData };
           }
         }
       );
@@ -134,12 +138,6 @@ const useEditCard = () => {
 
     // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
     onSettled: (serverData, error, data) => {
-      // If the search bar is open, it indicates that the user edited the card from the search result. The search bar is using the 'decks' query as data, so we will invalidate the decks query to keep it updated.
-      // As the data for decks might be large in size, to avoid transferring huge data again and again on edit/delete, we will just perform optimistic updates.
-      // if (showSearchBar) {
-      //   queryClient.invalidateQueries({ queryKey: ["decks-and-cards"] });
-      // }
-
       queryClient.invalidateQueries({
         queryKey: ["cards", data.deckId],
       });

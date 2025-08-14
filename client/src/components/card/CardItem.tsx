@@ -33,6 +33,7 @@ type PropType = {
     cardId: string;
     _id: string;
     createdAt: string;
+    order: number;
   };
   index: number;
   isDragging: boolean;
@@ -153,6 +154,7 @@ const CardItem = memo(
                   note: card.note,
                   cardId: card.cardId,
                   createdAt: card.createdAt,
+                  order: card.order,
                 },
                 deletionIndex: index,
               });
@@ -263,7 +265,6 @@ const CardItem = memo(
                   }
                   handleEditCardButtonClick({
                     ...card,
-                    cardIndex: index,
                   });
                 }}
                 toolTipText="Edit card"

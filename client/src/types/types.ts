@@ -31,8 +31,8 @@ export type UndoDeckType = {
 
 
 export type CardListType = {
-  title: string,
   cards: CardContentType[]
+  maxOrder: number
 }
 
 
@@ -42,13 +42,10 @@ export type bulbColors = "red" | "yellow" | "lime" | "fuchsia" | "violet" | "cya
 //cards
 
 export type CardContentType = {
-  note: Descendant[]; cardId: string, createdAt: string
+  note: Descendant[]; cardId: string, createdAt: string, order: number,
 }
 
-export type ContentTypeForEdit = CardContentType & {
-  cardIndex: number | null;
-}
-
+export type ContentTypeForEdit = CardContentType
 export type DeleteDeckPayload = {
   deckId: string;
   searchParams?: {
@@ -60,7 +57,6 @@ export type DeleteDeckPayload = {
 export type UndoCardPayloadData = {
   deckId: string;
   content: CardContentType;
-  index: number;
   searchParams?: {
     query: string;
     page: number;
@@ -70,9 +66,8 @@ export type UndoCardPayloadData = {
 };
 
 export type GetCardsResponseType = {
-  title: string;
   cards: CardContentType[];
-  deckId: string;
+  maxOrder: number
 };
 
 
@@ -82,11 +77,14 @@ export type CreateCardPayloadType = {
     note: Descendant[];
     cardId: string;
   };
+  maxOrder: number
 };
 
 export type moveCardPayloadType = {
-  currentIndex: number;
-  newIndex: number;
+  cardId: string;
+  newOrder: number;
+  fromIndex: number;
+  toIndex: number;
   deckId: string;
 };
 
@@ -142,11 +140,10 @@ export type CurrentDraggingCardType = {
 
 
 export type CardType = {
-  title: string;
   cards:
   | []
   | CardContentType[];
-  deckId: string;
+  maxOrder: number
 }
   | undefined
 
@@ -188,9 +185,9 @@ export type DeckCardSearchResult = {
   deckId: string;
   deckTitle: string;
   cardId: string;
+  order: number;
   note: Descendant[];
   createdAt: string;
-  cardIndex: number;
 };
 
 export type ChapterCardSearchResult = {
@@ -200,9 +197,9 @@ export type ChapterCardSearchResult = {
   chapterId: string;
   chapterTitle: string;
   cardId: string;
+  order: number;
   note: Descendant[];
   createdAt: string;
-  cardIndex: number;
 };
 export type CardSearchResult = DeckCardSearchResult | ChapterCardSearchResult;
 export type SearchResult = DeckSearchResult | ChapterSearchResult | CardSearchResult;

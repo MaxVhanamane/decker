@@ -44,6 +44,7 @@ import { hasValidNoteContent } from "../utils/editor/hasValidNoteContent";
 import { usePrismTheme } from "../hooks/utility/usePrismTheme";
 import { ThemeContext } from "../context/ThemeContext";
 import { useIsDeviceType } from "../hooks/utility/useIsDeviceType";
+import { useLocation } from "react-router-dom";
 
 // const Tips = lazy(() => import("../components/card/Tips"));
 const initialValue: Descendant[] = [
@@ -61,19 +62,17 @@ type ContentTypeForPayload = {
   cardId: string;
 };
 
-type ContentForFullScreen = CardContentType & {
-  cardIndex: number | null;
-};
+type ContentForFullScreen = CardContentType;
 
 type PayloadType = {
   deckId: string;
   content: ContentTypeForPayload;
+  maxOrder: number;
 };
 
 const Cards = () => {
   const { deckId } = useStableParams();
   const { animateSearchBar } = useContext(searchContext);
-  const { setIndexOfCardForDeletion } = useContext(CardContext);
   const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
@@ -82,6 +81,7 @@ const Cards = () => {
   const { theme } = useContext(ThemeContext);
   const { setShouldTrashCanRotate, setUndoCardId } = useContext(CardContext);
   const { mutate: deleteCard } = useDeleteCard();
+  const { state } = useLocation();
   const {
     data,
     isError,
@@ -89,7 +89,7 @@ const Cards = () => {
     isLoading,
     isFetching: isFetchingCards,
   } = useGetCards(deckId!);
-
+  const maxOrder = data?.maxOrder ? data?.maxOrder : 0;
   const isCancelledError = error?.message === "CancelledError";
 
   const {
@@ -141,9 +141,7 @@ const Cards = () => {
 
   const richTextWrapperRef = useRef<HTMLDivElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const cardToDeleteRef = useRef<
-    (CardContentType & { deletionIndex: number }) | null
-  >(null);
+  const cardToDeleteRef = useRef<CardContentType | null>(null);
 
   const navigate = useStableNavigate();
   usePrismTheme(theme);
@@ -303,10 +301,9 @@ const Cards = () => {
       },
     }));
     setShowFullScreen(false);
-    const { deletionIndex, ...cardInfo } = cardToDeleteRef.current!;
+    const cardInfo = cardToDeleteRef.current!;
     deleteCard({
       deckId: deckId!,
-      index: deletionIndex,
       cardInfo,
     });
   }, [deleteCard, deckId]);
@@ -398,7 +395,7 @@ const Cards = () => {
         };
         const currentNote = note;
         const heightVal = height;
-        const payload: PayloadType = { deckId: deckId!, content };
+        const payload: PayloadType = { deckId: deckId!, content, maxOrder };
         addCard(payload, {
           //While saving the card, if an error occurs, we will retrieve the cleared card information and show it again so that the user doesn't lose the created card details.
           onError: () => {
@@ -434,6 +431,7 @@ const Cards = () => {
       isFetchingCards,
       isPlayingAudioAllowed,
       isOnline,
+      maxOrder,
     ]
   );
   const handleShowFullScreen = useCallback((card: ContentForFullScreen) => {
@@ -441,37 +439,30 @@ const Cards = () => {
     setFullScreenCardData({ ...card });
   }, []);
 
-  const handleDelete = useCallback(
-    (index: number) => {
-      if (!isOnline) {
-        showToast({
-          message: "No internet connection",
-          severity: "error",
-          autoHideDuration: 5000,
-          position: "top-center",
-          animationStyle: "scale-up",
-          theme: "auto",
-        });
+  const handleDelete = useCallback(() => {
+    if (!isOnline) {
+      showToast({
+        message: "No internet connection",
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
 
-        return;
-      }
-      if (fullScreenCardData) {
-        const { cardIndex, ...rest } = fullScreenCardData;
-
-        cardToDeleteRef.current = { ...rest, deletionIndex: cardIndex! };
-
-        setIndexOfCardForDeletion(index);
-        setModalState((prev) => ({
-          ...prev,
-          confirmDeleteCardModal: {
-            startClosingModalAnimation: true,
-            show: true,
-          },
-        }));
-      }
-    },
-    [isOnline, fullScreenCardData]
-  );
+      return;
+    }
+    if (fullScreenCardData) {
+      cardToDeleteRef.current = fullScreenCardData;
+      setModalState((prev) => ({
+        ...prev,
+        confirmDeleteCardModal: {
+          startClosingModalAnimation: true,
+          show: true,
+        },
+      }));
+    }
+  }, [isOnline, fullScreenCardData]);
 
   const handleEditCardButtonClick = useCallback(
     (cardItem: ContentTypeForEdit) => {
@@ -507,13 +498,13 @@ const Cards = () => {
     if (editContent) {
       const contentWithCardIndex = { ...editContent };
 
-      const { cardIndex: index, note } = {
+      const { cardId, note } = {
         ...editContent,
       };
       let data = {
         deckId: deckId!,
         newContent: { note },
-        index: index!,
+        cardId,
       };
 
       let fullScreenCardDataCache = fullScreenCardData;
@@ -680,7 +671,7 @@ const Cards = () => {
           }}
         >
           <h1 className="font-bold text-xl text-gray-800 mb-10 dark:text-gray-50">
-            {hasCards && data?.title}
+            {hasCards && state?.deckTitle}
           </h1>
           <CardContainer
             handleEditCardButtonClick={handleEditCardButtonClick}

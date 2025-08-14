@@ -22,16 +22,14 @@ type ContentType = {
   note: Descendant[];
   cardId: string;
   createdAt: string;
+  order: number;
 };
 
 type ContentForFullScreen = ContentType & {
-  cardIndex: number | null;
   from?: string;
 };
 
-type ContentTypeForEdit = ContentType & {
-  cardIndex: number | null;
-};
+type ContentTypeForEdit = ContentType;
 
 type propType = {
   fullScreenCardData: ContentForFullScreen | null;
@@ -41,7 +39,7 @@ type propType = {
   showScrollButtons: boolean;
   closeFullScreenWithAnimation: boolean;
   handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
-  handleDelete: (index: number) => void;
+  handleDelete: () => void;
 };
 
 const FullScreenCardView = ({
@@ -134,12 +132,8 @@ const FullScreenCardView = ({
   }, []);
 
   const handleDeleteCard = useCallback(() => {
-    if (
-      fullScreenCardData &&
-      fullScreenCardData.cardIndex !== undefined &&
-      fullScreenCardData?.cardIndex !== null
-    ) {
-      handleDelete(fullScreenCardData.cardIndex);
+    if (fullScreenCardData) {
+      handleDelete();
       setSkipTyping(true);
     }
   }, [fullScreenCardData, handleDelete]);

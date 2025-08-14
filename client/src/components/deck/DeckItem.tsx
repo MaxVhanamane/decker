@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState, memo, JSX } from "react";
 import type { DeckType } from "../../types/types";
 import Button from "../Button";
-import { BsFillPinFill, BsThreeDotsVertical } from "react-icons/bs";
+import { BsFillPinFill, BsPin, BsThreeDotsVertical } from "react-icons/bs";
 import { formatDate } from "../../functions/formatDate";
 import { Link } from "react-router-dom";
 import { BulbContext } from "../../context/BulbContext";
@@ -126,8 +126,12 @@ const DeckItem = ({
         }}
         className="absolute  dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
       >
-        <p className=" rounded-tr text-sm px-1  text-center  text-gray-600 dark:text-slate-400 group-hover/Btn:scale-95">
-          <BsFillPinFill className="text-[0.9rem]" />
+        <p className=" rounded-tr text-sm px-1  text-center  text-gray-600 dark:text-slate-500 group-hover/Btn:scale-95">
+          {deck.pinned ? (
+            <BsFillPinFill className="text-[0.9rem]" />
+          ) : (
+            <BsPin />
+          )}
         </p>
       </Button>
 
@@ -160,7 +164,7 @@ const DeckItem = ({
       </div>
 
       <div className="z-40 w-full flex items-center justify-center ">
-        <div className="absolute bottom-2 left-2 text-xs text-gray-400 flex items-center justify-center gap-1 select-none">
+        <div className="absolute bottom-2 left-2 text-xs text-gray-400 dark:text-gray-400/80 flex items-center justify-center gap-1 select-none">
           <span>{formatDate(deck.createdAt)}</span>{" "}
           <span className="inline-block w-1 h-1 bg-gray-300 rounded-full"></span>
           <span>
@@ -199,6 +203,7 @@ const DeckItem = ({
                 closeSearchBar(deck.deckId);
               }
             }}
+            state={{ deckTitle: deck.title }}
             className="outline-none focus-visible:ring-2 dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 inline-block w-full rounded-sm"
           >
             <p className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full select-none">

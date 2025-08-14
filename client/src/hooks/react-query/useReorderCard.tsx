@@ -21,7 +21,7 @@ const moveCard = async (
 ): Promise<MoveCardResponse | CustomError> => {
   try {
     const data = await request.put(
-      `/card/changeposition/${inputData.deckId}/${inputData.currentIndex}/${inputData.newIndex}`
+      `/card/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}`
     );
 
     return data?.data;
@@ -93,27 +93,37 @@ const useReorderCard = () => {
         queryKey: ["cards", payload.deckId],
       });
 
-      // Store previous data for potential rollback
-      const previousCardData: CardListType[] | undefined =
+      const previousCardData: CardListType | undefined =
         queryClient.getQueryData(["cards", payload.deckId]);
 
+      // Safe copy for rollback: previousCardData is a reference to the React Query cache.
+      // When we call setQueryData, we update an object (e.g., the order key).
+      // Even if we create a shallow copy, all objects inside are still pointing
+      // to the same memory. This causes rollbackData to be updated as well.
+      // To avoid this, we create new references for all objects too.
+
+      const rollbackData = previousCardData
+        ? {
+            ...previousCardData,
+            cards: previousCardData.cards.map((c) => ({ ...c })),
+          }
+        : undefined;
       // Apply optimistic update immediately for smooth UX
       queryClient.setQueryData<CardListType | undefined>(
         ["cards", payload.deckId],
         (oldCardData) => {
           if (oldCardData) {
             const newArray = [...oldCardData.cards];
-            const elementToMove = newArray.splice(payload.currentIndex, 1)[0];
-            if (elementToMove) {
-              newArray.splice(payload.newIndex, 0, elementToMove);
-            }
+            const [movedItem] = newArray.splice(payload.fromIndex, 1);
+            newArray.splice(payload.toIndex, 0, movedItem);
+            movedItem.order = payload.newOrder;
             return { ...oldCardData, cards: newArray };
           }
         }
       );
 
       return {
-        previousCardData,
+        rollbackData,
         operationId: operationIdCounter.current,
       };
     },
@@ -125,7 +135,7 @@ const useReorderCard = () => {
         if (context) {
           queryClient.setQueryData(
             ["cards", data.deckId],
-            context.previousCardData
+            context.rollbackData
           );
         }
       }

@@ -23,16 +23,16 @@ const CardItemPresentational = ({
   const note = extractTextFromSlateNodes(card.note);
   return (
     <div
-      className={`relative border overflow-hidden ${
+      className={`relative your-drag-preview-selector border overflow-hidden ${
         isDragging
           ? "shadow-2xl  border-violet-500  shadow-violet-500  dark:border-violet-500  dark:shadow-violet-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-white"
           : "dark:border-slate-600 border-slate-400 shadow-4-sides"
       } ${
         isDraggingCardOverDeleteArea
-          ? " !shadow-red-500 !border-red-500  "
+          ? " !shadow-red-500 !border-red-500 "
           : null
       }    
-        rounded-md px-2 lg:pt-2 pt-[0.4rem]  h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300 font-customInter`}
+        rounded-md px-2 lg:pt-2 pt-[0.4rem]  h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300 font-customInter `}
     >
       <div className={`absolute  top-0 -right-1 -z-10 ${isDragging && "z-10"}`}>
         <svg

@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DeckType } from "../../types/types";
 import { CustomError } from "../../utils/customError";
 import { request } from "../../utils/fetch-utils";
+import { useContext } from "react";
+import { ShowToastContext } from "../../context/ToastNotificationContext";
 
 type SuccessResponseType = {
   success: boolean;
@@ -31,6 +33,7 @@ export const reOrderDeck = async ({
 
 const useReorderDeck = () => {
   const queryClient = useQueryClient();
+  const { showToast } = useContext(ShowToastContext);
 
   return useMutation({
     mutationFn: reOrderDeck,
@@ -42,7 +45,6 @@ const useReorderDeck = () => {
       newIndex: number;
     }) => {
       await queryClient.cancelQueries({ queryKey: ["decks"] });
-      await queryClient.cancelQueries({ queryKey: ["decks-and-cards"] });
       const previousQueryData: DeckType[] = queryClient.getQueryData([
         "decks",
       ])!;
@@ -59,7 +61,18 @@ const useReorderDeck = () => {
         }
       });
 
-      return previousQueryData;
+      return { previousQueryData };
+    },
+    onError: (_error, _var, context) => {
+      showToast({
+        message: "We couldn't reorder your deck. Please try again.",
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
+      queryClient.setQueryData(["decks"], context?.previousQueryData);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["decks"] }),
   });

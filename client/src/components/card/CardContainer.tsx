@@ -154,12 +154,8 @@ const CardContainer = ({
     }
   }, [undoCardCardId, cards, columnsPerRow, bulbRef, setUndoCardId]);
 
-  const handleDeleteCard = ({
-    deckId,
-    cardInfo,
-    deletionIndex,
-  }: CardDeletionParams) => {
-    deleteCard({ deckId, cardInfo, index: deletionIndex });
+  const handleDeleteCard = ({ deckId, cardInfo }: CardDeletionParams) => {
+    deleteCard({ deckId, cardInfo });
   };
 
   const outerGridRef = useRef<HTMLDivElement>(null);

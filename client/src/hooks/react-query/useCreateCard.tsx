@@ -8,6 +8,7 @@ const createCard = async (payload: CreateCardPayloadType) => {
   try {
     const data = await request.post(`/card/${payload.deckId}`, {
       content: payload.content,
+      maxOrder: payload.maxOrder,
     });
 
     return data?.data;
@@ -44,6 +45,7 @@ const useCreateCard = () => {
             newArray.unshift({
               ...data.content,
               createdAt: new Date().toDateString(),
+              order: data.maxOrder,
             });
             return { ...oldCardData, cards: newArray };
           }

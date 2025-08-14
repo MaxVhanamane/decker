@@ -54,6 +54,7 @@ const useDragHandlers = () => {
         (event: DragEndEvent) => {
             setIsDragStarted(true);
             const { active } = event;
+
             // active.data.current?.name will give you "deck" or "card"
             // This if condition will handle deck related draggin and dropping
             activeItemRef.current = active.data?.current
@@ -99,6 +100,7 @@ const useDragHandlers = () => {
         (event: DragEndEvent) => {
             // This if statement fixes the issue if you drag over delete area and then move the card out of screen from there it won't reset color even if it is not on delete deck area.
             const { over } = event;
+
 
             if (activeItemRef.current?.name === "deck") {
                 if (
@@ -347,7 +349,7 @@ const useDragHandlers = () => {
 
                 if (!over) return;
 
-                // If deck is dropped in same place then do nothing
+                // If card is dropped in same place then do nothing
                 if (active.id === over.id) return;
 
                 if (
@@ -359,47 +361,72 @@ const useDragHandlers = () => {
                         "cards",
                         activeItemRef.current?.deckId,
                     ]);
+
                     if (cards?.cards) {
-                        // Create a new reference for `cards.cards`
-                        const updatedCards = [...cards.cards];
+                        // Make a deep-ish copy (new references for each card)
+                        const updatedCards = cards.cards.map((card) => ({ ...card }));
 
-                        // Remove the item from its old position
-                        const [movedItem] = updatedCards.splice(
-                            activeItemRef.current?.index,
-                            1
-                        );
-                        // Insert the item at the new position
-                        updatedCards.splice(over?.data?.current?.index, 0, movedItem);
+                        const fromIndex = activeItemRef.current?.index;
+                        const toIndex = over?.data?.current?.index;
 
-                        // Update query data with the new reference
+                        // Remove the card first
+                        const [movedItem] = updatedCards.splice(fromIndex, 1);
+
+                        // Insert the card at the intended target index
+                        updatedCards.splice(toIndex, 0, movedItem);
+
+                        // find its neighbors 
+                        const prevCard = updatedCards[toIndex - 1] || null;
+                        const nextCard = updatedCards[toIndex + 1] || null;
+
+                        let newOrderValue: number;
+                        if (prevCard && nextCard) {
+                            newOrderValue = (prevCard.order + nextCard.order) / 2;
+                        } else if (!prevCard && nextCard) {
+                            // Top of list
+                            newOrderValue = nextCard.order + 10;
+                        } else if (prevCard && !nextCard) {
+                            // Bottom of list
+                            newOrderValue = prevCard.order - 10;
+                        } else {
+                            // Only card
+                            newOrderValue = 10;
+                        }
+
+                        movedItem.order = newOrderValue;
+
+
                         setAllCardsState({ ...cards, cards: updatedCards });
                         moveCard({
+                            fromIndex,
+                            toIndex,
                             deckId: activeItemRef.current?.deckId,
-                            currentIndex: activeItemRef.current?.index,
-                            newIndex: over?.data?.current?.index,
+                            cardId: activeItemRef.current?.card?.cardId,
+                            newOrder: newOrderValue,
                         });
                     }
+
                 } else if (over?.id === "CardDeleteArea") {
-                    const deletionIndex = activeItemRef.current?.index;
+
                     const deckId = activeItemRef.current?.deckId;
+
                     const cardInfo = {
                         note: activeItemRef.current?.card?.note,
                         cardId: activeItemRef.current?.card?.cardId,
                         createdAt: activeItemRef.current?.card?.createdAt,
+                        order: activeItemRef.current?.card?.order,
                     };
                     setAllCardsState((prevCards) => {
                         if (!prevCards) return null;
 
+                        const updatedCards = prevCards.cards.filter((card) => card.order !== activeItemRef.current?.card?.order)
                         return {
                             ...prevCards,
-                            cards: [
-                                ...prevCards.cards.slice(0, deletionIndex),
-                                ...prevCards.cards.slice(deletionIndex + 1),
-                            ],
+                            cards: updatedCards,
                         };
                     });
 
-                    deleteCard({ deckId, index: deletionIndex, cardInfo });
+                    deleteCard({ deckId, cardInfo });
                 }
             }
         },

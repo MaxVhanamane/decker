@@ -21,11 +21,11 @@ type SuccessResponseType = {
 
 type DeleteCardPayloadType = {
   deckId: string;
-  index: number;
   cardInfo: {
     note: Descendant[];
     cardId: string;
     createdAt: string;
+    order: number;
   };
   searchParams?: {
     query: string;
@@ -38,7 +38,7 @@ const deleteCard = async (
 ): Promise<SuccessResponseType> => {
   try {
     const data = await request.delete(
-      `/card/${payload.deckId}/${payload.index}`
+      `/card/${payload.deckId}/${payload.cardInfo?.cardId}/${payload.cardInfo?.order}`
     );
 
     return data?.data;
@@ -83,7 +83,6 @@ const useDeleteCard = () => {
       undoCardDataRef.current = {
         deckId: data.deckId,
         content: data.cardInfo,
-        index: data.index,
       };
       await queryClient.cancelQueries({
         queryKey: ["cards", data.deckId],
@@ -107,9 +106,10 @@ const useDeleteCard = () => {
         ["cards", data.deckId],
         (oldQueryData) => {
           if (oldQueryData) {
-            const newArray = [...oldQueryData.cards];
-            newArray.splice(data.index, 1);
-            return { ...oldQueryData, cards: newArray };
+            const updatedArray = oldQueryData.cards.filter(
+              (card) => card.order !== data.cardInfo.order
+            );
+            return { ...oldQueryData, cards: updatedArray };
           }
         }
       );
@@ -157,7 +157,6 @@ const useDeleteCard = () => {
                 undoCardDataRef.current = {
                   deckId: data.deckId,
                   content: data.cardInfo,
-                  index: data.index,
                   searchParams: {
                     ...data.searchParams,
                     undoCardDetails: deletedCard,

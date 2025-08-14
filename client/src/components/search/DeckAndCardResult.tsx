@@ -15,10 +15,10 @@ type ContentType = {
   note: Descendant[];
   cardId: string;
   createdAt: string;
+  order: number;
 };
 
 type ContentForFullScreen = ContentType & {
-  cardIndex: number | null;
   deckId: string;
 };
 
@@ -219,7 +219,7 @@ const DeckAndCardResult = ({
                     handleCardItemClick({
                       deckId: card.deckId,
                       cardId: card.cardId,
-                      cardIndex: card.cardIndex,
+                      order: card.order,
                       note: card.note,
                       createdAt: card.createdAt,
                     })
