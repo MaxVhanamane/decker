@@ -16,7 +16,6 @@ const handleGlobalPopState = () => {
   if (pendingManualCloses.size > 0) {
     const modalKey = Array.from(pendingManualCloses)[0]; // Get first pending close
     pendingManualCloses.delete(modalKey);
-
     return;
   }
 
@@ -46,6 +45,11 @@ export const useModalBackNavigationHandler = ({
   const closeModalRef = useRef(closeModal);
   const wasOpenRef = useRef(false);
 
+  const pushStateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const backTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Keep close callback up to date
   useEffect(() => {
     closeModalRef.current = closeModal;
@@ -65,7 +69,10 @@ export const useModalBackNavigationHandler = ({
         modalCloseCallbacks.set(modalKey, closeModalRef.current);
 
         // Add history entry
-        window.history.pushState({ modalKey, timestamp: Date.now() }, "");
+        // To avoid lag when modal opens I am pushing the url in setTimeout
+        pushStateTimeoutRef.current = setTimeout(() => {
+          window.history.pushState({ modalKey, timestamp: Date.now() }, "");
+        }, 200);
       }
 
       // Attach global listener if not already attached
@@ -85,7 +92,7 @@ export const useModalBackNavigationHandler = ({
         pendingManualCloses.add(modalKey);
 
         // Use setTimeout to ensure the history.back() happens after state updates
-        setTimeout(() => {
+        backTimeoutRef.current = setTimeout(() => {
           window.history.back();
         }, 0);
       }
@@ -97,5 +104,17 @@ export const useModalBackNavigationHandler = ({
         pendingManualCloses.clear(); // Clear any remaining pending closes
       }
     }
+
+    return () => {
+      // Cleanup timeouts if dependencies change or on unmount
+      if (pushStateTimeoutRef.current) {
+        clearTimeout(pushStateTimeoutRef.current);
+        pushStateTimeoutRef.current = null;
+      }
+      if (backTimeoutRef.current) {
+        clearTimeout(backTimeoutRef.current);
+        backTimeoutRef.current = null;
+      }
+    };
   }, [isOpen, modalKey]);
 };

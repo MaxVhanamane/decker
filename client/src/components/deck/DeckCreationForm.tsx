@@ -11,9 +11,9 @@ const DeckCreationForm = memo(
     return (
       <form
         onSubmit={handleSubmit}
-        className="w-full flex justify-center px-4 "
+        className="w-full flex justify-center px-2.5"
       >
-        <div className="relative w-96 lg:w-[26rem] max-w-full">
+        <div className="relative xs:w-full ms:w-[25rem] w-full md:w-[26rem] max-w-full">
           <label htmlFor="title" className="sr-only">
             Deck Title
           </label>

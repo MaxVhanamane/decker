@@ -14,7 +14,7 @@ const DeckSkeleton = ({
     <section
       className={` ${
         title !== "Pinned" ? "mb-24" : "lg:mb-10"
-      } mx-1 animate-opacity_page_transition w-full`}
+      } mx-1 opacity-0 animate-[opacity_2s_ease-in_forwards] [animation-delay:300ms] w-full`}
     >
       <div className="w-full flex items-center justify-center flex-col">
         <h2 className="text-left  text-base font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2  px-4 lg:w-[80rem]">

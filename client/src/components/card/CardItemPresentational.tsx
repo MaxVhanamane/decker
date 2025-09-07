@@ -53,7 +53,7 @@ const CardItemPresentational = ({
             isDraggingCardOverDeleteArea && "dark:!text-red-500 !text-red-500 "
           } ${
             isDragging ? " animate-scaleUpDown" : ""
-          } absolute -right-4 -top-8 h-20 w-20 origin-top-right stroke-[0.4] text-black/10 duration-300 group-hover/card:scale-90 dark:text-white/10`}
+          } absolute -right-4 -top-8 h-20 w-20 origin-top-right stroke-[0.3] text-slate-400 dark:text-slate-600 duration-300 group-hover/card:scale-90 `}
         >
           <circle cx="12" cy="12" r="10"></circle>
         </svg>
@@ -67,7 +67,7 @@ const CardItemPresentational = ({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`   absolute -right-4 -top-8 h-28 w-28 origin-top-right stroke-[0.3] text-black/10 duration-500 group-hover/card:scale-90 dark:text-white/10 
+          className={`   absolute -right-4 -top-8 h-28 w-28 origin-top-right stroke-[0.2]  duration-500 group-hover/card:scale-90 text-slate-400 dark:text-slate-600
                       ${
                         isDragging && !isDraggingCardOverDeleteArea
                           ? " dark:!text-violet-500 "
@@ -85,24 +85,22 @@ const CardItemPresentational = ({
         </svg>
       </div>
 
-      <div className="absolute bottom-0 left-0 flex items-center justify-between w-full py-2  px-3 ">
-        <div className="text-xs text-gray-400 ">
+      <div className="absolute bottom-0 left-0 flex items-center justify-between w-full py-2 px-3 ">
+        <div className="text-xs text-gray-400 select-none">
           <span>{formatDate(card.createdAt)}</span>
         </div>
-        <div className="flex items-center justify-center gap-3">
-          <div className=" dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/deleteCardBtn">
+        <div className="flex items-center justify-center gap-3 ">
+          <div className=" dark:bg-slate-800  bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
             <button
-              type="button"
-              className="text-gray-600 dark:text-slate-300  hover:text-gray-700 dark:hover:text-slate-400  outline-none  rounded-tr p-[0.2rem]  text-center  transition-all duration-500  "
+              className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem] text-center "
               aria-label="Delete Card"
             >
               <MdOutlineDeleteOutline />
             </button>
           </div>
-          <div className=" dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/editBtn">
+          <div className=" dark:bg-slate-800  bg-gray-200 hover:bg-gray-300 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
             <button
-              type="button"
-              className="text-gray-600 dark:text-slate-300  hover:text-gray-700 dark:hover:text-slate-400 p-[0.2rem] text-base outline-none rounded-tr   text-center  transition-all duration-500 "
+              className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem]  text-base text-center "
               aria-label="Edit Card"
             >
               <BiEdit />

@@ -42,7 +42,7 @@ export type bulbColors = "red" | "yellow" | "lime" | "fuchsia" | "violet" | "cya
 //cards
 
 export type CardContentType = {
-  note: Descendant[]; cardId: string, createdAt: string, order: number,
+  note: Descendant[]; cardId: string, createdAt: string, order: number, chapterId?: string
 }
 
 export type ContentTypeForEdit = CardContentType
@@ -69,6 +69,19 @@ export type GetCardsResponseType = {
   cards: CardContentType[];
   maxOrder: number
 };
+export type ChapterDetails = {
+  deckId: string;
+  chapterId: string;
+  createdAt: string;
+  chapterName: string
+  cardsCount: number
+  order: number
+}
+export type GetChaptersResponseType = {
+  chapters: ChapterDetails[];
+  maxOrder: number
+
+};
 
 
 export type CreateCardPayloadType = {
@@ -77,7 +90,8 @@ export type CreateCardPayloadType = {
     note: Descendant[];
     cardId: string;
   };
-  maxOrder: number
+  maxOrder: number;
+  chapterId?: string
 };
 
 export type moveCardPayloadType = {
@@ -86,6 +100,8 @@ export type moveCardPayloadType = {
   fromIndex: number;
   toIndex: number;
   deckId: string;
+  chapterId?: string,
+  reindexNeeded: boolean
 };
 
 // Toast

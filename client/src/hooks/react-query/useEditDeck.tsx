@@ -42,7 +42,6 @@ const useEditDeck = () => {
 
   return useMutation({
     mutationFn: editDeck,
-    // Not doing any optimistic updates we will only show the data once it is added in the db.
 
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: ["decks"] });

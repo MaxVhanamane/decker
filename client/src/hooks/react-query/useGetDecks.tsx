@@ -1,9 +1,10 @@
 import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DeckType } from "../../types/types";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { request } from "../../utils/fetch-utils";
 import { searchContext } from "../../context/SearchContext";
 import { CustomError } from "../../utils/customError";
+import { usePreloadCache } from "../utility/usePreloadCache";
 
 const getDecks = async (
   showSearchBar: boolean,
@@ -45,28 +46,11 @@ export default function useGetDecks() {
   const url = `${import.meta.env.VITE_API_URL}/decks`;
 
   // Pre-populate query cache with browser cached data
-  useEffect(() => {
-    const loadAndSetCachedData = async () => {
-      // Only load if there's no data in React Query cache
-      const existingData = queryClient.getQueryData(["decks"]);
-      if (existingData) return;
-
-      try {
-        const cache = await caches.open("decks-cache");
-        const cachedResponse = await cache.match(url);
-
-        if (cachedResponse) {
-          const cachedData = await cachedResponse.json();
-          // Pre-populate the React Query cache with success state
-          queryClient.setQueryData(["decks"], cachedData);
-        }
-      } catch (error) {
-        // Silently fail - cache loading is optional, don't break the app
-      }
-    };
-
-    loadAndSetCachedData();
-  }, []);
+  usePreloadCache({
+    queryKey: ["decks"],
+    cacheName: "decks-cache",
+    url,
+  });
 
   return useQuery({
     queryKey: ["decks"],

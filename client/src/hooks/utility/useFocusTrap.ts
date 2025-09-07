@@ -17,32 +17,27 @@ type ModalEntry = {
     containerRef: React.RefObject<HTMLElement>;
     handleFocusIn: (e: FocusEvent) => void;
     timestamp: number;
+    opener: HTMLElement | null;
+    openedWithKeyboard: boolean;
 };
 
 // Module-level state for managing focus traps
 let modalStack: ModalEntry[] = [];
 let idCounter = 0;
-let isListenerActive = false;
+let globalListenerAttached = false;
 
 const sortStackByTimestamp = (): void => {
     modalStack.sort((a, b) => a.timestamp - b.timestamp);
 };
 
-const globalFocusHandler = (e: FocusEvent): void => {
-    if (modalStack.length === 0) return;
 
-    // Most recent modal (last in sorted array) handles focus
-    const topModal = modalStack[modalStack.length - 1];
-    topModal.handleFocusIn(e);
-};
-
-const updateGlobalListener = (): void => {
-    if (modalStack.length > 0 && !isListenerActive) {
-        document.addEventListener("focusin", globalFocusHandler, true);
-        isListenerActive = true;
-    } else if (modalStack.length === 0 && isListenerActive) {
-        document.removeEventListener("focusin", globalFocusHandler, true);
-        isListenerActive = false;
+const updateGlobalListener = () => {
+    if (modalStack.length > 0 && !globalListenerAttached) {
+        document.addEventListener("focusin", handleFocusInGlobal, true);
+        globalListenerAttached = true;
+    } else if (modalStack.length === 0 && globalListenerAttached) {
+        document.removeEventListener("focusin", handleFocusInGlobal, true);
+        globalListenerAttached = false;
     }
 };
 
@@ -51,11 +46,15 @@ const registerFocusTrap = (
     handleFocusIn: (e: FocusEvent) => void
 ): string => {
     const id = `focus-trap-${++idCounter}`;
+    const ae = document.activeElement as HTMLElement | null;
+
     const modal: ModalEntry = {
         id,
         containerRef,
         handleFocusIn,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        opener: ae,
+        openedWithKeyboard: ae?.matches(":focus-visible") ?? false,
     };
 
     modalStack.push(modal);
@@ -66,14 +65,82 @@ const registerFocusTrap = (
 };
 
 const unregisterFocusTrap = (id: string): void => {
-    modalStack = modalStack.filter(modal => modal.id !== id);
+    const closing = modalStack.find((m) => m.id === id) || null;
+    const wasTop = isTopModal(id);
+
+    modalStack = modalStack.filter((m) => m.id !== id);
     updateGlobalListener();
+
+    if (wasTop && closing) {
+        // only restore if there’s no newer modal still open
+        const newerStillOpen = modalStack.some(
+            (m) => m.timestamp > closing.timestamp
+        );
+        if (!newerStillOpen) {
+            restoreFocus(closing);
+        }
+    }
+};
+
+const handleFocusInGlobal = (e: FocusEvent) => {
+    if (modalStack.length === 0) return;
+
+    const top = modalStack[modalStack.length - 1];
+    if (!top.containerRef.current) return;
+
+    if (!top.containerRef.current.contains(e.target as Node)) {
+        // redirect focus back into modal
+        top.handleFocusIn(e);
+    }
 };
 
 const isTopModal = (id: string): boolean => {
     if (modalStack.length === 0) return false;
     const topModal = modalStack[modalStack.length - 1];
     return topModal.id === id;
+};
+
+const isFocusable = (el: HTMLElement | null): boolean => {
+    if (!el) return false;
+    if (!document.contains(el)) return false;
+
+    const style = window.getComputedStyle(el);
+    if (
+        style.display === "none" ||
+        style.visibility === "hidden"
+    ) {
+        return false;
+    }
+
+    if (el.hasAttribute("disabled")) return false;
+    if (typeof el.tabIndex === "number" && el.tabIndex < 0) return false;
+
+    return true;
+};
+
+
+const restoreFocus = (entry: ModalEntry) => {
+    let target: HTMLElement | null = entry.opener;
+    let withKeyboard = entry.openedWithKeyboard;
+
+    // climb backwards until we find a valid focus target
+    while (target && !isFocusable(target)) {
+        const prev = modalStack.findLast((m) => m.timestamp < entry.timestamp);
+        if (!prev) {
+            target = null;
+            break;
+        }
+        target = prev.opener;
+        withKeyboard = prev.openedWithKeyboard;
+    }
+
+    if (target && withKeyboard) {
+        try {
+            target.focus();
+        } catch {
+            // ignore
+        }
+    }
 };
 
 // Function overloads
@@ -105,7 +172,7 @@ export function useFocusTrap(
     const focusableElementsRef = useRef<HTMLElement[]>([]);
     const isKeyboardNavigatingRef = useRef(false);
     const modalIdRef = useRef<string | null>(null);
-
+    const openedWithKeyboardRef = useRef(false);
     // Cache the focusable elements selector for performance
     const focusableSelector = 'a[href], button:not([disabled]), textarea, input:not([disabled]), select, [tabindex]:not([tabindex="-1"])';
 
@@ -528,12 +595,22 @@ export function useFocusTrap(
 
         return () => {
             if (modalIdRef.current) {
+                const wasTop = isTopModal(modalIdRef.current);
                 unregisterFocusTrap(modalIdRef.current);
+
+                //  Restore previous focus only if we were the top modal
+                if (
+                    wasTop &&
+                    previousFocusRef.current &&
+                    openedWithKeyboardRef.current
+                ) {
+                    previousFocusRef.current.focus();
+                }
+
                 modalIdRef.current = null;
             }
         };
-    }, [enabled, handleFocusIn, containerRef]);
-
+    }, [enabled, handleFocusIn, containerRef, isUsingKeyboard]);
     /**
      * SET UP MOUSE EVENT LISTENERS
      * These track mouse interactions to determine input method (keyboard vs mouse)
@@ -623,20 +700,16 @@ export function useFocusTrap(
      */
     useLayoutEffect(() => {
         if (!enabled) return;
-
-        // Only store previous focus if no other modal is currently active
-        if (modalIdRef.current && isTopModal(modalIdRef.current)) {
-            previousFocusRef.current = document.activeElement as HTMLElement;
+        previousFocusRef.current = document.activeElement as HTMLElement;
+        // check if the thing that opened the modal got focus via keyboard
+        const ae = document.activeElement as HTMLElement | null;
+        if (ae) {
+            // if it was focused via Tab/Enter/Space, it will already be :focus-visible
+            openedWithKeyboardRef.current = ae.matches(":focus-visible");
         }
 
-        // Restore focus when the trap is disabled
-        return () => {
-            // Only restore focus if this was the top modal when closing
-            if (previousFocusRef.current && modalIdRef.current && isTopModal(modalIdRef.current)) {
-                previousFocusRef.current.focus();
-            }
-        };
     }, [enabled]);
+
 
     /**
      * SET UP DOM MUTATION OBSERVER
@@ -670,26 +743,21 @@ export function useFocusTrap(
 
         const focusableElements = getFocusableElements();
 
-        // Only set initial focus if nothing is already focused inside the container
-        // This prevents stealing focus from elements that are already focused (like radio buttons)
-        if (!containerRef.current.contains(document.activeElement)) {
-            if (typeof initialFocusIndex === "number") {
-                // Use the specified initial focus index
-                if (initialFocusIndex >= 0 && initialFocusIndex < focusableElements.length) {
-                    focusElementWithScroll(focusableElements[initialFocusIndex]);
-                } else if (focusableElements.length > 0) {
-                    focusElementWithScroll(focusableElements[0]);
-                } else {
-                    containerRef.current.focus();
-                }
+
+        if (typeof initialFocusIndex === "number") {
+
+            // Use the specified initial focus index
+            if (initialFocusIndex >= 0 && initialFocusIndex < focusableElements.length) {
+                focusElementWithScroll(focusableElements[initialFocusIndex]);
             } else if (focusableElements.length > 0) {
-                // No initial index specified, focus the first element
-                focusElementWithScroll(focusableElements[0]);
-            } else {
-                // No focusable elements, focus the container
+
                 containerRef.current.focus();
             }
+        } else {
+            // No focusable elements, focus the container
+            containerRef.current.focus();
         }
+
     }, [enabled, initialFocusIndex, getFocusableElements, containerRef, focusElementWithScroll]);
 
     // Return keyboard tracking state if requested, otherwise return nothing

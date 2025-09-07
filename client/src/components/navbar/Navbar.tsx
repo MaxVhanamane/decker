@@ -1,5 +1,5 @@
 import { memo, useState, useContext, Suspense } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { UserContext } from "../../context/UserContext";
 import ThemeToggler from "../ThemeToggler";
 import SearchBar from "../search/SearchBar";
@@ -19,21 +19,27 @@ import { CustomError } from "../../utils/customError";
 import Button from "../Button";
 import { useStableNavigate } from "../../context/StableNavigateContext";
 import BulbControls from "./BulbControls";
+import { RxHamburgerMenu } from "react-icons/rx";
+import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
+import { SidebarContex } from "../../context/SidebarContext";
 
 const Navbar = () => {
   const { userInfo } = useContext(UserContext);
-  const { showSearchBar, setShowSearchBar, setAnimateSearchBar } =
-    useContext(searchContext);
+  const { showSearchBar, setShowSearchBar } = useContext(searchContext);
+  const { toggleSidebar } = useContext(SidebarContex);
+
   const { isPlayingAudioAllowed, setIsPlayingAudioAllowed, handlePlayAudio } =
     useContext(AudioContext);
   const { theme } = useContext(ThemeContext);
+  const isMobileOrTablet = useIsDeviceType("tablet");
+
   const { setUserInfo, setUserEmailAddress } = useContext(UserContext);
   const { showToast } = useContext(ShowToastContext);
 
   const [modalState, setModalState] = useState({
     confirmLogoutModal: {
       show: false,
-      startModalAnimation: false,
+      startClosingModalAnimation: false,
     },
   });
   const queryClient = useQueryClient();
@@ -56,7 +62,7 @@ const Navbar = () => {
       setModalState({
         confirmLogoutModal: {
           show: true,
-          startModalAnimation: false,
+          startClosingModalAnimation: true,
         },
       }),
   });
@@ -73,7 +79,10 @@ const Navbar = () => {
         localStorage.removeItem("wasPreviouslyLoggedIn");
         setModalState((prev) => ({
           ...prev,
-          confirmLogoutModal: { startModalAnimation: false, show: false },
+          confirmLogoutModal: {
+            startClosingModalAnimation: false,
+            show: false,
+          },
         }));
         navigate("/login", { replace: true });
       } else {
@@ -88,7 +97,10 @@ const Navbar = () => {
 
         setModalState((prev) => ({
           ...prev,
-          confirmLogoutModal: { startModalAnimation: false, show: false },
+          confirmLogoutModal: {
+            startClosingModalAnimation: false,
+            show: false,
+          },
         }));
       }
     } catch (error) {
@@ -105,7 +117,7 @@ const Navbar = () => {
 
       setModalState((prev) => ({
         ...prev,
-        confirmLogoutModal: { startModalAnimation: false, show: false },
+        confirmLogoutModal: { startClosingModalAnimation: false, show: false },
       }));
     }
   };
@@ -113,7 +125,7 @@ const Navbar = () => {
   const handleOnCancelLogout = () => {
     setModalState((prev) => ({
       ...prev,
-      confirmLogoutModal: { startModalAnimation: false, show: false },
+      confirmLogoutModal: { startClosingModalAnimation: false, show: false },
     }));
   };
 
@@ -121,64 +133,48 @@ const Navbar = () => {
     <nav
       className={`border-b ${
         theme === "dark" || theme === null ? "bg-slate-900" : "bg-white"
-      } border-slate-900/10  dark:border-b dark:border-slate-300/10 px-1 sm:px-2 flex flex-row justify-between items-center sticky top-0 z-[60] h-16 `}
+      } border-slate-900/10  dark:border-slate-300/10 px-1 sm:px-2 flex flex-row justify-between items-center sticky top-0 z-[60] h-16 `}
     >
-      <div className="flex items-center justify-center flex-row gap-8">
-        <Button
-          variant="plain"
-          size="md"
-          aria-label="Go to home page"
-          type="button"
-          onClick={() => {
-            if (showSearchBar) {
-              return;
-            }
-
-            if (!pathNames.includes(location.pathname)) {
-              if (location.pathname !== "/") {
-                navigate("/");
-              }
-            }
-          }}
-          className="flex items-center justify-center rounded p-2 gap-2 "
-        >
-          <img
-            src="/decker_logo.png"
-            className={`w-7 h-7 lg:w-8 lg:h-8 object-contain select-none ${
-              !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
-            }`}
-            alt="decker logo"
-          />
-          <span
-            className={`h-8 w-auto select-none  ${
-              theme === "dark" || theme === null
-                ? "text-gray-50"
-                : "text-gray-700"
-            } font-bold text-lg sm:text-xl leading-7 sm:leading-normal  ${
-              !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
-            }`}
-          >
-            <span className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300">
-              D
+      <div className="flex items-center justify-center flex-row gap-8 ml-[1px]">
+        {location.pathname === "/" && (
+          <div className="flex items-center justify-center rounded gap-2 ml-1 lg:ml-auto">
+            <img
+              src="/decker_logo.png"
+              className={`w-7 h-7 lg:w-8 lg:h-8 object-contain select-none ${
+                !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
+              }`}
+              alt="decker logo"
+            />
+            <span
+              className={`h-8 w-auto select-none  ${
+                theme === "dark" || theme === null
+                  ? "text-gray-200"
+                  : "text-gray-700"
+              } font-bold text-lg sm:text-xl leading-7 sm:leading-normal  ${
+                !pathNames.includes(location.pathname) ? "cursor-pointer" : ""
+              }`}
+            >
+              {"Decker".split("").map((char, index) => {
+                return (
+                  <span
+                    key={index}
+                    className="inline-block transform hover:-translate-y-1 active:-translate-y-1 duration-300"
+                  >
+                    {char}
+                  </span>
+                );
+              })}
             </span>
-            <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-              e
-            </span>
-            <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-              c
-            </span>
-            <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-              k
-            </span>
-            <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-              e
-            </span>
-            <span className="inline-block transform hover:-translate-y-1  active:-translate-y-1 duration-300">
-              r
-            </span>
-          </span>
-        </Button>
-
+          </div>
+        )}
+        {location.pathname.startsWith("/cards") && isMobileOrTablet && (
+          <div className="flex items-center justify-center rounded p-2 px-2.5 gap-2">
+            <Button variant="unstyled" onClick={() => toggleSidebar(true)}>
+              <RxHamburgerMenu className="text-2xl dark:text-gray-200 text-gray-700 cursor-pointer" />
+            </Button>
+          </div>
+        )}
+        {/* 
         <div className="hidden md:block">
           <ul className="flex gap-10  items-center justify-center">
             {userInfo && location.pathname.split("/")[1] == "cards" ? (
@@ -194,10 +190,10 @@ const Navbar = () => {
               </Link>
             ) : null}
           </ul>
-        </div>
+        </div> */}
       </div>
 
-      <div className="flex gap-3 items-center justify-center ">
+      <div className="flex gap-3 items-center justify-center px-[0.3125rem] lg:px-0">
         <ul className="flex items-center justify-center md:gap-3">
           {userInfo && (
             <li className="flex items-center justify-center z-10">
@@ -309,7 +305,7 @@ const Navbar = () => {
           onConfirm={handleOnConfirmLogout}
           showConfirmationModal={modalState.confirmLogoutModal.show}
           startClosingModalAnimation={
-            modalState.confirmLogoutModal.startModalAnimation
+            modalState.confirmLogoutModal.startClosingModalAnimation
           }
         />
       )}

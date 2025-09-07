@@ -35,7 +35,6 @@ const GridCell = ({ columnIndex, rowIndex, style, data }: GridCellProps) => {
   } = data;
   const cardIndex = rowIndex * columnsPerRow + columnIndex;
   const card = cards[cardIndex];
-
   if (!card) return null;
 
   return (

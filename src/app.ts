@@ -23,7 +23,8 @@ const GoogleStrategy = require("passport-google-oauth20")
 import compression from "compression"
 import { SearchService } from "./services/searchService";
 import { extractTextFromSlateNodes } from "./utils/extractTextFromSlateNodes";
-import { CardModel } from "./models/card";
+import CardModel from "./models/card";
+import ChapterModel from "./models/chapter";
 
 config()
 declare module 'express-session' {
@@ -38,7 +39,7 @@ interface SearchQuery {
   limit?: string;
 }
 
-
+const gracePeriod = 3 * 60 * 1000; //The deleted item will stay in the database for 3 minutes, after which MongoDB’s TTL will remove it permanently.
 let PORT: number = 5000
 const isProduction = process.env.NODE_ENV === 'production';
 const app = express()
@@ -479,7 +480,7 @@ app.delete('/deck/:deckId', fetchUserDetails, async (req, res) => {
       },
       {
         deletedAt: new Date(),
-        undoExpiresAt: new Date(Date.now() + 20 * 1000)
+        undoExpiresAt: new Date(Date.now() + gracePeriod)
       },
       { new: true }
     );
@@ -502,38 +503,245 @@ app.delete('/deck/:deckId', fetchUserDetails, async (req, res) => {
   }
 });
 
+// Chapter Routes
+app.get('/chapters/:deckId', fetchUserDetails, async (req: Request, res: Response) => {
+  const { deckId } = req.params;
+  const userId = req.user?._id;
+
+  try {
+    // Fetch only chapters belonging to this user and deck
+    const chapters = await ChapterModel.find(
+      { deckId, email: userId, deletedAt: { $exists: false } },
+      { _id: 0, email: 0, updatedAt: 0, __v: 0 }
+    ).sort({ order: -1 });
+
+    const maxOrder = chapters.length > 0 ? chapters[0].order : 0;
+
+    return res.status(200).json({ chapters, maxOrder });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred while fetching chapters. Please try again later.",
+    });
+  }
+});
+
+
+app.post('/chapter', fetchUserDetails, async (req: Request, res: Response) => {
+  const { deckId, chapterName, chapterId, maxOrder } = req.body;
+  const newOrder = Number(maxOrder) + 10;
+  const userId = req.user?._id;
+  try {
+    const newChapter = await ChapterModel.create({
+      deckId,
+      email: userId,
+      chapterName,
+      chapterId,
+      order: newOrder,
+      cardsCount: 0
+    });
+
+    return res.status(201).json({
+      success: true,
+      chapter: newChapter
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred while creating the chapter. Please try again later."
+    });
+  }
+});
+
+
+app.put(
+  '/chapter/editchapter/:deckId/:chapterId',
+  fetchUserDetails,
+  async (req: Request, res: Response) => {
+    try {
+      const { deckId, chapterId } = req.params;
+      const { chapterName } = req.body;
+      const userId = req.user?._id;
+
+      // Update only if this chapter belongs to the user and deck
+      const updatedChapter = await ChapterModel.findOneAndUpdate(
+        { deckId, chapterId, email: userId, deletedAt: { $exists: false } },
+        { $set: { chapterName } },
+        { new: true }
+      );
+
+      if (!updatedChapter) {
+        return res.status(404).json({ success: false, message: "Chapter not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        chapter: updatedChapter
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: "An unexpected error occurred while saving the edited chapter. Please try again later!",
+      });
+    }
+  }
+);
+
+app.delete("/chapter/:deckId/:chapterId", fetchUserDetails, async (req: Request, res: Response) => {
+  const { deckId, chapterId } = req.params;
+  const userId = req.user?._id;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const now = new Date();
+    const undoExpiry = new Date(Date.now() + gracePeriod);
+
+    // 1. Soft delete the chapter
+    const chapter = await ChapterModel.findOneAndUpdate(
+      { deckId, chapterId, email: userId, deletedAt: { $exists: false } },
+      { $set: { deletedAt: now, undoExpiresAt: undoExpiry } },
+      { new: true, session }
+    );
+
+    if (!chapter) {
+      throw new Error("Chapter not found or already deleted");
+    }
+
+    // 2. Soft delete related cards
+    const cards = await CardModel.updateMany(
+      { deckId, chapterId, deletedAt: { $exists: false } },
+      { $set: { deletedAt: now, undoExpiresAt: undoExpiry } },
+      { session }
+    );
+
+    // 3. Decrement deck's cardsCount using modifiedCount
+    if (cards.modifiedCount > 0) {
+      await DeckModel.updateOne(
+        { deckId, email: userId },
+        { $inc: { cardsCount: -cards.modifiedCount } },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      message: "Chapter and its cards soft-deleted. Undo possible within grace period.",
+      chapter,
+      softDeletedCards: cards.modifiedCount,
+    });
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Transaction failed:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.put(
+  '/chapter/undo',
+  fetchUserDetails,
+  async (req: Request, res: Response) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const { chapterId, deckId } = req.body;
+      const userId = req.user?._id;
+      // 1. Restore chapter
+      const restoredChapter = await ChapterModel.findOneAndUpdate(
+        { chapterId, deckId, email: userId, deletedAt: { $exists: true } },
+        { $unset: { deletedAt: "", undoExpiresAt: "" } },
+        { new: true, session }
+      );
+
+      if (!restoredChapter) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({
+          success: false,
+          message: "Chapter not found!",
+        });
+      }
+
+      // 2. Restore all cards under this chapter
+      const restoredCards = await CardModel.updateMany(
+        { chapterId, deckId, deletedAt: { $exists: true } },
+        { $unset: { deletedAt: "", undoExpiresAt: "" } },
+        { session }
+      );
+
+      // 3. Increment deck’s cardsCount
+      const restoredCount = restoredCards.modifiedCount || 0;
+
+      await DeckModel.updateOne(
+        { deckId, email: userId },
+        { $inc: { cardsCount: restoredCount } },
+        { session }
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(200).json({
+        success: true,
+        message: "Chapter and its cards restored successfully",
+        chapter: restoredChapter,
+        restoredCards: restoredCount,
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      res.status(500).json({
+        success: false,
+        message: "An unexpected error occurred while undoing the chapter.",
+      });
+    }
+  }
+);
+
+
 
 // Card routes
 
-app.get('/cards/:deckId', fetchUserDetails, async (req: Request, res: Response) => {
+app.get('/cards/:deckId/:chapterId?', fetchUserDetails, async (req: Request, res: Response) => {
+
   try {
 
+    const { deckId, chapterId } = req.params;
+    // Build query condition dynamically
+    // If deletedAt is present means the card was soft deleted
+    const query: any = { deckId, chapterId: chapterId ? chapterId : null, deletedAt: { $exists: false } };
+
     const data = await CardModel.find(
-      { deckId: req.params.deckId },
-      { cardId: 1, note: 1, createdAt: 1, order: 1, _id: 0 }  // include order in projection if you want
+      query,
+      { cardId: 1, note: 1, createdAt: 1, order: 1, chapterId: 1, _id: 0 }
     )
       .sort({ order: -1 })
       .exec();
-    const maxOrder = data.length > 0 ? data[0].order : -1;
+
+    const maxOrder = data.length > 0 ? data[0].order : 0;
+
+    res.status(200).json({ cards: data, maxOrder });
 
 
-    if (data) {
-      res.status(200).json({ cards: data, maxOrder: maxOrder })
-    }
-    else {
-      res.status(404).json({ message: "No cards found!" });
-    }
-  }
-  catch (error) {
+  } catch (error) {
+
     if ((error as Error).name === "CastError") {
-      // Handle the error specifically when an invalid ID is provided
       res.status(400).json({ message: "Invalid deck ID" });
     } else {
+
       res.status(500).json({ message: "Internal server error" });
     }
   }
+});
 
-})
 
 app.post('/card/:deckId', fetchUserDetails, async (req: Request, res: Response) => {
   const session = await mongoose.startSession();
@@ -541,6 +749,8 @@ app.post('/card/:deckId', fetchUserDetails, async (req: Request, res: Response) 
 
   try {
     const deckId = req.params.deckId;
+    const chapterId = req.body.chapterId || null;
+    const userId = req.user?._id;
     const newOrder = Number(req.body.maxOrder) + 10;
 
     let searchableContent = "";
@@ -553,32 +763,45 @@ app.post('/card/:deckId', fetchUserDetails, async (req: Request, res: Response) 
       ...req.body.content,
       searchableContent,
       order: newOrder,
-      deckId
+      deckId,
+      chapterId,
+      email: userId
     });
 
     await newCard.save({ session });
 
-    // 2. Increment the cardsCount for that deck
+    // 2. Increment counts
     await DeckModel.updateOne(
-      { deckId },
+      { deckId, email: userId },
       { $inc: { cardsCount: 1 } },
       { session }
     );
 
+    if (chapterId) {
+      await ChapterModel.updateOne(
+        { deckId, chapterId, email: userId, deletedAt: { $exists: false } },
+        { $inc: { cardsCount: 1 } },
+        { session }
+      );
+    }
+
+    // 3. Commit transaction
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({ success: true });
+    res.status(201).json({ success: true, card: newCard });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+    console.error(error);
     res.status(500).json({ message: "An unexpected error occurred while creating the card. Please try again later." });
   }
 });
 
 //Edit card
-app.patch('/card/:deckId', fetchUserDetails, async (req: Request, res: Response) => {
+app.patch('/card/:deckId/:chapterId?', fetchUserDetails, async (req: Request, res: Response) => {
   const deckId = req.params.deckId;
+  const chapterId = req.params.chapterId;
   const cardId = req.body.cardId;
   const { note } = req.body.newContent;
   let searchableContent: string = ""
@@ -586,10 +809,14 @@ app.patch('/card/:deckId', fetchUserDetails, async (req: Request, res: Response)
   if (note) {
     searchableContent = extractTextFromSlateNodes(note);
   }
+  const filter: { deckId: string, cardId: string, chapterId?: string } = { deckId, cardId };
 
+  if (chapterId) {
+    filter["chapterId"] = chapterId;
+  }
   try {
     const updatedCard = await CardModel.findOneAndUpdate(
-      { deckId, cardId },
+      filter,
       {
         $set: {
           note,
@@ -616,107 +843,203 @@ app.put('/card/undocard', fetchUserDetails, async (req: Request, res: Response) 
   session.startTransaction();
 
   try {
-    const cardContent = req.body.undoCardDetails;
-    const deckId = cardContent.deckId;
-
-    let searchableContent = "";
-    if (cardContent?.note) {
-      searchableContent = extractTextFromSlateNodes(cardContent?.note);
+    const { cardId, deckId, chapterId } = req.body;
+    const userId = req.user?._id;
+    // 1. Build dynamic filter
+    const cardFilter: any = {
+      cardId,
+      deckId,
+      deletedAt: { $exists: true }
+    };
+    if (chapterId) {
+      cardFilter.chapterId = chapterId;
     }
 
-    const updatedContent = { ...cardContent, searchableContent };
+    // 2. Restore the card by unsetting soft-delete fields
+    const restoredCard = await CardModel.findOneAndUpdate(
+      cardFilter,
+      { $unset: { deletedAt: "", undoExpiresAt: "" } },
+      { new: true, session }
+    );
 
-    // 1. Restore the card
-    const newCard = new CardModel(updatedContent);
-    await newCard.save({ session });
+    if (!restoredCard) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "Card not found or already active"
+      });
+    }
 
-    // 2. Increment deck's cardsCount
+    // 3. Increment card counts back
     await DeckModel.updateOne(
-      { deckId },
+      { deckId, user: userId },
       { $inc: { cardsCount: 1 } },
       { session }
     );
 
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(200).json({ success: true });
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    res.status(500).json({
-      message: "An unexpected error occurred while undoing the card deletion."
-    });
-  }
-});
-
-app.delete('/card/:deckId/:cardId/:order', fetchUserDetails, async (req: Request, res: Response) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const deckId = req.params.deckId;
-    const cardId = req.params.cardId;
-    const order = Number(req.params.order);
-
-    // 1. Delete the card
-    const deletedCard = await CardModel.findOneAndDelete(
-      { deckId, cardId, order },
-      { session }
-    );
-
-    if (!deletedCard) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ success: false, message: "Card not found" });
+    if (chapterId) {
+      await ChapterModel.updateOne(
+        { chapterId, deckId, user: userId },
+        { $inc: { cardsCount: 1 } },
+        { session }
+      );
     }
 
-    // 2. Decrement the cardsCount for the deck
-    await DeckModel.updateOne(
-      { deckId },
-      { $inc: { cardsCount: -1 } },
-      { session }
-    );
-
+    // 4. Commit transaction
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).json({ success: true });
+    res.status(200).json({
+      success: true,
+      message: "Card restored successfully",
+      card: restoredCard,
+    });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+    console.error("Undo card error:", error);
     res.status(500).json({
-      message: "An unexpected error occurred while deleting the card.",
       success: false,
+      message: "An unexpected error occurred while undoing the card deletion.",
     });
   }
 });
 
 
-app.put(
-  '/card/changeposition/:deckId/:cardId/:newOrder',
+
+app.delete(
+  '/card/:deckId/:cardId/:chapterId?',
   fetchUserDetails,
   async (req: Request, res: Response) => {
-    const deckId = req.params.deckId;
-    const cardId = req.params.cardId;
-    const newOrder = Number(req.params.newOrder);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
+      const { deckId, cardId, chapterId } = req.params;
+      const userId = req.user?._id;
 
-      await CardModel.findOneAndUpdate({ deckId, cardId }, { $set: { order: newOrder } });
+      // 1. Build dynamic filter for card
+      const cardFilter: any = { cardId, deckId };
+      if (chapterId) {
+        cardFilter.chapterId = chapterId;
+      }
 
-      res.status(200).json({ success: true });
+      // 2. Soft delete the card (instead of hard delete)
+      const deletedCard = await CardModel.findOneAndUpdate(
+        cardFilter,
+        {
+          $set: {
+            deletedAt: new Date(),
+            undoExpiresAt: new Date(Date.now() + gracePeriod),
+          },
+        },
+        { new: true, session }
+      );
 
+      if (!deletedCard) {
+        await session.abortTransaction();
+        session.endSession();
+        return res
+          .status(404)
+          .json({ success: false, message: "Card not found" });
+      }
+
+      // 3. Decrement deck card count
+      await DeckModel.updateOne(
+        { deckId, user: userId },
+        { $inc: { cardsCount: -1 } },
+        { session }
+      );
+
+      // 4. If card belongs to a chapter, decrement that too
+      if (chapterId) {
+        await ChapterModel.updateOne(
+          { chapterId, deckId, user: userId },
+          { $inc: { cardsCount: -1 } },
+          { session }
+        );
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(200).json({
+        success: true,
+        message: "Card soft-deleted successfully",
+      });
     } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error("Delete card error:", error);
       res.status(500).json({
-        message: "An unexpected error occurred while moving the card.",
-        success: false
+        success: false,
+        message: "An unexpected error occurred while deleting the card.",
       });
     }
   }
 );
 
 
+app.put(
+  '/card/changeposition/:deckId/:cardId/:newOrder/:chapterId?',
+  fetchUserDetails,
+  async (req: Request, res: Response) => {
+    const deckId = req.params.deckId;
+    const cardId = req.params.cardId;
+    const chapterId = req.params.chapterId;
+    const newOrder = Number(req.params.newOrder);
+    const { reindexNeeded } = req.body;
 
+    const filter: { deckId: string; cardId: string; chapterId?: string } = {
+      deckId,
+      cardId,
+    };
+    if (chapterId) {
+      filter.chapterId = chapterId;
+    }
+
+    try {
+      // 1. Update moved card
+      await CardModel.findOneAndUpdate(filter, { $set: { order: newOrder } });
+
+      // 2. If frontend flagged reindex
+      if (reindexNeeded) {
+
+        const query: any = { deckId };
+        if (chapterId) query.chapterId = chapterId;
+
+        // Fetch all cards sorted in descending order
+        const cards = await CardModel.find(query).sort({ order: -1 });
+
+        if (cards.length) {
+          // Dynamic starting order = cards.length * 10
+          const startOrder = cards.length * 10;
+
+          const updates = cards.map((card, index) => ({
+            updateOne: {
+              filter: { _id: card._id },
+              update: { $set: { order: startOrder - index * 10 } }, // descending with gap=10
+            },
+          }));
+
+          await CardModel.bulkWrite(updates);
+        }
+
+        return res.status(200).json({ success: true, reindexed: true });
+      }
+
+      // Normal case
+      res.status(200).json({ success: true, reindexed: false });
+    } catch (error) {
+      res.status(500).json({
+        message: 'An unexpected error occurred while moving the card.',
+        success: false,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+);
 
 app.post('/login',
   passport.authenticate('local', { failWithError: true }),

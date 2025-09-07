@@ -27,6 +27,7 @@ type DeleteCardPayloadType = {
     createdAt: string;
     order: number;
   };
+  chapterId?: string;
   searchParams?: {
     query: string;
     page: number;
@@ -37,9 +38,10 @@ const deleteCard = async (
   payload: DeleteCardPayloadType
 ): Promise<SuccessResponseType> => {
   try {
-    const data = await request.delete(
-      `/card/${payload.deckId}/${payload.cardInfo?.cardId}/${payload.cardInfo?.order}`
-    );
+    const url = payload?.chapterId
+      ? `/card/${payload.deckId}/${payload.cardInfo?.cardId}/${payload?.chapterId}`
+      : `/card/${payload.deckId}/${payload.cardInfo?.cardId}`;
+    const data = await request.delete(url);
 
     return data?.data;
   } catch (error) {
@@ -80,101 +82,146 @@ const useDeleteCard = () => {
   return useMutation({
     mutationFn: deleteCard,
     onMutate: async (data: DeleteCardPayloadType) => {
-      undoCardDataRef.current = {
-        deckId: data.deckId,
-        content: data.cardInfo,
-      };
-      await queryClient.cancelQueries({
-        queryKey: ["cards", data.deckId],
-      });
-
-      // if we have data.searchPaylod it means delete request came from search result
-      if (data.searchParams) {
+      if (!data?.chapterId) {
+        const queryKey = ["cards", data.deckId];
+        undoCardDataRef.current = {
+          deckId: data.deckId,
+          content: data.cardInfo,
+        };
         await queryClient.cancelQueries({
-          queryKey: [
-            "searchResult",
-            data.searchParams.query,
-            data?.searchParams.page,
-          ],
+          queryKey,
         });
-      }
 
-      const previousCardQueryData: CardListType | undefined =
-        queryClient.getQueryData(["cards", data.deckId]);
-
-      queryClient.setQueryData<CardListType | undefined>(
-        ["cards", data.deckId],
-        (oldQueryData) => {
-          if (oldQueryData) {
-            const updatedArray = oldQueryData.cards.filter(
-              (card) => card.order !== data.cardInfo.order
-            );
-            return { ...oldQueryData, cards: updatedArray };
-          }
+        // if we have data.searchPaylod it means delete request came from search result
+        if (data.searchParams) {
+          await queryClient.cancelQueries({
+            queryKey: [
+              "searchResult",
+              data.searchParams.query,
+              data?.searchParams.page,
+            ],
+          });
         }
-      );
 
-      // update search result
-      let previousSearchResult: SearchResponse | undefined;
-      if (data.searchParams) {
-        previousSearchResult = queryClient.getQueryData([
-          "searchResult",
-          data.searchParams.query,
-          data?.searchParams.page,
-        ]);
+        const previousCardQueryData: CardListType | undefined =
+          queryClient.getQueryData(queryKey);
 
-        queryClient.setQueryData<SearchResponse>(
-          ["searchResult", data.searchParams.query, data?.searchParams.page],
+        queryClient.setQueryData<CardListType | undefined>(
+          queryKey,
           (oldQueryData) => {
             if (oldQueryData) {
-              if (!oldQueryData) return;
-              const deepCopiedDecks: SearchResponse = JSON.parse(
-                JSON.stringify(oldQueryData)
+              const updatedArray = oldQueryData.cards.filter(
+                (card) => card.cardId !== data.cardInfo.cardId
               );
-              let indexOfDeletedCard = -1;
-              let deletedCard: DeckCardSearchResult | undefined;
-
-              const modifiedData = deepCopiedDecks?.data?.results.filter(
-                (obj, index) => {
-                  const isTargetCard =
-                    obj.type === "deck-card" &&
-                    obj.cardId === data?.cardInfo?.cardId;
-
-                  if (isTargetCard) {
-                    indexOfDeletedCard = index;
-                    deletedCard = obj;
-                  }
-
-                  return !isTargetCard;
-                }
-              );
-
-              if (
-                data.searchParams &&
-                indexOfDeletedCard !== -1 &&
-                deletedCard
-              ) {
-                undoCardDataRef.current = {
-                  deckId: data.deckId,
-                  content: data.cardInfo,
-                  searchParams: {
-                    ...data.searchParams,
-                    undoCardDetails: deletedCard,
-                    indexOfCardInSearchResult: indexOfDeletedCard,
-                  },
-                };
-              }
-
-              return {
-                ...deepCopiedDecks,
-                data: { ...deepCopiedDecks.data, results: modifiedData },
-              };
+              return { ...oldQueryData, cards: updatedArray };
             }
           }
         );
-      }
 
-      return { previousCardQueryData, previousSearchResult };
+        // update search result
+        let previousSearchResult: SearchResponse | undefined;
+        if (data.searchParams) {
+          previousSearchResult = queryClient.getQueryData([
+            "searchResult",
+            data.searchParams.query,
+            data?.searchParams.page,
+          ]);
+
+          queryClient.setQueryData<SearchResponse>(
+            ["searchResult", data.searchParams.query, data?.searchParams.page],
+            (oldQueryData) => {
+              if (oldQueryData) {
+                if (!oldQueryData) return;
+                const deepCopiedDecks: SearchResponse = JSON.parse(
+                  JSON.stringify(oldQueryData)
+                );
+                let indexOfDeletedCard = -1;
+                let deletedCard: DeckCardSearchResult | undefined;
+
+                const modifiedData = deepCopiedDecks?.data?.results.filter(
+                  (obj, index) => {
+                    const isTargetCard =
+                      obj.type === "deck-card" &&
+                      obj.cardId === data?.cardInfo?.cardId;
+
+                    if (isTargetCard) {
+                      indexOfDeletedCard = index;
+                      deletedCard = obj;
+                    }
+
+                    return !isTargetCard;
+                  }
+                );
+
+                if (
+                  data.searchParams &&
+                  indexOfDeletedCard !== -1 &&
+                  deletedCard
+                ) {
+                  undoCardDataRef.current = {
+                    deckId: data.deckId,
+                    content: data.cardInfo,
+                    searchParams: {
+                      ...data.searchParams,
+                      undoCardDetails: deletedCard,
+                      indexOfCardInSearchResult: indexOfDeletedCard,
+                    },
+                  };
+                }
+
+                return {
+                  ...deepCopiedDecks,
+                  data: { ...deepCopiedDecks.data, results: modifiedData },
+                };
+              }
+            }
+          );
+        }
+
+        return { previousCardQueryData, previousSearchResult };
+      } else {
+        const queryKey = ["chapter-cards", data.deckId, data.chapterId];
+
+        undoCardDataRef.current = {
+          deckId: data.deckId,
+          content: { ...data.cardInfo, chapterId: data.chapterId },
+        };
+        await queryClient.cancelQueries({
+          queryKey,
+        });
+
+        // if we have data.searchPaylod it means delete request came from search result
+        if (data.searchParams) {
+          await queryClient.cancelQueries({
+            queryKey: [
+              "searchResult",
+              data.searchParams.query,
+              data?.searchParams.page,
+            ],
+          });
+        }
+
+        const previousCardQueryData: CardListType | undefined =
+          queryClient.getQueryData(queryKey);
+
+        queryClient.setQueryData<CardListType | undefined>(
+          queryKey,
+          (oldQueryData) => {
+            if (oldQueryData) {
+              const updatedArray = oldQueryData.cards.filter((card) => {
+                if (
+                  card.cardId !== data.cardInfo.cardId &&
+                  card.chapterId === data?.chapterId
+                ) {
+                  return true;
+                } else return false;
+              });
+              return { ...oldQueryData, cards: updatedArray };
+            }
+          }
+        );
+        return { previousCardQueryData };
+      }
     },
     onSuccess: () => {
       showToast({
@@ -201,11 +248,11 @@ const useDeleteCard = () => {
     },
     // As we can get error data in onSettled we can directly handle error in the onSettled function by using if.
     onSettled: (serverData, error, mutationData, context) => {
+      const queryKey = mutationData?.chapterId
+        ? ["chapter-cards", mutationData.deckId, mutationData.chapterId]
+        : ["cards", mutationData.deckId];
       if (error) {
-        queryClient.setQueryData(
-          ["cards", mutationData.deckId],
-          context?.previousCardQueryData
-        );
+        queryClient.setQueryData(queryKey, context?.previousCardQueryData);
 
         if (mutationData?.searchParams && context?.previousSearchResult) {
           queryClient.setQueryData(
@@ -222,7 +269,7 @@ const useDeleteCard = () => {
       //As searchResult data might be large in size, we won't invalidate it every time a user deletes a card to prevent frequent transfer of big data. We will only do optimistic updates instead.
 
       queryClient.invalidateQueries({
-        queryKey: ["cards", mutationData.deckId],
+        queryKey,
       });
     },
   });

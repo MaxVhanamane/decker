@@ -26,7 +26,7 @@ type ButtonProps = React.DetailedHTMLProps<
 };
 
 const baseStyles =
-  "font-medium  text-center flex items-center justify-center cursor-pointer transition-all duration-200 outline-none focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 ";
+  "font-medium text-center flex items-center justify-center cursor-pointer transition-all duration-200 outline-none focus-visible:ring-2 dark:ring-blue-500 ring-gray-600";
 
 const roundedStyles: Record<NonNullable<ButtonProps["rounded"]>, string> = {
   none: "rounded-none",

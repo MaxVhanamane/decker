@@ -3,16 +3,9 @@ const { Schema } = mongoose;
 import { v4 as uuidv4 } from 'uuid';
 
 
-const ChapterSchema = new Schema({
-  chapterId: { type: String, required: true, default: () => uuidv4() },
-  chapterTitle: String,
-  createdAt: { type: Date, required: true, default: Date.now }
-});
-
 const DeckSchema = new Schema({
   deckId: { type: String, required: true, unique: true, default: () => uuidv4() },
   title: String,        // Direct cards for simple use
-  chapters: [ChapterSchema],    // Optional organization
   pinned: { type: Boolean, default: false },
   cardsCount: { type: Number, default: 0 },
   email: { type: Schema.Types.ObjectId, ref: "User" },

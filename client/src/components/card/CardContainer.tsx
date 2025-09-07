@@ -6,7 +6,6 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import type { CardContentType, ContentTypeForEdit } from "../../types/types";
 import { CardContext } from "../../context/CardContext";
@@ -14,9 +13,11 @@ import { Descendant } from "slate";
 import { FixedSizeGrid } from "react-window";
 import GridCell from "./GridCell";
 import { twMerge } from "tailwind-merge";
-import debounce from "lodash/debounce";
 import useDeleteCard from "../../hooks/react-query/useDeleteCard";
 import { BulbContext } from "../../context/BulbContext";
+import { useStableParams } from "../../context/stableParamsContext";
+import { SidebarContex } from "../../context/SidebarContext";
+import useWindowDimension from "../../hooks/utility/useWindowDimension";
 type ContentForFullScreen = CardContentType & {
   cardIndex: number | null;
 };
@@ -41,29 +42,15 @@ const CardContainer = ({
   handleEditCardButtonClick,
   handleShowFullScreen,
 }: PropType) => {
-  const [windowDimensions, setWindowDimensions] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
   const gridRef = useRef<FixedSizeGrid>(null);
-
+  const { chapterId } = useStableParams();
   const { undoCardCardId, setUndoCardId } = useContext(CardContext);
   const { mutate: deleteCard } = useDeleteCard();
   const { bulbRef } = useContext(BulbContext);
-
-  useEffect(() => {
-    const debouncedResize = debounce(() => {
-      setWindowDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }, 300);
-    window.addEventListener("resize", debouncedResize);
-    return () => window.removeEventListener("resize", debouncedResize);
-  }, []);
-
+  const { isSidebarOpen } = useContext(SidebarContex);
+  const windowDimensions = useWindowDimension();
   const getColumnCount = (width: number): number => {
-    if (width >= 1024) return 3; // large screens
+    if (width >= (isSidebarOpen ? 1350 : 1150)) return 3; // large screens
     if (width >= 768) return 2; // medium screens
     return 1; // small screens
   };
@@ -75,9 +62,9 @@ const CardContainer = ({
     let eachColumnWidth: number;
     let eachRowHeight = 160;
     let gridContainerHeight: number;
-    if (containerWidth >= 1024) {
+    if (containerWidth >= (isSidebarOpen ? 1350 : 1150)) {
       // large screens
-      gridContainerWidth = 1070;
+      gridContainerWidth = Math.min(containerWidth, 1070);
       eachRowHeight = 168;
       // Calculate width for each column:
       // - 7 this is so that the scrollbar doen't appear close to container
@@ -108,7 +95,7 @@ const CardContainer = ({
       gridContainerWidth,
       totalRows,
     };
-  }, [cards.length, windowDimensions]);
+  }, [cards.length, windowDimensions, isSidebarOpen]);
 
   const items = useMemo(() => {
     return cards.map((card) => card?.cardId);
@@ -122,6 +109,7 @@ const CardContainer = ({
     gridContainerWidth,
     totalRows,
   } = getGridDimensions();
+
   useEffect(() => {
     if (undoCardCardId) {
       const cardIndex = cards.findIndex(
@@ -155,7 +143,7 @@ const CardContainer = ({
   }, [undoCardCardId, cards, columnsPerRow, bulbRef, setUndoCardId]);
 
   const handleDeleteCard = ({ deckId, cardInfo }: CardDeletionParams) => {
-    deleteCard({ deckId, cardInfo });
+    deleteCard({ deckId, cardInfo, chapterId });
   };
 
   const outerGridRef = useRef<HTMLDivElement>(null);
@@ -190,7 +178,7 @@ const CardContainer = ({
           columnWidth={eachColumnWidth}
           rowHeight={eachRowHeight}
           className={twMerge(
-            "!overflow-x-hidden overflow-y-auto scrollbar-gutter pb-20 ",
+            "!overflow-x-hidden overflow-y-auto scrollbar-gutter pb-20  ",
             cards.length > 50 && "dark:dark-scrollbar light-scrollbar"
           )}
           outerRef={outerGridRef}

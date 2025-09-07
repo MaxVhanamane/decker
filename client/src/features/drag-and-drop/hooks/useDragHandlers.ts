@@ -2,11 +2,11 @@ import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useContext, useRef } from "react";
 import { BulbContext } from "../../../context/BulbContext";
 import { DndCurrentDraggingCardContext, DndCurrentDraggingDeckContext, DndFilterContext, DndSettersContext } from "../../../context/DndItemContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { CardType, DeckType } from "../../../types/types";
 import useReorderCard from "../../../hooks/react-query/useReorderCard";
 import useDeleteCard from "../../../hooks/react-query/useDeleteCard";
 import useDeleteDeck from "../../../hooks/react-query/useDeleteDeck";
-import { useQueryClient } from "@tanstack/react-query";
 import { OfflineContext } from "../../../context/OfflineContext";
 import { ShowToastContext } from "../../../context/ToastNotificationContext";
 import useReorderDeck from "../../../hooks/react-query/useReorderDeck";
@@ -54,7 +54,6 @@ const useDragHandlers = () => {
         (event: DragEndEvent) => {
             setIsDragStarted(true);
             const { active } = event;
-
             // active.data.current?.name will give you "deck" or "card"
             // This if condition will handle deck related draggin and dropping
             activeItemRef.current = active.data?.current
@@ -356,11 +355,13 @@ const useDragHandlers = () => {
                     activeItemRef.current?.index !== undefined &&
                     over?.data?.current?.index !== undefined
                 ) {
-
-                    const cards: CardType = queryClient.getQueryData<CardType>([
+                    const queryKey = activeItemRef.current?.card?.chapterId ? ["chapter-cards", activeItemRef.current?.deckId, activeItemRef.current?.card?.chapterId] : [
                         "cards",
                         activeItemRef.current?.deckId,
-                    ]);
+                    ]
+
+                    const cards: CardType = queryClient.getQueryData<CardType>(queryKey);
+
 
                     if (cards?.cards) {
                         // Make a deep-ish copy (new references for each card)
@@ -392,24 +393,40 @@ const useDragHandlers = () => {
                             // Only card
                             newOrderValue = 10;
                         }
+                        let reindexNeeded = false;
+                        if (prevCard && nextCard) {
+                            reindexNeeded = Math.abs(prevCard.order - nextCard.order) < 0.0001;
+                        }
+
+
 
                         movedItem.order = newOrderValue;
 
 
                         setAllCardsState({ ...cards, cards: updatedCards });
-                        moveCard({
+                        const payload = activeItemRef.current?.card?.chapterId ? {
+                            fromIndex,
+                            toIndex,
+                            deckId: activeItemRef.current?.deckId,
+                            cardId: activeItemRef.current?.card?.cardId,
+                            newOrder: newOrderValue, chapterId: activeItemRef.current?.card?.chapterId,
+                            reindexNeeded
+                        } : {
                             fromIndex,
                             toIndex,
                             deckId: activeItemRef.current?.deckId,
                             cardId: activeItemRef.current?.card?.cardId,
                             newOrder: newOrderValue,
-                        });
+                            reindexNeeded
+
+                        }
+                        moveCard(payload);
                     }
 
                 } else if (over?.id === "CardDeleteArea") {
 
                     const deckId = activeItemRef.current?.deckId;
-
+                    const chapterId = activeItemRef.current?.card?.chapterId;
                     const cardInfo = {
                         note: activeItemRef.current?.card?.note,
                         cardId: activeItemRef.current?.card?.cardId,
@@ -426,7 +443,9 @@ const useDragHandlers = () => {
                         };
                     });
 
-                    deleteCard({ deckId, cardInfo });
+                    const cardDetails = chapterId ? { chapterId, deckId, cardInfo } : { deckId, cardInfo }
+
+                    deleteCard(cardDetails);
                 }
             }
         },

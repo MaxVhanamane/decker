@@ -17,6 +17,7 @@ import DndContextProvider from "./context/DndItemContext";
 import ToastContainer from "./components/toast/ToastContainer";
 import { DeckContextProvider } from "./context/DeckContext";
 import { StableNavigateContextProvider } from "./context/StableNavigateContext";
+import { SidebarContextProvider } from "./context/SidebarContext";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { networkMode: "offlineFirst" } },
@@ -25,41 +26,43 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <AudioProvider>
     <ThemeContextProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <StableNavigateContextProvider>
-            <OfflineProvider>
-              <UserContextProvider>
-                <SearchProvider>
-                  <BulbContextProvider>
-                    <ToastNotificationContextProvider>
-                      <Layout>
-                        <DeckContextProvider>
-                          <CardContextProvider>
-                            <DndContextProvider>
-                              <App />
-                            </DndContextProvider>
-                          </CardContextProvider>
-                        </DeckContextProvider>
-                      </Layout>
-                      <ToastContainer
-                        globalAutoHideDuration={5000}
-                        globalPosition="top-right"
-                      />
-                    </ToastNotificationContextProvider>
-                  </BulbContextProvider>
-                </SearchProvider>
-              </UserContextProvider>
-            </OfflineProvider>
-          </StableNavigateContextProvider>
-        </BrowserRouter>
+      <SidebarContextProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StableNavigateContextProvider>
+              <OfflineProvider>
+                <UserContextProvider>
+                  <SearchProvider>
+                    <BulbContextProvider>
+                      <ToastNotificationContextProvider>
+                        <ToastContainer
+                          globalAutoHideDuration={5000}
+                          globalPosition="top-right"
+                        />
+                        <Layout>
+                          <DeckContextProvider>
+                            <CardContextProvider>
+                              <DndContextProvider>
+                                <App />
+                              </DndContextProvider>
+                            </CardContextProvider>
+                          </DeckContextProvider>
+                        </Layout>
+                      </ToastNotificationContextProvider>
+                    </BulbContextProvider>
+                  </SearchProvider>
+                </UserContextProvider>
+              </OfflineProvider>
+            </StableNavigateContextProvider>
+          </BrowserRouter>
 
-        <ReactQueryDevtools
-          initialIsOpen={false}
-          position="bottom"
-          buttonPosition="bottom-left"
-        />
-      </QueryClientProvider>
+          <ReactQueryDevtools
+            initialIsOpen={false}
+            position="bottom"
+            buttonPosition="bottom-left"
+          />
+        </QueryClientProvider>
+      </SidebarContextProvider>
     </ThemeContextProvider>
   </AudioProvider>
 );

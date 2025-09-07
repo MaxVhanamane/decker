@@ -51,7 +51,7 @@ const CopyCode = ({ code, variant }: Props) => {
           aria-label="Copy code"
           size="md"
           className={twMerge(
-            "flex items-center justify-center gap-1 select-none",
+            "flex items-center justify-center gap-1 select-none rounded-md",
             variant === "preview" ? " mr-2 " : " mr-0 py-1.5"
           )}
           disabled={isCopied}

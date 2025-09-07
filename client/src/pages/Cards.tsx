@@ -17,7 +17,6 @@ import useToastOnError from "../hooks/utility/useToastOnError";
 
 import { Helmet } from "react-helmet";
 import type { CardContentType, ContentTypeForEdit } from "../types/types";
-import Loading from "../components/Loading";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { v4 as uuidv4 } from "uuid";
@@ -45,6 +44,10 @@ import { usePrismTheme } from "../hooks/utility/usePrismTheme";
 import { ThemeContext } from "../context/ThemeContext";
 import { useIsDeviceType } from "../hooks/utility/useIsDeviceType";
 import { useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
+import CardsSkeleton from "../components/card/skeleton.tsx/CardsSkeleton";
+import ChaptersSidebar from "../components/chapters/ChaptersSidebar";
+import { getDeckInfo } from "../functions/deckDataManager";
 
 // const Tips = lazy(() => import("../components/card/Tips"));
 const initialValue: Descendant[] = [
@@ -68,10 +71,13 @@ type PayloadType = {
   deckId: string;
   content: ContentTypeForPayload;
   maxOrder: number;
+  chapterId?: string;
 };
-
-const Cards = () => {
-  const { deckId } = useStableParams();
+type CardsProps = {
+  mode: "deck" | "chapter";
+};
+const Cards = ({ mode }: CardsProps) => {
+  const { deckId, chapterId } = useStableParams();
   const { animateSearchBar } = useContext(searchContext);
   const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
@@ -88,7 +94,7 @@ const Cards = () => {
     error,
     isLoading,
     isFetching: isFetchingCards,
-  } = useGetCards(deckId!);
+  } = useGetCards(deckId!, mode, chapterId);
   const maxOrder = data?.maxOrder ? data?.maxOrder : 0;
   const isCancelledError = error?.message === "CancelledError";
 
@@ -131,6 +137,14 @@ const Cards = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [, setCloseTipsModal] = useState(false);
   const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
+  const hasCards =
+    allCardsState &&
+    "cards" in allCardsState &&
+    allCardsState?.cards?.length > 0;
+  const [isNewChapter, setIsNewChapter] = useState(
+    state?.isNewChapter ?? false
+  );
+
   const [closeEditModalWithAnimation, setCloseEditModalWithAnimation] =
     useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
@@ -140,11 +154,12 @@ const Cards = () => {
   );
 
   const richTextWrapperRef = useRef<HTMLDivElement>(null);
-  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const cardToDeleteRef = useRef<CardContentType | null>(null);
+  const deckInfo = getDeckInfo();
 
   const navigate = useStableNavigate();
   usePrismTheme(theme);
+
   useToastOnError({
     isError: isCreateCardError,
     error: createCardError,
@@ -158,11 +173,23 @@ const Cards = () => {
   });
 
   useEffect(() => {
+    if (hasCards && isNewChapter) {
+      setIsNewChapter(false);
+    }
+  }, [hasCards, isNewChapter]);
+
+  useEffect(() => {
     if (data) {
       setIsCardsStateReady(true);
       setAllCardsState(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (hasCards && isNewChapter) {
+      setIsNewChapter(false);
+    }
+  }, [hasCards, isNewChapter]);
 
   useEffect(() => {
     return () => {
@@ -211,7 +238,7 @@ const Cards = () => {
         ...prev,
         confirmDeleteCardModal: {
           show: true,
-          startClosingModalAnimation: false,
+          startClosingModalAnimation: true,
         },
       })),
   });
@@ -235,7 +262,7 @@ const Cards = () => {
         ...prev,
         confirmCloseCardModal: {
           show: true,
-          startClosingModalAnimation: false,
+          startClosingModalAnimation: true,
         },
       })),
   });
@@ -305,8 +332,9 @@ const Cards = () => {
     deleteCard({
       deckId: deckId!,
       cardInfo,
+      chapterId,
     });
-  }, [deleteCard, deckId]);
+  }, [deleteCard, deckId, chapterId]);
 
   const handleOnCancelDeleteCard = useCallback(() => {
     setModalState((prev) => ({
@@ -339,7 +367,7 @@ const Cards = () => {
         ...prev,
         confirmCloseCardModal: {
           show: true,
-          startClosingModalAnimation: true,
+          startClosingModalAnimation: false,
         },
       }));
     } else {
@@ -395,7 +423,12 @@ const Cards = () => {
         };
         const currentNote = note;
         const heightVal = height;
-        const payload: PayloadType = { deckId: deckId!, content, maxOrder };
+        const payload: PayloadType = {
+          deckId: deckId!,
+          content,
+          maxOrder,
+          chapterId,
+        };
         addCard(payload, {
           //While saving the card, if an error occurs, we will retrieve the cleared card information and show it again so that the user doesn't lose the created card details.
           onError: () => {
@@ -427,6 +460,7 @@ const Cards = () => {
       note,
       deckId,
       height,
+      chapterId,
       isCreatingCard,
       isFetchingCards,
       isPlayingAudioAllowed,
@@ -457,7 +491,7 @@ const Cards = () => {
       setModalState((prev) => ({
         ...prev,
         confirmDeleteCardModal: {
-          startClosingModalAnimation: true,
+          startClosingModalAnimation: false,
           show: true,
         },
       }));
@@ -505,6 +539,7 @@ const Cards = () => {
         deckId: deckId!,
         newContent: { note },
         cardId,
+        chapterId,
       };
 
       let fullScreenCardDataCache = fullScreenCardData;
@@ -545,16 +580,12 @@ const Cards = () => {
   }, [
     showFullScreen,
     showToast,
+    chapterId,
     editCard,
     editContent,
     isOnline,
     fullScreenCardData,
   ]);
-
-  const hasCards =
-    allCardsState &&
-    "cards" in allCardsState &&
-    allCardsState?.cards?.length > 0;
 
   const handleTransitionEnd = useCallback(() => {
     if (data && "cards" in data && data?.cards?.length === 0) {
@@ -605,24 +636,15 @@ const Cards = () => {
     );
   }
 
-  if (isLoading || !isCardsStateReady) {
-    return (
-      <>
-        <Loading />
-        <Bulb />
-      </>
-    );
-  }
-
   return (
     <>
       <Helmet>
         <title>
           {animateSearchBar
             ? "Search result"
-            : data && "title" in data
-            ? `${data?.title}-cards`
-            : "Error"}
+            : mode === "deck"
+            ? "Top-level deck cards"
+            : "Chapter-cards"}
         </title>
       </Helmet>
 
@@ -636,7 +658,11 @@ const Cards = () => {
         </Suspense>
       )} */}
 
-      <div className="flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-[calc(100vh-64px)] ">
+      {createPortal(
+        <ChaptersSidebar />,
+        document.getElementById("chapters-portal")!
+      )}
+      <div className="relative flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-[calc(100vh-64px)]">
         <CardInput
           expandEditor={expandEditor}
           setExpandEditor={setExpandEditor}
@@ -670,16 +696,55 @@ const Cards = () => {
             })()})`,
           }}
         >
-          <h1 className="font-bold text-xl text-gray-800 mb-10 dark:text-gray-50">
-            {hasCards && state?.deckTitle}
+          <h1 className="text-gray-500 mb-10 dark:text-gray-400 text-sm">
+            {deckInfo.deckTitle?.length > 30
+              ? deckInfo.deckTitle.slice(0, 30) + "…"
+              : deckInfo.deckTitle}
+
+            {deckInfo.chapterTitle && (
+              <>
+                {" "}
+                &gt;{" "}
+                {deckInfo.chapterTitle.length > 30
+                  ? deckInfo.chapterTitle.slice(0, 30) + "…"
+                  : deckInfo.chapterTitle}
+              </>
+            )}
           </h1>
-          <CardContainer
-            handleEditCardButtonClick={handleEditCardButtonClick}
-            handleShowFullScreen={handleShowFullScreen}
-            cards={allCardsState?.cards || []}
-          />
+
+          {!isNewChapter ? (
+            !(isLoading || !isCardsStateReady) ? (
+              <CardContainer
+                handleEditCardButtonClick={handleEditCardButtonClick}
+                handleShowFullScreen={handleShowFullScreen}
+                cards={allCardsState?.cards || []}
+              />
+            ) : (
+              <CardsSkeleton skeletonCount={5} />
+            )
+          ) : null}
         </div>
-        {!hasCards && !expandEditor && !isTransitioning && (
+        {!isNewChapter &&
+          !hasCards &&
+          !expandEditor &&
+          !isTransitioning &&
+          !(isLoading || !isCardsStateReady) && (
+            <NoContent
+              imageSource="/illustrations/no_cards_found.svg"
+              heading="Looks like you haven't added any cards yet."
+              buttonLabel="Craft an Elegant Note"
+              onButtonClick={() => {
+                setExpandEditor(true);
+                if (isPlayingAudioAllowed) {
+                  setTimeout(() => {
+                    handlePlayAudio("open", "/cards");
+                  }, 100);
+                }
+              }}
+              imageAltText="No cards found!"
+            />
+          )}
+        {isNewChapter && (
           <NoContent
             imageSource="/illustrations/no_cards_found.svg"
             heading="Looks like you haven't added any cards yet."
@@ -744,7 +809,6 @@ const Cards = () => {
           editContent={editContent}
           setEditContent={setEditContent}
           handleSaveEdit={handleSaveEdit}
-          ref={editTextareaRef}
           showEditModalForCard={showEditModalForCard}
           setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
           closeEditModalWithAnimation={closeEditModalWithAnimation}

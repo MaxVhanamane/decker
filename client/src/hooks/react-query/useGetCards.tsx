@@ -1,15 +1,19 @@
 import { request } from "../../utils/fetch-utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { CustomError } from "../../utils/customError";
 import type { GetCardsResponseType } from "../../types/types";
-import { useEffect } from "react";
+import { usePreloadCache } from "../utility/usePreloadCache";
 
 const getCards = async (
   deckId: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  chapterId?: string
 ): Promise<GetCardsResponseType | null> => {
   try {
-    const data = await request.get(`/cards/${deckId}`, signal);
+    const url = chapterId
+      ? `/cards/${deckId}/${chapterId}`
+      : `/cards/${deckId}`;
+    const data = await request.get(url, signal);
     return data?.data;
   } catch (error: any) {
     if (
@@ -30,39 +34,31 @@ const getCards = async (
   }
 };
 
-const useGetCards = (deckId: string) => {
-  const queryKey = ["cards", deckId];
-  const queryClient = useQueryClient();
-  const url = `${import.meta.env.VITE_API_URL}/cards/${deckId}`;
+const useGetCards = (
+  deckId: string,
+  mode: "deck" | "chapter",
+  chapterId?: string
+) => {
+  let queryKey: string[] = [];
+  let url: string | undefined;
+  if (mode == "deck") {
+    url = `${import.meta.env.VITE_API_URL}/cards/${deckId}`;
+    queryKey = ["cards", deckId];
+  } else if (mode === "chapter" && chapterId) {
+    url = `${import.meta.env.VITE_API_URL}/cards/${deckId}/${chapterId}`;
+    queryKey = ["chapter-cards", deckId, chapterId];
+  }
+  const cacheName = mode == "deck" ? "cards-cache" : "chapter-cards-cache";
 
   // Pre-populate query cache with browser cached data
-  useEffect(() => {
-    const loadAndSetCachedData = async () => {
-      // Only load if there's no data in React Query cache
-      const existingData = queryClient.getQueryData(["cards", deckId]);
-      if (existingData) return;
-
-      try {
-        const cache = await caches.open("cards-cache");
-        const cachedResponse = await cache.match(url);
-
-        if (cachedResponse) {
-          const cachedData = await cachedResponse.json();
-          // Pre-populate the React Query cache with success state
-          queryClient.setQueryData(["cards", deckId], cachedData);
-        }
-      } catch (error) {
-        // Silently fail - cache loading is optional, don't break the app
-      }
-    };
-
-    loadAndSetCachedData();
-  }, []);
+  if (url) {
+    usePreloadCache({ queryKey, cacheName, url });
+  }
 
   return useQuery({
     queryKey: queryKey,
     queryFn: ({ signal }) => {
-      return getCards(deckId, signal);
+      return getCards(deckId, signal, chapterId);
     },
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: true, // Refetch on network reconnect

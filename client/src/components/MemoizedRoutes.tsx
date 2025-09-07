@@ -1,12 +1,12 @@
 import { lazy, memo, Suspense } from "react";
 import ErrorBoundary from "./ErrorBoundary";
 import { Route, Routes } from "react-router-dom";
-import Loading from "./Loading";
 import CheckAuth from "./CheckAuth";
 import Login from "../pages/Login";
 import AuthSuccess from "../pages/AuthSuccess";
 import Deck from "../pages/Deck";
 import PrivateRoutes from "./PrivateRoutes";
+import LoadingCentered from "./Loading/LoadingCentered";
 
 // Lazy load the components
 const AuthFailure = lazy(() => import("../pages/AuthFailure"));
@@ -32,8 +32,24 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/cards/:deckId"
             element={
-              <Suspense fallback={<Loading />}>
-                <Cards />
+              <Suspense
+                fallback={
+                  <LoadingCentered message="Just a moment while we bring your cards…" />
+                }
+              >
+                <Cards mode="deck" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/cards/:deckId/:chapterId"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingCentered message="Just a moment while we bring your cards…" />
+                }
+              >
+                <Cards mode="chapter" />
               </Suspense>
             }
           />
@@ -41,7 +57,7 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/account/deletemyaccount"
             element={
-              <Suspense fallback={<Loading />}>
+              <Suspense fallback={<LoadingCentered />}>
                 <DeleteMyAccount />
               </Suspense>
             }
@@ -52,7 +68,7 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/signup"
             element={
-              <Suspense fallback={<Loading />}>
+              <Suspense fallback={<LoadingCentered />}>
                 <SignUp />
               </Suspense>
             }
@@ -61,7 +77,7 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/sessionexpired"
             element={
-              <Suspense fallback={<Loading />}>
+              <Suspense fallback={<LoadingCentered />}>
                 <SessionExpired />
               </Suspense>
             }
@@ -69,7 +85,7 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/forgotpassword"
             element={
-              <Suspense fallback={<Loading />}>
+              <Suspense fallback={<LoadingCentered />}>
                 <ForgotPassword />
               </Suspense>
             }
@@ -77,7 +93,7 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/changepassword"
             element={
-              <Suspense fallback={<Loading />}>
+              <Suspense fallback={<LoadingCentered />}>
                 <ChangePassword />
               </Suspense>
             }
@@ -86,7 +102,7 @@ const MemoizedRoutes = memo(() => {
           <Route
             path="/verifyemail"
             element={
-              <Suspense fallback={<Loading />}>
+              <Suspense fallback={<LoadingCentered />}>
                 <VerifyEmail />
               </Suspense>
             }
@@ -96,7 +112,7 @@ const MemoizedRoutes = memo(() => {
         <Route
           path="/auth/failure"
           element={
-            <Suspense fallback={<Loading />}>
+            <Suspense fallback={<LoadingCentered />}>
               <AuthFailure />
             </Suspense>
           }
@@ -104,7 +120,7 @@ const MemoizedRoutes = memo(() => {
         <Route
           path="/accountdeletionsuccess"
           element={
-            <Suspense fallback={<Loading />}>
+            <Suspense fallback={<LoadingCentered />}>
               <AccountDeletionSuccess />
             </Suspense>
           }
@@ -114,7 +130,7 @@ const MemoizedRoutes = memo(() => {
         <Route
           path="*"
           element={
-            <Suspense fallback={<Loading />}>
+            <Suspense fallback={<LoadingCentered />}>
               <PageNotFound />
             </Suspense>
           }

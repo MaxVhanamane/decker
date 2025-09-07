@@ -223,9 +223,9 @@ const Toast = ({
         />
       )}
       <Icon
-        className={`w-fit ${isMultipleLines ? "text-3xl " : "text-2xl"} ${
-          theme === "auto" ? textColors[severity] : "text-gray-50"
-        } ${
+        className={`w-fit flex-shrink-0 ${
+          isMultipleLines ? "text-3xl " : "text-2xl"
+        } ${theme === "auto" ? textColors[severity] : "text-gray-50"} ${
           visible && animationStyle === "slide"
             ? position === "top-center" || position === "bottom-center"
               ? "animate-[scaleUp_0.2s_ease-in]"

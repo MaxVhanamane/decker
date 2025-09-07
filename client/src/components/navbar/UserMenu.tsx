@@ -22,11 +22,15 @@ import { twMerge } from "tailwind-merge";
 import { useClickOutside } from "../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
+import useUser from "../../hooks/utility/useUser";
 
 type PropType = {
   setModalState: Dispatch<
     SetStateAction<{
-      confirmLogoutModal: { show: boolean; startModalAnimation: boolean };
+      confirmLogoutModal: {
+        show: boolean;
+        startClosingModalAnimation: boolean;
+      };
     }>
   >;
 };
@@ -46,6 +50,7 @@ const UserMenu = ({ setModalState }: PropType) => {
   const [imageError, setImageError] = useState(false);
   const isTouchDevice = useIsDeviceType("tablet");
   const navigate = useNavigate();
+  const { getUser, isFetching } = useUser();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const emailTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -61,6 +66,10 @@ const UserMenu = ({ setModalState }: PropType) => {
 
   const handleImageError = () => {
     setImageError(true);
+  };
+
+  const handleFetchEmail = () => {
+    getUser();
   };
 
   const showNoInternetToast = () => {
@@ -80,6 +89,7 @@ const UserMenu = ({ setModalState }: PropType) => {
       navigate("/account/deletemyaccount", {
         state: { from: location.pathname },
       });
+      setShowUserProfile(false);
     } else {
       showNoInternetToast();
     }
@@ -95,9 +105,10 @@ const UserMenu = ({ setModalState }: PropType) => {
       setModalState({
         confirmLogoutModal: {
           show: true,
-          startModalAnimation: true,
+          startClosingModalAnimation: false,
         },
       });
+      setShowUserProfile(false);
     } else {
       showNoInternetToast();
     }
@@ -226,45 +237,65 @@ const UserMenu = ({ setModalState }: PropType) => {
           <div className="p-2">
             <ul className="flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 ">
               <li className="flex gap-1 whitespace-nowrap w-fit px-1">
-                <div className="relative group flex items-center justify-center gap-1">
+                <div
+                  className={twMerge(
+                    "relative flex items-center justify-center gap-1",
+                    userInfo?.username && "group"
+                  )}
+                >
                   <p
-                    className="truncate text-ellipsis overflow-hidden max-w-[14rem]"
+                    className="truncate text-ellipsis  overflow-hidden max-w-[14rem]"
                     onClick={handleUsernameClick}
                   >
                     username:{" "}
                     <span className=" text-sm">
-                      {userInfo?.username || "N/A"}
+                      {userInfo?.username ?? "N/A"}
                     </span>
                   </p>
 
                   <div
                     className={twMerge(
-                      "absolute bottom-full left-0 mt-1 opacity-0 bg-gray-800 text-white group-hover:opacity-100 dark:bg-gray-100 dark:text-slate-900 text-xs rounded shadow-md py-2 px-3 z-10 max-w-[15rem] w-max break-words whitespace-normal ",
-                      showComplete.username && "opacity-100"
+                      "absolute bottom-full left-0 mt-1 hidden bg-gray-800 text-white group-hover:block dark:bg-gray-100 dark:text-slate-900 text-xs rounded shadow-md py-2 px-3 z-10 max-w-[15rem] w-max break-words whitespace-normal ",
+                      showComplete.username && "block"
                     )}
                   >
-                    {userInfo?.username || "N/A"}
+                    {userInfo?.username ?? "N/A"}
                   </div>
                 </div>
               </li>
               <li className="flex gap-1 whitespace-nowrap w-fit px-1">
-                <div className="relative group flex items-center justify-center gap-1">
+                <div
+                  className={twMerge(
+                    "relative flex items-center justify-center gap-1",
+                    userEmailAddress && "group"
+                  )}
+                >
                   <p
                     className="truncate text-ellipsis overflow-hidden max-w-[14rem]"
                     onClick={handleEmailClick}
                   >
                     email:{" "}
                     <span className=" text-sm">
-                      {userEmailAddress || "N/A"}
+                      {userEmailAddress ?? "N/A"}
+                      {!userEmailAddress && (
+                        <Button
+                          className="inline ml-2 rounded-md border dark:border-slate-200 border-gray-700 px-1 font-light text-sm"
+                          variant="unstyled"
+                          onClick={handleFetchEmail}
+                          disabled={isFetching}
+                        >
+                          {isFetching ? "Fetching..." : "Fetch email"}
+                        </Button>
+                      )}
                     </span>
                   </p>
                   <div
                     className={twMerge(
-                      "absolute top-full left-0 mt-1 opacity-0 group-hover:opacity-100 bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 text-xs rounded shadow-md py-2 px-3 z-10 max-w-[15rem]  w-max break-words whitespace-normal",
-                      showComplete.email && "opacity-100 "
+                      "absolute top-full left-0 mt-1 hidden group-hover:block bg-gray-800 text-white dark:bg-gray-100 dark:text-slate-900 text-xs rounded shadow-md py-2 px-3 z-10 max-w-[15rem]  w-max break-words whitespace-normal",
+                      showComplete.email && "block "
                     )}
                   >
-                    {userEmailAddress || "N/A"}
+                    {userEmailAddress ?? "N/A"}
                   </div>
                 </div>
               </li>
@@ -278,7 +309,7 @@ const UserMenu = ({ setModalState }: PropType) => {
               tabIndex={showUserProfile ? 0 : -1}
               variant="unstyled"
               onClick={handleDeleteAccount}
-              className="rounded  text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 px-1 transition-[color] duration-300 cursor-pointer "
+              className="rounded text-center dark:text-gray-50 dark:hover:text-gray-300  text-gray-700 hover:text-gray-600 flex items-center justify-center gap-2 px-1 transition-[color] duration-300 cursor-pointer "
               aria-label="Delete My Account"
             >
               <AiOutlineDelete /> Delete My Account

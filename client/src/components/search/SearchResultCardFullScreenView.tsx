@@ -1,6 +1,5 @@
 import {
   useState,
-  useRef,
   useContext,
   useEffect,
   useCallback,
@@ -73,12 +72,11 @@ const SearchResultCardFullScreenView = ({
   } = useEditCard();
 
   // Refs
-  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [modalState, setModalState] = useState({
     confirmDeleteCardModal: {
       show: false,
-      startModalAnimation: false,
+      startClosingModalAnimation: false,
     },
   });
 
@@ -94,7 +92,7 @@ const SearchResultCardFullScreenView = ({
       setModalState({
         confirmDeleteCardModal: {
           show: true,
-          startModalAnimation: false,
+          startClosingModalAnimation: true,
         },
       }),
   });
@@ -134,7 +132,7 @@ const SearchResultCardFullScreenView = ({
     }
 
     setModalState({
-      confirmDeleteCardModal: { show: true, startModalAnimation: true },
+      confirmDeleteCardModal: { show: true, startClosingModalAnimation: false },
     });
   }, [isOnline]);
 
@@ -238,7 +236,10 @@ const SearchResultCardFullScreenView = ({
   const handleOnConfirmDeleteCard = useCallback(() => {
     setModalState((prev) => ({
       ...prev,
-      confirmDeleteCardModal: { startModalAnimation: false, show: false },
+      confirmDeleteCardModal: {
+        startClosingModalAnimation: false,
+        show: false,
+      },
     }));
     setShowFullScreen(false);
     deleteCard({
@@ -256,7 +257,10 @@ const SearchResultCardFullScreenView = ({
   const handleOnCancelDeleteCard = useCallback(() => {
     setModalState((prev) => ({
       ...prev,
-      confirmDeleteCardModal: { startModalAnimation: false, show: false },
+      confirmDeleteCardModal: {
+        startClosingModalAnimation: false,
+        show: false,
+      },
     }));
   }, []);
 
@@ -279,7 +283,6 @@ const SearchResultCardFullScreenView = ({
           handleSaveEdit={handleSaveEdit}
           closeEditModalWithAnimation={closeEditModalWithAnimation}
           setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
-          ref={editTextareaRef}
         />
       ) : null}
 
@@ -290,7 +293,7 @@ const SearchResultCardFullScreenView = ({
           onConfirm={handleOnConfirmDeleteCard}
           showConfirmationModal={modalState.confirmDeleteCardModal.show}
           startClosingModalAnimation={
-            modalState.confirmDeleteCardModal.startModalAnimation
+            modalState.confirmDeleteCardModal.startClosingModalAnimation
           }
         />
       )}

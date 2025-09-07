@@ -10,6 +10,7 @@ import { DeckContext } from "../../context/DeckContext";
 import { useClickOutside } from "../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 import DeckMoreOptions from "./DeckMoreOptions";
+import { storeDeckInfo } from "../../functions/deckDataManager";
 
 type PropTypes = {
   handleEditDeck: (deckId: string, title: string) => void;
@@ -124,9 +125,9 @@ const DeckItem = ({
         onClick={() => {
           handlePin(deck.deckId, deck.pinned);
         }}
-        className="absolute  dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
+        className="absolute transition-colors duration-300 hover:bg-gray-300 dark:hover:bg-slate-700 dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
       >
-        <p className=" rounded-tr text-sm px-1  text-center  text-gray-600 dark:text-slate-500 group-hover/Btn:scale-95">
+        <p className="rounded-tr  transition-colors duration-300 text-sm px-1  text-center  text-gray-600 dark:text-slate-500 dark:group-hover/Btn:text-slate-400 ">
           {deck.pinned ? (
             <BsFillPinFill className="text-[0.9rem]" />
           ) : (
@@ -147,7 +148,7 @@ const DeckItem = ({
           toolTipPosition="bottom"
           type="button"
           onClick={() => setShowMoreOptions((prevValue) => !prevValue)}
-          className="absolute z-50 right-2 top-2 hover:scale-95 rounded-full p-[0.1rem]"
+          className="absolute z-50 right-2 top-2 rounded-full p-[0.1rem]"
         >
           <BsThreeDotsVertical className="dark:text-slate-400 text-gray-600" />
         </Button>
@@ -166,7 +167,7 @@ const DeckItem = ({
       <div className="z-40 w-full flex items-center justify-center ">
         <div className="absolute bottom-2 left-2 text-xs text-gray-400 dark:text-gray-400/80 flex items-center justify-center gap-1 select-none">
           <span>{formatDate(deck.createdAt)}</span>{" "}
-          <span className="inline-block w-1 h-1 bg-gray-300 rounded-full"></span>
+          <span className="inline-block w-1 h-1 bg-gray-400 dark:bg-gray-400/80 rounded-full"></span>
           <span>
             {deck.cardsCount || 0}{" "}
             {(deck.cardsCount || 0) === 1 ? "entry" : "entries"}
@@ -198,15 +199,15 @@ const DeckItem = ({
           <Link
             to={`cards/${deck.deckId}`}
             onClick={(e) => {
+              storeDeckInfo(deck.title);
               if (highlightedTitle && closeSearchBar) {
                 e.preventDefault();
                 closeSearchBar(deck.deckId);
               }
             }}
-            state={{ deckTitle: deck.title }}
             className="outline-none focus-visible:ring-2 dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 inline-block w-full rounded-sm"
           >
-            <p className=" break-all font-bold  line-clamp-1 h-7 text-center  w-full select-none">
+            <p className="break-all font-bold  line-clamp-1 h-7 text-center  w-full select-none">
               {highlightedTitle ? highlightedTitle : deck.title}
             </p>
           </Link>

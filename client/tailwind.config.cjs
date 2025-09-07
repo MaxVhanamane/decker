@@ -45,7 +45,10 @@ module.exports = {
         radialGradient: 'radial-gradient(#0284c7,rgba(12, 123, 179, 0))',
       }),
       keyframes: {
-
+        'spinner-fade': {
+          from: { opacity: '1' },
+          to: { opacity: '0.25' },
+        },
         marquee: {
           "0%": {
             "transform": "translateX(100%)"
@@ -1141,13 +1144,26 @@ module.exports = {
           "95%": { transform: "rotate(3deg)" },
           "99%": { transform: "rotate(0deg)" },  // Tiny final movement
           "100%": { transform: "rotate(0deg)" }   // Comes to a rest smoothly
-        }
+        },
 
-
+        triangulate: {
+          "0%, 100%": { transform: "none" },
+          "33.333%": { transform: "translate(120%, 175%)" },
+          "66.666%": { transform: "translate(-95%, 175%)" },
+        },
+        grow0: {
+          "0%, 100%": { transform: "scale(1.5)" },
+          "20%, 70%": { transform: "none" },
+        },
 
       },
 
       animation: {
+        triangulate: "triangulate 1.25s ease infinite",
+        grow0: "grow0 1.25s ease infinite",
+        grow0Delay1: "grow0 1.25s ease -0.666s infinite",
+        grow0Delay2: "grow0 1.25s ease -0.333s infinite",
+        'spinner-bar': 'spinner-fade 1s linear infinite',
         marquee: "marquee 10s linear 1",
         rotate: "rotate 10s linear forwards infinite",
         translateFromLeftToRight: "translateFromLeftToRight 0.3s ease-in-out 1",

@@ -22,9 +22,9 @@ type PropTypes = {
   card: {
     note: Descendant[];
     cardId: string;
-    _id: string;
     createdAt: string;
     order: number;
+    chapterId?: string;
   };
   index: number;
 };
@@ -37,6 +37,20 @@ const SortableCardItem = ({
 }: PropTypes) => {
   const { deckId } = useStableParams();
 
+  const cardData = card?.chapterId
+    ? {
+        note: card?.note,
+        createdAt: card?.createdAt,
+        cardId: card?.cardId,
+        order: card?.order,
+        chapterId: card?.chapterId,
+      }
+    : {
+        note: card?.note,
+        createdAt: card?.createdAt,
+        cardId: card?.cardId,
+        order: card?.order,
+      };
   const {
     isDragging,
     listeners,
@@ -46,16 +60,9 @@ const SortableCardItem = ({
     transform,
   } = useSortable({
     id: card.cardId,
-
     data: {
       name: "card",
-      card: {
-        note: card?.note,
-        createdAt: card?.createdAt,
-        cardId: card?.cardId,
-        _id: card?._id,
-        order: card?.order,
-      },
+      card: cardData,
       index,
       deckId,
     },

@@ -6,10 +6,17 @@ import { CustomError } from "../../utils/customError";
 
 const createCard = async (payload: CreateCardPayloadType) => {
   try {
-    const data = await request.post(`/card/${payload.deckId}`, {
-      content: payload.content,
-      maxOrder: payload.maxOrder,
-    });
+    const serverData = payload.chapterId
+      ? {
+          content: payload.content,
+          maxOrder: payload.maxOrder,
+          chapterId: payload.chapterId,
+        }
+      : {
+          content: payload.content,
+          maxOrder: payload.maxOrder,
+        };
+    const data = await request.post(`/card/${payload.deckId}`, serverData);
 
     return data?.data;
   } catch (error) {
@@ -26,45 +33,81 @@ const useCreateCard = () => {
   return useMutation({
     mutationFn: createCard,
     onMutate: async (data: CreateCardPayloadType) => {
-      await queryClient.cancelQueries({
-        queryKey: ["cards", data.deckId],
-      });
+      if (!data?.chapterId) {
+        const queryKey = ["cards", data.deckId];
+        await queryClient.cancelQueries({
+          queryKey,
+        });
 
-      const previousCardData: CardListType[] = queryClient.getQueryData([
-        "cards",
-        data.deckId,
-      ])!;
+        const previousCardData: CardListType[] =
+          queryClient.getQueryData(queryKey)!;
 
-      queryClient.setQueryData<CardListType | undefined>(
-        ["cards", data.deckId],
-        (oldCardData) => {
-          if (oldCardData) {
-            // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will reference the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
-            const newArray = [...oldCardData.cards];
+        queryClient.setQueryData<CardListType | undefined>(
+          queryKey,
+          (oldCardData) => {
+            if (oldCardData) {
+              // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will reference the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
+              const newArray = [...oldCardData.cards];
 
-            newArray.unshift({
-              ...data.content,
-              createdAt: new Date().toDateString(),
-              order: data.maxOrder,
-            });
-            return { ...oldCardData, cards: newArray };
+              newArray.unshift({
+                ...data.content,
+                createdAt: new Date().toDateString(),
+                order: data.maxOrder + 10,
+              });
+              return { ...oldCardData, cards: newArray };
+            }
           }
-        }
-      );
+        );
 
-      return { previousCardData };
+        return { previousCardData };
+      } else {
+        const queryKey = ["chapter-cards", data.deckId, data.chapterId];
+        await queryClient.cancelQueries({
+          queryKey,
+        });
+
+        const previousCardData: CardListType[] =
+          queryClient.getQueryData(queryKey)!;
+
+        queryClient.setQueryData<CardListType | undefined>(
+          queryKey,
+          (oldCardData) => {
+            if (oldCardData) {
+              // creating a new array using spread operator if I directly assign newArray=oldCardData.cards like this It will reference the same array so If I modify here It will change data in original array which is not good because I am returning previousCardData so that I can reverse optimistic updates in onError function If some error occures. and there I want old array as it is.
+              const newArray = [...oldCardData.cards];
+
+              newArray.unshift({
+                ...data.content,
+                createdAt: new Date().toDateString(),
+                order: data.maxOrder + 10,
+                chapterId: data.chapterId,
+              });
+              return {
+                ...oldCardData,
+                cards: newArray,
+                maxOrder: data.maxOrder + 10,
+              };
+            }
+          }
+        );
+
+        return { previousCardData };
+      }
     },
 
     onError: (_error, data: CreateCardPayloadType, context) => {
-      queryClient.setQueryData(
-        ["cards", data.deckId],
-        context?.previousCardData
-      );
+      const queryKey = data?.chapterId
+        ? ["chapter-cards", data.deckId, data.chapterId]
+        : ["cards", data.deckId];
+      queryClient.setQueryData(queryKey, context?.previousCardData);
     },
 
     onSettled: (_dataReturnedByTheServer, _error, mutationData) => {
+      const queryKey = mutationData?.chapterId
+        ? ["chapter-cards", mutationData.deckId, mutationData.chapterId]
+        : ["cards", mutationData.deckId];
       queryClient.invalidateQueries({
-        queryKey: ["cards", mutationData.deckId],
+        queryKey,
       });
     },
     retry: false,

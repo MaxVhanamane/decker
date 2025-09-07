@@ -1,8 +1,8 @@
 import { twMerge } from "tailwind-merge";
 import Button from "../Button";
-import { BsFillPinFill, BsThreeDotsVertical } from "react-icons/bs";
-import { formatDate } from "../../functions/formatDate";
+import { BsFillPinFill, BsThreeDotsVertical, BsPin } from "react-icons/bs";
 import type { DeckType } from "../../types/types";
+import { formatDate } from "../../functions/formatDate";
 
 type DeckItemPresentationalPropType = {
   deck: DeckType & {
@@ -62,8 +62,12 @@ const DeckItemPresentational = ({
         size="md"
         className="absolute  dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
       >
-        <p className=" rounded-tr text-sm px-1  text-center  text-gray-600 dark:text-slate-400 group-hover/Btn:scale-95">
-          <BsFillPinFill className="text-[0.9rem]" />
+        <p className=" rounded-tr text-sm px-1  text-center text-gray-600 dark:text-slate-500  group-hover/Btn:scale-95">
+          {deck.pinned ? (
+            <BsFillPinFill className="text-[0.9rem]" />
+          ) : (
+            <BsPin />
+          )}
         </p>
       </Button>
 
@@ -78,9 +82,9 @@ const DeckItemPresentational = ({
       </div>
 
       <div className="z-40 w-full flex items-center justify-center ">
-        <div className="absolute bottom-2 left-2 text-xs text-gray-400 flex items-center justify-center gap-1 select-none">
+        <div className="absolute bottom-2 left-2 text-xs text-gray-400 dark:text-gray-400/80 flex items-center justify-center gap-1 select-none">
           <span>{formatDate(deck.createdAt)}</span>{" "}
-          <span className="inline-block w-1 h-1 bg-gray-300 rounded-full"></span>
+          <span className="inline-block w-1 h-1 bg-gray-400 dark:bg-gray-400/80 rounded-full"></span>
           <span>
             {(deck.cardsCount ?? deck?.cards?.length) || 0}{" "}
             {((deck.cardsCount ?? deck?.cards?.length) || 0) === 1

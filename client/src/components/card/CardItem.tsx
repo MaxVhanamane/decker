@@ -31,7 +31,6 @@ type PropType = {
   card: {
     note: Descendant[];
     cardId: string;
-    _id: string;
     createdAt: string;
     order: number;
   };
@@ -190,7 +189,7 @@ const CardItem = memo(
       <div
         ref={elementRef}
         className={twMerge(
-          "relative border overflow-hidden group/card dark:border-slate-600 border-slate-400 shadow-4-sides rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[9rem] lg:h-[9.5rem]  text-justify   transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-blue-500  dark:hover:shadow-blue-500  hover:border-sky-600 hover:shadow-sky-600 group",
+          "relative border overflow-hidden group/card dark:border-slate-600 border-slate-400 shadow-4-sides rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-blue-500  dark:hover:shadow-blue-500  hover:border-sky-600 hover:shadow-sky-600 group",
           undoCardCardId === card.cardId &&
             "!border-yellow-400  !shadow-yellow-400 dark:text-yellow-400 text-yellow-400 animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_3] "
         )}
@@ -210,10 +209,10 @@ const CardItem = memo(
             strokeLinecap="round"
             strokeLinejoin="round"
             className={twMerge(
-              "  absolute -right-4 -top-8 h-20 w-20 origin-top-right stroke-[0.4]  duration-300 group-hover/card:scale-90 ",
+              "  absolute -right-4 -top-8 h-20 w-20 origin-top-right stroke-[0.3]  duration-300 group-hover/card:scale-90 ",
               undoCardCardId === card.cardId
                 ? "dark:text-yellow-400 text-yellow-500"
-                : "text-black/10 dark:text-slate-700 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
+                : "text-slate-400 dark:text-slate-600 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
             )}
           >
             <circle cx="12" cy="12" r="10"></circle>
@@ -228,10 +227,10 @@ const CardItem = memo(
             strokeLinecap="round"
             strokeLinejoin="round"
             className={twMerge(
-              "absolute -right-4 -top-8 h-28 w-28 origin-top-right stroke-[0.3] text-black/10 duration-500 group-hover/card:scale-90 dark:text-white/10 ",
+              "absolute -right-4 -top-8 h-28 w-28 origin-top-right stroke-[0.2]  duration-500 group-hover/card:scale-90 dark:text-slate-600",
               undoCardCardId === card.cardId
                 ? "dark:text-yellow-400 text-yellow-500"
-                : "text-black/10 dark:text-slate-700 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
+                : "text-slate-400 dark:text-slate-600 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
             )}
           >
             <circle cx="12" cy="12" r="10"></circle>
@@ -239,7 +238,7 @@ const CardItem = memo(
         </div>
 
         <div className="absolute bottom-0 left-0 flex items-center justify-between w-full py-2 px-3 ">
-          <div className="text-xs text-gray-400 ">
+          <div className="text-xs text-gray-400 select-none">
             <span>{formatDate(card.createdAt)}</span>
           </div>
           <div className="flex items-center justify-center gap-3 ">

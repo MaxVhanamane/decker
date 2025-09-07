@@ -4,13 +4,13 @@ import Button from "./Button";
 
 type ConfirmationModalProps = {
   showConfirmationModal: boolean;
-  onConfirm: (resetEditor: () => void) => void;
+  onConfirm: () => void;
   onCancel: () => void;
   message: string;
   startClosingModalAnimation: boolean;
 };
 
-const TRANSITION_DURATION = 300;
+const TRANSITION_DURATION = 200;
 
 const ConfirmationModal = ({
   showConfirmationModal,
@@ -21,16 +21,18 @@ const ConfirmationModal = ({
 }: ConfirmationModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleConfirm = () => {
+  const closeModal = (callback: () => void) => {
     setIsVisible(false);
-    setTimeout(onConfirm, TRANSITION_DURATION);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      callback();
+    }, TRANSITION_DURATION);
   };
 
-  const handleCancel = () => {
-    setIsVisible(false);
-    setTimeout(onCancel, TRANSITION_DURATION);
-  };
+  const handleConfirm = () => closeModal(onConfirm);
+  const handleCancel = () => closeModal(onCancel);
 
   useFocusTrap(modalRef, "both", {
     onEscape: handleCancel,
@@ -38,12 +40,17 @@ const ConfirmationModal = ({
 
   useEffect(() => {
     if (!startClosingModalAnimation && showConfirmationModal) {
-      setIsVisible(false);
-      setTimeout(onCancel, TRANSITION_DURATION);
+      requestAnimationFrame(() => setIsVisible(true));
     } else if (startClosingModalAnimation && showConfirmationModal) {
-      setIsVisible(true);
+      handleCancel();
     }
   }, [startClosingModalAnimation, showConfirmationModal]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <div
@@ -52,9 +59,9 @@ const ConfirmationModal = ({
       aria-modal="true"
       aria-labelledby="confirmation-modal"
       tabIndex={-1}
-      className={`fixed inset-0 z-[90] flex items-center justify-center p-4 transition-all duration-200 ease-in-out backdrop-blur-md ${
-        showConfirmationModal ? "visible" : "invisible"
-      } ${isVisible ? "opacity-100" : "opacity-0"}`}
+      className={`fixed inset-0 z-[110] flex items-center justify-center p-4 transition-[opacity] duration-200 backdrop-blur-md  ${
+        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
     >
       <div className="relative w-full h-full flex items-center justify-center">
         <div
@@ -90,7 +97,7 @@ const ConfirmationModal = ({
                 aria-label="Yes, I'm sure"
                 onClick={handleConfirm}
                 type="button"
-                className="text-white bg-red-600 hover:bg-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
+                className="text-white bg-red-600 hover:bg-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none transition-all duration-200"
               >
                 Yes, I'm sure
               </Button>
@@ -100,7 +107,7 @@ const ConfirmationModal = ({
                 aria-label="No, cancel"
                 onClick={handleCancel}
                 type="button"
-                className="text-gray-500 bg-white hover:bg-gray-100 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+                className="text-gray-500 bg-white hover:bg-gray-100 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none  transition-all duration-200"
               >
                 No, cancel
               </Button>

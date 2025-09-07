@@ -9,6 +9,7 @@ import { OfflineContext } from "../context/OfflineContext";
 import { CustomError } from "../utils/customError";
 import { ThemeContext } from "../context/ThemeContext";
 import { ShowToastContext } from "../context/ToastNotificationContext";
+import Button from "../components/Button";
 
 export default function DeleteMyAccount() {
   const [email, setEmail] = useState("");
@@ -42,6 +43,35 @@ export default function DeleteMyAccount() {
       showToast({
         message: "No internet connection",
         severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      return;
+    }
+
+    if (!captcha) {
+      showToast({
+        message: "Complete the CAPTCHA before requesting an OTP.",
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      return;
+    }
+    if (showWaitMessage) {
+      showToast({
+        message: "An OTP is being sent. This may take a few moments.",
+        severity: "info",
         autoHideDuration: 5000,
         position: "top-center",
         animationStyle: "scale-up",
@@ -117,6 +147,7 @@ export default function DeleteMyAccount() {
         theme: "auto",
       });
       setShowWaitMessage(false);
+      setCaptcha(false);
     }
     // reset the captcha
     if (recaptchaRef.current) {
@@ -244,184 +275,175 @@ export default function DeleteMyAccount() {
   };
 
   return (
-    <>
-      <section className="absolute top-0 left-0 w-full h-full ">
-        <div className=" px-2 h-full mx-3">
-          <div className="flex justify-center items-center flex-wrap h-full  text-gray-800 pt-[3.45rem]">
-            <div className="w-full md:w-6/12">
-              <div className="block   rounded-lg shadow-lg bg-white border-2 border-sky-500 dark:bg-slate-900 dark:border dark:shadow-md dark:shadow-sky-500 dark:border-sky-500">
-                <div className="flex justify-center items-center ">
-                  <div className=" px-4 md:px-0">
-                    <div className="md:p-12 p-4 md:mx-6">
-                      <div className="flex items-center justify-center flex-col rounded-full">
-                        <img
-                          src="/decker_logo.png"
-                          className="w-7 h-7 object-contain"
-                          alt="decker logo"
-                        />
-
-                        <h2 className="font-bold text-2xl text-sky-500 ">
-                          Decker
-                        </h2>
-
-                        {showVerifyOTPButton && (
-                          <h4 className="text-base  mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50 text-justify">
-                            Are you sure you want to delete your account? This
-                            action is permanent and cannot be undone. All of
-                            your decks and cards inside them will be deleted,
-                            and you will no longer be able to access your
-                            account.
-                            <br /> To confirm your decision, please enter the
-                            OTP we sent to your email address.
-                          </h4>
-                        )}
-
-                        {!showVerifyOTPButton && (
-                          <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">
-                            Account Deletion Verification
-                          </h4>
-                        )}
-                      </div>
-                      {!showVerifyOTPButton && (
-                        <form onSubmit={handleGetOTP}>
-                          <div className="mb-1">
-                            <input
-                              onChange={handleChange}
-                              type="email"
-                              className=" block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50 dark:focus:dark:bg-slate-900"
-                              id="email"
-                              name="email"
-                              value={email}
-                              placeholder="Email"
-                              required
-                            />
-                          </div>
-
-                          <div className="text-center pt-1 mb-5 pb-1 relative  ">
-                            {isOnline ? (
-                              <div className="w-[18.75rem] h-[4.625rem]">
-                                <ReCAPTCHA
-                                  ref={recaptchaRef}
-                                  sitekey={
-                                    import.meta.env.VITE_RECAPTCHA_SITE_KEY
-                                  }
-                                  onChange={handleCaptchaChange}
-                                  onExpired={handleCaptchaExpired}
-                                  size="normal"
-                                  theme={theme === "dark" ? "dark" : "light"}
-                                />
-                              </div>
-                            ) : (
-                              <div className="dark:text-gray-400 text-gray-500 w-[18.75rem] h-[4.625rem]  flex items-center justify-center flex-col">
-                                <p>Couldn't load ReCAPTCHA because</p>
-                                <p> you have no internet connection.</p>
-                              </div>
-                            )}
-                            <button
-                              className={` mt-3 flex items-center justify-center px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md  active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-sky-600 hover:bg-sky-700 outline-none  disabled:cursor-not-allowed ${
-                                !showWaitMessage
-                                  ? "dark:disabled:bg-gray-500 disabled:bg-gray-500"
-                                  : ""
-                              }`}
-                              type="submit"
-                              aria-label="Request OTP"
-                              disabled={
-                                !captcha || showWaitMessage ? true : false
-                              }
-                            >
-                              {showWaitMessage ? (
-                                <svg
-                                  className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  ></path>
-                                </svg>
-                              ) : (
-                                "Request OTP"
-                              )}
-                            </button>
-                            <button
-                              className="  inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3  bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
-                              type="button"
-                              aria-label="Cancel"
-                              onClick={() => {
-                                navigate(from);
-                              }}
-                              disabled={showWaitMessage}
-                            >
-                              Cancel
-                            </button>
-                            {showWaitMessage ? (
-                              <div className="absolute w-full flex items-center justify-center">
-                                <p className=" text-sm  text-center text-sky-700 dark:text-sky-400 font-semibold ">
-                                  Sending OTP please wait...
-                                </p>
-                              </div>
-                            ) : null}
-                          </div>
-                        </form>
-                      )}
+    <section className=" w-full h-[calc(100vh-64px)] ">
+      <div className="px-2 h-full mx-3">
+        <div className="flex justify-center items-center text-gray-800 h-full ">
+          <div className="w-full md:w-6/12">
+            <div className="block rounded-lg  bg-white border border-gray-300 dark:bg-slate-900 dark:border dark:border-slate-600">
+              <div className="flex justify-center items-center ">
+                <div className=" px-4 md:px-0">
+                  <div className="md:p-12 p-4 md:mx-6">
+                    <div className="flex items-center justify-center flex-col rounded-full">
+                      <img
+                        src="/decker_logo.png"
+                        className="w-7 h-7 object-contain"
+                        alt="decker logo"
+                      />
+                      <h2 className="font-bold text-2xl text-sky-500 ">
+                        Decker
+                      </h2>
                       {showVerifyOTPButton && (
-                        <form onSubmit={(e) => e.preventDefault()}>
-                          <div className="mb-4 flex items-center justify-center">
-                            <input
-                              onChange={handleChange}
-                              type="text"
-                              className=" block md:w-1/2 w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
-                              id="otp"
-                              name="otp"
-                              value={otp}
-                              placeholder="Enter OTP"
-                              maxLength={6}
-                            />
-                          </div>
+                        <h4 className="text-base  mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50 text-justify">
+                          Are you sure you want to delete your account? This
+                          action is permanent and cannot be undone. All of your
+                          decks and cards inside them will be deleted, and you
+                          will no longer be able to access your account.
+                          <br /> To confirm your decision, please enter the OTP
+                          we sent to your email address.
+                        </h4>
+                      )}
 
-                          <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
-                            <button
-                              onClick={handleOTPVerification}
-                              className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-sky-600 hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
-                              type="button"
-                              aria-label="Verify OTP and Delete My Account"
-                              disabled={isDeletingAccount}
-                            >
-                              {isDeletingAccount
-                                ? "Account Deletion in Progress..."
-                                : "Verify OTP and Delete My Account"}
-                            </button>
-                            <button
-                              className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3   bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
-                              disabled={isDeletingAccount}
-                              type="button"
-                              aria-label="Cancel"
-                              onClick={handleCancelButtonClick}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </form>
+                      {!showVerifyOTPButton && (
+                        <h4 className="text-xl font-semibold mt-1 mb-3 pb-1 text-gray-700 dark:text-gray-50">
+                          Account Deletion Verification
+                        </h4>
                       )}
                     </div>
+                    {!showVerifyOTPButton && (
+                      <form onSubmit={handleGetOTP}>
+                        <div className="mb-1">
+                          <input
+                            onChange={handleChange}
+                            type="email"
+                            className=" block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50 dark:focus:dark:bg-slate-900"
+                            id="email"
+                            name="email"
+                            value={email}
+                            placeholder="Email"
+                            required
+                          />
+                        </div>
+
+                        <div className="text-center pt-1 mb-5 pb-1 relative  ">
+                          {isOnline ? (
+                            <div className="w-[18.75rem] h-[4.625rem]">
+                              <ReCAPTCHA
+                                ref={recaptchaRef}
+                                sitekey={
+                                  import.meta.env.VITE_RECAPTCHA_SITE_KEY
+                                }
+                                onChange={handleCaptchaChange}
+                                onExpired={handleCaptchaExpired}
+                                size="normal"
+                                theme={theme === "dark" ? "dark" : "light"}
+                              />
+                            </div>
+                          ) : (
+                            <div className="dark:text-gray-400 text-gray-500 w-[18.75rem] h-[4.625rem]  flex items-center justify-center flex-col">
+                              <p>Couldn't load ReCAPTCHA because</p>
+                              <p> you have no internet connection.</p>
+                            </div>
+                          )}
+                          <Button
+                            variant="unstyled"
+                            className={` mt-3 flex items-center justify-center px-6 py-2.5 gap-1 text-white font-medium text-sm leading-tight  rounded shadow-md  active:shadow-lg transition duration-150 ease-in-out w-full mb-2 bg-sky-600 hover:bg-sky-700 outline-none  disabled:cursor-not-allowed `}
+                            type="submit"
+                            aria-label="Request OTP"
+                          >
+                            {showWaitMessage && (
+                              <svg
+                                className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-100"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                            )}
+                            {showWaitMessage ? "Processing…" : "Request OTP"}
+                          </Button>
+                          <Button
+                            variant="unstyled"
+                            className="  inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out w-full mb-3  bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
+                            type="button"
+                            aria-label="Cancel"
+                            onClick={() => {
+                              navigate(from);
+                            }}
+                            disabled={showWaitMessage}
+                          >
+                            Cancel
+                          </Button>
+                          {showWaitMessage ? (
+                            <div className="absolute w-full flex items-center justify-center">
+                              <p className=" text-sm  text-center text-sky-700 dark:text-sky-400 font-semibold ">
+                                Sending OTP please wait...
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      </form>
+                    )}
+                    {showVerifyOTPButton && (
+                      <form onSubmit={(e) => e.preventDefault()}>
+                        <div className="mb-4 flex items-center justify-center">
+                          <input
+                            onChange={handleChange}
+                            type="text"
+                            className=" block md:w-1/2 w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-cyan-600 focus:outline-none dark:border-gray-300/40 dark:bg-slate-900 dark:focus:ring-gray-100/40 dark:focus:ring-1 dark:text-gray-50"
+                            id="otp"
+                            name="otp"
+                            value={otp}
+                            placeholder="Enter OTP"
+                            maxLength={6}
+                          />
+                        </div>
+
+                        <div className="text-center pt-1 mb-10 pb-1 flex flex-col items-center justify-center">
+                          <Button
+                            variant="unstyled"
+                            onClick={handleOTPVerification}
+                            className="md:w-1/2 w-full  inline-block px-6 py-2.5 text-white font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3 bg-sky-600 hover:bg-sky-700 outline-none  disabled:cursor-not-allowed"
+                            type="button"
+                            aria-label="Verify OTP and Delete My Account"
+                            disabled={isDeletingAccount}
+                          >
+                            {isDeletingAccount
+                              ? "Account Deletion in Progress..."
+                              : "Verify OTP and Delete My Account"}
+                          </Button>
+                          <Button
+                            variant="unstyled"
+                            className=" md:w-1/2 w-full inline-block px-6 py-2.5 text-gray-50 font-medium text-sm leading-tight  rounded shadow-md   active:shadow-lg transition duration-150 ease-in-out  mb-3   bg-red-600 hover:bg-red-700  outline-none  disabled:cursor-not-allowed"
+                            disabled={isDeletingAccount}
+                            type="button"
+                            aria-label="Cancel"
+                            onClick={handleCancelButtonClick}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

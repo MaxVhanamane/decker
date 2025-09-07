@@ -78,7 +78,7 @@ const DeckMoreOptions = ({
   return (
     <div
       ref={moreOptionsRef}
-      className="absolute z-[100] -right-[19.5px] top-9 flex items-start justify-center flex-col gap-2 dark:bg-slate-800 bg-gray-200 rounded-md py-2 px-3 w-32 border border-slate-400 select-none"
+      className="absolute z-[100] -right-[19.5px] top-9 flex items-start justify-center flex-col gap-2 dark:bg-slate-800 bg-gray-200 rounded-md py-2 px-3 w-32 border border-slate-400 select-none outline-none"
     >
       <div
         className="absolute z-20 -top-[0.8px] md:hidden h-[1px] dark:bg-slate-800 bg-gray-200 w-[13.1px]"

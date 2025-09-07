@@ -46,6 +46,7 @@ interface CommonProps {
 interface CreateModeProps extends CommonProps {
   mode: "create";
   expandEditorToMaxHeight: () => void;
+  parentIndex?: 0 | -1;
 }
 
 // Edit mode specific props
@@ -399,7 +400,8 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           onDOMBeforeInput={handleOnDOMBeforeInput}
           onKeyDown={onKeyDown}
           scrollSelectionIntoView={handleScrollSelectionIntoView}
-          className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words break-all whitespace-pre-wrap"
+          className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words whitespace-pre-wrap"
+          tabIndex={mode === "create" && props?.parentIndex === 0 ? -1 : 0}
         />
         <div className="h-10 flex-shrink-0 " />
         {/* Spacer for bottom padding */}

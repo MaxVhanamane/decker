@@ -24,14 +24,28 @@ const CardSchema = new Schema({
     },
     searchableContent: { type: String, default: '' },
     order: { type: Number, required: true },
-    deckId: { type: String, required: true, index: true },   //index for faster query
-    chapterId: chapterIdField, //index for faster query
+    deckId: { type: String, required: true, index: true },
+    chapterId: chapterIdField,
+
+    // Soft delete fields
+    deletedAt: { type: Date },
+    undoExpiresAt: { type: Date }
 }, { timestamps: true });
 
-// Create a compound unique index on deckId and order to ensure 
-// that each card's order value is unique within the same deck.
-// This prevents duplicate order numbers for cards in one deck.
-CardSchema.index({ deckId: 1, order: 1 }, { unique: true });
+// Ensure each card's order is unique within a deck+chapter
+CardSchema.index({ deckId: 1, chapterId: 1, order: 1 }, { unique: true });
 
+// TTL index for auto-hard-delete after undoExpiresAt passes
+CardSchema.index(
+    { undoExpiresAt: 1 },
+    {
+        expireAfterSeconds: 0,
+        partialFilterExpression: {
+            deletedAt: { $exists: true },
+            undoExpiresAt: { $exists: true }
+        }
+    }
+);
 
-export const CardModel = mongoose.model("Card", CardSchema);
+const CardModel = mongoose.model("Card", CardSchema);
+export default CardModel

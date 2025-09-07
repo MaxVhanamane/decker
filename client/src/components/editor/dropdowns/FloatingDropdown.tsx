@@ -1,7 +1,15 @@
-import { RefObject, useLayoutEffect, useRef, useState } from "react";
+import {
+  RefObject,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { twMerge } from "tailwind-merge";
 import { useClickOutside } from "../../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../../hooks/utility/useFocusTrap";
+import { useIsDeviceType } from "../../../hooks/utility/useIsDeviceType";
+import { SidebarContex } from "../../../context/SidebarContext";
 
 type FloatingDropdownProps = {
   buttonRef: RefObject<HTMLElement>;
@@ -24,10 +32,12 @@ export const FloatingDropdown = ({
   mode,
   toolbarPosition,
 }: FloatingDropdownProps) => {
+  const { isSidebarOpen } = useContext(SidebarContex);
+  const belowTabDimension = useIsDeviceType("tablet");
   const [position, setPosition] = useState({ top: 0, left: 0, arrowOffset: 0 });
-
   const dropdownRef = useRef<HTMLDivElement>(null);
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sidebarDimensions = !belowTabDimension ? (isSidebarOpen ? 256 : 52) : 0;
 
   useClickOutside(dropdownRef, true, onClickOutside, {
     excludeRefs: [buttonRef],
@@ -58,7 +68,11 @@ export const FloatingDropdown = ({
     const padding = 3;
 
     // Ideal centered position for dropdown
-    let left = buttonRect.left + buttonRect.width / 2 - dropdownWidth / 2;
+    let left =
+      buttonRect.left +
+      buttonRect.width / 2 -
+      dropdownWidth / 2 -
+      sidebarDimensions;
 
     // Clamp within parent with padding
     const minLeft = parentRect.left + padding;
@@ -69,7 +83,8 @@ export const FloatingDropdown = ({
     if (left > maxLeft) left = maxLeft;
 
     // Set the arrow offset (always aligned with the center of the button)
-    const arrowOffset = buttonRect.left + buttonRect.width / 2 - left;
+    const arrowOffset =
+      buttonRect.left + buttonRect.width / 2 - left - sidebarDimensions;
 
     // For edit mode, position above the button with same gap as create mode
     const top =
@@ -116,12 +131,11 @@ export const FloatingDropdown = ({
     <div
       ref={dropdownRef}
       style={{
-        position: "absolute",
         top: `${position.top + getTopValue()}px`,
         left: `${position.left}px`,
       }}
       className={twMerge(
-        "dark:text-gray-50 rounded-md p-5 pt-4 shadow-lg dark:shadow-md border border-gray-300 dark:border-slate-600 dark:bg-slate-800 bg-gray-100 dark:shadow-slate-800 outline-none",
+        "absolute dark:text-gray-50 rounded-md p-5 pt-4 shadow-lg dark:shadow-md border border-gray-300 dark:border-slate-600 dark:bg-slate-800 bg-gray-100 dark:shadow-slate-800 outline-none",
         className
       )}
       role="menu"

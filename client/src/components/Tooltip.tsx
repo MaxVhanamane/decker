@@ -56,7 +56,7 @@ type TooltipProps = {
   children: ReactNode;
   toolTipPosition?: ToolTipPositionType;
   tooltipAutoHideDuration?: number | "infinity";
-  containerRef: RefObject<HTMLButtonElement | null>;
+  containerRef: RefObject<HTMLElement | null>;
   hideTooltip?: boolean;
   disabled?: boolean | undefined;
   toolTipColor?: "light" | "medium" | "dark";
@@ -270,6 +270,12 @@ const Tooltip = memo(
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchCancel={handleTouchEnd} // Handle touch cancel same as touch end
+        onFocus={(e) => {
+          if (e.target.matches(":focus-visible")) {
+            handleMouseEnter();
+          }
+        }}
+        onBlur={handleMouseLeave}
         style={{
           // Prevent text selection on mobile during long press
           WebkitUserSelect: "none",

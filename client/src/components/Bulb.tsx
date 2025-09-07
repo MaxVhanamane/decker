@@ -314,7 +314,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
       onAnimationEnd={() => {
         setSwingBulb(false);
       }}
-      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500 pointer-events-none ${
+      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500 pointer-events-none mix-blend-lighten ${
         swingBulb ? "animate-swingBulb" : ""
       }  origin-top ${showBulb ? "opacity-100" : "opacity-0 "}`}
     >

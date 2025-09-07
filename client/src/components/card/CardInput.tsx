@@ -311,7 +311,7 @@ const CardInput = ({
           >
             <div
               className={twMerge(
-                "transition-[transform,opacity] duration-1000 flex md:h-10 h-20 items-center justify-end border-r border-l dark:border-[#5fb1d6] border-sky-500 rounded-t-md  md:w-[75vw] md:max-w-[44rem] w-[95vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
+                "transition-[transform,opacity] duration-1000 flex md:h-10 h-20 items-center justify-end border-r border-l dark:border-[#5fb1d6] border-gray-400 rounded-t-md  md:w-[75vw] md:max-w-[44rem] w-[95vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
                 expandEditor
                   ? "border-t md:delay-1000 delay-1000"
                   : "p-0 translate-y-full border-t pointer-events-none md:delay-1000 delay-[0s]"
@@ -333,9 +333,9 @@ const CardInput = ({
               onClick={handleEditorClick}
               onKeyDown={handleKeyDown}
               ref={richTextWrapperRef}
-              tabIndex={-1}
+              tabIndex={!expandEditor ? 0 : -1}
               className={twMerge(
-                "md:w-[75vw] md:max-w-[44rem] bg-white w-full border dark:border-[#5fb1d6] border-sky-500 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500",
+                "md:w-[75vw] md:max-w-[44rem]  bg-white w-full border dark:border-[#5fb1d6] border-gray-400 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500 focus-visible:ring-2 dark:ring-blue-500 ring-gray-600",
                 expandEditor
                   ? "before:opacity-0 before:delay-0 delay-[0s]"
                   : "before:delay-[1.6s] h-[85px] md:h-[45px] delay-1000 md:delay-[0s]",
@@ -365,6 +365,7 @@ const CardInput = ({
                   setShowHyperlinkModal={setShowHyperlinkModal}
                   expandEditorToMaxHeight={expandEditorToMaxHeight}
                   mode="create"
+                  parentIndex={expandEditor ? -1 : 0}
                 />
                 {/* <div className="absolute z-50 top-0 left-0">
                   <div

@@ -20,9 +20,12 @@ const moveCard = async (
   inputData: moveCardPayloadType
 ): Promise<MoveCardResponse | CustomError> => {
   try {
-    const data = await request.put(
-      `/card/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}`
-    );
+    const url = inputData?.chapterId
+      ? `/card/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}/${inputData.chapterId}`
+      : `/card/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}`;
+    const data = await request.put(url, {
+      reindexNeeded: inputData.reindexNeeded,
+    });
 
     return data?.data;
   } catch (error) {
@@ -89,12 +92,15 @@ const useReorderCard = () => {
     onMutate: async (payload: moveCardPayloadType) => {
       // Only cancel queries to prevent stale data interference
       // DO NOT cancel actual HTTP requests
+      const queryKey = payload?.chapterId
+        ? ["chapter-cards", payload.deckId, payload.chapterId]
+        : ["cards", payload.deckId];
       await queryClient.cancelQueries({
-        queryKey: ["cards", payload.deckId],
+        queryKey,
       });
 
       const previousCardData: CardListType | undefined =
-        queryClient.getQueryData(["cards", payload.deckId]);
+        queryClient.getQueryData(queryKey);
 
       // Safe copy for rollback: previousCardData is a reference to the React Query cache.
       // When we call setQueryData, we update an object (e.g., the order key).
@@ -110,7 +116,7 @@ const useReorderCard = () => {
         : undefined;
       // Apply optimistic update immediately for smooth UX
       queryClient.setQueryData<CardListType | undefined>(
-        ["cards", payload.deckId],
+        queryKey,
         (oldCardData) => {
           if (oldCardData) {
             const newArray = [...oldCardData.cards];
@@ -131,21 +137,24 @@ const useReorderCard = () => {
     onError: (_error, data: moveCardPayloadType, context) => {
       // Only rollback if this was the last operation
       // Otherwise, let the final invalidation handle sync
+      const queryKey = data?.chapterId
+        ? ["chapter-cards", data.deckId, data.chapterId]
+        : ["cards", data.deckId];
       if (operationQueue.current.length === 0) {
         if (context) {
-          queryClient.setQueryData(
-            ["cards", data.deckId],
-            context.rollbackData
-          );
+          queryClient.setQueryData(queryKey, context.rollbackData);
         }
       }
     },
 
     onSettled: (_dataReturnedByTheServer, _error, dataThatWePassed) => {
+      const queryKey = dataThatWePassed?.chapterId
+        ? ["chapter-cards", dataThatWePassed.deckId, dataThatWePassed.chapterId]
+        : ["cards", dataThatWePassed.deckId];
       // Only invalidate when ALL operations in queue are complete
       if (operationQueue.current.length === 0 && !isProcessing.current) {
         queryClient.invalidateQueries({
-          queryKey: ["cards", dataThatWePassed.deckId],
+          queryKey,
         });
       }
     },

@@ -20,7 +20,8 @@ import Button from "../Button";
 import { VerticalDivider } from "../VerticalDivider";
 import { twMerge } from "tailwind-merge";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
-import Loading from "../Loading";
+import LoadingCentered from "../Loading/LoadingCentered";
+import { OfflineContext } from "../../context/OfflineContext";
 const SearchResult = lazy(() => import("./SearchResult"));
 const SearchBar = () => {
   const searchBarRef = useRef<HTMLInputElement>(null);
@@ -31,6 +32,7 @@ const SearchBar = () => {
     animateSearchBar,
   } = useContext(searchContext);
   const { showToast } = useContext(ShowToastContext);
+  const { isOnline } = useContext(OfflineContext);
   const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
   const [inputValue, setInputValue] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,6 +73,18 @@ const SearchBar = () => {
   }, []);
 
   const handleSearch = () => {
+    if (!isOnline) {
+      showToast({
+        message:
+          "Looks like you're offline. Connect to the internet to search.",
+        severity: "error",
+        autoHideDuration: 5000,
+        position: "top-center",
+        animationStyle: "scale-up",
+        theme: "auto",
+      });
+      return;
+    }
     const input = inputValue.trim().replace(/\s+/g, " ");
     if (input.length < 2) {
       showToast({
@@ -90,6 +104,18 @@ const SearchBar = () => {
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      if (!isOnline) {
+        showToast({
+          message:
+            "Looks like you're offline. Connect to the internet to search.",
+          severity: "error",
+          autoHideDuration: 5000,
+          position: "top-center",
+          animationStyle: "scale-up",
+          theme: "auto",
+        });
+        return;
+      }
       handleSearch();
       searchBarRef?.current?.blur();
     } else if (e.key === "Escape") {
@@ -204,11 +230,14 @@ const SearchBar = () => {
         {showSearchBar && (
           <Suspense
             fallback={
-              <Loading
-                message="Loading search page"
-                subMessage="You can start typing your query while the page finishes loading."
-                inSearchSuspense={true}
-              />
+              <div className="h-full bg-white dark:bg-slate-900">
+                {" "}
+                <LoadingCentered
+                  message="Loading search page"
+                  subMessage="You can start typing your query while the page finishes loading."
+                  inSearchSuspense={true}
+                />
+              </div>
             }
           >
             <SearchResult

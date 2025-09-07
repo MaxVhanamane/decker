@@ -1,4 +1,4 @@
-import { useContext, useCallback } from 'react'
+import { useContext, useCallback, useState } from 'react'
 import { request } from '../../utils/fetch-utils';
 import { UserContext } from '../../context/UserContext';
 import { UserStore } from '../../utils/userStore';
@@ -12,7 +12,10 @@ const useUser = () => {
     const navigate = useStableNavigate();
     const location = useLocation();
 
+    const [isFetching, setIsFetching] = useState(false);
+
     const getUser = useCallback(async () => {
+        setIsFetching(true);
         try {
             const userInfoResponse = await request.get("/getuser");
             const userData = userInfoResponse?.data;
@@ -57,10 +60,12 @@ const useUser = () => {
             }
 
             navigate("/login");
+        } finally {
+            setIsFetching(false);
         }
     }, [setUserInfo, setUserEmailAddress, navigate, location.pathname]);
 
-    return { getUser };
+    return { getUser, isFetching };
 };
 
 export default useUser;

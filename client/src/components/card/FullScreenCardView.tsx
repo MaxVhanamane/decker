@@ -17,6 +17,7 @@ import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
 import ThemeToggler from "../ThemeToggler";
 import { AudioContext } from "../../context/AudioContext";
 import { Descendant } from "slate";
+import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 
 type ContentType = {
   note: Descendant[];
@@ -69,8 +70,19 @@ const FullScreenCardView = ({
   );
   const divRef = useRef<HTMLDivElement>(null);
   const bottomElementRef = useRef<HTMLDivElement>(null);
+  const fullScreenContainer = useRef<HTMLElement>(null);
   const topElementRef = useRef<HTMLDivElement>(null);
   const prevScrollPosition = useRef(0);
+
+  const handleBackButtonClick = useCallback(() => {
+    setCloseFullScreenWithAnimation(true);
+    setShowScrollButtons(false);
+  }, []);
+
+  useFocusTrap(fullScreenContainer, "tab", {
+    enabled: true,
+    onEscape: handleBackButtonClick,
+  });
 
   useEffect(() => {
     if (divRef.current) {
@@ -114,11 +126,6 @@ const FullScreenCardView = ({
 
     prevScrollPosition.current = scrollTop;
   };
-
-  const handleBackButtonClick = useCallback(() => {
-    setCloseFullScreenWithAnimation(true);
-    setShowScrollButtons(false);
-  }, []);
 
   const handleScrollToTheBottom = useCallback(() => {
     if (bottomElementRef.current) {
@@ -181,6 +188,7 @@ const FullScreenCardView = ({
   return (
     <>
       <article
+        ref={fullScreenContainer}
         onAnimationEnd={handleOnAnimationEnd}
         className={`fixed inset-0 ${
           toggleGradient
@@ -198,7 +206,7 @@ const FullScreenCardView = ({
             className={` w-full flex items-center
                justify-center md:w-[42rem] `}
           >
-            <div className=" flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 px-2 md:px-0">
+            <div className="flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 px-1 md:px-0">
               <div>
                 <Button
                   variant="plain"
@@ -206,16 +214,12 @@ const FullScreenCardView = ({
                   aria-label="Go back"
                   type="button"
                   onClick={handleBackButtonClick}
-                  className="font-semibold text-lg "
+                  className=" text-lg md:-ml-3 rounded-md"
                 >
                   {buttons.Back.label}
                 </Button>
               </div>
-              <div className="flex items-center justify-center gap-1 ">
-                <div>
-                  <ThemeToggler />
-                </div>
-
+              <div className="flex items-center justify-center gap-1 mr-[0.35rem] md:-mr-[0.35rem] ">
                 <Button
                   variant="plain"
                   size="md"
@@ -278,13 +282,17 @@ const FullScreenCardView = ({
                     ? buttons.ToggleBgColor.label.on
                     : buttons.ToggleBgColor.label.off}
                 </Button>
+                <div>
+                  <ThemeToggler />
+                </div>
               </div>
             </div>
           </div>
           {/*content */}
           <div
             ref={divRef}
-            className=" w-full  flex  justify-center overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-full "
+            tabIndex={0}
+            className=" w-full  flex  justify-center overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-full outline-none focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 ring-inset"
           >
             <div className="w-full  md:w-[42rem] md:-mr-[10px] px-4 md:px-0">
               <div ref={topElementRef} />
@@ -347,7 +355,7 @@ const buttons = {
   Back: {
     label: (
       <>
-        <IoIosArrowBack className="md:-ml-[0.8rem] -ml-[0.5rem]" />
+        <IoIosArrowBack className="md:-ml-auto -ml-[0.3rem]" />
         <p className="text-xs">Back</p>
       </>
     ),

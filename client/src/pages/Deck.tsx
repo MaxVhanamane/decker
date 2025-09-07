@@ -12,7 +12,6 @@ import useGetDecks from "../hooks/react-query/useGetDecks";
 import useCreateDeck from "../hooks/react-query/useCreateDeck";
 import usePinDeck from "../hooks/react-query/usePinDeck";
 import EditModalForDeck from "../components/deck/EditModalForDeck";
-import Loading from "../components/Loading";
 import { Helmet } from "react-helmet";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
@@ -32,6 +31,7 @@ import useToastOnError from "../hooks/utility/useToastOnError";
 import { DeckContext } from "../context/DeckContext";
 import DeckSkeleton from "../components/deck/skeleton/DeckSkeleton";
 import { getDeckSkeletonCounts } from "../utils/deckUtils";
+import LoadingCentered from "../components/Loading/LoadingCentered";
 
 function Deck() {
   const { showToast } = useContext(ShowToastContext);
@@ -236,7 +236,7 @@ function Deck() {
   }
 
   if ((isLoading || !isDecksStateReady) && !DeckSkeletonCounts) {
-    return <Loading />;
+    return <LoadingCentered />;
   }
 
   return (

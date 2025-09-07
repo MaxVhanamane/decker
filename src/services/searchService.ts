@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import DeckModel from '../models/deck';
-import { CardModel } from '../models/card';
+import CardModel from '../models/card';
+import ChapterModel from '../models/chapter';
 
+// ---- Result types ----
 export type DeckSearchResult = {
     type: 'deck';
     deckId: string;
@@ -25,7 +27,7 @@ export type DeckCardSearchResult = {
     deckId: string;
     deckTitle: string;
     cardId: string;
-    note: { children: any[]; type?: string | null | undefined }[];
+    note: { children: any[]; type?: string | null }[];
     createdAt: Date;
     order: number;
 };
@@ -37,7 +39,7 @@ export type ChapterCardSearchResult = {
     chapterId: string;
     chapterTitle: string;
     cardId: string;
-    note: { children: any[]; type?: string | null | undefined }[];
+    note: { children: any[]; type?: string | null }[];
     createdAt: Date;
     order: number;
 };
@@ -53,38 +55,13 @@ export interface SearchResponse {
     hasMore: boolean;
 }
 
-// ---- Lean shapes we actually select from Mongo ----
-type LeanChapter = {
-    chapterId: string;
-    chapterTitle?: string;
-    createdAt: Date;
-};
-
-type LeanDeck = {
-    deckId: string;
-    title?: string;
-    pinned: boolean;
-    createdAt: Date;
-    cardsCount?: number;
-    chapters?: LeanChapter[];
-};
-
-type LeanCard = {
-    cardId: string;
-    searchableContent?: string;
-    note: { children: any[]; type?: string | null | undefined }[];
-    createdAt: Date;
-    deckId: string;
-    chapterId?: string | null;
-    order: number;
-};
-
 // Escape user input for regex
 function escapeRegex(input: string): string {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export class SearchService {
+    // Optimized approach: Separate queries with proper pagination
     static async search(
         query: string,
         userId: mongoose.Types.ObjectId,
@@ -92,140 +69,354 @@ export class SearchService {
         limit: number = 20
     ): Promise<SearchResponse> {
         const skip = (page - 1) * limit;
-        const clean = escapeRegex(query.replace(/['"]+/g, ''));
-        const searchRegex = new RegExp(clean, 'i');
+        const cleanQuery = escapeRegex(query.replace(/['"]+/g, ''));
+        const searchRegex = new RegExp(cleanQuery, 'i');
 
-        const allResults: SearchResult[] = [];
+        // First, get valid deck IDs for this user to optimize card queries
+        const validDeckIds = await DeckModel.distinct('deckId', {
+            email: userId,
+            deletedAt: { $exists: false }
+        });
 
-        // 1) Load all decks for this user (not deleted)
-        const deckDocs = await DeckModel.find(
-            { email: userId, deletedAt: { $exists: false } },
-            { deckId: 1, title: 1, pinned: 1, createdAt: 1, cardsCount: 1, chapters: 1, _id: 0 }
-        )
-            .lean<LeanDeck[]>()
-            .exec();
-
-        // Build maps for quick lookups
-        const deckMap = new Map<string, LeanDeck>();
-        const deckIds: string[] = [];
-
-        for (const d of deckDocs) {
-            if (!d?.deckId) continue;
-            deckMap.set(d.deckId, d);
-            deckIds.push(d.deckId);
-
-            // Deck title match
-            if (d.title && searchRegex.test(d.title)) {
-                allResults.push({
-                    type: 'deck',
-                    deckId: d.deckId,
-                    title: d.title,
-                    pinned: d.pinned,
-                    createdAt: d.createdAt,
-                    cardsCount: d.cardsCount ?? 0,
-                });
-            }
-
-            // Chapter title match
-            if (Array.isArray(d.chapters)) {
-                for (const ch of d.chapters) {
-                    if (ch?.chapterId && ch.chapterTitle && searchRegex.test(ch.chapterTitle)) {
-                        allResults.push({
-                            type: 'chapter',
-                            deckId: d.deckId,
-                            deckTitle: d.title ?? '',
-                            chapterId: ch.chapterId,
-                            chapterTitle: ch.chapterTitle,
-                            createdAt: ch.createdAt,
-                        });
-                    }
-                }
-            }
+        if (validDeckIds.length === 0) {
+            return { results: [], total: 0, page, totalPages: 0, hasMore: false };
         }
 
-        if (deckIds.length === 0) {
-            // No decks for this user -> empty results
-            return {
-                results: [],
-                total: 0,
-                page,
-                totalPages: 0,
-                hasMore: false,
-            };
+        // Count totals for each type
+        const [deckCount, chapterCount, cardCount] = await Promise.all([
+            DeckModel.countDocuments({
+                email: userId,
+                deletedAt: { $exists: false },
+                title: searchRegex
+            }),
+            ChapterModel.countDocuments({
+                email: userId,
+                deletedAt: { $exists: false },
+                deckId: { $in: validDeckIds },
+                chapterName: searchRegex
+            }),
+            CardModel.countDocuments({
+                deckId: { $in: validDeckIds },
+                deletedAt: { $exists: false },
+                searchableContent: searchRegex
+            })
+        ]);
+
+        const total = deckCount + chapterCount + cardCount;
+        const totalPages = Math.ceil(total / limit);
+
+        // Determine which types to query based on pagination
+        const results: SearchResult[] = [];
+        let remaining = limit;
+        let currentSkip = skip;
+
+        // Decks first (priority 0)
+        if (currentSkip < deckCount && remaining > 0) {
+            const deckResults = await this.getDecks(
+                searchRegex,
+                userId,
+                Math.max(0, currentSkip),
+                Math.min(remaining, deckCount - currentSkip)
+            );
+            results.push(...deckResults);
+            remaining -= deckResults.length;
         }
+        currentSkip = Math.max(0, currentSkip - deckCount);
 
-        // 2) Load cards from the separate collection, for those decks, matching the regex
-        const cardDocs = await CardModel.find(
-            { deckId: { $in: deckIds }, searchableContent: searchRegex },
-            { cardId: 1, note: 1, createdAt: 1, deckId: 1, chapterId: 1, order: 1, _id: 0 }
-        )
-            .lean<LeanCard[]>()
-            .exec();
-
-        // Optional: Build chapter lookup per deck for nicer labels
-        const chapterTitleMap = new Map<string, Map<string, { title: string; createdAt: Date }>>();
-        for (const d of deckDocs) {
-            if (!d.chapters?.length) continue;
-            const inner = new Map<string, { title: string; createdAt: Date }>();
-            for (const ch of d.chapters) {
-                if (ch.chapterId) {
-                    inner.set(ch.chapterId, { title: ch.chapterTitle ?? '', createdAt: ch.createdAt });
-                }
-            }
-            chapterTitleMap.set(d.deckId, inner);
+        // Chapters second (priority 1)
+        if (currentSkip < chapterCount && remaining > 0) {
+            const chapterResults = await this.getChapters(
+                searchRegex,
+                userId,
+                validDeckIds,
+                Math.max(0, currentSkip),
+                Math.min(remaining, chapterCount - currentSkip)
+            );
+            results.push(...chapterResults);
+            remaining -= chapterResults.length;
         }
+        currentSkip = Math.max(0, currentSkip - chapterCount);
 
-        // 3) Convert cards to results
-        for (const c of cardDocs) {
-            const deck = deckMap.get(c.deckId);
-            if (!deck) continue;
-
-            if (c.chapterId) {
-                const chMap = chapterTitleMap.get(c.deckId);
-                const chInfo = chMap?.get(c.chapterId);
-                allResults.push({
-                    type: 'chapter-card',
-                    deckId: deck.deckId,
-                    deckTitle: deck.title ?? '',
-                    chapterId: c.chapterId,
-                    chapterTitle: chInfo?.title ?? '',
-                    cardId: c.cardId,
-                    note: c.note,
-                    createdAt: c.createdAt,
-                    order: c.order,
-                });
-            } else {
-                allResults.push({
-                    type: 'deck-card',
-                    deckId: deck.deckId,
-                    deckTitle: deck.title ?? '',
-                    cardId: c.cardId,
-                    note: c.note,
-                    createdAt: c.createdAt,
-                    order: c.order,
-                });
-            }
+        // Cards last (priority 2 & 3)
+        if (currentSkip < cardCount && remaining > 0) {
+            const cardResults = await this.getCards(
+                searchRegex,
+                validDeckIds,
+                Math.max(0, currentSkip),
+                remaining
+            );
+            results.push(...cardResults);
         }
-
-        // 4) Sort by deck,chapter,deck-card,chapter-card
-        const typeOrder: Record<SearchResult['type'], number> = {
-            deck: 0,
-            chapter: 1,
-            'deck-card': 2,
-            'chapter-card': 3,
-        };
-        allResults.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
-
-        // 5) Paginate
-        const total = allResults.length;
-        const paginated = allResults.slice(skip, skip + limit);
 
         return {
-            results: paginated,
+            results,
             total,
             page,
-            totalPages: Math.ceil(total / limit),
-            hasMore: page < Math.ceil(total / limit),
+            totalPages,
+            hasMore: page < totalPages,
+        };
+    }
+
+    private static async getDecks(
+        searchRegex: RegExp,
+        userId: mongoose.Types.ObjectId,
+        skip: number,
+        limit: number
+    ): Promise<DeckSearchResult[]> {
+        const decks = await DeckModel.find(
+            {
+                email: userId,
+                deletedAt: { $exists: false },
+                title: searchRegex
+            },
+            {
+                deckId: 1,
+                title: 1,
+                pinned: 1,
+                createdAt: 1,
+                cardsCount: 1
+            }
+        )
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        return decks.map(deck => ({
+            type: 'deck' as const,
+            deckId: deck.deckId,
+            title: deck.title || '',
+            pinned: deck.pinned,
+            createdAt: deck.createdAt,
+            cardsCount: deck.cardsCount || 0,
+        }));
+    }
+
+    private static async getChapters(
+        searchRegex: RegExp,
+        userId: mongoose.Types.ObjectId,
+        validDeckIds: string[],
+        skip: number,
+        limit: number
+    ): Promise<ChapterSearchResult[]> {
+        const pipeline = [
+            {
+                $match: {
+                    email: userId,
+                    deletedAt: { $exists: false },
+                    deckId: { $in: validDeckIds },
+                    chapterName: searchRegex
+                }
+            },
+            {
+                $lookup: {
+                    from: 'decks', // MongoDB collection name
+                    let: { deckId: '$deckId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$deckId', '$$deckId'] },
+                                email: userId,
+                                deletedAt: { $exists: false }
+                            }
+                        },
+                        { $project: { title: 1, _id: 0 } }
+                    ],
+                    as: 'deckInfo'
+                }
+            },
+            {
+                $project: {
+                    chapterId: 1,
+                    deckId: 1,
+                    chapterName: 1,
+                    createdAt: 1,
+                    deckTitle: {
+                        $ifNull: [
+                            { $arrayElemAt: ['$deckInfo.title', 0] },
+                            ''
+                        ]
+                    }
+                }
+            },
+            { $sort: { createdAt: -1 as const } },
+            { $skip: skip },
+            { $limit: limit }
+        ];
+
+        const chapters = await ChapterModel.aggregate(pipeline);
+
+        return chapters.map(chapter => ({
+            type: 'chapter' as const,
+            deckId: chapter.deckId,
+            deckTitle: chapter.deckTitle,
+            chapterId: chapter.chapterId,
+            chapterTitle: chapter.chapterName,
+            createdAt: chapter.createdAt,
+        }));
+    }
+
+    private static async getCards(
+        searchRegex: RegExp,
+        validDeckIds: string[],
+        skip: number,
+        limit: number
+    ): Promise<CardSearchResult[]> {
+        const pipeline: any[] = [
+            {
+                $match: {
+                    deckId: { $in: validDeckIds },
+                    deletedAt: { $exists: false },
+                    searchableContent: searchRegex
+                }
+            },
+            {
+                $lookup: {
+                    from: 'decks',
+                    let: { deckId: '$deckId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$deckId', '$$deckId'] },
+                                deletedAt: { $exists: false }
+                            }
+                        },
+                        { $project: { title: 1, _id: 0 } }
+                    ],
+                    as: 'deckInfo'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'chapters',
+                    let: {
+                        chapterId: '$chapterId',
+                        deckId: '$deckId'
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$chapterId', '$$chapterId'] },
+                                        { $eq: ['$deckId', '$$deckId'] },
+                                        { $ne: ['$chapterId', null] }
+                                    ]
+                                },
+                                deletedAt: { $exists: false }
+                            }
+                        },
+                        { $project: { chapterName: 1, _id: 0 } }
+                    ],
+                    as: 'chapterInfo'
+                }
+            },
+            {
+                $project: {
+                    cardId: 1,
+                    deckId: 1,
+                    chapterId: 1,
+                    note: 1,
+                    createdAt: 1,
+                    order: 1,
+                    deckTitle: {
+                        $ifNull: [
+                            { $arrayElemAt: ['$deckInfo.title', 0] },
+                            ''
+                        ]
+                    },
+                    chapterTitle: {
+                        $ifNull: [
+                            { $arrayElemAt: ['$chapterInfo.chapterName', 0] },
+                            ''
+                        ]
+                    },
+                    // Add sort priority: deck-card = 2, chapter-card = 3
+                    sortOrder: {
+                        $cond: {
+                            if: { $and: [{ $ne: ['$chapterId', null] }, { $ne: ['$chapterId', ''] }] },
+                            then: 3,
+                            else: 2
+                        }
+                    }
+                }
+            },
+            { $sort: { sortOrder: 1 as const, createdAt: -1 as const } },
+            { $skip: skip },
+            { $limit: limit }
+        ];
+
+        const cards = await CardModel.aggregate(pipeline);
+
+
+        return cards.map(card => {
+            const baseCard = {
+                deckId: card.deckId,
+                deckTitle: card.deckTitle,
+                cardId: card.cardId,
+                note: card.note,
+                createdAt: card.createdAt,
+                order: card.order,
+            };
+
+            // Check if card belongs to a chapter
+            if (card.chapterId && card.chapterId !== null && card.chapterId !== '') {
+                return {
+                    type: 'chapter-card' as const,
+                    ...baseCard,
+                    chapterId: card.chapterId,
+                    chapterTitle: card.chapterTitle,
+                };
+            } else {
+                return {
+                    type: 'deck-card' as const,
+                    ...baseCard,
+                };
+            }
+        });
+    }
+
+    // Optional: Method to get search counts without results (useful for UI)
+    static async getSearchCounts(
+        query: string,
+        userId: mongoose.Types.ObjectId
+    ): Promise<{ decks: number; chapters: number; cards: number; total: number }> {
+        const cleanQuery = escapeRegex(query.replace(/['"]+/g, ''));
+        const searchRegex = new RegExp(cleanQuery, 'i');
+
+        const validDeckIds = await DeckModel.distinct('deckId', {
+            email: userId,
+            deletedAt: { $exists: false }
+        });
+
+        if (validDeckIds.length === 0) {
+            return { decks: 0, chapters: 0, cards: 0, total: 0 };
+        }
+
+        const [deckCount, chapterCount, cardCount] = await Promise.all([
+            DeckModel.countDocuments({
+                email: userId,
+                deletedAt: { $exists: false },
+                title: searchRegex
+            }),
+            ChapterModel.countDocuments({
+                email: userId,
+                deletedAt: { $exists: false },
+                deckId: { $in: validDeckIds },
+                chapterName: searchRegex
+            }),
+            CardModel.countDocuments({
+                deckId: { $in: validDeckIds },
+                deletedAt: { $exists: false },
+                searchableContent: searchRegex
+            })
+        ]);
+
+        return {
+            decks: deckCount,
+            chapters: chapterCount,
+            cards: cardCount,
+            total: deckCount + chapterCount + cardCount
         };
     }
 }

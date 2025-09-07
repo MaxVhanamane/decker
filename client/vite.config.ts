@@ -40,6 +40,24 @@ export default defineConfig(({ command, mode }) => {
 
           },
           {
+
+            urlPattern: new RegExp(`${API_URL}/chapters/[^/]+(\\?.*)?$`), //  your API endpoint
+            handler: 'NetworkFirst', //  caching strategy 
+            options: {
+              cacheName: 'chapters-cache',
+              expiration: {
+                maxEntries: 1, // number of entries to store
+                maxAgeSeconds: 60 * 60 * 24 * 30, // cache expiration time
+              },
+              cacheableResponse: {
+                statuses: [200]
+              }
+
+            },
+
+
+          },
+          {
             urlPattern: new RegExp(`${API_URL}/cards/[^/]+(\\?.*)?$`),
             handler: 'NetworkFirst', // Caching strategy for /cards/deckId
             options: {
@@ -53,6 +71,21 @@ export default defineConfig(({ command, mode }) => {
               },
             },
 
+          },
+          {
+            // Chapter cards
+            urlPattern: new RegExp(`${API_URL}/cards/[^/]+/[^/]+(\\?.*)?$`),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'chapter-cards-cache',
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+              cacheableResponse: {
+                statuses: [200],
+              },
+            },
           },
 
           {

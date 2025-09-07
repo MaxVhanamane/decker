@@ -209,15 +209,25 @@
     /* Height for horizontal scrollbar */
   }
 
+  .scrollbar-extra-small::-webkit-scrollbar {
+    width: 6px;
+    /* Width for vertical scrollbar */
+    height: 6px;
+    /* Height for horizontal scrollbar */
+  }
+
   /* Ensures the grabbing cursor applies globally when dragging with DndKit. By default, DndKit forces the default cursor while dragging, but I want to show the grabbing cursor. Applying it directly to a draggable element doesn't work, so we override the body's cursor, as that's where DndKit applies its styles. */
   body:has(.cursor-grabbing) {
     cursor: grabbing !important;
   }
 
   /* Disable transitions during theme switch */
-  .disable-transition * {
+  .disable-transition *,
+  .disable-transition *::before,
+  .disable-transition *::after {
     transition: none !important;
   }
+
 
   ::-webkit-scrollbar {
     width: 10px;
@@ -432,52 +442,4 @@
     }
   }
 
-  /* Show scrollbar for specific elements, e.g., code blocks */
-
-  /* For Firefox */
-  /* .show-scrollbar {
-    overflow: auto;
-    scrollbar-width: 8px;
-  } */
-
-  /* .show-scrollbar::-webkit-scrollbar {
-    height: 8px;
-
-  }
-
-  .show-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #64748b;
-    border-radius: 10px;
-  }
-
-  .show-scrollbar::-webkit-scrollbar-track {
-    background-color: #cbd5e1;
-    border-radius: 10px;
-  }
-
-  html.dark .show-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #334155;
-    border-radius: 10px;
-  }
-
-  html.dark .show-scrollbar::-webkit-scrollbar-track {
-    background-color: #1e293b;
-    border-radius: 10px;
-  } */
 }
-
-/* Hide the scrollbar */
-/* ::-webkit-scrollbar {
-  width: 0.2em;
-  background-color: transparent; 
-} */
-
-/* Track */
-/* ::-webkit-scrollbar-thumb {
-background-color: #0f172a;
-} */
-
-/* Handle on hover */
-/* ::-webkit-scrollbar-thumb:hover {
-background-color: #000000;
-} */
