@@ -353,7 +353,9 @@ const CardInput = ({
                 onClick={handleEditorContentClick}
                 className={twMerge(
                   "transition-all duration-500 relative h-full w-full px-4 rounded-md",
-                  expandEditor ? "opacity-100" : "opacity-0",
+                  expandEditor
+                    ? "opacity-100"
+                    : "opacity-0 pointer-events-none",
                   shouldShowScrollbar
                     ? "animate-scrollbar-delayed dark:dark-scrollbar light-scrollbar scrollbar-gutter"
                     : "overflow-y-hidden"

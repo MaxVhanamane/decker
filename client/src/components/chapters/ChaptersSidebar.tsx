@@ -26,7 +26,6 @@ import useDeleteChapter from "../../hooks/react-query/useDeleteChapter";
 import { useModalBackNavigationHandler } from "../../hooks/utility/useModalBackNavigationHandler";
 import ChapterSidebarActions from "./ChapterSidebarActions";
 import { searchContext } from "../../context/SearchContext";
-import { useClickOutside } from "../../hooks/utility/useClickOutside";
 
 const ChaptersSidebar = () => {
   const { deckId } = useStableParams();
@@ -51,12 +50,7 @@ const ChaptersSidebar = () => {
   const { data, isLoading, isError, refetch } = useGetChapters(deckId);
   const { mutate: deleteChapter } = useDeleteChapter();
   const moreOptionsRef = useRef<HTMLDivElement | null>(null);
-  const sidebarContainer = useRef<HTMLElement | null>(null);
   const chapterToDeleteRef = useRef<null | ChapterDetails>(null);
-
-  useClickOutside(sidebarContainer, isMobileOrTablet, () => {
-    toggleSidebar(false);
-  });
 
   useModalBackNavigationHandler({
     isOpen: modalState.confirmDeleteCardModal.show,
@@ -180,7 +174,6 @@ const ChaptersSidebar = () => {
   return (
     <>
       <aside
-        ref={sidebarContainer}
         onClick={(e) => handleOpenSidebar(e)}
         className={twMerge(
           "h-screen bg-white dark:bg-slate-900 dark:border-slate-300/10  border-slate-900/10 border-r top-0 bottom-0",
@@ -328,6 +321,12 @@ const ChaptersSidebar = () => {
           </div>
         )}
       </aside>
+      {isMobileOrTablet && isSidebarOpen && (
+        <div
+          className="fixed inset-0 dark:bg-black/50 bg-gray-900/40 z-[99]"
+          onClick={() => toggleSidebar(false)}
+        />
+      )}
       {showCreateChapterModal && (
         <CreateChapterModal
           handleCloseChapterModal={handleCloseChapterModal}

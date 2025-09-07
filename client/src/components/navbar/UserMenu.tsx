@@ -279,7 +279,8 @@ const UserMenu = ({ setModalState }: PropType) => {
                       {userEmailAddress ?? "N/A"}
                       {!userEmailAddress && (
                         <Button
-                          className="inline ml-2 rounded-md border dark:border-slate-200 border-gray-700 px-1 font-light text-sm"
+                          tabIndex={showUserProfile ? 0 : -1}
+                          className="inline ml-2 rounded-md dark:bg-slate-800 bg-gray-50 border dark:border-slate-500 border-gray-500 px-1 font-light text-sm"
                           variant="unstyled"
                           onClick={handleFetchEmail}
                           disabled={isFetching}
