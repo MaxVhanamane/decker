@@ -26,7 +26,7 @@ const CardItemPresentational = ({
       className={`relative your-drag-preview-selector border overflow-hidden ${
         isDragging
           ? "shadow-2xl  border-violet-500  shadow-violet-500  dark:border-violet-500  dark:shadow-violet-500 animate-[pulse_3s_linear_infinite] dark:bg-slate-900 bg-white"
-          : "dark:border-slate-600 border-slate-400 shadow-4-sides"
+          : "dark:border-slate-600 border-slate-400"
       } ${
         isDraggingCardOverDeleteArea
           ? " !shadow-red-500 !border-red-500 "

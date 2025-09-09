@@ -2,6 +2,7 @@ import { DragOverlay } from "@dnd-kit/core";
 import { lazy, memo, Suspense, useContext, useEffect } from "react";
 import {
   DndCurrentDraggingCardContext,
+  DndCurrentDraggingChapterContext,
   DndCurrentDraggingDeckContext,
 } from "../context/DndItemContext";
 const CardItemPresentational = lazy(
@@ -9,10 +10,14 @@ const CardItemPresentational = lazy(
 );
 import DeckItemPresentational from "./deck/DeckItemPresentational";
 import DraggingCardFallback from "./suspense-loaders/DraggingCardFallback";
+import ChapterItemPresentational from "./chapters/ChapterItemPresentational";
 
 const DragOverlayComponent = () => {
   const { currentDraggingCard } = useContext(DndCurrentDraggingCardContext);
   const { currentDraggingDeck } = useContext(DndCurrentDraggingDeckContext);
+  const { currentDraggingChapter } = useContext(
+    DndCurrentDraggingChapterContext
+  );
 
   // CardItemPresentational uses Slate.js. To keep the initial bundle smaller, we lazy‑load it and show a fallback while it’s loading. We also import it in a useEffect to pre‑load it, so the fallback only appears for a split second. Without this pre‑load, Suspense would wait for the module to download from the server before rendering the actual component. By using useEffect, the lazy‑loaded module is cached, and Suspense can render it immediately on subsequent loads.
   useEffect(() => {
@@ -44,6 +49,17 @@ const DragOverlayComponent = () => {
           >
             <CardItemPresentational {...currentDraggingCard} />
           </Suspense>
+        </div>
+      )}
+      {currentDraggingChapter && (
+        <div>
+          <ChapterItemPresentational
+            chapterName={currentDraggingChapter.chapter.chapterName}
+            isDragging={currentDraggingChapter.isDragging}
+            isDraggingChapterOverDeleteArea={
+              currentDraggingChapter?.isDraggingOverDeleteArea
+            }
+          />
         </div>
       )}
     </DragOverlay>

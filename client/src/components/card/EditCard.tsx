@@ -92,6 +92,7 @@ const EditCard = ({
   }, []);
   useFocusTrap(editorContainer, "tab", {
     onEscape: () => setCloseEditModalWithAnimation(true),
+    initialFocusIndex: 0,
   });
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
   const { showToast } = useContext(ShowToastContext);

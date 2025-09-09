@@ -209,13 +209,13 @@ const UserMenu = ({ setModalState }: PropType) => {
       <div
         ref={containerRef}
         className={twMerge(
-          "absolute -left-64 top-14 transition-[opacity,transform] shadow duration-300 ease-in-out z-[90] w-64 outline-none",
+          "absolute -left-64 rounded-lg top-14 transition-[opacity,transform] shadow duration-300 ease-in-out z-[90] w-64 outline-none",
           showUserProfile
             ? "opacity-100 translate-x-0"
             : "opacity-0 -translate-x-4 pointer-events-none"
         )}
       >
-        <div className="ring-1 border-sky-500/60 relative shadow-xl bg-white rounded-lg dark:bg-slate-900 mx-auto">
+        <div className="border  border-slate-500/60 relative shadow-xl bg-white rounded-lg dark:bg-slate-900 mx-auto">
           <Button
             tabIndex={showUserProfile ? 0 : -1}
             variant="unstyled"
@@ -232,7 +232,7 @@ const UserMenu = ({ setModalState }: PropType) => {
             Account Settings
           </h2>
 
-          <hr className="border-sky-500/60" />
+          <hr className="border-slate-500/60" />
 
           <div className="p-2">
             <ul className="flex flex-col items-start gap-2 text-gray-700 dark:text-gray-50 ">
@@ -303,7 +303,7 @@ const UserMenu = ({ setModalState }: PropType) => {
             </ul>
           </div>
 
-          <hr className="border-sky-500/60" />
+          <hr className="border-slate-500/60" />
 
           <div className="flex items-start justify-start flex-col p-2 gap-2 ">
             <Button

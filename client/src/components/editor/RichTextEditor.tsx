@@ -99,6 +99,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       ReactEditor.focus(editor);
     }
   }, [isEditorExpanded, editor]);
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const { selection } = editor;
 
@@ -401,7 +402,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       <SetNodeToDecorations />
       <div className="h-full flex flex-col">
         <Editable
-          readOnly={!isEditorExpanded ? true : false}
+          readOnly={!isEditorExpanded && mode !== "edit" ? true : false}
           renderElement={renderElement}
           decorate={decorate}
           renderLeaf={renderLeaf}
@@ -409,7 +410,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           onKeyDown={onKeyDown}
           scrollSelectionIntoView={handleScrollSelectionIntoView}
           className="focus-visible:outline-none  flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words whitespace-pre-wrap"
-          tabIndex={!isEditorExpanded ? -1 : 0}
+          tabIndex={!isEditorExpanded && mode !== "edit" ? -1 : 0}
         />
         <div className="h-10 flex-shrink-0 " />
         {/* Spacer for bottom padding */}

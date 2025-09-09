@@ -11,7 +11,7 @@ const useCustomSensors = () => {
         useSensor(TouchSensor, {
             activationConstraint: {
                 delay: 500,
-                tolerance: { x: 5, y: 5 }
+                tolerance: { x: 3, y: 3 }
             }
         })
         ,

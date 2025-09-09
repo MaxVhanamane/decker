@@ -39,6 +39,16 @@ const colorConfig = {
     spanShadowRight: "!shadow-[-12px_12px_0_4.5px_#f87171]",
     tungstenWireStroke: "#fecaca", // red-200
   },
+  green: {
+    rgb: "34, 197, 94", // orange-500
+    tailwindBg: "!bg-green-400",
+    tailwindShadow: "!shadow-green-600",
+    beforeTailwindBg: "before:!bg-green-400",
+    spanShadowLeft: "!shadow-[12px_12px_0_4.5px_#4ade80]",
+    spanShadowRight: "!shadow-[-12px_12px_0_4.5px_#4ade80]",
+    tungstenWireStroke: "#bbf7d0", // orange-200
+  },
+
   yellow: {
     rgb: "234, 179, 8", // yellow-500
     tailwindBg: "!bg-yellow-400",
@@ -314,7 +324,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
       onAnimationEnd={() => {
         setSwingBulb(false);
       }}
-      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500 pointer-events-none mix-blend-lighten ${
+      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500 pointer-events-none dark:mix-blend-lighten mix-blend-multiply ${
         swingBulb ? "animate-swingBulb" : ""
       }  origin-top ${showBulb ? "opacity-100" : "opacity-0 "}`}
     >

@@ -14,7 +14,7 @@ export function useCustomCollisionDetection() {
         const collisions = rectIntersection(args);
 
         return collisions.sort((a, b) => {
-            if (a.id === "CardDeleteArea") return -1;
+            if (a.id === "CardAndChapterDeleteArea") return -1;
             if (a.id === "DeckDeleteArea") return -1;
             if (b.id === "priority-drop") return 1;
             return 0;

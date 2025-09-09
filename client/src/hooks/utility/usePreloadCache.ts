@@ -22,7 +22,6 @@ export function usePreloadCache<T>({ queryKey, cacheName, url }: UsePreloadCache
             try {
                 const cache = await caches.open(cacheName);
                 const cachedResponse = await cache.match(url);
-
                 if (cachedResponse) {
                     const cachedData = await cachedResponse.json();
                     queryClient.setQueryData(queryKey, cachedData);

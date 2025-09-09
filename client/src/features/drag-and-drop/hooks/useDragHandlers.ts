@@ -1,17 +1,18 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useContext, useRef } from "react";
 import { BulbContext } from "../../../context/BulbContext";
-import { DndCurrentDraggingCardContext, DndCurrentDraggingDeckContext, DndFilterContext, DndSettersContext } from "../../../context/DndItemContext";
+import { DndCurrentDraggingCardContext, DndCurrentDraggingChapterContext, DndCurrentDraggingDeckContext, DndFilterContext, DndSettersContext } from "../../../context/DndItemContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { CardType, DeckType } from "../../../types/types";
+import { CardType, DeckType, GetChaptersResponseType } from "../../../types/types";
 import useReorderCard from "../../../hooks/react-query/useReorderCard";
 import useDeleteCard from "../../../hooks/react-query/useDeleteCard";
 import useDeleteDeck from "../../../hooks/react-query/useDeleteDeck";
 import { OfflineContext } from "../../../context/OfflineContext";
 import { ShowToastContext } from "../../../context/ToastNotificationContext";
 import useReorderDeck from "../../../hooks/react-query/useReorderDeck";
-import { AudioContext } from "../../../context/AudioContext";
 import useToastOnError from "../../../hooks/utility/useToastOnError";
+import useReorderChapter from "../../../hooks/react-query/useRorderChapter";
+import useDeleteChapter from "../../../hooks/react-query/useDeleteChapter";
 
 const useDragHandlers = () => {
     const {
@@ -19,14 +20,15 @@ const useDragHandlers = () => {
         setCurrentDraggingCard,
         setAllCardsState,
         setCurrentDraggingDeck,
-        setIsDragStarted,
+        setCurrentDraggingChapter,
+        setAllChaptersState,
     } = useContext(DndSettersContext);
     const { bulbRef } = useContext(BulbContext);
     const { currentDraggingDeck } = useContext(DndCurrentDraggingDeckContext);
     const { currentDraggingCard } = useContext(DndCurrentDraggingCardContext);
+    const { currentDraggingChapter } = useContext(DndCurrentDraggingChapterContext);
     const { isOnline } = useContext(OfflineContext);
     const { showToast } = useContext(ShowToastContext);
-    const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
     const activeItemRef = useRef<Record<string, any> | undefined>();
 
 
@@ -35,9 +37,11 @@ const useDragHandlers = () => {
 
     const { mutate: deleteCard } = useDeleteCard();
     const { mutate: deleteDeck } = useDeleteDeck();
+    const { mutate: deleteChapter } = useDeleteChapter();
 
     const queryClient = useQueryClient();
     const { mutate: reorderDeck } = useReorderDeck();
+    const { mutate: reorderChapter } = useReorderChapter();
     const {
         mutate: moveCard,
         reset: resetMoveCardResponse,
@@ -52,7 +56,6 @@ const useDragHandlers = () => {
     });
     const handleDragStart = useCallback(
         (event: DragEndEvent) => {
-            setIsDragStarted(true);
             const { active } = event;
             // active.data.current?.name will give you "deck" or "card"
             // This if condition will handle deck related draggin and dropping
@@ -75,7 +78,7 @@ const useDragHandlers = () => {
                 });
             }
 
-            if (active.data?.current?.name === "card") {
+            else if (active.data?.current?.name === "card") {
                 if (bulbRef.current?.colorName === "yellow") {
                     bulbRef.current.removeBulbColor("yellow");
                 }
@@ -91,14 +94,24 @@ const useDragHandlers = () => {
                     },
                 });
             }
+            else if (active.data?.current?.name === "chapter") {
+                bulbRef?.current?.setBulbColor("green");
+                setCurrentDraggingChapter({
+                    isDragging: true,
+                    chapter: active.data?.current?.ChapterDetails,
+                    isDraggingOverDeleteArea: false,
+                });
+            }
+
         },
-        [setCurrentDraggingDeck, setCurrentDraggingCard]
+        [setCurrentDraggingDeck, setCurrentDraggingCard, setCurrentDraggingChapter]
     );
 
     const handleDragMove = useCallback(
         (event: DragEndEvent) => {
             // This if statement fixes the issue if you drag over delete area and then move the card out of screen from there it won't reset color even if it is not on delete deck area.
             const { over } = event;
+
 
 
             if (activeItemRef.current?.name === "deck") {
@@ -127,7 +140,7 @@ const useDragHandlers = () => {
                 }
             } else if (activeItemRef.current?.name === "card") {
                 if (
-                    over?.id !== "CardDeleteArea" &&
+                    over?.id !== "CardAndChapterDeleteArea" &&
                     currentDraggingCard?.isDraggingCardOverDeleteArea
                 ) {
                     bulbRef?.current?.removeBulbColor("red");
@@ -144,10 +157,30 @@ const useDragHandlers = () => {
                     });
                 }
             }
+            else if (activeItemRef.current?.name === "chapter") {
+
+                if (
+                    over?.id !== "CardAndChapterDeleteArea" &&
+                    currentDraggingChapter?.isDraggingOverDeleteArea
+                ) {
+                    bulbRef?.current?.removeBulbColor("red");
+                    bulbRef?.current?.setBulbColor("green");
+                    setCurrentDraggingChapter((pre) => {
+                        if (!pre) {
+                            return null;
+                        }
+                        return {
+                            ...pre,
+                            isDraggingOverDeleteArea: false,
+                        };
+                    });
+                }
+            }
         },
         [
             currentDraggingDeck,
             setCurrentDraggingDeck,
+            currentDraggingChapter,
             setCurrentDraggingCard,
             currentDraggingCard,
             bulbRef,
@@ -159,44 +192,6 @@ const useDragHandlers = () => {
             const { active, over } = event;
             if (!over) return;
             if (active.id === over.id) return;
-
-            // if (
-            //   active.data.current?.deck?.pinned &&
-            //   over?.data.current?.deck?.pinned === false
-            // ) {
-            //   let updatedDecks: DeckType[];
-            //   const allDecks = queryClient.getQueryData<DeckType[]>(["decks"]);
-
-            //   if (allDecks) {
-            //     updatedDecks = allDecks?.map((item) => {
-            //       if (item._id === active.data.current?.deck._id) {
-            //         return { ...item, pinned: false };
-            //       } else {
-            //         return item;
-            //       }
-            //     });
-            //     setAllDecksState(updatedDecks);
-            //     queryClient.setQueryData(["decks"], updatedDecks);
-            //   }
-            // } else if (
-            //   !active.data.current?.deck?.pinned &&
-            //   over?.data.current?.deck?.pinned === true
-            // ) {
-            //   let updatedDecks: DeckType[];
-            //   const allDecks = queryClient.getQueryData<DeckType[]>(["decks"]);
-
-            //   if (allDecks) {
-            //     updatedDecks = allDecks?.map((item) => {
-            //       if (item._id === active.data.current?.deck._id) {
-            //         return { ...item, pinned: true };
-            //       } else {
-            //         return item;
-            //       }
-            //     });
-            //     setAllDecksState(updatedDecks);
-            //     queryClient.setQueryData(["decks"], updatedDecks);
-            //   }
-            // }
 
             if (activeItemRef.current?.name === "deck") {
                 if (
@@ -229,7 +224,7 @@ const useDragHandlers = () => {
                 }
             } else if (activeItemRef.current?.name === "card") {
                 if (
-                    over?.id === "CardDeleteArea" &&
+                    over?.id === "CardAndChapterDeleteArea" &&
                     currentDraggingCard?.isDraggingCardOverDeleteArea === false
                 ) {
                     bulbRef?.current?.removeBulbColor("violet");
@@ -245,8 +240,29 @@ const useDragHandlers = () => {
                     });
                 }
             }
+            else if (activeItemRef.current?.name === "chapter") {
+
+                if (
+                    over?.id === "CardAndChapterDeleteArea" &&
+                    currentDraggingChapter?.isDraggingOverDeleteArea === false
+                ) {
+
+                    bulbRef?.current?.removeBulbColor("green");
+                    bulbRef?.current?.setBulbColor("red");
+                    setCurrentDraggingChapter((pre) => {
+                        if (!pre) {
+                            return null;
+                        }
+                        return {
+                            ...pre,
+                            isDraggingOverDeleteArea: true
+                        };
+                    });
+                }
+            }
         },
         [
+            currentDraggingChapter,
             currentDraggingDeck,
             currentDraggingCard,
             setCurrentDraggingCard,
@@ -258,7 +274,6 @@ const useDragHandlers = () => {
     const handleOnDragEnd = useCallback(
         (event: DragEndEvent) => {
             const { active, over } = event;
-            setIsDragStarted(false);
             if (activeItemRef.current?.name === "deck") {
                 // Reset bulb color:
                 if (bulbRef?.current?.colorName === "fuchsia") {
@@ -409,7 +424,8 @@ const useDragHandlers = () => {
                             toIndex,
                             deckId: activeItemRef.current?.deckId,
                             cardId: activeItemRef.current?.card?.cardId,
-                            newOrder: newOrderValue, chapterId: activeItemRef.current?.card?.chapterId,
+                            newOrder: newOrderValue,
+                            chapterId: activeItemRef.current?.card?.chapterId,
                             reindexNeeded
                         } : {
                             fromIndex,
@@ -423,7 +439,7 @@ const useDragHandlers = () => {
                         moveCard(payload);
                     }
 
-                } else if (over?.id === "CardDeleteArea") {
+                } else if (over?.id === "CardAndChapterDeleteArea") {
 
                     const deckId = activeItemRef.current?.deckId;
                     const chapterId = activeItemRef.current?.card?.chapterId;
@@ -448,19 +464,107 @@ const useDragHandlers = () => {
                     deleteCard(cardDetails);
                 }
             }
+            if (activeItemRef.current?.name === "chapter") {
+                setCurrentDraggingChapter(null);
+                if (bulbRef?.current?.colorName === "green") {
+                    bulbRef?.current?.removeBulbColor("green");
+                } else if (bulbRef.current?.colorName === "red") {
+                    bulbRef?.current?.removeBulbColor("green");
+                    bulbRef?.current?.removeBulbColor("red");
+                }
+
+                if (!over) return;
+
+                // If chapter is dropped in same place then do nothing
+                if (active.id === over.id) return;
+                if (
+                    activeItemRef.current?.index !== undefined &&
+                    over?.data?.current?.index !== undefined
+                ) {
+                    const queryKey = ["chapters", activeItemRef.current?.ChapterDetails?.deckId]
+
+                    const chaptersResponse = queryClient.getQueryData<GetChaptersResponseType>(queryKey);
+
+
+                    if (chaptersResponse?.chapters) {
+                        // Make a deep-ish copy (new references for each card)
+                        const updatedChapters = chaptersResponse.chapters.map((chapter) => ({ ...chapter }));
+
+                        const fromIndex = activeItemRef.current?.index;
+                        const toIndex = over?.data?.current?.index;
+
+                        // Remove the card first
+                        const [movedItem] = updatedChapters.splice(fromIndex, 1);
+
+                        // Insert the card at the intended target index
+                        updatedChapters.splice(toIndex, 0, movedItem);
+
+                        // find its neighbors 
+                        const prevChapter = updatedChapters[toIndex - 1] || null;
+                        const nextChapter = updatedChapters[toIndex + 1] || null;
+
+                        let newOrderValue: number;
+                        if (prevChapter && nextChapter) {
+                            newOrderValue = (prevChapter.order + nextChapter.order) / 2;
+                        } else if (!prevChapter && nextChapter) {
+                            // Top of list
+                            newOrderValue = nextChapter.order + 10;
+                        } else if (prevChapter && !nextChapter) {
+                            // Bottom of list
+                            newOrderValue = prevChapter.order - 10;
+                        } else {
+                            // Only card
+                            newOrderValue = 10;
+                        }
+                        let reindexNeeded = false;
+                        if (prevChapter && nextChapter) {
+                            reindexNeeded = Math.abs(prevChapter.order - nextChapter.order) < 0.0001;
+                        }
+
+                        movedItem.order = newOrderValue;
+
+
+                        setAllChaptersState({ ...chaptersResponse, chapters: updatedChapters });
+                        const payload = {
+                            deckId: activeItemRef.current?.ChapterDetails.deckId,
+                            chapterId: activeItemRef.current?.ChapterDetails.chapterId,
+                            newOrder: newOrderValue,
+                            reindexNeeded
+                        }
+
+                        reorderChapter(payload);
+                    }
+
+                }
+                else if (over?.id === "CardAndChapterDeleteArea") {
+
+                    setAllChaptersState((prevChapters) => {
+                        if (!prevChapters) return null;
+
+                        const updatedChapters = prevChapters.chapters.filter((chapter) => chapter.chapterId !== activeItemRef.current?.ChapterDetails?.chapterId)
+                        return {
+                            ...prevChapters,
+                            chapters: updatedChapters,
+                        };
+                    });
+
+
+                    deleteChapter({ chapterInfo: activeItemRef.current.ChapterDetails });
+                }
+            }
         },
         [
-            setDeckIdToFilterOnDragOverDeleteArea,
-            isPlayingAudioAllowed,
-            handlePlayAudio,
             showToast,
             isOnline,
             reorderDeck,
-            queryClient,
+            deleteDeck,
+            moveCard,
+            deleteCard,
+            reorderChapter,
+            deleteChapter,
             bulbRef,
-            location.pathname,
-            currentDraggingCard,
         ]
+
     );
 
     const handleDragCancel = useCallback(() => {

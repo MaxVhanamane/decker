@@ -706,7 +706,61 @@ app.put(
   }
 );
 
+app.put(
+  '/chapter/changeposition/:deckId/:chapterId/:newOrder',
+  fetchUserDetails,
+  async (req: Request, res: Response) => {
+    const deckId = req.params.deckId;
+    const chapterId = req.params.chapterId;
+    const newOrder = Number(req.params.newOrder);
+    const { reindexNeeded } = req.body;
+    const email = req.user!._id as mongoose.Types.ObjectId;
+    const filter: { deckId: string; chapterId: string, email: mongoose.Types.ObjectId } = {
+      deckId,
+      chapterId,
+      email
+    };
 
+    try {
+      // 1. Update moved chapter
+      await ChapterModel.findOneAndUpdate(filter, { $set: { order: newOrder } });
+
+      // 2. If frontend flagged reindex
+      if (reindexNeeded) {
+
+        const query: { deckId: string, email: mongoose.Types.ObjectId } = { deckId, email };
+
+        // Fetch all cards sorted in descending order
+        const chapters = await ChapterModel.find(query).sort({ order: -1 });
+
+        if (chapters.length) {
+          // Dynamic starting order = cards.length * 10
+          const startOrder = chapters.length * 10;
+
+          const updates = chapters.map((chapter, index) => ({
+            updateOne: {
+              filter: { _id: chapter._id },
+              update: { $set: { order: startOrder - index * 10 } }, // descending with gap=10
+            },
+          }));
+
+          await ChapterModel.bulkWrite(updates);
+        }
+
+        return res.status(200).json({ success: true, reindexed: true });
+      }
+
+      // Normal case
+      res.status(200).json({ success: true, reindexed: false });
+    } catch (error) {
+      res.status(500).json({
+        message: 'An unexpected error occurred while changing chapter position.',
+        success: false,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+);
 
 // Card routes
 

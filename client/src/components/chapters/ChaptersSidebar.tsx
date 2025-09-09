@@ -17,7 +17,6 @@ import { twMerge } from "tailwind-merge";
 import { SidebarContex } from "../../context/SidebarContext";
 import Spinner from "../Spinner";
 import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
-import Chapter from "./Chapter";
 import EditChapter from "./EditChapter";
 import ConfirmationModal from "../ConfirmationModal";
 import { IoWarning } from "react-icons/io5";
@@ -26,6 +25,11 @@ import useDeleteChapter from "../../hooks/react-query/useDeleteChapter";
 import { useModalBackNavigationHandler } from "../../hooks/utility/useModalBackNavigationHandler";
 import ChapterSidebarActions from "./ChapterSidebarActions";
 import { searchContext } from "../../context/SearchContext";
+import ChapterContainer from "./ChapterContainer";
+import {
+  DndSettersContext,
+  DndStateContext,
+} from "../../context/DndItemContext";
 
 const ChaptersSidebar = () => {
   const { deckId } = useStableParams();
@@ -46,11 +50,18 @@ const ChaptersSidebar = () => {
     useState(false);
   const { theme } = useContext(ThemeContext);
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContex);
+  const { setAllChaptersState } = useContext(DndSettersContext);
+  const { allChaptersState } = useContext(DndStateContext);
   const { animateSearchBar } = useContext(searchContext);
   const { data, isLoading, isError, refetch } = useGetChapters(deckId);
   const { mutate: deleteChapter } = useDeleteChapter();
-  const moreOptionsRef = useRef<HTMLDivElement | null>(null);
   const chapterToDeleteRef = useRef<null | ChapterDetails>(null);
+
+  useEffect(() => {
+    if (data) {
+      setAllChaptersState(data);
+    }
+  }, [data]);
 
   useModalBackNavigationHandler({
     isOpen: modalState.confirmDeleteCardModal.show,
@@ -268,24 +279,14 @@ const ChaptersSidebar = () => {
             {!isLoading ? (
               !isError ? (
                 <div className="mt-0.5 overflow-y-auto scrollbar-extra-small h-[calc(100vh-212px)] pb-12 pt-2 light-scrollbar scrollbar-gutter dark:dark-scrollbar">
-                  {data?.chapters?.length ? (
-                    <ul className=" text-gray-700 dark:text-gray-200 flex items-start justify-center flex-col gap-0.5 pl-[10px] pr-2 ">
-                      {data?.chapters?.map((chapter) => {
-                        return (
-                          <Chapter
-                            key={chapter.chapterId}
-                            chapter={chapter}
-                            moreOptionsRef={moreOptionsRef}
-                            handleShowEditChapterModal={
-                              handleShowEditChapterModal
-                            }
-                            handleDeleteChapterButtonClick={
-                              handleDeleteChapterButtonClick
-                            }
-                          />
-                        );
-                      })}
-                    </ul>
+                  {data?.chapters?.length && allChaptersState ? (
+                    <ChapterContainer
+                      data={allChaptersState}
+                      handleDeleteChapterButtonClick={
+                        handleDeleteChapterButtonClick
+                      }
+                      handleShowEditChapterModal={handleShowEditChapterModal}
+                    />
                   ) : (
                     <p className="text-gray-400 dark:text-gray-500 mt-2 text-xs pl-[18px] text-left">
                       Chapters will appear here once created

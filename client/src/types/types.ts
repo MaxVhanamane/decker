@@ -37,7 +37,7 @@ export type CardListType = {
 
 
 //bulb
-export type bulbColors = "red" | "yellow" | "lime" | "fuchsia" | "violet" | "cyan";
+export type bulbColors = "red" | "yellow" | "lime" | "fuchsia" | "violet" | "cyan" | "green";
 
 //cards
 
@@ -101,6 +101,12 @@ export type moveCardPayloadType = {
   toIndex: number;
   deckId: string;
   chapterId?: string,
+  reindexNeeded: boolean
+};
+export type moveChapterPayloadType = {
+  chapterId: string;
+  newOrder: number;
+  deckId: string;
   reindexNeeded: boolean
 };
 

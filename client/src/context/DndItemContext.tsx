@@ -9,8 +9,10 @@ import {
 import { UniqueIdentifier } from "@dnd-kit/core";
 import type {
   CardType,
+  ChapterDetails,
   CurrentDraggingCardType,
   DeckType,
+  GetChaptersResponseType,
 } from "../types/types";
 
 // Separate state and setter contexts
@@ -20,9 +22,16 @@ type CurrentDraggingDeckType = {
   deck: DeckType;
 } | null;
 
+type CurrentDraggingChapterType = {
+  isDragging: boolean;
+  isDraggingOverDeleteArea: boolean;
+  chapter: ChapterDetails;
+} | null;
+
 type DndStateContextType = {
   allDecksState: DeckType[] | [];
   allCardsState: CardType | null;
+  allChaptersState: GetChaptersResponseType | null;
 };
 type CurrentDraggingDeckContextType = {
   currentDraggingDeck: CurrentDraggingDeckType;
@@ -30,9 +39,14 @@ type CurrentDraggingDeckContextType = {
 type CurrentDraggingCardContextType = {
   currentDraggingCard: CurrentDraggingCardType;
 };
+type CurrentDraggingChapterContextType = {
+  currentDraggingChapter: CurrentDraggingChapterType;
+};
+
 type DndActiveIdType = {
   activeId: UniqueIdentifier | null;
 };
+
 type DndFilterContextType = {
   deckIdToFilterOnDragOverDeleteArea: UniqueIdentifier | null;
   setDeckIdToFilterOnDragOverDeleteArea: Dispatch<
@@ -40,32 +54,24 @@ type DndFilterContextType = {
   >;
 };
 
-type DndFlagsContextType = {
-  isDragStarted: boolean;
-};
-
 type DndSettersContextType = {
   setAllDecksState: Dispatch<SetStateAction<DeckType[] | []>>;
   setAllCardsState: Dispatch<SetStateAction<CardType | null>>;
+  setAllChaptersState: Dispatch<SetStateAction<GetChaptersResponseType | null>>;
   setActiveId: Dispatch<SetStateAction<UniqueIdentifier | null>>;
   setCurrentDraggingDeck: Dispatch<SetStateAction<CurrentDraggingDeckType>>;
   setCurrentDraggingCard: Dispatch<SetStateAction<CurrentDraggingCardType>>;
-  setDragAffectedPages: Dispatch<SetStateAction<number[]>>;
-  setIsDragStarted: Dispatch<SetStateAction<boolean>>;
+  setCurrentDraggingChapter: Dispatch<
+    SetStateAction<CurrentDraggingChapterType>
+  >;
 };
 
 export const DndStateContext = createContext<DndStateContextType>({
   allDecksState: [],
   allCardsState: null,
+  allChaptersState: null,
 });
-export const DndFlagsContext = createContext<DndFlagsContextType>({
-  isDragStarted: false,
-});
-export const DndDragAffectedPagesContext = createContext<{
-  dragAffectedPages: number[];
-}>({
-  dragAffectedPages: [],
-});
+
 export const DndActiveIdContext = createContext<DndActiveIdType>({
   activeId: null,
 });
@@ -73,9 +79,14 @@ export const DndCurrentDraggingDeckContext =
   createContext<CurrentDraggingDeckContextType>({
     currentDraggingDeck: null,
   });
+
 export const DndCurrentDraggingCardContext =
   createContext<CurrentDraggingCardContextType>({
     currentDraggingCard: null,
+  });
+export const DndCurrentDraggingChapterContext =
+  createContext<CurrentDraggingChapterContextType>({
+    currentDraggingChapter: null,
   });
 
 export const DndFilterContext = createContext<DndFilterContextType>({
@@ -86,11 +97,11 @@ export const DndFilterContext = createContext<DndFilterContextType>({
 export const DndSettersContext = createContext<DndSettersContextType>({
   setAllDecksState: () => {},
   setAllCardsState: () => {},
+  setAllChaptersState: () => {},
   setActiveId: () => {},
   setCurrentDraggingDeck: () => {},
   setCurrentDraggingCard: () => {},
-  setIsDragStarted: () => {},
-  setDragAffectedPages: () => {},
+  setCurrentDraggingChapter: () => {},
 });
 
 const DndContextProvider = ({ children }: { children: ReactNode }) => {
@@ -99,15 +110,18 @@ const DndContextProvider = ({ children }: { children: ReactNode }) => {
     deckIdToFilterOnDragOverDeleteArea,
     setDeckIdToFilterOnDragOverDeleteArea,
   ] = useState<UniqueIdentifier | null>(null);
-  const [isDragStarted, setIsDragStarted] = useState(false);
   const [allDecksState, setAllDecksState] = useState<DeckType[] | []>([]);
   const [allCardsState, setAllCardsState] = useState<CardType | null>(null);
+  const [allChaptersState, setAllChaptersState] =
+    useState<GetChaptersResponseType | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [currentDraggingDeck, setCurrentDraggingDeck] =
     useState<CurrentDraggingDeckType>(null);
   const [currentDraggingCard, setCurrentDraggingCard] =
     useState<CurrentDraggingCardType>(null);
-  const [dragAffectedPages, setDragAffectedPages] = useState<number[]>([]);
+  const [currentDraggingChapter, setCurrentDraggingChapter] =
+    useState<CurrentDraggingChapterType>(null);
+
   const filterContextValue = useMemo(() => {
     return {
       deckIdToFilterOnDragOverDeleteArea,
@@ -117,32 +131,37 @@ const DndContextProvider = ({ children }: { children: ReactNode }) => {
     deckIdToFilterOnDragOverDeleteArea,
     setDeckIdToFilterOnDragOverDeleteArea,
   ]);
-  const flagsContextValue = useMemo(() => ({ isDragStarted }), [isDragStarted]);
-  const dragAffectedPagesContextValue = useMemo(
-    () => ({ dragAffectedPages }),
-    [dragAffectedPages]
-  );
+
   const stateContextValue = useMemo(() => {
     return {
       allDecksState,
       allCardsState,
+      allChaptersState,
     };
-  }, [allDecksState, allCardsState]);
+  }, [allDecksState, allCardsState, allChaptersState]);
+
   const activeIdContextValue = useMemo(() => {
     return {
       activeId,
     };
   }, [activeId]);
+
   const currentDraggingDeckContextValue = useMemo(() => {
     return {
       currentDraggingDeck,
     };
   }, [currentDraggingDeck]);
+
   const currentDraggingCardContextValue = useMemo(() => {
     return {
       currentDraggingCard,
     };
   }, [currentDraggingCard]);
+  const currentDraggingChapterontextValue = useMemo(() => {
+    return {
+      currentDraggingChapter,
+    };
+  }, [currentDraggingChapter]);
 
   const settersContextValue = useMemo(() => {
     return {
@@ -151,42 +170,32 @@ const DndContextProvider = ({ children }: { children: ReactNode }) => {
       setCurrentDraggingDeck,
       setCurrentDraggingCard,
       setAllCardsState,
-      setIsDragStarted,
-      setDragAffectedPages,
+      setCurrentDraggingChapter,
+      setAllChaptersState,
     };
-  }, [
-    setAllDecksState,
-    setActiveId,
-    setCurrentDraggingDeck,
-    setCurrentDraggingCard,
-    setAllCardsState,
-    setIsDragStarted,
-    setDragAffectedPages,
-  ]);
+  }, []);
 
   return (
     <DndSettersContext.Provider value={settersContextValue}>
-      <DndFlagsContext.Provider value={flagsContextValue}>
-        <DndDragAffectedPagesContext.Provider
-          value={dragAffectedPagesContextValue}
-        >
-          <DndStateContext.Provider value={stateContextValue}>
-            <DndFilterContext.Provider value={filterContextValue}>
-              <DndActiveIdContext.Provider value={activeIdContextValue}>
-                <DndCurrentDraggingDeckContext.Provider
-                  value={currentDraggingDeckContextValue}
+      <DndStateContext.Provider value={stateContextValue}>
+        <DndFilterContext.Provider value={filterContextValue}>
+          <DndActiveIdContext.Provider value={activeIdContextValue}>
+            <DndCurrentDraggingDeckContext.Provider
+              value={currentDraggingDeckContextValue}
+            >
+              <DndCurrentDraggingCardContext.Provider
+                value={currentDraggingCardContextValue}
+              >
+                <DndCurrentDraggingChapterContext.Provider
+                  value={currentDraggingChapterontextValue}
                 >
-                  <DndCurrentDraggingCardContext.Provider
-                    value={currentDraggingCardContextValue}
-                  >
-                    {children}
-                  </DndCurrentDraggingCardContext.Provider>
-                </DndCurrentDraggingDeckContext.Provider>
-              </DndActiveIdContext.Provider>
-            </DndFilterContext.Provider>
-          </DndStateContext.Provider>
-        </DndDragAffectedPagesContext.Provider>
-      </DndFlagsContext.Provider>
+                  {children}
+                </DndCurrentDraggingChapterContext.Provider>
+              </DndCurrentDraggingCardContext.Provider>
+            </DndCurrentDraggingDeckContext.Provider>
+          </DndActiveIdContext.Provider>
+        </DndFilterContext.Provider>
+      </DndStateContext.Provider>
     </DndSettersContext.Provider>
   );
 };
