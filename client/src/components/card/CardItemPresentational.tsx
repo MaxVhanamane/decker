@@ -3,8 +3,10 @@ import { BiEdit } from "react-icons/bi";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { formatDate } from "../../functions/formatDate";
 import { Element as SlateElement } from "slate";
-import { Text } from "slate";
-import { extractTextFromSlateNodes } from "../../utils/editor/extractTextFromSlateNodes";
+import {
+  extractTextFromSlateNodes,
+  getPlainText,
+} from "../../utils/editor/extractTextFromSlateNodes";
 type PropType = NonNullable<CurrentDraggingCardType>;
 
 const CardItemPresentational = ({
@@ -13,11 +15,8 @@ const CardItemPresentational = ({
   card,
 }: PropType) => {
   const cardTitle =
-    card.note &&
-    SlateElement.isElement(card.note[0]) &&
-    Text.isText(card.note[0].children?.[0]) &&
-    card.note[0]?.children?.[0]?.text?.trim()
-      ? card.note[0].children[0].text
+    card.note && SlateElement.isElement(card.note[0])
+      ? getPlainText(card.note[0].children, 55).trim()
       : "";
 
   const note = extractTextFromSlateNodes(card.note);

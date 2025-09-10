@@ -1,4 +1,4 @@
-import { Descendant } from "slate";
+import { Descendant, Text, Element as SlateElement } from "slate";
 
 /**
  * Extracts text from Slate Descendant[] with natural spacing.
@@ -46,3 +46,24 @@ export const extractTextFromSlateNodes = (
     walk(nodes.slice(1));
     return result.trim().replace(/\s+/g, ' ');
 };
+
+
+export function getPlainText(nodes: Descendant[], limit = 40): string {
+    let result = "";
+
+    function walk(children: Descendant[]) {
+        for (const n of children) {
+            if (result.length >= limit) break;
+
+            if (Text.isText(n)) {
+                const remaining = limit - result.length;
+                result += n.text.slice(0, remaining);
+            } else if (SlateElement.isElement(n)) {
+                walk(n.children);
+            }
+        }
+    }
+
+    walk(nodes);
+    return result.trim();
+}

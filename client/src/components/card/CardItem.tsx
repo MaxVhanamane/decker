@@ -16,8 +16,11 @@ import { CardContext } from "../../context/CardContext";
 import { useParams } from "react-router-dom";
 import Button from "../Button";
 import { twMerge } from "tailwind-merge";
-import { Descendant, Element as SlateElement, Text } from "slate";
-import { extractTextFromSlateNodes } from "../../utils/editor/extractTextFromSlateNodes";
+import { Descendant, Element as SlateElement } from "slate";
+import {
+  extractTextFromSlateNodes,
+  getPlainText,
+} from "../../utils/editor/extractTextFromSlateNodes";
 
 type CardDeletionParams = {
   deckId: string;
@@ -176,13 +179,9 @@ const CardItem = memo(
     );
 
     const cardTitle =
-      card.note &&
-      SlateElement.isElement(card.note[0]) &&
-      Text.isText(card.note[0].children?.[0]) &&
-      card.note[0]?.children?.[0]?.text?.trim()
-        ? card.note[0].children[0].text
+      card.note && SlateElement.isElement(card.note[0])
+        ? getPlainText(card.note[0].children, 55).trim()
         : "";
-
     const note = extractTextFromSlateNodes(card.note);
 
     return (
