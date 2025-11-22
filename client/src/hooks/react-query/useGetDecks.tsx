@@ -10,12 +10,10 @@ const getDecks = async (
   showSearchBar: boolean,
   queryClient: QueryClient,
   signal: AbortSignal
-): Promise<DeckType[]> => {
+): Promise<DeckType> => {
   // If the search bar is open and the user opens the search results (e.g., any card) and reads it, and then closes it, if the user has opened the search bar on the home page, and when the user closes it by hitting the back button, they will be navigated to "/", which will trigger the execution of the useGetDecks() function. To avoid unnecessary network requests, I will serve the cached data in this case.
   // We will also check the following condition (cachedDecks === undefined) to ensure that the data is available in the cache. If it is not available, we will then proceed to refetch the data.
-  const cachedDecks = queryClient.getQueryData<DeckType[] | undefined>([
-    "decks",
-  ]);
+  const cachedDecks = queryClient.getQueryData<DeckType | undefined>(["decks"]);
 
   if (!showSearchBar || cachedDecks === undefined) {
     try {
@@ -40,7 +38,9 @@ const getDecks = async (
   return cachedDecks;
 };
 
-export default function useGetDecks() {
+export default function useGetDecks({
+  enabled = true,
+}: { enabled?: boolean } = {}) {
   const { showSearchBar } = useContext(searchContext);
   const queryClient = useQueryClient();
   const url = `${import.meta.env.VITE_API_URL}/decks`;
@@ -53,6 +53,7 @@ export default function useGetDecks() {
   });
 
   return useQuery({
+    enabled,
     queryKey: ["decks"],
     queryFn: ({ signal }) => getDecks(showSearchBar, queryClient, signal),
     refetchOnWindowFocus: false,

@@ -10,7 +10,7 @@ const TitleElementView = ({
   isTitleEmpty,
 }: TitleElementViewProps) => {
   return (
-    <h1 className="text-lg font-bold outline-none relative ">
+    <h1 className="text-2xl font-bold outline-none relative ">
       {isTitleEmpty && (
         <span
           contentEditable={false}

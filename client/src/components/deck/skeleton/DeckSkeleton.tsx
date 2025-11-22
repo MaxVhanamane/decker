@@ -17,10 +17,10 @@ const DeckSkeleton = ({
       } mx-1 opacity-0 animate-[opacity_2s_ease-in_forwards] [animation-delay:300ms] w-full`}
     >
       <div className="w-full flex items-center justify-center flex-col">
-        <h2 className="text-left  text-base font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2  px-4 lg:w-[80rem]">
+        <h2 className="text-left  text-base font-semibold text-gray-800 dark:text-gray-50  my-4 mx-2  px-4 2xl:w-[90rem]">
           {title}
         </h2>
-        <div className=" flex flex-row flex-wrap gap-2  justify-center items-center py-2 sm:px-1 lg:w-[80rem] transition-all duration-1000">
+        <div className=" flex flex-row flex-wrap gap-2  justify-center items-center py-2 sm:px-1 2xl:w-[90rem] transition-all duration-1000">
           {Array.from({ length: optimalCount }).map((_, index) => {
             return <DeckItemSkeleton key={index} />;
           })}

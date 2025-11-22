@@ -26,7 +26,8 @@ type PropType = HTMLButtonPropsWithoutRef & {
   toolTipPosition?: ToolTipPositionType;
   mode: "create" | "edit";
   toolbarPosition: "top" | "bottom";
-  isActive: boolean;
+  isActive?: boolean;
+  iconClassName?: string;
 };
 
 const CardToolbarButton = forwardRef<HTMLButtonElement, PropType>(
@@ -46,12 +47,12 @@ const CardToolbarButton = forwardRef<HTMLButtonElement, PropType>(
       mode,
       toolbarPosition,
       isActive,
+      iconClassName,
       ...props
     },
     ref
   ) => {
     const { showToast } = useContext(ShowToastContext);
-
     const getDropdownButtonArrow = () => {
       if (hasDropdown) {
         if (
@@ -124,7 +125,7 @@ const CardToolbarButton = forwardRef<HTMLButtonElement, PropType>(
         hideTooltip={hideTooltip}
         {...props}
       >
-        <Icon />
+        <Icon className={iconClassName} />
         {getDropdownButtonArrow()}
       </Button>
     );

@@ -23,7 +23,7 @@ const ChapterContainer = ({
 
   return (
     <SortableContext items={items} strategy={verticalListSortingStrategy}>
-      <ul className=" text-gray-700 dark:text-gray-200 flex items-start justify-center flex-col gap-0.5 pl-[10px] pr-2 ">
+      <ul className=" text-gray-700 dark:text-gray-200 flex items-start justify-center flex-col gap-1 pl-[10px] pr-2 ">
         {data?.chapters?.map((chapter, index) => {
           return (
             <SortableChapterItem

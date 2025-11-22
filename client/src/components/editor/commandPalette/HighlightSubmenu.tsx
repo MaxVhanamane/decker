@@ -2,34 +2,31 @@ import { twMerge } from "tailwind-merge";
 import Button from "../../Button";
 import type {
   CommandItemType,
-  HighlightStyle,
+  HighlightColors,
 } from "../../../types/textEditorTypes";
 import { Dispatch, memo, SetStateAction, useRef } from "react";
 import { ReactEditor, useSlateStatic } from "slate-react";
 import { useFocusTrap } from "../../../hooks/utility/useFocusTrap";
+import { CommandPaletteHighLightConfigType } from "../../../types/types";
 
 type HighlightSubmenuProps = {
   item: CommandItemType;
-  selectedHighlightStyle: HighlightStyle;
-  setSelectedHighlightStyle: Dispatch<SetStateAction<HighlightStyle>>;
+  highLightConfig: CommandPaletteHighLightConfigType;
+  setHighlightConfig: Dispatch<
+    SetStateAction<CommandPaletteHighLightConfigType>
+  >;
   handleCommandClick: (item: CommandItemType) => void;
   toggleSubmenu: (command: string) => void;
 };
 
 const HighlightSubmenu = ({
   item,
-  selectedHighlightStyle,
-  setSelectedHighlightStyle,
+  highLightConfig,
+  setHighlightConfig,
   handleCommandClick,
   toggleSubmenu,
 }: HighlightSubmenuProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  //   const [interactionMode, setInteractionMode] = useState<"mouse" | "keyboard">(
-  //     "keyboard"
-  //   );
-  //   // Store the index of the currently hovered/focused element
-  //   const currentElementIndex = useRef<number>(-1);
-
   const editor = useSlateStatic();
 
   //   useEffect(() => {
@@ -98,8 +95,14 @@ const HighlightSubmenu = ({
       toggleSubmenu("");
       ReactEditor.focus(editor);
     },
+    initialFocusIndex: 0,
+    onEnter: () => {
+      handleCommandClick(item), toggleSubmenu("");
+    },
     trackInputMethod: true,
   });
+
+  const highLightColor = item.label as HighlightColors;
 
   return (
     <div
@@ -129,14 +132,24 @@ const HighlightSubmenu = ({
               // Only handle Space and Enter for activation
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setSelectedHighlightStyle("plain");
+                setHighlightConfig({
+                  selectedHighlightStyle: "plain",
+                  toggledHighlightColor: highLightColor,
+                });
               }
               // Let Tab and Arrow keys be handled by the focus trap
             }}
-            checked={selectedHighlightStyle === "plain"}
-            onChange={() => setSelectedHighlightStyle("plain")}
+            checked={highLightConfig.selectedHighlightStyle === "plain"}
+            onChange={() =>
+              setHighlightConfig({
+                selectedHighlightStyle: "plain",
+                toggledHighlightColor: highLightColor,
+              })
+            }
             // Make only the checked radio button tabbable
-            tabIndex={selectedHighlightStyle === "plain" ? 0 : -1}
+            tabIndex={
+              highLightConfig.selectedHighlightStyle === "plain" ? 0 : -1
+            }
             className={twMerge(
               "appearance-none w-4 h-4 mr-2 rounded-full border-2 border-gray-400 relative cursor-pointer transition-all duration-200 focus-visible:ring-2 focus-visible:ring-gray-600 outline-none",
               "checked:border-blue-500",
@@ -163,14 +176,24 @@ const HighlightSubmenu = ({
               // Only handle Space and Enter for activation
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setSelectedHighlightStyle("wavy");
+                setHighlightConfig({
+                  selectedHighlightStyle: "wavy",
+                  toggledHighlightColor: highLightColor,
+                });
               }
               // Let Tab and Arrow keys be handled by the focus trap
             }}
-            checked={selectedHighlightStyle === "wavy"}
-            onChange={() => setSelectedHighlightStyle("wavy")}
+            checked={highLightConfig.selectedHighlightStyle === "wavy"}
+            onChange={() =>
+              setHighlightConfig({
+                selectedHighlightStyle: "wavy",
+                toggledHighlightColor: highLightColor,
+              })
+            }
             // Make only the checked radio button tabbable
-            tabIndex={selectedHighlightStyle === "wavy" ? 0 : -1}
+            tabIndex={
+              highLightConfig.selectedHighlightStyle === "wavy" ? 0 : -1
+            }
             className={twMerge(
               "appearance-none w-4 h-4 mr-2 rounded-full border-2 border-gray-400 relative cursor-pointer transition-all duration-200 focus-visible:ring-2 focus-visible:ring-gray-600 outline-none",
               "checked:border-blue-500",
@@ -191,6 +214,7 @@ const HighlightSubmenu = ({
           )}
           onClick={() => {
             handleCommandClick(item);
+            toggleSubmenu("");
           }}
         >
           Apply

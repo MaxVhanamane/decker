@@ -21,7 +21,7 @@ const NoContent = ({
 }: PropType) => {
   return (
     <div
-      className={`absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 font-semibold dark:text-gray-50 text-gray-800 px-1 flex items-center justify-center flex-col w-full mt-6 md:mt-0 animate-quickOpacity`}
+      className={`absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2  dark:text-gray-200 text-gray-700 px-1 flex items-center justify-center flex-col w-full mt-6 md:mt-0 animate-quickOpacity`}
     >
       <img src={imageSource} alt={imageAltText} className={imageClassNames} />
       <p className="p-1 mt-1 text-base">{heading}</p>

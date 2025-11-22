@@ -23,7 +23,7 @@ import DeckCreationForm from "../components/deck/DeckCreationForm";
 import TrashCanDropZone from "../components/TrashCanDropZone";
 import { ShowToastContext } from "../context/ToastNotificationContext";
 import { DndSettersContext, DndStateContext } from "../context/DndItemContext";
-import type { DeckType } from "../types/types";
+import type { DeckItemType } from "../types/types";
 import { v4 as uuidv4 } from "uuid";
 import { useModalBackNavigationHandler } from "../hooks/utility/useModalBackNavigationHandler";
 import NoContent from "../components/NoContent";
@@ -32,6 +32,7 @@ import { DeckContext } from "../context/DeckContext";
 import DeckSkeleton from "../components/deck/skeleton/DeckSkeleton";
 import { getDeckSkeletonCounts } from "../utils/deckUtils";
 import LoadingCentered from "../components/Loading/LoadingCentered";
+import { generateKeyBetween } from "fractional-indexing-jittered";
 
 function Deck() {
   const { showToast } = useContext(ShowToastContext);
@@ -56,8 +57,8 @@ function Deck() {
   const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
     useState(false);
   const inputRefElement = useRef<HTMLInputElement>(null);
-  const pinnedDecksRef = useRef<DeckType[]>([]);
-  const otherDecksRef = useRef<DeckType[]>([]);
+  const pinnedDecksRef = useRef<DeckItemType[]>([]);
+  const otherDecksRef = useRef<DeckItemType[]>([]);
   // Don't show an error screen if it is due to aborting the request.
   const isCancelledError = error?.message === "CancelledError";
 
@@ -83,7 +84,8 @@ function Deck() {
   }, [allDecks]);
 
   const pinnedDecks = useMemo(() => {
-    const newPinnedDecks = allDecksState?.filter((deck) => deck.pinned) ?? [];
+    const newPinnedDecks =
+      allDecksState?.decks?.filter((deck) => deck.pinned) ?? [];
 
     // Compare with the previous value stored in the ref
     if (
@@ -97,7 +99,8 @@ function Deck() {
   }, [allDecksState]);
 
   const otherDecks = useMemo(() => {
-    const newOtherDecks = allDecksState?.filter((deck) => !deck.pinned) ?? [];
+    const newOtherDecks =
+      allDecksState?.decks?.filter((deck) => !deck.pinned) ?? [];
     // Compare with the previous value stored in the ref
     if (
       JSON.stringify(newOtherDecks) !== JSON.stringify(otherDecksRef.current)
@@ -193,9 +196,24 @@ function Deck() {
         });
         return;
       }
-      pinDeck({ deckId, pinned: !pinned });
+      let newOrder: string;
+      if (!pinned) {
+        if (pinnedDecks.length === 0) {
+          newOrder = generateKeyBetween(null, null);
+        } else {
+          newOrder = generateKeyBetween(pinnedDecks[0].order, null);
+        }
+      } else {
+        if (otherDecks.length === 0) {
+          newOrder = generateKeyBetween(null, null);
+        } else {
+          newOrder = generateKeyBetween(otherDecks[0].order, null);
+        }
+      }
+
+      pinDeck({ deckId, pinned: !pinned, newOrder });
     },
-    [isOnline, pinDeck]
+    [isOnline, pinDeck, pinnedDecks, otherDecks]
   );
 
   const handleEditDeck = useCallback(
@@ -244,7 +262,6 @@ function Deck() {
       <Helmet>
         <title>Decks</title>
         {/* here h-[calc(100vh-64px)] 64px is the navbar height */}
-        {/* iOS Safari top bar */}
       </Helmet>
       <div
         ref={deckContainerRef}
@@ -304,7 +321,7 @@ function Deck() {
           />
         ) : null}
 
-        {allDecks?.length === 0 && (
+        {allDecks?.decks.length === 0 && (
           <NoContent
             heading="Looks like you haven't added any decks yet."
             subheading="Create a new deck to get started."

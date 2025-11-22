@@ -10,6 +10,8 @@ const DeckSchema = new Schema({
   cardsCount: { type: Number, default: 0 },
   email: { type: Schema.Types.ObjectId, ref: "User" },
   date: { type: Date },
+  order: { type: String, required: true },
+
   // Soft delete fields
   deletedAt: { type: Date },        // Only exists when document is deleted
   undoExpiresAt: { type: Date }     // Only exists when document is deleted
@@ -27,6 +29,14 @@ DeckSchema.index(
     }
   }
 );
+// For aggregating decks by user
+DeckSchema.index({ email: 1, deletedAt: 1, order: 1 });
+
+DeckSchema.index(
+  { email: 1, pinned: 1, order: 1 },
+  { unique: true }
+);
+
 
 const DeckModel = mongoose.model("Deck", DeckSchema);
 

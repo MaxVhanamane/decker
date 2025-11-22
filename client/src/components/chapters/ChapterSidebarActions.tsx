@@ -12,11 +12,26 @@ import { getDeckInfo, storeDeckInfo } from "../../functions/deckDataManager";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 
 type ChapterSidebarActionsProps = {
-  setShowCreateChapterModal: Dispatch<SetStateAction<boolean>>;
+  setModalState: Dispatch<
+    SetStateAction<{
+      confirmDeleteCardModal: {
+        show: boolean;
+        startClosingModalAnimation: boolean;
+      };
+      showEditChapterModal: {
+        show: boolean;
+        startClosingModalAnimation: boolean;
+      };
+      showCreateChapterModal: {
+        show: boolean;
+        startClosingModalAnimation: boolean;
+      };
+    }>
+  >;
 };
 
 const ChapterSidebarActions = ({
-  setShowCreateChapterModal,
+  setModalState,
 }: ChapterSidebarActionsProps) => {
   const { deckId, chapterId } = useStableParams();
   const { showToast } = useContext(ShowToastContext);
@@ -41,7 +56,15 @@ const ChapterSidebarActions = ({
         withTooltip
         toolTipText="Create new chapter"
         hideTooltip={isSidebarOpen}
-        onClick={() => setShowCreateChapterModal(true)}
+        onClick={() =>
+          setModalState((prev) => ({
+            ...prev,
+            showCreateChapterModal: {
+              show: true,
+              startClosingModalAnimation: false,
+            },
+          }))
+        }
         variant="unstyled"
         className={twMerge(
           "flex items-center transition-[background-color] duration-200 justify-start h-9 w-full text-gray-700 dark:text-gray-200  rounded-lg",
@@ -100,8 +123,7 @@ const ChapterSidebarActions = ({
           className={twMerge(
             "flex items-center transition-[background-color] duration-200 justify-start h-9 w-full text-gray-700 dark:text-gray-200 rounded-lg focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 outline-none mt-[1px]",
             isSidebarOpen && "hover:bg-gray-100 dark:hover:bg-slate-800",
-            !chapterId &&
-              " dark:text-gray-500 text-gray-400 dark:bg-slate-800 bg-gray-100"
+            !chapterId && "  dark:bg-slate-800 bg-gray-100"
           )}
         >
           <div className="flex items-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 justify-center w-8 h-8  ">

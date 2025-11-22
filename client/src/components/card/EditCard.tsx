@@ -13,27 +13,21 @@ import React, {
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { IoIosArrowBack } from "react-icons/io";
-import { ReactEditor, Slate, withReact } from "slate-react";
+import { ReactEditor, Slate } from "slate-react";
 import RichTextEditor from "../editor/RichTextEditor";
-import { withInlineElements } from "../../utils/editor/plugins/withInlineElements";
-import { createEditor, Editor, Element, Node, Transforms } from "slate";
+import { Descendant, Editor, Element, Node, Transforms } from "slate";
 import EditCardToolbar from "./EditCardToolbar";
 import type { ContentTypeForEdit } from "../../types/types";
 import LinkModal from "../editor/LinkModal";
-import { withResetToParagraphOnBackspaceWhenEmpty } from "../../utils/editor/plugins/withResetToParagraphOnBackspaceWhenEmpty";
-import { withResetToParagraphOnEnter } from "../../utils/editor/plugins/withResetToParagraphOnEnter";
-import { withTitleBackspaceProtection } from "../../utils/editor/plugins/withTitleBackspaceProtection";
-import { withTitle } from "../../utils/editor/plugins/withTitle";
-import { withUnwrapEmptyInlines } from "../../utils/editor/plugins/withUnwrapEmptyInlines";
-import { withClearEmptyMarks } from "../../utils/editor/plugins/withClearEmptyMarks";
-import { withVoidElements } from "../../utils/editor/plugins/withVoidElements";
-import { withHistory } from "slate-history";
-import { withExitInlineOnSpace } from "../../utils/editor/plugins/withExitInlineOnSpace";
 import type { CustomElementType } from "../../types/textEditorTypes";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 import { twMerge } from "tailwind-merge";
 import Button from "../Button";
 import ThemeToggler from "../ThemeToggler";
+import SelectionToolbar from "../editor/selection-toolbar/SelectionToolbar";
+import { createCardEditor } from "../../utils/editor/createEditor";
+import { CommandPaletteHandle } from "./CardInput";
+import { getTextAfterSlash } from "../../utils/editor/commandUtils";
 
 type EditCardProps = {
   setShowEditModalForCard: Dispatch<React.SetStateAction<boolean>>;
@@ -57,6 +51,7 @@ const EditCard = ({
   const editorContainer = useRef<HTMLDivElement>(null);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
   const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
+  const comandPaletteConfig = useRef<CommandPaletteHandle | null>(null);
   const [toolbarPosition, setToolbarPosition] = useState<"top" | "bottom">(
     () => {
       const position = localStorage.getItem("editToolbarPosition");
@@ -69,30 +64,10 @@ const EditCard = ({
   );
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
     useState(false);
-  const editor = useMemo(() => {
-    return withResetToParagraphOnBackspaceWhenEmpty(
-      withResetToParagraphOnEnter(
-        withTitleBackspaceProtection(
-          withTitle(
-            withInlineElements(
-              withUnwrapEmptyInlines(
-                withClearEmptyMarks(
-                  withVoidElements(
-                    withExitInlineOnSpace(
-                      withReact(withHistory(createEditor()))
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    );
-  }, []);
+  const editor = useMemo(() => createCardEditor(), []);
+
   useFocusTrap(editorContainer, "tab", {
     onEscape: () => setCloseEditModalWithAnimation(true),
-    initialFocusIndex: 0,
   });
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
   const { showToast } = useContext(ShowToastContext);
@@ -256,6 +231,34 @@ const EditCard = ({
     }
   };
 
+  const handleChange = (value: Descendant[]) => {
+    setEditContent((prev) => ({ ...prev!, note: value }));
+    if (
+      comandPaletteConfig.current &&
+      comandPaletteConfig.current.showCommandPalette
+    ) {
+      const text = getTextAfterSlash(editor);
+
+      //  Close only if:
+      // 1. text is empty (slash was deleted)
+      // 2. text contains two or more **consecutive** spaces
+      if (text === null) {
+        comandPaletteConfig.current.closeCommandPalette();
+        comandPaletteConfig.current.resetSlashPosition();
+
+        return;
+      }
+      if (text && /\s{2,}$/.test(text)) {
+        comandPaletteConfig.current.closeCommandPalette();
+        comandPaletteConfig.current.resetSlashPosition();
+
+        return;
+      }
+
+      comandPaletteConfig.current.setCommandSearch(text || "");
+    }
+  };
+
   return (
     <div
       ref={editorContainer}
@@ -275,7 +278,7 @@ const EditCard = ({
           className="pointer-events-auto"
         />
       </div>
-      <div className="md:w-[45rem] w-full flex flex-col h-full md:h-[40rem] md:p-2 dark:md:bg-slate-500 relative md:bg-slate-300 md:rounded-[12px]">
+      <div className="md:w-[45rem] lg:w-[50rem] w-full flex flex-col h-full md:h-[90%] lg:h-[92%] md:max-h-[50rem] md:p-2 dark:md:bg-slate-500 relative md:bg-slate-300 md:rounded-[12px]">
         <div className="w-full h-16 bg-white dark:bg-slate-900 border-b border-gray-400/40 dark:border-gray-300/10 px-4  flex items-center justify-between md:hidden flex-shrink-0">
           <div>
             <Button
@@ -298,9 +301,7 @@ const EditCard = ({
         <Slate
           editor={editor}
           initialValue={editContent?.note ?? []}
-          onChange={(value) => {
-            setEditContent((prev) => ({ ...prev!, note: value }));
-          }}
+          onChange={handleChange}
         >
           {toolbarPosition === "top" && (
             <EditCardToolbar
@@ -322,6 +323,11 @@ const EditCard = ({
             <RichTextEditor
               setShowHyperlinkModal={setShowHyperlinkModal}
               mode="edit"
+              comandPaletteConfig={comandPaletteConfig}
+            />
+            <SelectionToolbar
+              mode="edit"
+              setShowHyperlinkModal={setShowHyperlinkModal}
             />
           </div>
 
@@ -330,7 +336,7 @@ const EditCard = ({
               variant="unstyled"
               className={twMerge(
                 " absolute  bottom-20 right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
-                toolbarPosition === "top" ? "bottom-6" : "bottom-20"
+                toolbarPosition === "top" ? "bottom-6" : "bottom-24"
               )}
               onClick={scrollToBottom}
             >
@@ -342,7 +348,7 @@ const EditCard = ({
               variant="unstyled"
               className={twMerge(
                 "absolute right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
-                toolbarPosition === "top" ? "bottom-6" : "bottom-20"
+                toolbarPosition === "top" ? "bottom-6" : "bottom-24"
               )}
               onClick={scrollToTop}
             >

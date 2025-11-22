@@ -1,7 +1,7 @@
 import { request } from "../../utils/fetch-utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import type { DeckSearchResult, SearchResponse } from "../../types/types";
+import type { DeckType, SearchResponse } from "../../types/types";
 import { CustomError } from "../../utils/customError";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { useContext } from "react";
@@ -9,17 +9,11 @@ import { useContext } from "react";
 type PayloadType = {
   deckId: string;
   pinned: boolean;
+  newOrder: string;
   searchParams?: {
     query: string;
     page: number;
   };
-};
-
-type DeckType = {
-  deckId: string;
-  title: string;
-  cards: string[];
-  pinned: boolean;
 };
 
 type SuccessResponseType = {
@@ -32,6 +26,7 @@ export const pinDeck = async (
   try {
     const data = await request.patch(`/deck/togglepin/${inputData.deckId}`, {
       pinned: inputData.pinned,
+      newOrder: inputData.newOrder,
     });
 
     return data?.data;
@@ -61,33 +56,54 @@ const usePinDeck = () => {
           ],
         });
       }
-      const previousQueryData = queryClient.getQueryData<DeckType[]>(["decks"]);
+      const previousQueryData = queryClient.getQueryData<DeckType>(["decks"]);
       // Make a deep copy because if an error occurs, we are returning the previousQueryData. If I directly work on it, I won't be able to reverse the changes made in case of an error.
       if (previousQueryData) {
-        const CopiedPreviousQueryData: DeckType[] = JSON.parse(
+        const CopiedPreviousQueryData: DeckType = JSON.parse(
           JSON.stringify(previousQueryData)
         );
 
-        // all this code is to show pinned and unpinned items in the beginning
-        // To store index of an item that we want to pin or unpin
-        let indexValue: number;
-        // first get the item which we want to pin or unpin
-        const deckToBeChanged = CopiedPreviousQueryData!.find((obj, index) => {
-          if (obj.deckId === payload.deckId) {
-            indexValue = index;
-            return obj;
-          }
-        });
+        let finalUpdatedDecks: DeckType;
+        if (payload.pinned) {
+          const decks = CopiedPreviousQueryData.decks
+            .map((deck) => {
+              if (deck.deckId === payload.deckId) {
+                deck.order = payload.newOrder;
+                deck.pinned = payload.pinned;
+                return deck;
+              } else {
+                return deck;
+              }
+            })
+            .sort((a, b) => {
+              // descending order: higher order comes first
+              if (a.order > b.order) return -1;
+              if (a.order < b.order) return 1;
+              return 0;
+            });
+          finalUpdatedDecks = { decks };
+        } else {
+          const decks = CopiedPreviousQueryData.decks
+            .map((deck) => {
+              if (deck.deckId === payload.deckId) {
+                deck.order = payload.newOrder;
+                deck.pinned = payload.pinned;
+                return deck;
+              } else {
+                return deck;
+              }
+            })
+            .sort((a, b) => {
+              // descending order: higher order comes first
+              if (a.order > b.order) return -1;
+              if (a.order < b.order) return 1;
+              return 0;
+            });
+          finalUpdatedDecks = { decks };
+        }
 
-        // once we get the item then we will change the pinned property
-        deckToBeChanged!.pinned = payload.pinned;
-        // then we will remove the item that we want pin or unpin
-        CopiedPreviousQueryData!.splice(indexValue!, 1);
-        // then we will add the item in the beginning of an array using unshift
-        CopiedPreviousQueryData!.unshift(deckToBeChanged!);
-
-        queryClient.setQueryData<DeckType[] | undefined>(["decks"], () => {
-          return CopiedPreviousQueryData;
+        queryClient.setQueryData<DeckType | undefined>(["decks"], () => {
+          return finalUpdatedDecks;
         });
       }
 
@@ -105,37 +121,34 @@ const usePinDeck = () => {
             JSON.stringify(previousSearchResult)
           );
 
-          // all this code is to show pinned and unpinned items in the beginning
-          // To store index of an item that we want to pin or unpin
-          let indexValue: number | undefined;
-          // first get the item which we want to pin or unpin
-          const deckToBeChanged = copiedPreviousSearchResult.data.results.find(
-            (obj, index) => {
+          const updatedData = copiedPreviousSearchResult.data.results.map(
+            (obj) => {
               if (obj.type === "deck" && obj.deckId === payload.deckId) {
-                indexValue = index;
+                obj.pinned = payload.pinned;
+                obj.order = payload.newOrder;
+                return obj;
+              } else {
                 return obj;
               }
             }
-          ) as DeckSearchResult | undefined;
+          );
 
-          // once we get the item then we will change the pinned property
-          if (deckToBeChanged && indexValue !== undefined) {
-            deckToBeChanged.pinned = payload.pinned;
-            // then we will remove the item that we want pin or unpin
-            copiedPreviousSearchResult.data.results.splice(indexValue, 1);
-            // then we will add the item in the beginning of an array using unshift
-            copiedPreviousSearchResult.data.results.unshift(deckToBeChanged);
-            queryClient.setQueryData<SearchResponse | undefined>(
-              [
-                "searchResult",
-                payload.searchParams.query,
-                payload?.searchParams.page,
-              ],
-              () => {
-                return copiedPreviousSearchResult;
-              }
-            );
-          }
+          queryClient.setQueryData<SearchResponse | undefined>(
+            [
+              "searchResult",
+              payload.searchParams.query,
+              payload?.searchParams.page,
+            ],
+            () => {
+              return {
+                ...copiedPreviousSearchResult,
+                data: {
+                  ...copiedPreviousSearchResult.data,
+                  results: updatedData,
+                },
+              };
+            }
+          );
         }
       }
 

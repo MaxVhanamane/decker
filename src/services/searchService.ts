@@ -11,6 +11,7 @@ export type DeckSearchResult = {
     pinned: boolean;
     createdAt: Date;
     cardsCount: number;
+    order: string;
 };
 
 export type ChapterSearchResult = {
@@ -174,7 +175,8 @@ export class SearchService {
                 title: 1,
                 pinned: 1,
                 createdAt: 1,
-                cardsCount: 1
+                cardsCount: 1,
+                order: 1
             }
         )
             .sort({ createdAt: -1 })
@@ -187,6 +189,7 @@ export class SearchService {
             deckId: deck.deckId,
             title: deck.title || '',
             pinned: deck.pinned,
+            order: deck.order,
             createdAt: deck.createdAt,
             cardsCount: deck.cardsCount || 0,
         }));

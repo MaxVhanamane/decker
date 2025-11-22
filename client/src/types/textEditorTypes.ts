@@ -19,6 +19,7 @@ export type ActiveFormattingOptions = {
     italic?: boolean;
     underline?: boolean;
     highlightConfig?: HighlightConfig;
+    inlineCode?: boolean
 };
 
 export type InternalDecorators = {
@@ -28,15 +29,38 @@ export type InternalDecorators = {
 export type FormattingOptions = ActiveFormattingOptions & InternalDecorators;
 export type CustomTextKeyType = keyof ActiveFormattingOptions;
 
+export type ListType =
+    | "bulleted-list"
+    | "numbered-list"
+    | "alpha-upper-list"
+    | "alpha-lower-list"
+    | "roman-upper-list"
+    | "roman-lower-list"
+    | "circle-list"
+    | "square-list"
+    | "hollow-square-list"
+    | "dash-list"
+    | "star-list"
+    | "arrow-list";
+
+
 export type ListElement = {
     type: ListType;
     children: ListItemElement[];
+    userStyled?: boolean;
+    locked?: boolean;
+    indentLevel?: IndentLevel;
+};
+export type ListItemTextElementType = {
+    type: 'list-item-text';
+    children: Descendant[];
 };
 
 
 export type ListItemElement = {
     type: 'list-item';
     children: Descendant[];
+
 };
 export type ColorBarColors = "neutral" | "yellow" | "blue" | "green" | "red" | "pink"
 export type HighlightColors = "yellow" | "blue" | "green" | "red" | "pink" | "purple" | "teal" | "sky"
@@ -49,18 +73,19 @@ export type HighlightConfig = {
 export type ColorBarElement = {
     type: 'color-bar';
     children: Descendant[];
-    color: ColorBarColors
+    color: ColorBarColors,
+    indentLevel?: IndentLevel
 };
 
 export type CodeBlockElementType = {
     type: 'code-block'
     language: string
     children: Descendant[]
-
 }
 export type CodeLineElement = {
     type: 'code-line'
     children: Descendant[]
+    indentLevel?: IndentLevel;
 }
 export type LinkElementType = {
     type: 'link'
@@ -80,21 +105,21 @@ export type DividerElement = {
     children: [{ text: '' }]; // Usually divider is a void element, but Slate needs at least one text node
 };
 
+export type IndentLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
-export type ListType =
-    | "bulleted-list"       // • Bullet points
-    | "numbered-list"       // 1. 2. 3.
-    | "alpha-upper-list"    // A. B. C.
-    | "alpha-lower-list"    // a. b. c.
-    | "roman-upper-list"    // I. II. III.
-    | "roman-lower-list";   // i. ii. iii.
+export type ParagraphElementType = { type: "paragraph"; children: Descendant[], indentLevel?: IndentLevel };
+export type BlockquoteElementType = { type: "blockquote"; children: Descendant[], indentLevel?: IndentLevel };
+export type LargeHeadingElementType = { type: "h1"; children: Descendant[], indentLevel?: IndentLevel };
+export type MediumHeadingElementType = { type: "h2"; children: Descendant[], indentLevel?: IndentLevel };
 
+export type IndentableElementType =
+    | ParagraphElementType
+    | LargeHeadingElementType
+    | MediumHeadingElementType
+    | BlockquoteElementType
+    | ColorBarElement | CodeLineElement | ListElement
 
-export type ParagraphElementType = { type: "paragraph"; children: Descendant[] };
-export type BlockquoteElementType = { type: "blockquote"; children: Descendant[] };
-export type LargeHeadingElementType = { type: "h1"; children: Descendant[] };
-export type MediumHeadingElementType = { type: "h2"; children: Descendant[] };
-
+export type IndentableElementTypeStrings = IndentableElementType['type'];
 
 export type CustomElementFormatType = "code-block" | "paragraph" | "link" | "h1" | "h2" | ListType | "list-item" | "blockquote" | "divider" | "color-bar"
 
@@ -103,7 +128,7 @@ export type CustomTextType = {
 } & FormattingOptions;
 
 
-export type CustomElementType = ParagraphElementType | CodeBlockElementType | LinkElementType | LargeHeadingElementType | MediumHeadingElementType | TitleElementType | ListItemElement | ListElement | BlockquoteElementType | DividerElement | CodeLineElement | ColorBarElement;
+export type CustomElementType = ParagraphElementType | ListItemTextElementType | CodeBlockElementType | LinkElementType | LargeHeadingElementType | MediumHeadingElementType | TitleElementType | ListItemElement | ListElement | BlockquoteElementType | DividerElement | CodeLineElement | ColorBarElement;
 
 declare module "slate" {
     interface CustomTypes {
@@ -127,10 +152,11 @@ export type MarkButtonConfig = {
     icon: IconType;
     className: string;
     tabIndex: number;
-    format: "underline" | "bold" | "italic" | "highlightConfig";
+    format: "underline" | "bold" | "italic" | "highlightConfig" | "inlineCode";
     ref?: React.RefObject<HTMLButtonElement>;
     hasDropdown?: boolean;
 };
+
 
 export type ActionButtonsConfig = {
     name: string;
@@ -140,6 +166,24 @@ export type ActionButtonsConfig = {
     icon: IconType;
     className: string;
     tabIndex: number;
+};
+export type StructureButtonsConfig = {
+    name: string;
+    onClickHandler: () => void;
+    toolTipText: string;
+    icon: IconType;
+    className: string;
+    tabIndex: number;
+    withTooltip: boolean;
+};
+export type HistoryButtonsConfig = {
+    name: string;
+    onClickHandler: () => void;
+    toolTipText: string;
+    icon: IconType;
+    className: string;
+    tabIndex: number;
+    withTooltip: boolean;
 };
 
 export type BlockButtonConfig = {
@@ -154,6 +198,7 @@ export type BlockButtonConfig = {
     format: string;
     ref?: RefObject<HTMLButtonElement>;
     id?: string;
+    iconClassName?: string;
     ariaHaspopup?: "menu";
     ariaExpanded?: boolean;
     hasDropdown?: boolean;

@@ -3,41 +3,43 @@ import {
   SetStateAction,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
 } from "react";
 import { BaseRange } from "slate";
 import { ReactEditor, useSlateStatic } from "slate-react";
 import Button from "../../Button";
 import { twMerge } from "tailwind-merge";
-import type {
-  CommandItemType,
-  HighlightStyle,
-} from "../../../types/textEditorTypes";
+import type { CommandItemType } from "../../../types/textEditorTypes";
 import { removeSlashCommandText } from "../../../utils/editor/commandUtils";
 import { useClickOutside } from "../../../hooks/utility/useClickOutside";
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
 import HighlightSubmenu from "./HighlightSubmenu";
 import { useDisableTabNavigation } from "../../../hooks/utility/useDisableTabNavigation";
+import { CommandPaletteHighLightConfigType } from "../../../types/types";
 
 type CommandPaletteProps = {
   filteredCommands: CommandItemType[];
-  target: BaseRange | null;
+  commandPalettePosition: BaseRange | null;
   selectedIndex?: number;
   closeCommandPalette: () => void;
   setSelectedIndex: Dispatch<SetStateAction<number>>;
   isUsingArrowKeys: boolean;
   setIsUsingArrowKeys: Dispatch<SetStateAction<boolean>>;
   commandSearch: string;
-  selectedHighlightStyle: HighlightStyle;
-  setSelectedHighlightStyle: Dispatch<SetStateAction<HighlightStyle>>;
+  highLightConfig: CommandPaletteHighLightConfigType;
+  setHighlightConfig: Dispatch<
+    SetStateAction<CommandPaletteHighLightConfigType>
+  >;
   activeSubmenuId: string | null;
   hasSubmenu: (command: CommandItemType) => boolean;
   toggleSubmenu: (command: string) => void;
   mode: "create" | "edit";
+  resetSlashPosition: () => void;
 };
 
 const CommandPalette = ({
-  target,
+  commandPalettePosition,
   closeCommandPalette,
   selectedIndex,
   filteredCommands,
@@ -45,94 +47,123 @@ const CommandPalette = ({
   isUsingArrowKeys,
   setIsUsingArrowKeys,
   commandSearch,
-  selectedHighlightStyle,
-  setSelectedHighlightStyle,
+  highLightConfig,
+  setHighlightConfig,
   activeSubmenuId,
   hasSubmenu,
   toggleSubmenu,
   mode,
+  resetSlashPosition,
 }: CommandPaletteProps) => {
   const commandPaletRef = useRef<HTMLDivElement>(null);
   const editor = useSlateStatic();
+  const initialPlacement = useRef<"above" | "below" | null>(null);
   const selectedItemRef = useRef<HTMLButtonElement | null>(null);
-  useClickOutside(commandPaletRef, true, () => closeCommandPalette());
+  useClickOutside(commandPaletRef, true, () => {
+    closeCommandPalette();
+    resetSlashPosition();
+    initialPlacement.current = null;
+  });
 
   useDisableTabNavigation(true);
 
-  const updatePosition = () => {
-    if (!target || !commandPaletRef.current) return;
+  const updatePosition = useCallback(() => {
+    if (!commandPalettePosition || !commandPaletRef.current) return;
 
-    // Get the DOM range from the target
-    const domRange = ReactEditor.toDOMRange(editor, target);
-
+    const palette = commandPaletRef.current;
+    const domRange = ReactEditor.toDOMRange(editor, commandPalettePosition);
     const slashElement = document.querySelector('[data-slash-command="true"]');
-    let rect;
-    if (slashElement) {
-      // Use the actual position of the decorated slash command
-      rect = slashElement.getBoundingClientRect();
-    } else {
-      // Fallback to the normal cursor position
-      rect = domRange.getBoundingClientRect();
-    }
+
+    const rect = slashElement
+      ? slashElement.getBoundingClientRect()
+      : domRange.getBoundingClientRect();
+
     const domNode =
       domRange.startContainer.parentElement ||
       (domRange.startContainer as Element);
-
     if (!domNode) return;
-    let editorContainer;
-    if (mode === "create") {
-      editorContainer = domNode.closest("[data-editor-parent-create]");
+
+    const editorContainer =
+      mode === "create"
+        ? domNode.closest("[data-editor-parent-create]")
+        : domNode.closest("[data-editor-parent-edit]");
+    if (!editorContainer) return;
+
+    const parentRect = editorContainer.getBoundingClientRect();
+    const style = window.getComputedStyle(editorContainer);
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingRight = parseFloat(style.paddingRight) || 0;
+    // const paddingBottom = parseFloat(style.paddingBottom) || 0;
+
+    const scrollTop = editorContainer.scrollTop || 0;
+    const scrollLeft = editorContainer.scrollLeft || 0;
+
+    const distanceFromParentTop =
+      rect.top - parentRect.top - paddingTop + scrollTop;
+    const distanceFromParentLeft =
+      rect.left - parentRect.left - paddingLeft + scrollLeft;
+
+    const spaceBelow =
+      parentRect.bottom - rect.bottom - (mode === "edit" ? 10 : 0);
+    const spaceAbove = rect.top - parentRect.top;
+
+    // Decide initial placement
+    if (!initialPlacement.current) {
+      initialPlacement.current = spaceBelow >= spaceAbove ? "below" : "above";
+    }
+
+    const GAP = 8; // smaller gap for a closer feel
+
+    // Determine max-height class
+    const MAX_HEIGHT = 272; // 17rem
+    const DEFAULT_HEIGHT = 320; // 20rem = max-h-80
+    let appliedHeight: number;
+
+    if (
+      spaceBelow < palette.offsetHeight &&
+      spaceAbove < palette.offsetHeight
+    ) {
+      palette.classList.remove("max-h-80");
+      palette.classList.add("max-h-[17rem]");
+      appliedHeight = Math.min(MAX_HEIGHT, spaceAbove, spaceBelow);
     } else {
-      editorContainer = domNode.closest("[data-editor-parent-edit]");
+      palette.classList.remove("max-h-[17rem]");
+      palette.classList.add("max-h-80");
+      appliedHeight = Math.min(DEFAULT_HEIGHT, palette.offsetHeight);
     }
 
-    const palette = commandPaletRef.current;
-
-    if (editorContainer) {
-      const parentRect = editorContainer.getBoundingClientRect();
-      const paletteHeight = palette.offsetHeight;
-      const paletteWidth = palette.offsetWidth;
-
-      // Calculate position relative to editor
-      const distanceFromParentTop = rect.top - parentRect.top;
-      const distanceFromParentLeft = rect.left - parentRect.left;
-
-      const spaceBelow = parentRect.bottom - rect.bottom;
-      const spaceAbove = rect.top - parentRect.top;
-
-      // Default to show below the target
-      let top = distanceFromParentTop + 15 + rect.height;
-
-      // Flip above if there's not enough space below
-      if (spaceBelow < paletteHeight && spaceAbove >= paletteHeight) {
-        top = distanceFromParentTop - 15 - paletteHeight;
-      }
-
-      // Horizontal logic
-      let left = distanceFromParentLeft;
-
-      // Adjust if palette goes out to the right
-      if (left + paletteWidth > parentRect.width) {
-        left = parentRect.width - paletteWidth - 8; // Add small margin
-      }
-
-      // Adjust if palette goes out to the left
-      if (left < 0) {
-        left = 8; // Minimum padding from left
-      }
-
-      palette.style.top = `${top}px`;
-      palette.style.left = `${left}px`;
+    // Compute top based on placement and visible height
+    let top: number;
+    if (initialPlacement.current === "below") {
+      top = distanceFromParentTop + rect.height + GAP;
+    } else {
+      top = distanceFromParentTop - appliedHeight - GAP;
+      if (top < 0) top = GAP; // prevent going out of editor top
     }
-  };
+
+    let left = distanceFromParentLeft;
+    const paletteWidth = palette.offsetWidth;
+
+    // Clamp to container edges
+    if (left + paletteWidth > parentRect.width - paddingRight) {
+      left = parentRect.width - paddingRight - paletteWidth;
+    }
+    if (left < paddingLeft) {
+      left = paddingLeft;
+    }
+
+    palette.style.top = `${top}px`;
+    palette.style.left = `${left}px`;
+  }, [commandPalettePosition, editor, mode]);
 
   // Update position whenever command search changes
-  useEffect(() => {
+  useLayoutEffect(() => {
     requestAnimationFrame(updatePosition);
-  }, [commandSearch]);
+  }, [commandSearch, updatePosition]);
 
   // Initial setup and cleanup
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Initial position update with a slight delay to ensure rendering
     const timer = setTimeout(() => {
       updatePosition();
@@ -152,7 +183,7 @@ const CommandPalette = ({
       window.removeEventListener("resize", updatePosition);
       document.removeEventListener("selectionchange", handleSelectionChange);
     };
-  }, [target]);
+  }, [commandPalettePosition]);
 
   useEffect(() => {
     if (
@@ -191,11 +222,20 @@ const CommandPalette = ({
     }
   }, [selectedIndex]);
 
-  const handleCommandClick = useCallback((item: CommandItemType) => {
-    removeSlashCommandText(editor);
-    item.onClickHandler();
-    closeCommandPalette();
-  }, []);
+  const handleCommandClick = useCallback(
+    (item: CommandItemType) => {
+      removeSlashCommandText(editor);
+      resetSlashPosition();
+      item.onClickHandler();
+      closeCommandPalette();
+      setHighlightConfig({
+        selectedHighlightStyle: "plain",
+        toggledHighlightColor: null,
+      });
+      initialPlacement.current = null;
+    },
+    [closeCommandPalette]
+  );
 
   let lastCategory = "";
 
@@ -203,7 +243,8 @@ const CommandPalette = ({
     <div
       ref={commandPaletRef}
       className={twMerge(
-        "w-64 border absolute -left-full -top-full dark:border-gray-500 border-gray-400 flex flex-col items-start p-2 gap-4 rounded-md dark:bg-slate-800 bg-gray-100 max-h-80 h-fit overflow-y-auto dark:dark-scrollbar light-scrollbar outline-none z-[1000]"
+        "w-64 border absolute -left-full -top-full dark:border-gray-500 border-gray-400 flex flex-col items-start p-2 gap-4 rounded-md  bg-gray-100 max-h-80  h-fit overflow-y-auto dark:dark-scrollbar light-scrollbar outline-none z-[1000]",
+        mode === "edit" ? "dark:bg-slate-900" : "dark:bg-slate-800"
       )}
       role="dialog"
       aria-label="Command Palette"
@@ -220,7 +261,10 @@ const CommandPalette = ({
               }
 
               return (
-                <li key={index} className="w-full">
+                <li
+                  key={index}
+                  className="w-full dark:text-gray-50 text-gray-800"
+                >
                   {showCategory && (
                     <>
                       {index !== 0 && index !== filteredCommands.length - 1 && (
@@ -288,10 +332,10 @@ const CommandPalette = ({
 
                   {isSubmenuOpen && item.hasSubmenu && (
                     <HighlightSubmenu
-                      setSelectedHighlightStyle={setSelectedHighlightStyle}
+                      highLightConfig={highLightConfig}
                       handleCommandClick={handleCommandClick}
                       item={item}
-                      selectedHighlightStyle={selectedHighlightStyle}
+                      setHighlightConfig={setHighlightConfig}
                       toggleSubmenu={toggleSubmenu}
                     />
                   )}
@@ -301,18 +345,17 @@ const CommandPalette = ({
           </ul>
         </nav>
       ) : (
-        <div className="flex items-center justify-between w-full">
-          <p>No commands found!</p>
-          <Button
-            variant="danger"
-            className="rounded-md px-2 py-1 text-sm"
-            toolTipText="close command pallet"
-            withTooltip
-            onClick={closeCommandPalette}
-            type="button"
-          >
-            Close
-          </Button>
+        <div className="flex flex-col items-center justify-center w-full py-4 text-center">
+          <p className="text-sm font-medium text-muted-foreground/90">
+            No commands found!
+          </p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Press{" "}
+            <span className="px-1 py-0.5 bg-muted rounded-md text-xs font-mono">
+              Space
+            </span>{" "}
+            to close or try a different command
+          </p>
         </div>
       )}
     </div>

@@ -34,13 +34,13 @@ const EditCardToolbar = ({
   }, [toolbarPosition]);
   return (
     <div
-      className={`w-full md:h-14 h-20 dark:md:bg-slate-700 dark:bg-slate-900  bg-white  flex items-center justify-center   border-gray-400/40 dark:border-gray-300/10 md:bg-gray-100 flex-shrink-0   ${
+      className={`w-full xl:h-14 h-20 dark:md:bg-slate-700 dark:bg-slate-900  bg-white  flex items-center justify-center   border-gray-400/40 dark:border-gray-300/10 md:bg-gray-100 flex-shrink-0 z-10 ${
         toolbarPosition === "top"
           ? "md:rounded-t-md border-b"
           : "md:rounded-b-md border-t"
       }`}
     >
-      <div className="flex items-center justify-between md:justify-center w-full md:px-2 h-full">
+      <div className="flex items-center justify-between xl:justify-center w-full xl:px-2 h-full">
         <Button
           variant="unstyled"
           withTooltip
@@ -48,7 +48,7 @@ const EditCardToolbar = ({
             toolbarPosition === "top" ? "Move toolbar down" : "Move toolbar up"
           }
           toolTipPosition={toolbarPosition === "top" ? "bottom" : "top"}
-          className="dark:text-gray-50 dark:hover:bg-gray-600 hover:bg-gray-200 hover:rounded-md md:p-2 p-1 text-sm  dark:hover:text-gray-200 text-gray-700 hover:text-gray-800 transition-all duration-300 rounded-md hidden md:block"
+          className="dark:text-gray-50 dark:hover:bg-gray-600 hover:bg-gray-200 hover:rounded-md xl:p-2 p-1 text-sm  dark:hover:text-gray-200 text-gray-700 hover:text-gray-800 transition-all duration-300 rounded-md hidden xl:block"
           type="button"
           onClick={toggleToolbarPosition}
         >

@@ -6,14 +6,14 @@ import { v4 as uuidv4 } from "uuid";
 import { useStableParams } from "../../context/stableParamsContext";
 
 type CreateChapterModalProps = {
-  animateCreateChapterModal: boolean;
+  startClosingModalAnimation: boolean;
   handleCloseChapterModal: () => void;
   handleAnimateCloseChapterModal: () => void;
   maxOrder: number;
 };
 
 const CreateChapterModal = ({
-  animateCreateChapterModal,
+  startClosingModalAnimation,
   handleCloseChapterModal,
   handleAnimateCloseChapterModal,
   maxOrder,
@@ -35,12 +35,12 @@ const CreateChapterModal = ({
     <div
       ref={chapterModalRef}
       onAnimationEnd={() => {
-        if (animateCreateChapterModal) {
+        if (startClosingModalAnimation) {
           handleCloseChapterModal();
         }
       }}
       className={`backdrop-blur-xl fixed inset-0 flex items-center justify-center z-[999] ${
-        animateCreateChapterModal
+        startClosingModalAnimation
           ? "animate-[opacityFadeOut_0.15s_linear_1] opacity-0"
           : "animate-[opacity_0.15s_linear_1]"
       }`}

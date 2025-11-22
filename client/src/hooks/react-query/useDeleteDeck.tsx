@@ -1,6 +1,7 @@
 import { request } from "../../utils/fetch-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
+  DeckItemType,
   DeckType,
   DeleteDeckPayload,
   DeleteDeckResponseType,
@@ -56,25 +57,20 @@ const useDeleteDeck = () => {
         });
       }
 
-      const previousQueryData: DeckType[] = queryClient.getQueryData([
-        "decks",
-      ])!;
+      const previousQueryData: DeckType = queryClient.getQueryData(["decks"])!;
       queryClient.setQueryData(
         ["decks"],
-        (oldQueryData: DeckType[] | undefined) => {
+        (oldQueryData: DeckType | undefined) => {
           if (oldQueryData) {
-            const newData = oldQueryData?.filter(
-              (deck: DeckType, index: number) => {
-                if (deck.deckId === payload.deckId) {
-                  deletedDeckItem = {
-                    ...deck,
-                    index,
-                  };
-                }
-                return deck.deckId != payload.deckId;
+            const newData = oldQueryData?.decks.filter((deck: DeckItemType) => {
+              if (deck.deckId === payload.deckId) {
+                deletedDeckItem = {
+                  ...deck,
+                };
               }
-            );
-            return newData;
+              return deck.deckId != payload.deckId;
+            });
+            return { ...oldQueryData, decks: newData };
           }
         }
       );
@@ -116,7 +112,6 @@ const useDeleteDeck = () => {
 
                         deletedDeckItem = {
                           ...deck,
-                          index: null,
                           indexOfDeletedDeckSearchResult: index,
                           searchParams: payload.searchParams,
                         };

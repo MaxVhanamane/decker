@@ -29,7 +29,9 @@ import {
   getActionButtons,
   getBlockButtons,
   getEditActionButtons,
+  getHistoryButtons,
   getMarkButtons,
+  getStructureButtons,
 } from "../../../utils/editor/editorButtonConfigs";
 import { useIsDeviceType } from "../../../hooks/utility/useIsDeviceType";
 import { Descendant } from "slate";
@@ -46,12 +48,13 @@ interface CreateModeProps extends CommonProps {
   mode: "create";
   setShowTips: Dispatch<SetStateAction<boolean>>;
   expandEditorToMaxHeight: () => void;
-  handleCloseTextEditor: () => void;
+  handleCloseTextEditor: (note: Descendant[]) => void;
   isCreatingCard: boolean;
   isFetchingCards: boolean;
   handleCreateCard: (
     resetEditor: () => void,
-    restoreUnsavedContent: (newNote: Descendant[]) => void
+    restoreUnsavedContent: (newNote: Descendant[]) => void,
+    note: Descendant[]
   ) => void;
 }
 
@@ -87,10 +90,15 @@ const CardToolbar = (props: CardToolbarProps) => {
     handleDivider,
     handleColorBar,
     handleList,
+    handleIndentBlock,
+    handleOutdentBlock,
+    handleInlineCode,
+    handleUndo,
+    handleRedo,
   } = useEditorActions();
   const { resetEditor } = useResetEditor(editor);
 
-  const isSmallScreen = useIsDeviceType("phone");
+  const isSmallScreen = useIsDeviceType("tablet");
 
   // Dropdown state
   const [showDividerOptions, setShowDividerOptions] = useState(false);
@@ -144,7 +152,7 @@ const CardToolbar = (props: CardToolbarProps) => {
 
   const handleCreateCardHandler = useCallback(() => {
     if (handleCreateCard) {
-      handleCreateCard(resetEditor, restoreUnsavedContent);
+      handleCreateCard(resetEditor, restoreUnsavedContent, editor.children);
     }
   }, [handleCreateCard, resetEditor, restoreUnsavedContent]);
 
@@ -158,6 +166,7 @@ const CardToolbar = (props: CardToolbarProps) => {
         setShowHighlightOptions,
         tabbable,
         highlightButtonRef,
+        handleInlineCode,
       }),
     [
       handleUnderline,
@@ -166,7 +175,26 @@ const CardToolbar = (props: CardToolbarProps) => {
       setShowHighlightOptions,
       tabbable,
       highlightButtonRef,
+      handleInlineCode,
     ]
+  );
+  const structureButtons = useMemo(
+    () =>
+      getStructureButtons({
+        handleIndentBlock,
+        handleOutdentBlock,
+        tabbable,
+      }),
+    [handleIndentBlock, handleOutdentBlock, tabbable]
+  );
+  const historyButtons = useMemo(
+    () =>
+      getHistoryButtons({
+        handleUndo,
+        handleRedo,
+        tabbable,
+      }),
+    [handleUndo, handleRedo, tabbable]
   );
 
   // Block buttons configuration
@@ -213,13 +241,18 @@ const CardToolbar = (props: CardToolbarProps) => {
     ]
   );
 
+  const handleCloseTextEditorHandler = () => {
+    if (handleCloseTextEditor) {
+      handleCloseTextEditor(editor.children);
+    }
+  };
   // Action buttons configuration
   const actionButtons = useMemo(() => {
     if (mode === "create") {
       return getActionButtons({
         handleCreateCardHandler: handleCreateCardHandler!,
         expandEditorToMaxHeight: expandEditorToMaxHeight!,
-        handleCloseTextEditor: handleCloseTextEditor!,
+        handleCloseTextEditor: handleCloseTextEditorHandler!,
         handlePlayAudio,
         isPlayingAudioAllowed,
         isFetchingCards: isFetchingCards!,
@@ -321,15 +354,19 @@ const CardToolbar = (props: CardToolbarProps) => {
         : "dropdownPortalContainerForEdit";
     return document.getElementById(containerId)!;
   }, [mode]);
-
   return (
-    <div className="flex flex-col md:flex-row items-center justify-center w-full h-full">
+    <div
+      data-toolbar-container
+      className="flex flex-col md:flex-row items-center justify-center w-full h-full"
+    >
       {isSmallScreen ? (
         <div className="w-full flex items-center justify-center flex-col h-full">
           <MobileView
             isFormatDropdownOpen={isFormatDropdownOpen}
             markButtons={markButtons}
             blockButtons={blockButtons}
+            structureButtons={structureButtons}
+            historyButtons={historyButtons}
             isBlockDropdownOpen={isBlockDropdownOpen}
             isAnyDropdownOpen={isAnyDropdownOpen}
             actionButtons={actionButtons}
@@ -340,11 +377,13 @@ const CardToolbar = (props: CardToolbarProps) => {
           />
         </div>
       ) : (
-        <div className="w-full flex items-center justify-center flex-row h-full">
+        <div className="w-full flex items-center justify-end flex-row h-full">
           <DesktopView
             isFormatDropdownOpen={isFormatDropdownOpen}
             markButtons={markButtons}
             blockButtons={blockButtons}
+            structureButtons={structureButtons}
+            historyButtons={historyButtons}
             isBlockDropdownOpen={isBlockDropdownOpen}
             isAnyDropdownOpen={isAnyDropdownOpen}
             actionButtons={actionButtons}

@@ -11,6 +11,7 @@ const ChapterSchema = new Schema({
     createdAt: { type: Date, default: Date.now },
     cardsCount: { type: Number, default: 0 },
     order: { type: Number, required: true, },
+    deletedBatchId: String,
     // Soft delete fields
     deletedAt: { type: Date },
     undoExpiresAt: { type: Date }
@@ -27,6 +28,12 @@ ChapterSchema.index(
         }
     }
 );
+
+ChapterSchema.index(
+    { email: 1, deckId: 1, order: 1 },
+    { unique: true }
+);
+
 
 const ChapterModel = mongoose.model("Chapter", ChapterSchema);
 export default ChapterModel

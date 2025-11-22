@@ -4,6 +4,7 @@ import { RiSunFill } from "react-icons/ri";
 import { AudioContext } from "../context/AudioContext";
 import { ThemeContext } from "../context/ThemeContext";
 import Button from "./Button";
+import { BulbContext } from "../context/BulbContext";
 
 type PropType = {
   ParentComponentName?: "FullScreenCardView";
@@ -12,6 +13,7 @@ type PropType = {
 const ThemeToggler: FC<PropType> = memo(({ ParentComponentName }) => {
   const { theme, setTheme } = useContext(ThemeContext);
   const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { showBulb, setShowBulb } = useContext(BulbContext);
 
   const handleClick = () => {
     if (isPlayingAudioAllowed) {
@@ -24,6 +26,15 @@ const ThemeToggler: FC<PropType> = memo(({ ParentComponentName }) => {
 
     localStorage.setItem("theme", theme === "dark" ? "light" : "dark");
     setTheme(theme === "dark" ? "light" : "dark");
+    if (theme === "light" && localStorage.getItem("wasBulbOn") === "true") {
+      setShowBulb(true);
+    }
+    if (showBulb && theme === "dark") {
+      localStorage.setItem("wasBulbOn", "true");
+      setShowBulb(false);
+    } else {
+      localStorage.setItem("wasBulbOn", "false");
+    }
   };
   return (
     <>

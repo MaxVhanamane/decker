@@ -2,6 +2,7 @@ import type {
   ColorBarColors,
   ColorBarElement,
 } from "../../../../types/textEditorTypes";
+import { indentMargin } from "../../../../utils/constants";
 
 const colorMap: Record<ColorBarElement["color"], string> = {
   neutral: "dark:border-gray-200 border-gray-700",
@@ -15,12 +16,24 @@ const colorMap: Record<ColorBarElement["color"], string> = {
 const ColorBarView = ({
   children,
   color,
+  element,
 }: {
   children: any;
   color: ColorBarColors;
+  element: ColorBarElement;
 }) => {
+  const { indentLevel } = element;
   const colorClass = colorMap[color];
-  return <p className={`border-l-[3px] pl-3 my-2 ${colorClass}`}>{children}</p>;
+  return (
+    <p
+      style={{
+        marginLeft: indentLevel ? indentMargin * indentLevel : 0,
+      }}
+      className={`border-l-[3px] pl-3 my-2 ${colorClass}`}
+    >
+      {children}
+    </p>
+  );
 };
 
 export default ColorBarView;

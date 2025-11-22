@@ -305,32 +305,82 @@ const useDragHandlers = () => {
                 if (active.id === over.id) return;
 
                 if (activeItemRef.current?.name && over?.id !== "DeckDeleteArea") {
-                    const allDecks = queryClient.getQueryData<DeckType[]>(["decks"]);
-                    const currentIndex = allDecks?.findIndex(
-                        (deck) => deck.deckId === active.id
-                    );
-                    const newIndex = allDecks?.findIndex(
-                        (deck) => deck.deckId === over.id
-                    );
+                    const allDecks = queryClient.getQueryData<DeckType>(["decks"]);
+                    if (!allDecks) return;
 
-                    if (
-                        currentIndex !== undefined &&
-                        newIndex !== undefined &&
-                        allDecks
-                    ) {
-                        // reorderDeck({ oldIndex, newIndex });
-                        const updatedDecks = [...allDecks];
-                        // Step 1: Remove the item from the old index
-                        const [movedItem] = updatedDecks.splice(currentIndex, 1);
+                    const draggedId = activeItemRef.current.deck.deckId;
+                    const isPinned = !!activeItemRef.current.isPinned;
+                    const hoverId = over?.data?.current?.deck?.deckId ?? null;
 
-                        // Step 2: Insert the item at the new index
-                        updatedDecks.splice(newIndex, 0, movedItem);
+                    // split & sort each section by order (use same comparator as server)
+                    const pinned = allDecks.decks.filter(d => d.pinned)
+                        .sort((a, b) => {
+                            // descending order: higher order comes first
+                            if (a.order > b.order) return -1;
+                            if (a.order < b.order) return 1;
+                            return 0;
+                        });
 
-                        setAllDecksState(updatedDecks);
+                    const unpinned = allDecks.decks.filter(d => !d.pinned)
+                        .sort((a, b) => {
+                            // descending order: higher order comes first
+                            if (a.order > b.order) return -1;
+                            if (a.order < b.order) return 1;
+                            return 0;
+                        });
 
-                        reorderDeck({ currentIndex, newIndex });
+
+                    const section = isPinned ? pinned : unpinned;
+
+                    // 1) find dragged index in original sorted section
+                    const draggedIndexInOriginal = section.findIndex(d => d.deckId === draggedId);
+                    if (draggedIndexInOriginal === -1) return; // safety
+
+                    // 2) list without dragged item in it
+                    const listWithoutDragged = section.filter(d => d.deckId !== draggedId);
+
+                    // 3) find hover indices
+                    const hoverIndexInOriginal = hoverId ? section.findIndex(d => d.deckId === hoverId) : -1;
+                    const hoverIndexInWithout = hoverId ? listWithoutDragged.findIndex(d => d.deckId === hoverId) : -1;
+
+                    // 4) compute insert index
+                    let insertIndex: number;
+                    if (hoverIndexInWithout === -1) {
+                        // drop at end of section
+                        insertIndex = listWithoutDragged.length;
+                    } else {
+                        // if originally dragged was before hover in the original list -> moving down -> insert after hover
+                        if (draggedIndexInOriginal < hoverIndexInOriginal) {
+                            insertIndex = hoverIndexInWithout + 1;
+                        } else {
+                            // moving up or same spot -> insert before hover
+                            insertIndex = hoverIndexInWithout;
+                        }
                     }
+
+                    // 5) build new section with dragged re-inserted
+                    const draggedItem = section[draggedIndexInOriginal];
+                    const newSection = [
+                        ...listWithoutDragged.slice(0, insertIndex),
+                        draggedItem,
+                        ...listWithoutDragged.slice(insertIndex),
+                    ];
+
+                    // 6) prev/next ids for backend
+                    const prevDeckId = insertIndex > 0 ? newSection[insertIndex - 1].deckId : null;
+                    const nextDeckId = insertIndex < newSection.length - 1 ? newSection[insertIndex + 1].deckId : null;
+
+                    // 7) combine back pinned/unpinned (preserve order inside each section)
+                    const finalPinned = isPinned ? newSection : pinned;
+                    const finalUnpinned = isPinned ? unpinned : newSection;
+                    const combined = [...finalPinned, ...finalUnpinned];
+
+                    setAllDecksState({ decks: combined, });
+
+                    // 8) server will compute final order
+                    reorderDeck({ deckId: draggedId, prevDeckId, nextDeckId });
                 }
+
 
                 if (over?.id === "DeckDeleteArea") {
                     if (!isOnline) {
@@ -572,6 +622,9 @@ const useDragHandlers = () => {
         if (colorName) {
             bulbRef.current.removeBulbColor(colorName);
         }
+        setCurrentDraggingCard(null)
+        setCurrentDraggingDeck(null)
+        setCurrentDraggingChapter(null)
     }, []);
 
 
@@ -581,3 +634,136 @@ const useDragHandlers = () => {
 }
 
 export default useDragHandlers
+
+
+
+
+
+
+
+
+// if (activeItemRef.current?.name && over?.id !== "DeckDeleteArea") {
+//     const allDecks = queryClient.getQueryData<DeckType>(["decks"]);
+//     if (!allDecks) return;
+//     const copiedDeckItems = allDecks.decks.map((deck) => ({ ...deck }));
+//     const allDecksCopy = { ...allDecks, decks: copiedDeckItems }
+//     let newOrder: string | undefined = undefined
+//     let deckOrderBounds = {
+//         firstPinnedDeckOrder: allDecksCopy.firstPinnedDeckOrder, lastPinnedDeckOrder: allDecksCopy.lastPinnedDeckOrder, firstUnpinnedDeckOrder: allDecksCopy.firstUnpinnedDeckOrder, lastUnpinnedDeckOrder: allDecksCopy.lastUnpinnedDeckOrder
+//     }
+//     if (allDecksCopy) {
+//         // Moved deck in pinned section
+//         if (activeItemRef.current?.isPinned) {
+//             if (over?.data?.current?.deck?.order === allDecksCopy.firstPinnedDeckOrder) {
+
+//                 newOrder = generateJitteredKeyBetween(null, over?.data?.current?.deck?.order)
+
+//                 if (newOrder) {
+//                     deckOrderBounds.firstPinnedDeckOrder = newOrder
+//                 }
+//             }
+//             else if (over?.data?.current?.deck?.order === allDecksCopy.lastPinnedDeckOrder) {
+//                 newOrder = generateJitteredKeyBetween(over?.data?.current?.deck?.order, null)
+//                 if (newOrder) {
+//                     deckOrderBounds.lastPinnedDeckOrder = newOrder
+//                 }
+//             }
+//             else {
+
+//                 const decks = allDecksCopy.decks.filter(deck => deck.pinned);
+//                 const hoverIndex = decks.findIndex(deck => deck.order === over?.data?.current?.deck?.order);
+//                 const draggedIndex = decks.findIndex(deck => deck.deckId === activeItemRef.current?.deck?.deckId);
+
+//                 let prevOrder: string | null = null;
+//                 let nextOrder: string | null = null;
+
+//                 if (draggedIndex < hoverIndex) {
+//                     // Moving down/forward
+//                     prevOrder = decks[hoverIndex].order;
+//                     nextOrder = hoverIndex + 1 < decks.length ? decks[hoverIndex + 1].order : null;
+
+//                 } else {
+//                     // Moving up/backward
+//                     prevOrder = hoverIndex > 0 ? decks[hoverIndex - 1].order : null;
+//                     nextOrder = decks[hoverIndex].order;
+
+//                 }
+
+//                 if (prevOrder !== null || nextOrder !== null) {
+//                     newOrder = generateJitteredKeyBetween(prevOrder, nextOrder);
+//                 }
+
+//                 if (activeItemRef.current?.deck.order === allDecksCopy.firstPinnedDeckOrder) {
+//                     console.log("first element moved")
+//                 }
+//             }
+//         }
+//         else {
+//             if (over?.data?.current?.deck?.order === allDecksCopy.firstUnpinnedDeckOrder) {
+//                 newOrder = generateJitteredKeyBetween(null, over?.data?.current?.deck?.order)
+//                 if (newOrder) {
+//                     deckOrderBounds.firstUnpinnedDeckOrder = newOrder
+//                 }
+
+//             }
+//             else if (over?.data?.current?.deck?.order === allDecksCopy.lastUnpinnedDeckOrder) {
+//                 newOrder = generateJitteredKeyBetween(over?.data?.current?.deck?.order, null)
+//                 if (newOrder) {
+//                     deckOrderBounds.lastUnpinnedDeckOrder = newOrder
+//                 }
+
+
+//             }
+//             else {
+
+//                 const decks = allDecksCopy.decks.filter(deck => !deck.pinned);
+//                 const hoverIndex = decks.findIndex(deck => deck.order === over?.data?.current?.deck?.order);
+//                 const draggedIndex = decks.findIndex(deck => deck.deckId === activeItemRef.current?.deck?.deckId);
+
+//                 let prevOrder: string | null = null;
+//                 let nextOrder: string | null = null;
+//                 if (draggedIndex < hoverIndex) {
+//                     // Moving down/forward
+//                     prevOrder = decks[hoverIndex].order;
+//                     nextOrder = hoverIndex + 1 < decks.length ? decks[hoverIndex + 1].order : null;
+//                 } else {
+//                     // Moving up/backward
+//                     prevOrder = hoverIndex > 0 ? decks[hoverIndex - 1].order : null;
+//                     nextOrder = decks[hoverIndex].order;
+//                 }
+
+//                 if (prevOrder !== null || nextOrder !== null) {
+//                     newOrder = generateJitteredKeyBetween(prevOrder, nextOrder);
+//                 }
+//             }
+//         }
+
+//         if (newOrder && allDecksCopy && allDecksCopy.decks && deckOrderBounds) {
+//             const updatedDecks = allDecksCopy.decks.map((deck) => {
+//                 if (deck.deckId === activeItemRef?.current?.deck?.deckId) {
+//                     console.log("match found", deck)
+//                     deck.order = newOrder!
+//                     return deck
+//                 }
+//                 else {
+//                     return deck
+//                 }
+//             }).sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0));
+
+//             if (updatedDecks) {
+//                 setAllDecksState({
+//                     decks: updatedDecks,
+//                     ...deckOrderBounds
+//                 });
+//             }
+//             let reindexNeeded = false
+//             if (newOrder.length > 20) {
+//                 reindexNeeded = true
+//             }
+//             reorderDeck({ deckId: activeItemRef.current?.deck?.deckId, newOrder, deckOrderBounds, reindexNeeded })
+//         }
+
+
+//     }
+
+// }

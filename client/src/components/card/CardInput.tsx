@@ -13,30 +13,17 @@ import {
 import { BsChevronExpand } from "react-icons/bs";
 import { AudioContext } from "../../context/AudioContext";
 import { twMerge } from "tailwind-merge";
-import { ReactEditor, Slate, withReact } from "slate-react";
-import {
-  createEditor,
-  Editor,
-  Node,
-  Transforms,
-  Descendant,
-  Element,
-} from "slate";
+import { ReactEditor, Slate } from "slate-react";
+import { Editor, Node, Transforms, Descendant, Element } from "slate";
 import RichTextEditor from "../editor/RichTextEditor";
-import { withInlineElements } from "../../utils/editor/plugins/withInlineElements";
-import { withTitle } from "../../utils/editor/plugins/withTitle";
-import { withTitleBackspaceProtection } from "../../utils/editor/plugins/withTitleBackspaceProtection";
-import { withResetToParagraphOnEnter } from "../../utils/editor/plugins/withResetToParagraphOnEnter";
-import { withResetToParagraphOnBackspaceWhenEmpty } from "../../utils/editor/plugins/withResetToParagraphOnBackspaceWhenEmpty";
 import type { CustomElementType } from "../../types/textEditorTypes";
 import LinkModal from "../editor/LinkModal";
-import { withVoidElements } from "../../utils/editor/plugins/withVoidElements";
-import { withClearEmptyMarks } from "../../utils/editor/plugins/withClearEmptyMarks";
-import { withHistory } from "slate-history";
-import { withUnwrapEmptyInlines } from "../../utils/editor/plugins/withUnwrapEmptyInlines";
-import { withExitInlineOnSpace } from "../../utils/editor/plugins/withExitInlineOnSpace";
 import useResetEditor from "../../hooks/editor/useResetEditor";
 import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
+import SelectionToolbar from "../editor/selection-toolbar/SelectionToolbar";
+import { createCardEditor } from "../../utils/editor/createEditor";
+import { getTextAfterSlash } from "../../utils/editor/commandUtils";
+import { useGlobalEditorShortcuts } from "../../hooks/editor/useGlobalEditorShortcuts";
 
 export const initialValue: Descendant[] = [
   {
@@ -52,7 +39,6 @@ export const initialValue: Descendant[] = [
 type PropType = {
   expandEditor: boolean;
   setExpandEditor: Dispatch<SetStateAction<boolean>>;
-  setNote: Dispatch<SetStateAction<Descendant[]>>;
   expandEditorToMaxHeight: () => void;
   children: ReactNode;
   height: number;
@@ -63,10 +49,16 @@ type PropType = {
   handleTransitionEnd: () => void;
 };
 
+export type CommandPaletteHandle = {
+  showCommandPalette: boolean;
+  setCommandSearch: (newSearch: string) => void;
+  closeCommandPalette: () => void;
+  resetSlashPosition: () => void;
+};
+
 const CardInput = ({
   expandEditor,
   setExpandEditor,
-  setNote,
   expandEditorToMaxHeight,
   children,
   height,
@@ -81,31 +73,18 @@ const CardInput = ({
   const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
   const hasEditorOpened = useRef(false);
   const isHeightTransitioning = useRef(true);
-
+  const comandPaletteConfig = useRef<CommandPaletteHandle | null>(null);
   // Memoize editor creation to prevent recreation on every render
-  const editor = useMemo(() => {
-    return withResetToParagraphOnBackspaceWhenEmpty(
-      withResetToParagraphOnEnter(
-        withTitleBackspaceProtection(
-          withTitle(
-            withInlineElements(
-              withUnwrapEmptyInlines(
-                withClearEmptyMarks(
-                  withVoidElements(
-                    withExitInlineOnSpace(
-                      withReact(withHistory(createEditor()))
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    );
-  }, []);
+  const editor = useMemo(() => createCardEditor(), []);
   const { resetEditor } = useResetEditor(editor);
 
+  useGlobalEditorShortcuts(editor, {
+    onEditorFocus: () => {
+      if (!expandEditor) {
+        handleEditorClick();
+      }
+    },
+  });
   useEffect(() => {
     if (!expandEditor) {
       resetEditor();
@@ -150,7 +129,7 @@ const CardInput = ({
         const remainingSpace = maxExpandableHeight - previousHeight;
         if (remainingSpace <= 0) return previousHeight;
 
-        const increment = remainingSpace >= 120 ? 120 : remainingSpace;
+        const increment = remainingSpace >= 250 ? 250 : remainingSpace;
         const newHeight = previousHeight + increment;
 
         return Math.min(newHeight, maxExpandableHeight);
@@ -169,14 +148,14 @@ const CardInput = ({
     height,
   ]);
 
-  // const saveToLocalStorage = useCallback((value: Descendant[]) => {
-  //   try {
-  //     const content = JSON.stringify(value);
-  //     localStorage.setItem("content", content);
-  //   } catch (error) {
-  //     console.warn("Failed to save to localStorage:", error);
-  //   }
-  // }, []);
+  const saveToLocalStorage = useCallback((value: Descendant[]) => {
+    try {
+      const content = JSON.stringify(value);
+      localStorage.setItem("content", content);
+    } catch (error) {
+      console.warn("Failed to save to localStorage:", error);
+    }
+  }, []);
 
   const handleChange = useCallback(
     (value: Descendant[]) => {
@@ -198,14 +177,40 @@ const CardInput = ({
       // }
 
       // Ensure at least one valid node exists
-      setNote(value);
 
+      if (
+        comandPaletteConfig.current &&
+        comandPaletteConfig.current.showCommandPalette
+      ) {
+        const text = getTextAfterSlash(editor);
+
+        //  Close only if:
+        // 1. text is empty (slash was deleted)
+        // 2. text contains two or more **consecutive** spaces
+        if (text === null) {
+          comandPaletteConfig.current.closeCommandPalette();
+          comandPaletteConfig.current.resetSlashPosition();
+
+          return;
+        }
+        if (text && /\s{2,}$/.test(text)) {
+          comandPaletteConfig.current.closeCommandPalette();
+          comandPaletteConfig.current.resetSlashPosition();
+
+          return;
+        }
+
+        comandPaletteConfig.current.setCommandSearch(text || "");
+      }
+
+      // setNote(value);
+      saveToLocalStorage(value);
       // Handle editor height adjustment
-      if (value.length > 2 && !isMaxHeightReached) {
+      if (value.length > 1 && !isMaxHeightReached) {
         adjustEditorHeight();
       }
     },
-    [editor, setNote, adjustEditorHeight, isMaxHeightReached]
+    [editor, adjustEditorHeight, isMaxHeightReached]
   );
 
   const handleEditorClick = useCallback(() => {
@@ -306,15 +311,15 @@ const CardInput = ({
               "flex flex-col relative transition-[transform] duration-1000 will-change-[transform]",
               expandEditor
                 ? "-translate-y-0"
-                : "-translate-y-14 md:-translate-y-0 delay-1000"
+                : "-translate-y-14 xl:-translate-y-0 delay-1000"
             )}
           >
             <div
               className={twMerge(
-                "transition-[transform,opacity] duration-1000 flex md:h-10 h-20 items-center justify-end border-r border-l dark:border-[#5fb1d6] border-gray-400 rounded-t-md  md:w-[75vw] md:max-w-[44rem] w-[95vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
+                "transition-[transform,opacity] duration-1000 flex xl:h-10 h-20 items-center justify-end border-r border-l dark:border-slate-500 border-gray-400 rounded-t-md  md:w-[75vw] md:max-w-[44rem] xl:w-[85vw] xl:max-w-[50rem] w-[95vw] sm-mid:w-[85vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
                 expandEditor
                   ? "border-t md:delay-1000 delay-1000"
-                  : "p-0 translate-y-full border-t pointer-events-none md:delay-1000 delay-[0s]"
+                  : "p-0 translate-y-full border-t pointer-events-none lg:delay-1000 delay-[0s]"
               )}
             >
               {children}
@@ -335,14 +340,14 @@ const CardInput = ({
               ref={richTextWrapperRef}
               tabIndex={!expandEditor ? 0 : -1}
               className={twMerge(
-                "md:w-[75vw] md:max-w-[44rem]  bg-white w-full border dark:border-[#5fb1d6] border-gray-400 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500 focus-visible:ring-2 dark:ring-blue-500 ring-gray-600",
+                "md:w-[75vw] md:max-w-[44rem] xl:w-[85vw] xl:max-w-[50rem] bg-white w-full max-w-[95vw] sm-mid:w-[85vw] border dark:border-slate-500 border-gray-400 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500 focus-visible:ring-2 dark:ring-blue-500 ring-gray-600",
                 expandEditor
                   ? "before:opacity-0 before:delay-0 delay-[0s]"
-                  : "before:delay-[1.6s] h-[85px] md:h-[45px] delay-1000 md:delay-[0s]",
+                  : "before:delay-[1.6s] h-[85px] xl:h-[45px] delay-1000 lg:delay-[0s]",
                 hasEditorOpened.current &&
                   (expandEditor
                     ? "animate-rounded-top-out"
-                    : "md:animate-rounded-top-in animate-rounded-top-in-mobile")
+                    : "lg:animate-rounded-top-in animate-rounded-top-in-mobile")
               )}
               style={{
                 height: expandEditor ? `${height}px` : undefined,
@@ -352,7 +357,7 @@ const CardInput = ({
               <div
                 onClick={handleEditorContentClick}
                 className={twMerge(
-                  "transition-all duration-500 relative h-full w-full px-4 rounded-md",
+                  "transition-all duration-500 relative h-full px-4 rounded-md",
                   expandEditor
                     ? "opacity-100"
                     : "opacity-0 pointer-events-none",
@@ -368,13 +373,13 @@ const CardInput = ({
                   expandEditorToMaxHeight={expandEditorToMaxHeight}
                   mode="create"
                   parentIndex={expandEditor ? -1 : 0}
+                  comandPaletteConfig={comandPaletteConfig}
                 />
-                {/* <div className="absolute z-50 top-0 left-0">
-                  <div
-                    id="hoveringToolbarPortalContainer"
-                    className="pointer-events-auto"
-                  />
-                </div> */}
+
+                <SelectionToolbar
+                  mode="create"
+                  setShowHyperlinkModal={setShowHyperlinkModal}
+                />
               </div>
 
               <div

@@ -1,4 +1,5 @@
-import { Range } from "slate";
+import { Point } from "slate";
+import { Range, Element as SlateElement } from "slate";
 import { Editor, Transforms } from "slate";
 
 export function removeSlashCommandText(editor: Editor) {
@@ -33,21 +34,32 @@ export const getTextAfterSlash = (editor: Editor): string | null => {
 
     const cursor = selection.anchor;
 
-    // Walk backwards to find the sequence
-    let start = cursor;
-    let lastSlashPosition = null;
-    let slashCount = 0;
+    let start: Point = cursor;
+    let lastSlashPosition: Point | null = null;
+
+    // Get the path of the current block
+    const [currentBlock] = Editor.above(editor, {
+        match: (n) => Editor.isBlock(editor, n as SlateElement),
+
+    }) || [];
 
     while (true) {
-        const before = Editor.before(editor, start, { unit: 'character' });
+        const before = Editor.before(editor, start, { unit: "character" });
         if (!before) break;
+
+        //  stop if we've crossed into a different block
+        const [block] = Editor.above(editor, {
+            at: before,
+            match: (n) => Editor.isBlock(editor, n as SlateElement),
+        }) || [];
+        if (block && block !== currentBlock) break;
 
         const charRange = Editor.range(editor, before, start);
         const char = Editor.string(editor, charRange);
 
         if (char === "/") {
-            slashCount++;
             lastSlashPosition = before;
+            break; // only need the nearest slash
         } else if (char === " " || char === "\n") {
             break;
         }
@@ -55,29 +67,11 @@ export const getTextAfterSlash = (editor: Editor): string | null => {
         start = before;
     }
 
-    if (slashCount === 0 || !lastSlashPosition) return null;
+    if (!lastSlashPosition) return null;
 
-    // If only one slash was found, return everything after it
-    if (slashCount === 1) {
-        const textAfterSlashStart = Editor.after(editor, lastSlashPosition, { unit: "character" });
-        if (!textAfterSlashStart) return "";
+    const textAfterSlashStart = Editor.after(editor, lastSlashPosition, { unit: "character" });
+    if (!textAfterSlashStart) return "";
 
-        const textRange = Editor.range(editor, textAfterSlashStart, cursor);
-        return Editor.string(editor, textRange);
-    }
-
-    // For multiple slashes, skip the first one
-    // Find position after the first slash
-    const firstSlashPosition = Editor.before(editor, lastSlashPosition, {
-        unit: 'character',
-        distance: slashCount - 1
-    });
-
-    if (!firstSlashPosition) return null;
-
-    const afterFirstSlash = Editor.after(editor, firstSlashPosition, { unit: "character" });
-    if (!afterFirstSlash) return "";
-
-    const textRange = Editor.range(editor, afterFirstSlash, cursor);
+    const textRange = Editor.range(editor, textAfterSlashStart, cursor);
     return Editor.string(editor, textRange);
-}
+};

@@ -2,12 +2,12 @@ import React, { memo, useLayoutEffect, useState } from "react";
 import Button from "../Button";
 import { BiEdit } from "react-icons/bi";
 import { BsTrash } from "react-icons/bs";
-import { DeckType } from "../../types/types";
+import { DeckItemType } from "../../types/types";
 import useDeleteDeck from "../../hooks/react-query/useDeleteDeck";
 
 type DeckMoreOptionsProps = {
   moreOptionsRef: React.MutableRefObject<HTMLDivElement | null>;
-  deck: DeckType;
+  deck: DeckItemType;
   triggerRef: React.RefObject<HTMLElement | null>;
   handleEditDeck: (deckId: string, title: string) => void;
   searchParams?: {

@@ -97,6 +97,18 @@ const SortableCardItem = ({
           e.stopPropagation(); // Prevent drag when using Tab + Enter/Space
           return;
         }
+        if (
+          e.target instanceof HTMLElement &&
+          e.target.id === "cardContent" &&
+          (e.key === "Enter" || e.key === " ")
+        ) {
+          e.stopPropagation(); // Prevent drag when using Tab + Enter/Space
+          handleShowFullScreen({
+            ...card,
+            cardIndex: index,
+          });
+          return;
+        }
         listeners?.onKeyDown?.(e);
       }}
       className={twMerge(

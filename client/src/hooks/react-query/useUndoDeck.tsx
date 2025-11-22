@@ -33,24 +33,27 @@ const useUndoDeck = () => {
       await queryClient.cancelQueries({ queryKey: ["decks"] });
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      const previousQueryData: DeckType[] = queryClient.getQueryData([
-        "decks",
-      ])!;
+      const previousQueryData: DeckType = queryClient.getQueryData(["decks"])!;
 
-      if (payload.index !== null) {
-        const index = payload.index;
-        queryClient.setQueryData(["decks"], () => {
-          const newArray = [...previousQueryData];
-          newArray.splice(index, 0, {
+      queryClient.setQueryData<DeckType>(["decks"], () => {
+        const newArray = [
+          ...previousQueryData.decks,
+          {
             deckId: payload.deckId,
             title: payload.title,
             pinned: payload.pinned,
             createdAt: payload.createdAt,
             cardsCount: payload.cardsCount,
-          });
-          return newArray;
+            order: payload.order,
+          },
+        ].sort((a, b) => {
+          // descending order: higher order comes first
+          if (a.order > b.order) return -1;
+          if (a.order < b.order) return 1;
+          return 0;
         });
-      }
+        return { decks: newArray };
+      });
 
       let previousSearchResult: SearchResponse | undefined;
       if (
@@ -78,6 +81,7 @@ const useUndoDeck = () => {
             pinned: payload.pinned,
             createdAt: payload.createdAt,
             cardsCount: payload.cardsCount,
+            order: payload.order,
           });
 
           queryClient.setQueryData(queryKey, {

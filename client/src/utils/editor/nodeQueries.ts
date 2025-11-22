@@ -68,7 +68,7 @@ export const NodeQueries = {
 
         return null;
     },
-    isInRestrictedBlockExceptSelf(editor: Editor, format: string): boolean {
+    isInRestrictedBlockExceptSelf(editor: Editor, format?: string): boolean {
         if (!editor.selection) return false;
 
         const [node] = Editor.above(editor, {

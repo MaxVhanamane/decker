@@ -1,5 +1,9 @@
 import { memo, useCallback, useContext, useState } from "react";
-import type { DeckCardSearchResult, DeckSearchResult } from "../../types/types";
+import type {
+  DeckCardSearchResult,
+  DeckSearchResult,
+  DeckType,
+} from "../../types/types";
 import { OfflineContext } from "../../context/OfflineContext";
 import usePinDeck from "../../hooks/react-query/usePinDeck";
 import { ThemeContext } from "../../context/ThemeContext";
@@ -10,6 +14,9 @@ import SearchResultCardFullScreenView from "./SearchResultCardFullScreenView";
 import { useModalBackNavigationHandler } from "../../hooks/utility/useModalBackNavigationHandler";
 import { Descendant, Element, Text } from "slate";
 import { extractTextFromSlateNodes } from "../../utils/editor/extractTextFromSlateNodes";
+import { useQueryClient } from "@tanstack/react-query";
+import useGetDecks from "../../hooks/react-query/useGetDecks";
+import { generateKeyBetween } from "fractional-indexing-jittered";
 
 type ContentType = {
   note: Descendant[];
@@ -43,6 +50,7 @@ const DeckAndCardResult = ({
   const { isOnline } = useContext(OfflineContext);
   const { showToast } = useContext(ShowToastContext);
   const { theme } = useContext(ThemeContext);
+  const { refetch } = useGetDecks({ enabled: false });
   const [editData, setEditData] = useState({ deckId: "", title: "" });
   const [
     animateCloseEditDeckModalInSearchResult,
@@ -50,7 +58,7 @@ const DeckAndCardResult = ({
   ] = useState(false);
 
   const { mutate: pinDeck } = usePinDeck();
-
+  const queryClient = useQueryClient();
   const [initialFullScreenCardData, setInitialFullScreenCardData] =
     useState<ContentForFullScreen>();
   const [openCardInFullScreen, setOpenCardInFullScreen] = useState(false);
@@ -114,11 +122,29 @@ const DeckAndCardResult = ({
   );
 
   const handlePin = useCallback(
-    (deckId: string, pinned: boolean) => {
-      pinDeck({ deckId, pinned: !pinned, searchParams });
+    async (deckId: string, pinned: boolean) => {
+      const queryKey = ["decks"];
+      let decksData = queryClient.getQueryData<DeckType>(queryKey);
+
+      // Fetch if cache is empty or GC'd
+      if (!decksData) {
+        const freshDecks = (await refetch()).data;
+        decksData = freshDecks;
+      }
+
+      const relevantDecks =
+        decksData?.decks.filter((deck) => deck.pinned === !pinned) ?? [];
+
+      // Compute new order
+      const firstDeckOrder =
+        relevantDecks.length > 0 ? relevantDecks[0].order : null;
+      const newOrder = generateKeyBetween(firstDeckOrder, null);
+
+      pinDeck({ deckId, pinned: !pinned, searchParams, newOrder });
     },
-    [pinDeck, searchParams]
+    [pinDeck, searchParams, refetch, queryClient]
   );
+
   const handleEditDeck = useCallback(
     (deckId: string, title: string) => {
       if (!isOnline) {
@@ -142,7 +168,7 @@ const DeckAndCardResult = ({
     <div>
       {foundDecks?.filter((deck) => deck.pinned === true).length > 0 && (
         <div className="lg:mt-4 lg:mb-10 animate-quickOpacity lg:mx-24">
-          <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
+          <p className="text-left text-sm text-gray-700 dark:text-gray-200 m-4">
             Pinned Decks
           </p>
           <div className="w-full flex items-center justify-center ">
@@ -175,7 +201,7 @@ const DeckAndCardResult = ({
               : "lg:mt-16 "
           }  lg:mb-10 animate-quickOpacity lg:mx-24`}
         >
-          <p className="text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4">
+          <p className="text-left text-sm text-gray-700 dark:text-gray-200 m-4">
             Other Decks
           </p>
           <div className="w-full flex items-center justify-center">
@@ -205,7 +231,7 @@ const DeckAndCardResult = ({
       {foundCards.length > 0 && (
         <div className="animate-quickOpacity mb-4 lg:mx-24">
           <p
-            className={`text-left text-md font-semibold text-gray-800 dark:text-gray-50 m-4  ${
+            className={`text-left text-sm text-gray-700 dark:text-gray-200 m-4  ${
               foundDecks.length > 0 ? "mt-10" : "mt-[1.3rem] "
             }`}
           >

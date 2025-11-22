@@ -26,7 +26,7 @@ const CardSchema = new Schema({
     order: { type: Number, required: true },
     deckId: { type: String, required: true, index: true },
     chapterId: chapterIdField,
-
+    deletedBatchId: String,
     // Soft delete fields
     deletedAt: { type: Date },
     undoExpiresAt: { type: Date }

@@ -1,27 +1,37 @@
 import { Descendant } from "slate";
+import { HighlightColors, HighlightStyle } from "./textEditorTypes";
 
 export type userData = {
   username: string,
   profile_picture: string,
 }
 
-export type DeckType = {
+export type DeckItemType = {
   title: string,
   pinned: boolean,
   createdAt: string,
   cardsCount: number,
   deckId: string
+  order: string,
   isProcessing?: boolean,
 }
 
+export type DeckType = {
+  decks: DeckItemType[]
+}
+
+export type CommandPaletteHighLightConfigType = {
+  selectedHighlightStyle: HighlightStyle;
+  toggledHighlightColor: HighlightColors | null;
+}
 
 export type UndoDeckType = {
   title: string;
   deckId: string;
   pinned: boolean;
+  order: string;
   createdAt: string;
   cardsCount: number;
-  index: number | null,
   indexOfDeletedDeckSearchResult?: number,
   searchParams?: {
     query: string;
@@ -187,6 +197,7 @@ export type DeleteDeckResponseType = {
 export type DeckSearchResult = {
   type: 'deck';
   deckId: string;
+  order: string;
   title: string;
   pinned: boolean;
   createdAt: string;

@@ -30,10 +30,10 @@ import {
   DndSettersContext,
   DndStateContext,
 } from "../../context/DndItemContext";
+import { getDeckInfo, storeDeckInfo } from "../../functions/deckDataManager";
 
 const ChaptersSidebar = () => {
   const { deckId } = useStableParams();
-  const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
   const [modalState, setModalState] = useState({
     confirmDeleteCardModal: {
       show: false,
@@ -43,11 +43,13 @@ const ChaptersSidebar = () => {
       show: false,
       startClosingModalAnimation: false,
     },
+    showCreateChapterModal: {
+      show: false,
+      startClosingModalAnimation: false,
+    },
   });
   const [currentChapterName, setCurrentChapterName] = useState("");
   const isMobileOrTablet = useIsDeviceType("tablet");
-  const [animateCreateChapterModal, setAnimateCreateChapterModal] =
-    useState(false);
   const { theme } = useContext(ThemeContext);
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContex);
   const { setAllChaptersState } = useContext(DndSettersContext);
@@ -56,12 +58,33 @@ const ChaptersSidebar = () => {
   const { data, isLoading, isError, refetch } = useGetChapters(deckId);
   const { mutate: deleteChapter } = useDeleteChapter();
   const chapterToDeleteRef = useRef<null | ChapterDetails>(null);
+  // Store the deck title so that I can display it when a chapter is deleted and the user is navigated to the top-level decks page.
+  const deckTitle = useRef(getDeckInfo().deckTitle);
 
   useEffect(() => {
     if (data) {
       setAllChaptersState(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "/") {
+        event.preventDefault();
+
+        if (isSidebarOpen) {
+          toggleSidebar(false);
+        } else {
+          toggleSidebar(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSidebarOpen, toggleSidebar]);
 
   useModalBackNavigationHandler({
     isOpen: modalState.confirmDeleteCardModal.show,
@@ -87,33 +110,29 @@ const ChaptersSidebar = () => {
         },
       })),
   });
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "/") {
-        event.preventDefault();
-
-        if (isSidebarOpen) {
-          toggleSidebar(false);
-        } else {
-          toggleSidebar(true);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isSidebarOpen, toggleSidebar]);
-
   const handleAnimateCloseChapterModal = useCallback(() => {
-    setAnimateCreateChapterModal(true);
+    setModalState((prev) => ({
+      ...prev,
+      showCreateChapterModal: {
+        startClosingModalAnimation: true,
+        show: true,
+      },
+    }));
   }, []);
+  useModalBackNavigationHandler({
+    isOpen: modalState.showCreateChapterModal.show,
+    modalKey: "showCreateChapterModal",
+    closeModal: handleAnimateCloseChapterModal,
+  });
 
   const handleCloseChapterModal = useCallback(() => {
-    setShowCreateChapterModal(false);
-    setAnimateCreateChapterModal(false);
+    setModalState((prev) => ({
+      ...prev,
+      showCreateChapterModal: {
+        startClosingModalAnimation: false,
+        show: false,
+      },
+    }));
   }, []);
 
   const handleOnCancelDeleteCard = useCallback(() => {
@@ -171,6 +190,9 @@ const ChaptersSidebar = () => {
   const handleOnConfirmDelete = useCallback(() => {
     if (chapterToDeleteRef.current) {
       deleteChapter({ chapterInfo: chapterToDeleteRef.current });
+      if (deckTitle) {
+        storeDeckInfo(deckTitle.current, "");
+      }
       chapterToDeleteRef.current = null;
       setModalState((prev) => ({
         ...prev,
@@ -187,8 +209,8 @@ const ChaptersSidebar = () => {
       <aside
         onClick={(e) => handleOpenSidebar(e)}
         className={twMerge(
-          "h-screen bg-white dark:bg-slate-900 dark:border-slate-300/10  border-slate-900/10 border-r top-0 bottom-0",
-          isSidebarOpen ? "lg:w-64 w-64" : "lg:w-[3.25rem] w-64 cursor-pointer",
+          "h-screen bg-gray-50 dark:bg-slate-900 dark:border-slate-300/10  border-slate-900/10 border-r top-0 bottom-0",
+          isSidebarOpen ? "xl:w-64 w-64" : "xl:w-[3.25rem] w-64 cursor-pointer",
           isMobileOrTablet
             ? isSidebarOpen
               ? "translate-x-0"
@@ -267,9 +289,7 @@ const ChaptersSidebar = () => {
             </Button>
           )}
         </div>
-        <ChapterSidebarActions
-          setShowCreateChapterModal={setShowCreateChapterModal}
-        />
+        <ChapterSidebarActions setModalState={setModalState} />
         {(isSidebarOpen || isMobileOrTablet) && (
           <div className="mt-4">
             <p className="dark:text-gray-500 text-gray-400 text-left pl-[18px] font-light text-sm">
@@ -328,10 +348,12 @@ const ChaptersSidebar = () => {
           onClick={() => toggleSidebar(false)}
         />
       )}
-      {showCreateChapterModal && (
+      {modalState.showCreateChapterModal.show && (
         <CreateChapterModal
           handleCloseChapterModal={handleCloseChapterModal}
-          animateCreateChapterModal={animateCreateChapterModal}
+          startClosingModalAnimation={
+            modalState.showCreateChapterModal.startClosingModalAnimation
+          }
           handleAnimateCloseChapterModal={handleAnimateCloseChapterModal}
           maxOrder={data?.maxOrder ?? 0}
         />

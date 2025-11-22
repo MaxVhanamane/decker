@@ -6,6 +6,7 @@ type ScrollBehavior = "auto" | "instant" | "smooth"
 type UseFocusTrapOptions = {
     enabled?: boolean;
     onEscape?: () => void;
+    onEnter?: () => void;
     initialFocusIndex?: number;
     trackInputMethod?: boolean;
     scrollBehavior?: ScrollBehavior;
@@ -165,6 +166,7 @@ export function useFocusTrap(
         initialFocusIndex,
         trackInputMethod = false,
         scrollBehavior = 'auto',
+        onEnter
     }: UseFocusTrapOptions = {}
 ): { isUsingKeyboard: boolean } | void {
     const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -440,6 +442,13 @@ export function useFocusTrap(
                 e.preventDefault();
                 return;
             }
+            // ENTER KEY: only if onEnter is provided
+            if (e.key === "Enter" && onEnter) {
+                e.preventDefault();
+                onEnter();
+                return;
+            }
+
 
             // FOCUS TRAPPING: Handle Tab/Shift+Tab to keep focus within the container
             if (e.key === "Tab" && (navigationMode === 'tab' || navigationMode === 'both')) {

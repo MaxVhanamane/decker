@@ -13,7 +13,7 @@ const TitleElement = memo(
     return (
       <h1
         {...attributes}
-        className="text-lg font-bold outline-none relative slate-placeholder-title"
+        className="text-2xl font-bold outline-none relative slate-placeholder-title"
         data-placeholder="Title"
         data-is-empty-title={isEmpty.toString()}
       >

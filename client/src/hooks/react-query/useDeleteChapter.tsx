@@ -15,6 +15,8 @@ import useUndoChapter from "./useUndoChapter";
 
 type SuccessResponseType = {
   success: boolean;
+  deletedBatchId: string;
+  softDeletedCards: number;
 };
 
 type DeleteChapterPayloadType = {
@@ -46,7 +48,9 @@ const useDeleteChapter = () => {
   const queryClient = useQueryClient();
   const { showToast } = useContext(ShowToastContext);
   const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
-  const undoChapterDataRef = useRef<null | ChapterDetails>(null);
+  const undoChapterDataRef = useRef<
+    null | (ChapterDetails & { deletedBatchId: string })
+  >(null);
   const { isOnline } = useContext(OfflineContext);
   const navigate = useNavigate();
   const { mutate: undoChapter } = useUndoChapter();
@@ -74,7 +78,6 @@ const useDeleteChapter = () => {
     onMutate: async (data: DeleteChapterPayloadType) => {
       const queryKey = ["chapters", data.chapterInfo.deckId];
 
-      undoChapterDataRef.current = data?.chapterInfo;
       await queryClient.cancelQueries({
         queryKey,
       });
@@ -108,10 +111,18 @@ const useDeleteChapter = () => {
           }
         }
       );
-      navigate(`/cards/${data.chapterInfo.deckId}`);
+      setTimeout(() => {
+        navigate(`/cards/${data.chapterInfo.deckId}`, { replace: true });
+      }, 50);
+
       return { previousChaptersQueryData };
     },
-    onSuccess: () => {
+    onSuccess: (serverResponse, payload) => {
+      undoChapterDataRef.current = {
+        ...payload?.chapterInfo,
+        deletedBatchId: serverResponse.deletedBatchId,
+      };
+
       showToast({
         message: "Chapter deleted successfully!",
         severity: "success",

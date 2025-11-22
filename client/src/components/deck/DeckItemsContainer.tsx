@@ -1,12 +1,12 @@
 import { useContext, memo, useMemo } from "react";
-import type { DeckType } from "../../types/types";
+import type { DeckItemType } from "../../types/types";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { DndFilterContext } from "../../context/DndItemContext";
 import SortableDeckItem from "./SortableDeckItem";
 
 type PropTypes = {
-  allDecks: DeckType[];
+  allDecks: DeckItemType[];
   handleEditDeck: (deckId: string, title: string) => void;
   handlePin: (deckId: string, pinned: boolean) => Promise<void>;
   heading: string;
@@ -47,22 +47,23 @@ const DeckItemsContainer = memo(
           id={heading}
           key={heading}
         >
-          <div className="w-full flex items-center justify-center flex-col">
-            <h2 className="text-left w-full text-sm  text-gray-800 dark:text-gray-50  my-4 mx-2  px-4 lg:w-[80rem]">
+          <div className="w-full flex items-center justify-center flex-col ">
+            <h2 className="text-left w-full text-sm  text-gray-800 dark:text-gray-50  my-4 mx-2  px-4 2xl:w-[90rem]">
               {heading}
             </h2>
-            <div className=" flex flex-row flex-wrap gap-2 justify-center items-center py-2 sm:px-1 lg:w-[80rem] transition-all duration-1000">
+            <div className=" flex flex-row flex-wrap gap-2 justify-center items-center py-2 sm:px-1 2xl:w-[90rem] transition-all duration-1000">
               {allDecks
                 ?.filter(
                   (deck) => deck.deckId !== deckIdToFilterOnDragOverDeleteArea
                 )
-                .map((deck) => {
+                .map((deck, index) => {
                   return (
                     <SortableDeckItem
                       deck={deck}
                       handleEditDeck={handleEditDeck}
                       handlePin={handlePin}
                       key={deck.deckId}
+                      index={index}
                     />
                   );
                 })}

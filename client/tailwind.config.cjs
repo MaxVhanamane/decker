@@ -35,7 +35,8 @@ module.exports = {
       },
       screens: {
         'xs': '370px',
-        'ms': '400px'
+        'ms': '400px',
+        'sm-mid': { 'min': '640px', 'max': '767px' },
       },
       backgroundImage: ({ theme }) => ({
         BgForDarkMode: `linear-gradient(to right,#020617,${theme('colors.slate.700')},${theme('colors.slate.900')})`,
@@ -77,11 +78,9 @@ module.exports = {
         translateFromLeftToRight: {
           "0%": {
             "transform": "translateX(-100%)",
-            "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)"
           },
           "100%": {
             "transform": "translateX(0)",
-            "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)"
 
           },
 
@@ -101,14 +100,10 @@ module.exports = {
         translateFromRightToLeft: {
           "0%": {
             "transform": "translateX(0)",
-            "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)"
-
 
           },
           "100%": {
             "transform": "translateX(-100%)",
-            "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)"
-
           },
 
         },
@@ -1166,11 +1161,11 @@ module.exports = {
         'spinner-bar': 'spinner-fade 1s linear infinite',
         marquee: "marquee 10s linear 1",
         rotate: "rotate 10s linear forwards infinite",
-        translateFromLeftToRight: "translateFromLeftToRight 0.3s ease-in-out 1",
-        translateFromLeftToRightSearch: "translateFromLeftToRightSearch 0.3s ease-in-out 1",
-        translateFromRightToLeft: "translateFromRightToLeft 0.3s ease-in-out forwards 1",
-        translateFromBottomToTop: "translateFromBottomToTop 0.5s ease-in-out 1",
-        translateFromTopToBottom: "translateFromTopToBottom 0.5s ease-in-out 1",
+        translateFromLeftToRight: "translateFromLeftToRight 0.2s ease-out 1",
+        translateFromLeftToRightSearch: "translateFromLeftToRightSearch 0.3s ease-out 1",
+        translateFromRightToLeft: "translateFromRightToLeft 0.2s ease-out forwards 1",
+        translateFromBottomToTop: "translateFromBottomToTop 0.5s ease-out 1",
+        translateFromTopToBottom: "translateFromTopToBottom 0.5s ease-out 1",
         animateFromRightToLeftToastRight: "animateFromRightToLeftToastRight 0.5s forwards ease-in-out 1",
         animateFromLeftToRightToastRight: "animateFromLeftToRightToastRight 0.5s forwards ease-in-out 1",
         animateFromRightToLeftToastLeft: "animateFromRightToLeftToastLeft 0.5s forwards ease-in-out 1",

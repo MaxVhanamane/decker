@@ -11,6 +11,7 @@ import type {
   CardType,
   ChapterDetails,
   CurrentDraggingCardType,
+  DeckItemType,
   DeckType,
   GetChaptersResponseType,
 } from "../types/types";
@@ -19,7 +20,7 @@ import type {
 type CurrentDraggingDeckType = {
   isDragging: boolean;
   isDraggingOverDeleteArea: boolean;
-  deck: DeckType;
+  deck: DeckItemType;
 } | null;
 
 type CurrentDraggingChapterType = {
@@ -29,7 +30,7 @@ type CurrentDraggingChapterType = {
 } | null;
 
 type DndStateContextType = {
-  allDecksState: DeckType[] | [];
+  allDecksState: DeckType | null;
   allCardsState: CardType | null;
   allChaptersState: GetChaptersResponseType | null;
 };
@@ -55,7 +56,7 @@ type DndFilterContextType = {
 };
 
 type DndSettersContextType = {
-  setAllDecksState: Dispatch<SetStateAction<DeckType[] | []>>;
+  setAllDecksState: Dispatch<SetStateAction<DeckType | null>>;
   setAllCardsState: Dispatch<SetStateAction<CardType | null>>;
   setAllChaptersState: Dispatch<SetStateAction<GetChaptersResponseType | null>>;
   setActiveId: Dispatch<SetStateAction<UniqueIdentifier | null>>;
@@ -67,7 +68,7 @@ type DndSettersContextType = {
 };
 
 export const DndStateContext = createContext<DndStateContextType>({
-  allDecksState: [],
+  allDecksState: null,
   allCardsState: null,
   allChaptersState: null,
 });
@@ -110,7 +111,7 @@ const DndContextProvider = ({ children }: { children: ReactNode }) => {
     deckIdToFilterOnDragOverDeleteArea,
     setDeckIdToFilterOnDragOverDeleteArea,
   ] = useState<UniqueIdentifier | null>(null);
-  const [allDecksState, setAllDecksState] = useState<DeckType[] | []>([]);
+  const [allDecksState, setAllDecksState] = useState<DeckType | null>(null);
   const [allCardsState, setAllCardsState] = useState<CardType | null>(null);
   const [allChaptersState, setAllChaptersState] =
     useState<GetChaptersResponseType | null>(null);

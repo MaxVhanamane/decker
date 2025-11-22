@@ -14,7 +14,6 @@ import { useStableNavigate } from "../context/StableNavigateContext";
 import { useStableParams } from "../context/stableParamsContext";
 import useDeleteCard from "../hooks/react-query/useDeleteCard";
 import useToastOnError from "../hooks/utility/useToastOnError";
-
 import { Helmet } from "react-helmet";
 import type { CardContentType, ContentTypeForEdit } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
@@ -50,16 +49,7 @@ import ChaptersSidebar from "../components/chapters/ChaptersSidebar";
 import { getDeckInfo } from "../functions/deckDataManager";
 
 // const Tips = lazy(() => import("../components/card/Tips"));
-const initialValue: Descendant[] = [
-  {
-    type: "title",
-    children: [{ text: "" }],
-  },
-  {
-    type: "paragraph",
-    children: [{ text: "" }],
-  },
-];
+
 type ContentTypeForPayload = {
   note: Descendant[];
   cardId: string;
@@ -112,18 +102,19 @@ const Cards = ({ mode }: CardsProps) => {
     error: editCardError,
   } = useEditCard();
   const [isCardsStateReady, setIsCardsStateReady] = useState(false);
-  const [note, setNote] = useState<Descendant[]>(initialValue);
+  // const [note, setNote] = useState<Descendant[]>(initialValue);
   const [showTips, setShowTips] = useState(false);
   const [showEditModalForCard, setShowEditModalForCard] = useState(false);
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [height, setHeight] = useState(() =>
-    window.innerWidth < 640 ? 200 : 120
+    window.innerWidth < 640 ? 200 : 250
   );
   const [expandEditor, setExpandEditor] = useState(false);
   const [closeFullScreenWithAnimation, setCloseFullScreenWithAnimation] =
     useState(false);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const isSmallScreen = useIsDeviceType("phone");
+  const isLargePhone = useIsDeviceType("tablet");
   const [modalState, setModalState] = useState({
     confirmCloseCardModal: {
       show: false,
@@ -184,12 +175,6 @@ const Cards = ({ mode }: CardsProps) => {
       setAllCardsState(data);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (hasCards && isNewChapter) {
-      setIsNewChapter(false);
-    }
-  }, [hasCards, isNewChapter]);
 
   useEffect(() => {
     return () => {
@@ -304,12 +289,11 @@ const Cards = ({ mode }: CardsProps) => {
     if (isSmallScreen) {
       setHeight(200);
     } else {
-      setHeight(120);
+      setHeight(250);
     }
     if (data && "cards" in data && data?.cards?.length === 0) {
       setIsTransitioning(true);
     }
-    setNote(initialValue);
   }, [data]);
 
   const keepNoteAndContinueEditing = useCallback(() => {
@@ -361,34 +345,37 @@ const Cards = ({ mode }: CardsProps) => {
     }
   }, [isSmallScreen]);
 
-  const handleCloseTextEditor = useCallback(() => {
-    if (hasValidNoteContent(note)) {
-      setModalState((prev) => ({
-        ...prev,
-        confirmCloseCardModal: {
-          show: true,
-          startClosingModalAnimation: false,
-        },
-      }));
-    } else {
-      setExpandEditor(false);
-      if (isSmallScreen) {
-        setHeight(200);
+  const handleCloseTextEditor = useCallback(
+    (note: Descendant[]) => {
+      if (hasValidNoteContent(note)) {
+        setModalState((prev) => ({
+          ...prev,
+          confirmCloseCardModal: {
+            show: true,
+            startClosingModalAnimation: false,
+          },
+        }));
       } else {
-        setHeight(120);
-      }
-      setNote(initialValue);
-      if (data && "cards" in data && data?.cards?.length === 0) {
-        setIsTransitioning(true);
-      }
-    }
-  }, [note, data]);
-  // onClick handlers
+        setExpandEditor(false);
+        if (isSmallScreen) {
+          setHeight(200);
+        } else {
+          setHeight(250);
+        }
 
+        if (data && "cards" in data && data?.cards?.length === 0) {
+          setIsTransitioning(true);
+        }
+      }
+    },
+    [data, isSmallScreen]
+  );
+  // onClick handlers
   const handleCreateCard = useCallback(
     (
       resetEditor: () => void,
-      restoreUnsavedContent: (newNote: Descendant[]) => void
+      restoreUnsavedContent: (newNote: Descendant[]) => void,
+      note: Descendant[]
     ) => {
       if (!isOnline) {
         showToast({
@@ -437,9 +424,9 @@ const Cards = ({ mode }: CardsProps) => {
             restoreUnsavedContent(currentNote);
           },
         });
-        setNote(initialValue);
         resetEditor();
-        setHeight(120);
+
+        setHeight(250);
         if (isPlayingAudioAllowed) {
           setTimeout(() => {
             handlePlayAudio("createdSuccessfully", "/cards");
@@ -457,7 +444,6 @@ const Cards = ({ mode }: CardsProps) => {
       }
     },
     [
-      note,
       deckId,
       height,
       chapterId,
@@ -593,6 +579,20 @@ const Cards = ({ mode }: CardsProps) => {
     }
   }, [data]);
 
+  const computedTransform = useMemo(() => {
+    if (expandEditor) {
+      return isLargePhone
+        ? height === 200
+          ? "translateY(100px)"
+          : `translateY(${height - 90}px)`
+        : height === 250
+        ? "translateY(120px)"
+        : `translateY(${height - 120}px)`;
+    } else {
+      return `translateY(${isLargePhone ? "-66px" : "-80px"})`;
+    }
+  }, [expandEditor, height, isLargePhone]);
+
   const cardToolbar = useMemo(
     () => (
       <CardToolbar
@@ -662,11 +662,13 @@ const Cards = ({ mode }: CardsProps) => {
         <ChaptersSidebar />,
         document.getElementById("chapters-portal")!
       )}
-      <div className="relative flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-[calc(100vh-64px)]">
+      <div
+        className="relative flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-[calc(100vh-64px)]"
+        id="cardsMainContainer"
+      >
         <CardInput
           expandEditor={expandEditor}
           setExpandEditor={setExpandEditor}
-          setNote={setNote}
           expandEditorToMaxHeight={expandEditorToMaxHeight}
           height={height}
           richTextWrapperRef={richTextWrapperRef}
@@ -677,23 +679,14 @@ const Cards = ({ mode }: CardsProps) => {
         >
           {cardToolbar}
         </CardInput>
+
         <div
           className={twMerge(
-            "flex items-center flex-col justify-center transition-transform duration-1000 md:delay-[0s] will-change-transform",
+            "flex items-center flex-col justify-center transition-transform duration-1000 lg:delay-[0s] will-change-transform",
             expandEditor ? "delay-0" : "delay-1000"
           )}
           style={{
-            transform: `translateY(${(() => {
-              if (expandEditor) {
-                if (isSmallScreen) {
-                  return height === 200 ? "100px" : `${height - 90}px`;
-                } else {
-                  return height === 120 ? "0px" : `${height - 120}px`;
-                }
-              } else {
-                return isSmallScreen ? "-66px" : "-80px";
-              }
-            })()})`,
+            transform: computedTransform,
           }}
         >
           <h1 className="text-gray-500 mb-10 dark:text-gray-400 text-sm">

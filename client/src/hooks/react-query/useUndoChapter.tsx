@@ -5,12 +5,13 @@ import { useContext } from "react";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { ChapterDetails, GetChaptersResponseType } from "../../types/types";
 
-type UndoChapterPayload = ChapterDetails;
+type UndoChapterPayload = ChapterDetails & { deletedBatchId: string };
 const undoChapter = async (payload: UndoChapterPayload) => {
   try {
     const data = await request.put("/chapter/undo", {
       deckId: payload.deckId,
       chapterId: payload.chapterId,
+      deletedBatchId: payload.deletedBatchId,
     });
 
     return data?.data;

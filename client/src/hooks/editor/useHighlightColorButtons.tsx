@@ -19,6 +19,7 @@ type useHighlightColorButtonsProps = {
   selectedHighlightStyle: HighlightStyle;
   onSelect: (color: HighlightConfig) => void;
   setSelectedHighlightColor?: Dispatch<SetStateAction<HighlightColors | null>>;
+  toggledHighlightColor?: HighlightColors | null;
 };
 
 type useHighlightColorButtonsReturn<T extends "toolbar" | "commandpalette"> =
@@ -39,6 +40,7 @@ export const useHighlightColorButtons = <
   selectedHighlightStyle,
   setSelectedHighlightColor,
   onSelect,
+  toggledHighlightColor,
   usage,
 }: useHighlightColorButtonsProps & {
   usage: T;
@@ -101,9 +103,11 @@ export const useHighlightColorButtons = <
               <div
                 className={twMerge(
                   "flex flex-col justify-center items-center w-full rounded ",
-                  selectedHighlightStyle === "plain"
-                    ? backgroundColor
-                    : backgroundColorWavy
+                  selectedHighlightStyle === "plain" && backgroundColor,
+                  selectedHighlightStyle === "wavy" &&
+                    toggledHighlightColor === color
+                    ? backgroundColorWavy
+                    : backgroundColor
                 )}
               >
                 {color[0].toUpperCase() + color.slice(1)}

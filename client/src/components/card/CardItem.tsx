@@ -188,7 +188,7 @@ const CardItem = memo(
       <div
         ref={elementRef}
         className={twMerge(
-          "relative border overflow-hidden group/card dark:border-slate-600 border-slate-400 shadow-4-sides rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-blue-500  dark:hover:shadow-blue-500  hover:border-sky-600 hover:shadow-sky-600 group",
+          "relative border overflow-hidden group/card dark:border-slate-600 border-slate-400/40 shadow-4-sides rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-blue-500  dark:hover:shadow-blue-500  hover:border-sky-600 hover:shadow-sky-600 group",
           undoCardCardId === card.cardId &&
             "!border-yellow-400  !shadow-yellow-400 dark:text-yellow-400 text-yellow-400 animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_3] "
         )}
@@ -211,7 +211,7 @@ const CardItem = memo(
               "  absolute -right-4 -top-8 h-20 w-20 origin-top-right stroke-[0.3]  duration-300 group-hover/card:scale-90 ",
               undoCardCardId === card.cardId
                 ? "dark:text-yellow-400 text-yellow-500"
-                : "text-slate-400 dark:text-slate-600 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
+                : "text-slate-400/40 dark:text-slate-600 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
             )}
           >
             <circle cx="12" cy="12" r="10"></circle>
@@ -229,19 +229,45 @@ const CardItem = memo(
               "absolute -right-4 -top-8 h-28 w-28 origin-top-right stroke-[0.2]  duration-500 group-hover/card:scale-90 dark:text-slate-600",
               undoCardCardId === card.cardId
                 ? "dark:text-yellow-400 text-yellow-500"
-                : "text-slate-400 dark:text-slate-600 group-hover/card:text-sky-500  dark:group-hover/card:text-blue-500"
+                : "text-slate-400/40 dark:text-slate-600 group-hover/card:text-sky-500 dark:group-hover/card:text-blue-500"
             )}
           >
             <circle cx="12" cy="12" r="10"></circle>
           </svg>
         </div>
+        <div
+          tabIndex={0}
+          className="focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 outline-none rounded-md"
+          id="cardContent"
+        >
+          <p className="text-base text-gray-900 dark:text-white mb-1 p-1 line-clamp-1 break-words break-all select-none">
+            {cardTitle ? (
+              cardTitle
+            ) : (
+              <span className="text-sm lg:text-base font-normal dark:text-gray-500 text-gray-400">
+                You have not added a title to this entry.
+              </span>
+            )}
+          </p>
 
+          <div className="text-sm  text-gray-900 dark:text-gray-100 p-1  break-words break-all font-light select-none">
+            <p className="line-clamp-3">
+              {note.trim().length > 0 ? (
+                note
+              ) : (
+                <span className="font-normal dark:text-gray-500 text-gray-400">
+                  You have not added a note to this entry.
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
         <div className="absolute bottom-0 left-0 flex items-center justify-between w-full py-2 px-3 ">
           <div className="text-xs text-gray-400 select-none">
             <span>{formatDate(card.createdAt)}</span>
           </div>
           <div className="flex items-center justify-center gap-3 ">
-            <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 hover:bg-gray-300  bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/deleteCardBtn">
+            <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 hover:bg-gray-200  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center group/deleteCardBtn">
               <Button
                 variant="unstyled"
                 onClick={handleDeleteCardButtonClick}
@@ -253,7 +279,7 @@ const CardItem = memo(
                 <MdOutlineDeleteOutline />
               </Button>
             </div>
-            <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 bg-gray-200 hover:bg-gray-300 rounded-full w-6 h-6 z-50  flex items-center justify-center group/editBtn ">
+            <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 bg-gray-100 hover:bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/editBtn ">
               <Button
                 variant="unstyled"
                 onClick={(event) => {
@@ -274,28 +300,6 @@ const CardItem = memo(
               </Button>
             </div>
           </div>
-        </div>
-
-        <p className="text-base text-gray-700 dark:text-white mb-1 p-1 line-clamp-1 break-words break-all select-none">
-          {cardTitle ? (
-            cardTitle
-          ) : (
-            <span className="text-sm lg:text-base font-normal dark:text-gray-500 text-gray-400">
-              You have not added a title to this entry.
-            </span>
-          )}
-        </p>
-
-        <div className="text-sm  text-gray-800 dark:text-gray-100 p-1  break-words break-all font-light select-none">
-          <p className="line-clamp-3">
-            {note.trim().length > 0 ? (
-              note
-            ) : (
-              <span className="font-normal dark:text-gray-500 text-gray-400">
-                You have not added a note to this entry.
-              </span>
-            )}
-          </p>
         </div>
       </div>
     );

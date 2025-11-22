@@ -19,22 +19,23 @@ import "prismjs/components/prism-yaml";
 import "prismjs/components/prism-json";
 
 import type {
-  CodeBlockElementType,
+  CodeLineElement,
   CustomTextType,
 } from "../../../../types/textEditorTypes";
-import { renderLeaf } from "../../../RichTextRenderer";
 import { GiFeather } from "react-icons/gi";
 import CopyCode from "../../../card/CopyCode";
+import { renderLeaf } from "../../../rich-text-renderer/renderLeaf";
+import { indentMargin } from "../../../../utils/constants";
 
 interface CodeBlockProps {
-  code: CodeBlockElementType[];
+  code: CodeLineElement[];
   language: string;
   visibleChars?: number;
   showCursor?: boolean;
 }
 
 // Helper function to get total character count for a code line
-const getCodeLineCharCount = (line: CodeBlockElementType): number => {
+const getCodeLineCharCount = (line: CodeLineElement): number => {
   return (line.children || []).reduce((total, child) => {
     if (typeof child === "object" && "text" in child) {
       return total + (child.text || "").length;
@@ -57,14 +58,24 @@ export const CodeBlockElementView: React.FC<CodeBlockProps> = ({
 
   return (
     <div className="relative font-mono text-sm leading-5 !my-6  !pt-[52px] dark:bg-[#09101F] bg-gray-100 rounded-md !p-6 min-h-[5rem]">
-      {visibleCode.map((line, idx) => (
-        <div key={idx} className="relative">
-          {renderHighlightedCodeLine(line, language)}
-          {showCursor && idx === lastVisibleLineIndex && (
-            <GiFeather className="inline-block text-lg ml-2 -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 " />
-          )}
-        </div>
-      ))}
+      {visibleCode.map((line, idx) => {
+        return (
+          <div
+            style={{
+              marginLeft: line.indentLevel
+                ? line.indentLevel * indentMargin
+                : 0,
+            }}
+            key={idx}
+            className="relative"
+          >
+            {renderHighlightedCodeLine(line, language)}
+            {showCursor && idx === lastVisibleLineIndex && (
+              <GiFeather className="inline-block text-lg ml-2 -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 " />
+            )}
+          </div>
+        );
+      })}
       <CopyCode code={code} variant="preview" />
     </div>
   );
@@ -72,10 +83,10 @@ export const CodeBlockElementView: React.FC<CodeBlockProps> = ({
 
 // Helper function to get visible code lines based on character count
 const getVisibleCodeLines = (
-  code: CodeBlockElementType[],
+  code: CodeLineElement[],
   visibleChars: number
-): { visibleCode: CodeBlockElementType[]; lastVisibleLineIndex: number } => {
-  const result: CodeBlockElementType[] = [];
+): { visibleCode: CodeLineElement[]; lastVisibleLineIndex: number } => {
+  const result: CodeLineElement[] = [];
   let charCount = 0;
   let lastVisibleLineIndex = -1;
 
@@ -137,10 +148,7 @@ const getVisibleCodeLines = (
   return { visibleCode: result, lastVisibleLineIndex };
 };
 
-const renderHighlightedCodeLine = (
-  line: CodeBlockElementType,
-  language: string
-) => {
+const renderHighlightedCodeLine = (line: CodeLineElement, language: string) => {
   const textNodes = line.children as CustomTextType[];
   const fullLineText = textNodes.map((c) => c.text).join("");
 

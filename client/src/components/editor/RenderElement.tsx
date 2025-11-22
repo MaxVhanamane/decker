@@ -11,6 +11,8 @@ import Divider from "./elements/editable/Divider";
 import ColorBar from "./elements/editable/ColorBar";
 import List from "./elements/editable/List";
 import { Range } from "slate";
+import ListItem from "./elements/editable/ListItem";
+import { indentMargin } from "../../utils/constants";
 
 export const RenderElement = memo(
   (
@@ -33,7 +35,15 @@ export const RenderElement = memo(
         return <CodeBlockElement {...props} />;
       case "code-line":
         return (
-          <div {...attributes} className="relative">
+          <div
+            style={{
+              marginLeft: element.indentLevel
+                ? indentMargin * element.indentLevel
+                : 0,
+            }}
+            {...attributes}
+            className="relative"
+          >
             {children}
           </div>
         );
@@ -49,15 +59,22 @@ export const RenderElement = memo(
       case "color-bar":
         return <ColorBar {...props} />;
       case "bulleted-list":
+      case "circle-list":
+      case "square-list":
+      case "hollow-square-list":
+      case "dash-list":
+      case "star-list":
+      case "arrow-list":
       case "numbered-list":
       case "alpha-upper-list":
       case "alpha-lower-list":
       case "roman-upper-list":
       case "roman-lower-list":
-        return <List {...props} />;
-
+        return <List key={element.type} {...props} />;
+      case "list-item-text":
+        return <div {...attributes}>{children}</div>;
       case "list-item":
-        return <li {...props.attributes}>{props.children}</li>;
+        return <ListItem {...props} />;
       case "divider": {
         return <Divider {...props} />;
       }

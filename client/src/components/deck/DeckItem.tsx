@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState, memo, JSX } from "react";
-import type { DeckType } from "../../types/types";
+import type { DeckItemType } from "../../types/types";
 import Button from "../Button";
 import { BsFillPinFill, BsPin, BsThreeDotsVertical } from "react-icons/bs";
 import { formatDate } from "../../functions/formatDate";
@@ -15,7 +15,7 @@ import { storeDeckInfo } from "../../functions/deckDataManager";
 type PropTypes = {
   handleEditDeck: (deckId: string, title: string) => void;
   handlePin: (deckId: string, pinned: boolean) => void;
-  deck: DeckType;
+  deck: DeckItemType;
   highlightedTitle?: JSX.Element;
   closeSearchBar?: (deckId: string) => void;
   isDragging?: boolean;
@@ -103,7 +103,7 @@ const DeckItem = ({
     <div
       ref={deckItemRef}
       className={twMerge(
-        "relative border dark:border-slate-700 border-slate-400 text-gray-700 dark:text-gray-50 rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[7rem]  flex  justify-center items-center  text-justify transition-[border-color,box-shadow,background-color] duration-200   before:absolute before:opacity-0 before:transition-all before:duration-200 shadow-4-sides hover:shadow-sky-500  dark:hover:bg-gray-900 hover:border-sky-500 dark:hover:border-sky-500 hover:bg-gray-100 group",
+        "relative border dark:border-slate-700 border-slate-400/40 text-gray-800 dark:text-gray-50 rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[7rem]  flex  justify-center items-center  text-justify transition-[border-color,box-shadow,background-color] duration-200   before:absolute before:opacity-0 before:transition-all before:duration-200 shadow-4-sides hover:shadow-sky-500  dark:hover:bg-gray-900 hover:border-sky-500 dark:hover:border-sky-500 hover:bg-gray-100 group",
         showMoreOptions ? "z-50" : "z-30 ",
         deck.isProcessing ? "cursor-not-allowed" : " ",
         newlyAddedDeckId === deck.deckId
@@ -112,7 +112,7 @@ const DeckItem = ({
       )}
     >
       <div
-        className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 group-hover:after:bg-radialGradient group-hover:after:opacity-100 after:transition-all after:duration-200 pointer-events-none  `}
+        className={`absolute w-full h-full bg-[url('/hexagongrid.svg')] bg-center bg-cover after:absolute  after:inset-0 after:m-auto  after:w-[40%] after:aspect-square  after:blur-[40px] after:rounded-full after:opacity-0  z-50 dark:group-hover:after:bg-radialGradient dark:group-hover:after:opacity-100 after:transition-all after:duration-200 pointer-events-none  `}
       ></div>
 
       <Button
@@ -205,9 +205,9 @@ const DeckItem = ({
                 closeSearchBar(deck.deckId);
               }
             }}
-            className="outline-none focus-visible:ring-2 dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 inline-block w-full rounded-sm"
+            className="outline-none focus-visible:ring-2 dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 inline-block w-full rounded-md"
           >
-            <p className="break-all font-bold  line-clamp-1 h-7 text-center  w-full select-none">
+            <p className="break-all font-semibold  line-clamp-1 h-7 text-center  w-full select-none">
               {highlightedTitle ? highlightedTitle : deck.title}
             </p>
           </Link>

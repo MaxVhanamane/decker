@@ -26,11 +26,20 @@ export const useListToolbarButtons = <T extends "toolbar" | "commandpalette">(
     type: ListType;
     toolTipPosition: "top" | "right" | "bottom" | "left";
   }[] = [
+    // --- Unordered lists ---
     { type: "bulleted-list", toolTipPosition: "left" },
+    { type: "circle-list", toolTipPosition: "top" },
+    { type: "square-list", toolTipPosition: "right" },
+    { type: "hollow-square-list", toolTipPosition: "left" },
+    { type: "dash-list", toolTipPosition: "top" },
+    { type: "star-list", toolTipPosition: "right" }, // ✦
+    { type: "arrow-list", toolTipPosition: "left" }, // →
+
+    // --- Numbered lists ---
     { type: "numbered-list", toolTipPosition: "top" },
     { type: "alpha-upper-list", toolTipPosition: "right" },
     { type: "alpha-lower-list", toolTipPosition: "left" },
-    { type: "roman-upper-list", toolTipPosition: "bottom" },
+    { type: "roman-upper-list", toolTipPosition: "top" },
     { type: "roman-lower-list", toolTipPosition: "right" },
   ];
 
@@ -94,6 +103,18 @@ const ListTypeIcon = ({ type }: { type: ListType }) => {
     switch (type) {
       case "bulleted-list":
         return ["• —", "• —"];
+      case "circle-list":
+        return ["◦ —", "◦ —"];
+      case "square-list":
+        return ["▪ —", "▪ —"];
+      case "hollow-square-list":
+        return ["□ —", "□ —"];
+      case "dash-list":
+        return ["– —", "– —"];
+      case "star-list":
+        return ["✦ —", "✦ —"]; // star
+      case "arrow-list":
+        return ["→ —", "→ —"]; // arrow
       case "numbered-list":
         return ["1. —", "2. —"];
       case "alpha-upper-list":
@@ -110,9 +131,9 @@ const ListTypeIcon = ({ type }: { type: ListType }) => {
   };
 
   return (
-    <div className="flex flex-col text-xs font-medium text-gray-700 dark:text-gray-200 leading-tight">
+    <div className="flex flex-col text-xs font-medium text-gray-700 dark:text-gray-200 leading-tight ">
       {getMarkers().map((line, i) => (
-        <span key={i} className="tracking-tight">
+        <span key={i} className={twMerge("tracking-tight")}>
           {line}
         </span>
       ))}

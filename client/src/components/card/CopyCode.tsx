@@ -1,5 +1,5 @@
 import CopyToClipboard from "react-copy-to-clipboard";
-import { CodeBlockElementType } from "../../types/textEditorTypes";
+import { CodeLineElement } from "../../types/textEditorTypes";
 import { memo, useState } from "react";
 import Button from "../Button";
 import { BsCheckLg } from "react-icons/bs";
@@ -7,11 +7,11 @@ import { MdContentCopy } from "react-icons/md";
 import { twMerge } from "tailwind-merge";
 
 type Props = {
-  code: CodeBlockElementType[];
+  code: CodeLineElement[];
   variant: "editor" | "preview";
 };
 
-const getCodeString = (code: CodeBlockElementType[]): string => {
+const getCodeString = (code: CodeLineElement[]): string => {
   return code
     .map((line) =>
       (line.children || [])

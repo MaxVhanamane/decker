@@ -46,14 +46,13 @@ const SortableChapterItem = ({
       touchAction: "pan-y",
     };
   }, [transition, transform, isDragging]);
+
   return (
     <li
-      {...listeners}
-      {...attributes}
       ref={setNodeRef}
       style={style}
       className={twMerge(
-        "w-full rounded-lg group/chapter",
+        "w-full relative rounded-lg group/chapter focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 outline-none",
         currentDraggingChapter &&
           "ring-1 ring-inset ring-slate-400/50 dark:ring-slate-400/40"
       )}
@@ -64,6 +63,8 @@ const SortableChapterItem = ({
         moreOptionsRef={moreOptionsRef}
         handleShowEditChapterModal={handleShowEditChapterModal}
         handleDeleteChapterButtonClick={handleDeleteChapterButtonClick}
+        attributes={attributes}
+        listeners={listeners}
       />
     </li>
   );

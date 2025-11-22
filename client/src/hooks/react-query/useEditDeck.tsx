@@ -56,19 +56,19 @@ const useEditDeck = () => {
       }
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      const previousQueryData = queryClient.getQueryData<DeckType[]>(["decks"]);
-      queryClient.setQueryData<DeckType[] | undefined>(
+      const previousQueryData = queryClient.getQueryData<DeckType>(["decks"]);
+      queryClient.setQueryData<DeckType | undefined>(
         ["decks"],
         (oldQueryData) => {
           if (oldQueryData) {
             // find the deck using deckId and update it
-            const newDeck = oldQueryData.map((deck) => {
+            const newDeck = oldQueryData.decks.map((deck) => {
               if (deck.deckId === payload.deckId) {
                 return { ...deck, title: payload.newTitle };
               }
               return deck;
             });
-            return [...newDeck];
+            return { ...oldQueryData, decks: [...newDeck] };
           }
         }
       );

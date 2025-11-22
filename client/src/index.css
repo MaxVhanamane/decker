@@ -229,6 +229,15 @@
   }
 
 
+  .whitespace-break {
+    white-space: break-spaces;
+  }
+
+  .keyboard-focus {
+    @apply ring-2 dark:ring-blue-500 ring-gray-600 rounded-lg;
+  }
+
+
   ::-webkit-scrollbar {
     width: 10px;
     /* Width for vertical scrollbar */

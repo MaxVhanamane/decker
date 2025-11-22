@@ -1382,6 +1382,14 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@prezly/slate-lists@0.114.0":
+  version "0.114.0"
+  resolved "https://registry.yarnpkg.com/@prezly/slate-lists/-/slate-lists-0.114.0.tgz#7ba8a271ab9d16a07be39d5523aeb3bcc08032cb"
+  integrity sha512-Rd9gJoQUNwy+vVqUoYibIa8rGG7Qojw9UF/Z/m8rWb3lfni+B5LBhx6SrDl2A/tjk9Zn5E4JTFSyEkIwlnrPkQ==
+  dependencies:
+    is-hotkey "^0.2.0"
+    uuid "^8.3.0"
+
 "@remix-run/router@1.10.0":
   version "1.10.0"
   resolved "https://registry.npmjs.org/@remix-run/router/-/router-1.10.0.tgz"
@@ -2896,6 +2904,11 @@ fraction.js@^4.3.7:
   version "4.3.7"
   resolved "https://registry.npmjs.org/fraction.js/-/fraction.js-4.3.7.tgz"
   integrity sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==
+
+fractional-indexing-jittered@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/fractional-indexing-jittered/-/fractional-indexing-jittered-1.0.0.tgz#d79f81186a371e6f0df498a0f4d4ebc3b2cc6bee"
+  integrity sha512-0tLU0FOedVY7lrvN4LK0DVj6FTuYM0pWDpN97/8UTZE2lx1+OwX8+2uL7IOWc2PmktYTHQjMT6FvZZ3SGCdZdg==
 
 fs-extra@^9.0.1:
   version "9.1.0"
@@ -4748,6 +4761,11 @@ uuid@^11.1.0:
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
   integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
+
+uuid@^8.3.0:
+  version "8.3.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
+  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 vite-bundle-analyzer@^1.1.0:
   version "1.1.0"

@@ -1,18 +1,20 @@
-import { memo, useCallback, useMemo } from "react";
-import type { DeckType } from "../../types/types";
+import { memo, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { twMerge } from "tailwind-merge";
 import DeckItem from "./DeckItem";
+import { DeckItemType } from "../../types/types";
+import { useKeyDownHandler } from "../../hooks/utility/useKeyDownHandler";
 
 type PropTypes = {
   handleEditDeck: (deckId: string, title: string) => void;
   handlePin: (deckId: string, pinned: boolean) => Promise<void>;
-  deck: DeckType;
+  deck: DeckItemType;
+  index: number;
 };
 
 const SortableDeckItem = memo(
-  ({ handleEditDeck, handlePin, deck }: PropTypes) => {
+  ({ handleEditDeck, handlePin, deck, index }: PropTypes) => {
     const {
       setNodeRef,
       listeners,
@@ -23,6 +25,7 @@ const SortableDeckItem = memo(
     } = useSortable({
       id: deck.deckId,
       data: {
+        index,
         name: "deck",
         isPinned: deck.pinned,
         deck,
@@ -33,6 +36,8 @@ const SortableDeckItem = memo(
       },
     });
 
+    // console.log(deck.order, deck.title);
+
     const style = useMemo(() => {
       return {
         transition,
@@ -42,16 +47,7 @@ const SortableDeckItem = memo(
       };
     }, [transition, transform, isDragging, deck]);
 
-    const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent) => {
-        if (e.target instanceof HTMLElement && e.target.tagName === "BUTTON") {
-          e.stopPropagation();
-          return;
-        }
-        listeners?.onKeyDown?.(e);
-      },
-      [listeners]
-    );
+    const handleKeyDown = useKeyDownHandler(listeners);
 
     return (
       <>

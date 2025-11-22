@@ -1,10 +1,13 @@
 import React, {
   Dispatch,
   memo,
+  MutableRefObject,
   SetStateAction,
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
+  useRef,
   useState,
 } from "react";
 
@@ -16,10 +19,14 @@ import {
   useSlate,
 } from "slate-react";
 import { CustomEditor } from "../../utils/editor/customEditor";
-
-import { Text, Element as SlateElement, Editor, Point, Range } from "slate";
+import {
+  Text,
+  Element as SlateElement,
+  Editor,
+  Range,
+  Transforms,
+} from "slate";
 import CommandPalette from "./commandPalette/CommandPalette";
-import { getTextAfterSlash } from "../../utils/editor/commandUtils";
 import { NodeEntry } from "slate";
 import { Path } from "slate";
 import { RenderLeaf } from "./RenderLeaf";
@@ -30,6 +37,9 @@ import { isInsideCodeBlock } from "../../utils/editor/isInsideCodeBlock";
 import { SetNodeToDecorations } from "./SetNodeToDecorations";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { useEditorActions } from "../../hooks/editor/useEditorActions";
+import { ListsEditor, onKeyDown } from "@prezly/slate-lists";
+import { CommandPaletteHandle } from "../card/CardInput";
+import { Node } from "slate";
 
 export interface TokenRange extends Range {
   token: boolean;
@@ -41,6 +51,7 @@ export type EditorWithDecorations = Editor & {
 
 interface CommonProps {
   setShowHyperlinkModal: Dispatch<SetStateAction<boolean>>;
+  comandPaletteConfig: MutableRefObject<CommandPaletteHandle | null>;
 }
 
 // Create mode specific props
@@ -59,7 +70,7 @@ type RichTextEditorProps = CreateModeProps | EditModeProps;
 
 const RichTextEditor = (props: RichTextEditorProps) => {
   const editor = useSlate();
-  const { mode } = props;
+  const { mode, comandPaletteConfig } = props;
 
   const expandEditorToMaxHeight =
     mode === "create" ? props.expandEditorToMaxHeight : undefined;
@@ -84,8 +95,8 @@ const RichTextEditor = (props: RichTextEditorProps) => {
     isUsingArrowKeys,
     setIsUsingArrowKeys,
     commandSearch,
-    selectedHighlightStyle,
-    setSelectedHighlightStyle,
+    highLightConfig,
+    setHighlightConfig,
     activeSubmenuId,
     hasSubmenu,
     toggleSubmenu,
@@ -93,15 +104,231 @@ const RichTextEditor = (props: RichTextEditorProps) => {
   const { handleLink } = useEditorActions();
   const { showToast } = useContext(ShowToastContext);
   const isEditorExpanded = mode === "create" && props?.parentIndex === -1;
+  const lastSlashLocation = useRef<Range | null>(null);
 
+  const resetSlashPosition = useCallback(() => {
+    lastSlashLocation.current = null;
+  }, []);
   useEffect(() => {
     if (isEditorExpanded) {
       ReactEditor.focus(editor);
     }
   }, [isEditorExpanded, editor]);
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  useImperativeHandle(
+    comandPaletteConfig,
+    () => ({
+      showCommandPalette: showCommandPalette,
+      setCommandSearch: setCommandSearch,
+      closeCommandPalette: closeCommandPalette,
+      resetSlashPosition: resetSlashPosition,
+    }),
+    [
+      showCommandPalette,
+      setCommandSearch,
+      closeCommandPalette,
+      resetSlashPosition,
+    ]
+  );
+
+  const isInsideListElement = () => {
+    const isInListItem = !!Editor.above(editor, {
+      match: (n) => SlateElement.isElement(n) && n.type === "list-item",
+      mode: "lowest", // ensures only direct ancestor chain checked
+    });
+    return isInListItem;
+  };
+
+  const isInsideListElementAndEmpty = () => {
+    // Find the closest ancestor that is a 'list-item-text'
+    const entry = Editor.above(editor, {
+      match: (n) => SlateElement.isElement(n) && n.type === "list-item-text",
+      mode: "lowest", // direct parent chain
+    });
+
+    if (!entry) return false; // not inside a list-item-text
+
+    const [node] = entry;
+
+    // Check if the node is empty
+    const isEmpty = Node.string(node).trim() === "";
+
+    return isEmpty;
+  };
+
+  const isInsideTitleElement = () => {
+    const isInTitle = !!Editor.above(editor, {
+      match: (n) => SlateElement.isElement(n) && n.type === "title",
+      mode: "lowest", // ensures only direct ancestor chain checked
+    });
+    return isInTitle;
+  };
+
+  const handleOnDOMBeforeInput = useCallback(
+    (e: InputEvent) => {
+      const { selection } = editor;
+      if (!selection) return;
+
+      //  Only run this for *real text insertions*.
+      //  Backspace/Delete also trigger onDOMBeforeInput, but if we flipped
+      // `data-is-empty` to false during those, the placeholder would disappear
+      //  even when the node is still empty. This avoids that bug.
+      if (
+        e.inputType !== "insertText" &&
+        e.inputType !== "insertCompositionText"
+      ) {
+        return;
+      }
+
+      // Find the nearest element block node (e.g., title or paragraph)
+      const [elementNode, path] =
+        Editor.above(editor, {
+          match: SlateElement.isElement,
+        }) || [];
+
+      if (!elementNode || !path) return;
+
+      // Only apply this logic to the first two elements (title at index 0, paragraph at index 1)
+      const index = path[0];
+      if (index > 1) return;
+
+      const domNode = ReactEditor.toDOMNode(editor, elementNode);
+
+      // Remove placeholder if it's currently marked empty
+      if (
+        index === 0 &&
+        domNode.getAttribute("data-is-empty-title") === "true"
+      ) {
+        domNode.setAttribute("data-is-empty-title", "false");
+      } else if (
+        index === 1 &&
+        domNode.getAttribute("data-is-empty-paragraph") === "true"
+      ) {
+        domNode.setAttribute("data-is-empty-paragraph", "false");
+      }
+    },
+    [editor]
+  );
+
+  const onKeyDownHandler = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const { selection } = editor;
+    // Make sure the Control key is not pressed, since that toggles the chapters sidebar.
+    // If we don't check this, pressing Ctrl + / will toggle the sidebar and also open the command palette.
+
+    if (
+      event.key === "/" &&
+      !event.ctrlKey && // not holding Ctrl (Windows/Linux)
+      !event.metaKey && // not holding Cmd (Mac)
+      !isInsideCodeBlock(editor) &&
+      !showCommandPalette
+    ) {
+      // Remember this slash position
+      if (editor.selection) {
+        lastSlashLocation.current = editor.selection;
+      }
+      openCommandPalette();
+
+      return;
+    }
+
+    if (event.key === "Enter" && isInsideListElement()) {
+      onKeyDown(editor, event);
+      return;
+    }
+    if (event.key === "Backspace" && isInsideListElementAndEmpty()) {
+      event.preventDefault();
+      ListsEditor.decreaseDepth(editor);
+      return;
+    }
+
+    //Handle Exit code block on Shift + Enter
+
+    if (event.key === "Enter" && event.shiftKey) {
+      const { selection } = editor;
+      if (!selection) return;
+
+      const anchorBlockEntry = Editor.above(editor, {
+        at: selection.anchor,
+        match: (n) =>
+          !Editor.isEditor(n) &&
+          SlateElement.isElement(n) &&
+          n.type === "code-block",
+      });
+      const focusBlockEntry = Editor.above(editor, {
+        at: selection.focus,
+        match: (n) =>
+          !Editor.isEditor(n) &&
+          SlateElement.isElement(n) &&
+          n.type === "code-block",
+      });
+
+      // If neither anchor nor focus is in a code block, let default behavior happen
+      if (!anchorBlockEntry && !focusBlockEntry) return;
+
+      // Prevent default anytime selection touches a code block
+      event.preventDefault();
+
+      // Only handle if selection is fully inside a single code block
+      if (!anchorBlockEntry || !focusBlockEntry) return;
+      const [, anchorPath] = anchorBlockEntry;
+      const [, focusPath] = focusBlockEntry;
+      if (!Path.equals(anchorPath, focusPath)) return;
+
+      // Now handle the “exit code block” logic
+      const nextPath = Path.next(anchorPath);
+      let nextNode: Node | null = null;
+      if (Editor.hasPath(editor, nextPath)) {
+        nextNode = Node.get(editor, nextPath);
+      }
+
+      const isNextEmptyParagraph =
+        nextNode &&
+        SlateElement.isElement(nextNode) &&
+        nextNode.type === "paragraph" &&
+        nextNode.children.length === 1 &&
+        Text.isText(nextNode.children[0]) &&
+        nextNode.children[0].text === "";
+
+      if (isNextEmptyParagraph) {
+        Transforms.select(editor, Editor.start(editor, nextPath));
+        Transforms.collapse(editor, { edge: "start" });
+      } else {
+        Transforms.insertNodes(
+          editor,
+          { type: "paragraph", children: [{ text: "" }] },
+          { at: nextPath, select: true }
+        );
+      }
+    }
+
+    if (event.key === "Tab" && event.shiftKey) {
+      if (isInsideTitleElement()) return;
+      event.preventDefault();
+      const { selection } = editor;
+      if (!selection) return;
+      const isCollapsed = Range.isCollapsed(selection);
+      if (isCollapsed && isInsideListElement()) {
+        onKeyDown(editor, event);
+      } else {
+        CustomEditor.outdentBlock(editor);
+      }
+      return;
+    }
+
+    if (event.key === "Tab") {
+      if (isInsideTitleElement()) return;
+
+      event.preventDefault();
+      const { selection } = editor;
+      if (!selection) return;
+      const isCollapsed = Range.isCollapsed(selection);
+      if (isCollapsed && isInsideListElement()) {
+        onKeyDown(editor, event);
+      } else {
+        CustomEditor.indentBlock(editor);
+      }
+      return;
+    }
 
     if (!selection || !ReactEditor.isFocused(editor)) return;
 
@@ -129,29 +356,16 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       if (event.key === "Enter") {
         event.preventDefault();
         runCommand(selectedIndex);
+        const commandBtn = filteredCommands[selectedIndex];
+        if (!hasSubmenu(commandBtn)) {
+          resetSlashPosition();
+        }
         return;
       }
 
       if (event.key === "Escape") {
         closeCommandPalette();
-      } else {
-        setTimeout(() => {
-          const text = getTextAfterSlash(editor);
-          //  Close only if:
-          // 1. text is empty (slash was deleted)
-          // 2. text contains two or more **consecutive** spaces
-
-          if (text === null) {
-            closeCommandPalette();
-            return;
-          }
-          if (text && /\s{2,}$/.test(text)) {
-            closeCommandPalette();
-            return;
-          }
-
-          setCommandSearch(text || "");
-        });
+        resetSlashPosition();
       }
     }
 
@@ -177,6 +391,11 @@ const RichTextEditor = (props: RichTextEditorProps) => {
         // Underline (Ctrl/⌘ + U)
         event.preventDefault();
         CustomEditor.toggleMark(editor, "underline");
+        break;
+      }
+      case "e": {
+        event.preventDefault();
+        CustomEditor.toggleMark(editor, "inlineCode");
         break;
       }
 
@@ -253,11 +472,10 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       ([node, path]: NodeEntry) => {
         const ranges: any[] = [];
 
-        // First decorator logic (handling the command palette matching)
-        if (Text.isText(node) && showCommandPalette && commandPalettePosition) {
-          // Match slash commands anywhere in the text
+        if (Text.isText(node)) {
           const regex = /\/[^\s]*/g;
           let match;
+          const lastSlashLocationValue = lastSlashLocation.current;
 
           while ((match = regex.exec(node.text)) !== null) {
             const start = match.index;
@@ -267,16 +485,16 @@ const RichTextEditor = (props: RichTextEditorProps) => {
               anchor: { path, offset: start },
               focus: { path, offset: end },
             };
-
-            // Only decorate if it's the same path and range as commandPalettePosition
+            // Only highlight if it’s the same range as the *typed* slash
             if (
-              Path.equals(path, commandPalettePosition.anchor.path) &&
-              Point.equals(matchRange.anchor, commandPalettePosition.anchor)
+              lastSlashLocationValue &&
+              Path.equals(path, lastSlashLocationValue.anchor.path) &&
+              lastSlashLocationValue.anchor.offset >= start &&
+              lastSlashLocationValue.anchor.offset <= end
             ) {
               ranges.push({
                 ...matchRange,
                 isSlashCommand: true,
-                text: match[0],
               });
             }
           }
@@ -290,7 +508,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
 
         return ranges;
       },
-      [showCommandPalette, commandPalettePosition, editor.nodeToDecorations]
+      [lastSlashLocation.current]
     );
   };
 
@@ -352,73 +570,28 @@ const RichTextEditor = (props: RichTextEditorProps) => {
     []
   );
 
-  const handleOnDOMBeforeInput = (e: InputEvent) => {
-    const { selection } = editor;
-    if (!selection) return;
-    if (e.data === "/" && !isInsideCodeBlock(editor) && !showCommandPalette) {
-      requestAnimationFrame(() => {
-        openCommandPalette();
-      });
-      return;
-    }
-    //  Only run this for *real text insertions*.
-    //  Backspace/Delete also trigger onDOMBeforeInput, but if we flipped
-    // `data-is-empty` to false during those, the placeholder would disappear
-    //  even when the node is still empty. This avoids that bug.
-    if (
-      e.inputType !== "insertText" &&
-      e.inputType !== "insertCompositionText"
-    ) {
-      return;
-    }
-
-    // Find the nearest element block node (e.g., title or paragraph)
-    const [elementNode, path] =
-      Editor.above(editor, {
-        match: SlateElement.isElement,
-      }) || [];
-
-    if (!elementNode || !path) return;
-
-    // Only apply this logic to the first two elements (title at index 0, paragraph at index 1)
-    const index = path[0];
-    if (index > 1) return;
-
-    const domNode = ReactEditor.toDOMNode(editor, elementNode);
-
-    // Remove placeholder if it's currently marked empty
-    if (index === 0 && domNode.getAttribute("data-is-empty-title") === "true") {
-      domNode.setAttribute("data-is-empty-title", "false");
-    } else if (
-      index === 1 &&
-      domNode.getAttribute("data-is-empty-paragraph") === "true"
-    ) {
-      domNode.setAttribute("data-is-empty-paragraph", "false");
-    }
-  };
-
   return (
     <>
       <SetNodeToDecorations />
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col ">
         <Editable
           readOnly={!isEditorExpanded && mode !== "edit" ? true : false}
           renderElement={renderElement}
           decorate={decorate}
           renderLeaf={renderLeaf}
           onDOMBeforeInput={handleOnDOMBeforeInput}
-          onKeyDown={onKeyDown}
+          onKeyDown={onKeyDownHandler}
           scrollSelectionIntoView={handleScrollSelectionIntoView}
-          className="focus-visible:outline-none  flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words whitespace-pre-wrap"
+          className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words !whitespace-break"
           tabIndex={!isEditorExpanded && mode !== "edit" ? -1 : 0}
         />
-        <div className="h-10 flex-shrink-0 " />
+        <div className="h-32 flex-shrink-0 " />
         {/* Spacer for bottom padding */}
       </div>
 
       {showCommandPalette && commandPalettePosition && (
         <CommandPalette
-          target={commandPalettePosition}
+          commandPalettePosition={commandPalettePosition}
           closeCommandPalette={closeCommandPalette}
           selectedIndex={selectedIndex}
           filteredCommands={filteredCommands}
@@ -426,12 +599,13 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           setIsUsingArrowKeys={setIsUsingArrowKeys}
           isUsingArrowKeys={isUsingArrowKeys}
           commandSearch={commandSearch}
-          selectedHighlightStyle={selectedHighlightStyle}
-          setSelectedHighlightStyle={setSelectedHighlightStyle}
+          highLightConfig={highLightConfig}
+          setHighlightConfig={setHighlightConfig}
           activeSubmenuId={activeSubmenuId}
           hasSubmenu={hasSubmenu}
           toggleSubmenu={toggleSubmenu}
           mode={mode}
+          resetSlashPosition={resetSlashPosition}
         />
       )}
 

@@ -61,7 +61,7 @@ export const CodeLanguageDropdown = memo((props: CodeLanguageDropdownProps) => {
 
   return (
     <div
-      className="absolute top-2 right-16 z-[1]"
+      className="absolute top-2 right-16 z-[1] select-none"
       ref={containerRef}
       contentEditable={false}
     >

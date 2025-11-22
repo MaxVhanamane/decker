@@ -14,17 +14,20 @@ import ForgotPasswordOTP from './models/forgotpasswordotps';
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import nodemailer from "nodemailer"
 import AccountDeletionOTP from "./models/accountdeletionotps";
-const cookieParser = require('cookie-parser')
-const LocalStrategy = passportLocal.Strategy
 import MongoStore from 'connect-mongo'
 import { connectToMongoDB } from "./DB/dbConnection";
 import { fetchUserDetails } from "./middlewares/fetchUserDetails";
-const GoogleStrategy = require("passport-google-oauth20")
 import compression from "compression"
 import { SearchService } from "./services/searchService";
 import { extractTextFromSlateNodes } from "./utils/extractTextFromSlateNodes";
 import CardModel from "./models/card";
 import ChapterModel from "./models/chapter";
+import { generateKeyBetween } from "fractional-indexing-jittered";
+import { runWithRetry } from "./services/mongoTransaction";
+import { v4 as uuidv4 } from 'uuid';
+const cookieParser = require('cookie-parser')
+const LocalStrategy = passportLocal.Strategy
+const GoogleStrategy = require("passport-google-oauth20")
 
 config()
 declare module 'express-session' {
@@ -75,6 +78,7 @@ declare global {
     }
   }
 }
+
 
 // cors is used to get request from different origin. eg. If your backend is running on http://localhost:5000 you can't request from 
 // http://localhost:3000 it gives you cross-origin error. to avoid that error we use cors.
@@ -150,6 +154,9 @@ if (isDev) {
       process.exit(1);
     });
 }
+
+
+
 
 // local strategy 
 passport.use(new LocalStrategy(
@@ -274,21 +281,12 @@ app.get('/decks', fetchUserDetails, async (req: Request, res: Response,) => {
   try {
     const user = req?.user
 
-    // .sort({ date: -1 }): This part of the query sorts the results in descending order based on the date field. The -1 indicates that the results should be sorted in descending order, while a 1 would indicate ascending order.
-    // as there is a relation defined between two collection DeckModel and User 
-    // I have to use DeckModel.find({ email: user.id }) not DeckModel.find({ email: user.email })
-    // To retrieve only certain fields from the documents, you can pass a projection object as the second argument to the find() method. The projection object should contain the fields that you want to include (set to 1) or exclude (set to 0) from the result set. For example, if you want to retrieve only the title and pinned fields, you can pass the projection object as follows: { title: 1, pinned: 1 }
-    // const deck = await DeckModel.find({ email: user?._id }, { title: 1, pinned: 1, date: 1 }).sort({ date: -1 });
-    const decks = await DeckModel.aggregate([
-      { $match: { email: user?._id, deletedAt: { $exists: false } } },
-      { $sort: { date: -1 } },
-      {
-        $project: {
-          title: 1, pinned: 1, createdAt: 1, deckId: 1, cardsCount: 1, _id: 0,
-        }
-      }
-    ]);
-    res.status(200).json(decks)
+    const decks = await DeckModel.find(
+      { email: user?._id, deletedAt: { $exists: false } },
+      { title: 1, pinned: 1, createdAt: 1, order: 1, deckId: 1, cardsCount: 1, _id: 0 }
+    ).sort({ order: -1 });
+
+    res.status(200).json({ decks })
 
   }
   catch (error) {
@@ -297,49 +295,152 @@ app.get('/decks', fetchUserDetails, async (req: Request, res: Response,) => {
 
 })
 
-app.post("/reorder-deck", async (req: Request, res: Response,) => {
-  const { currentIndex, newIndex } = req.body;
-  const userId = req?.user?._id;
-  try {
-    // Fetch decks sorted by date (newest to oldest)
-    const decks = await DeckModel.aggregate([
-      { $match: { email: userId } },
-      { $sort: { date: -1 } },  // Sort by date, newest first
-      { $project: { title: 1, pinned: 1, _id: 1, date: 1 } }
-    ]);
 
-    if (currentIndex < 0 || currentIndex >= decks.length || newIndex < 0 || newIndex >= decks.length) {
-      return res.status(400).json({ message: 'Invalid index positions' });
+
+app.put(
+  "/deck/changeposition/:deckId",
+  fetchUserDetails,
+  async (req: Request, res: Response) => {
+    const { deckId } = req.params;
+    const { prevDeckId, nextDeckId } = req.body;
+    const userId = req.user?._id;
+
+    try {
+      let prevOrder: string | null = null;
+      let nextOrder: string | null = null;
+
+      // 1. Dropped between two decks
+      if (prevDeckId && nextDeckId) {
+        const [prevDeck, nextDeck] = await Promise.all([
+          DeckModel.findOne({ deckId: prevDeckId, email: userId }),
+          DeckModel.findOne({ deckId: nextDeckId, email: userId }),
+        ]);
+        prevOrder = prevDeck?.order ?? null;
+        nextOrder = nextDeck?.order ?? null;
+      }
+
+      // 2. Dropped at the beginning (only nextDeckId is available)
+      else if (nextDeckId) {
+        const nextDeck = await DeckModel.findOne({ deckId: nextDeckId, email: userId });
+        const isPinned = nextDeck?.pinned ?? false;
+
+        const firstDeck = await DeckModel.findOne({
+          email: userId,
+          pinned: isPinned,
+          deletedAt: { $exists: false },
+        }).sort({ order: -1 });
+        if (firstDeck && firstDeck.deckId === nextDeckId) {
+          // Truly first
+          prevOrder = null;
+          nextOrder = nextDeck?.order ?? null;
+        } else {
+          const prevDeck = await DeckModel.findOne({
+            email: userId,
+            pinned: isPinned,
+            order: { $lt: nextDeck?.order },
+          }).sort({ order: -1 }); // Nearest deck before nextDeck
+          prevOrder = prevDeck?.order ?? null;
+          nextOrder = nextDeck?.order ?? null;
+        }
+      }
+
+      // 3. Dropped at the end (only prevDeckId is available)
+      else if (prevDeckId) {
+        const prevDeck = await DeckModel.findOne({ deckId: prevDeckId, email: userId });
+        const isPinned = prevDeck?.pinned ?? false;
+
+        const lastDeck = await DeckModel.findOne({
+          email: userId,
+          pinned: isPinned,
+          deletedAt: { $exists: false },
+        }).sort({ order: 1 }); // Last deck in descending order
+
+        if (lastDeck && lastDeck.deckId === prevDeckId) {
+          // Truly last
+          prevOrder = prevDeck?.order ?? null;
+          nextOrder = null;
+        } else {
+          const nextDeck = await DeckModel.findOne({
+            email: userId,
+            pinned: isPinned,
+            order: { $lt: prevDeck?.order },
+          }).sort({ order: -1 }); // Nearest deck after prevDeck
+          prevOrder = prevDeck?.order ?? null;
+          nextOrder = nextDeck?.order ?? null;
+        }
+      }
+
+      // 4. Safety check: ensure prevOrder < nextOrder
+      if (prevOrder && nextOrder && prevOrder >= nextOrder) {
+        // Swap if accidentally reversed
+        [prevOrder, nextOrder] = [nextOrder, prevOrder];
+      }
+
+      // 5. Generate new order
+      let newOrder: string;
+      if (prevOrder && nextOrder) {
+
+        newOrder = generateKeyBetween(prevOrder, nextOrder);
+      } else if (nextOrder) {
+        // Dropped at the beginning, generate greater than nextOrder
+        newOrder = generateKeyBetween(nextOrder, null);
+      } else if (prevOrder) {
+        // Dropped at the end, generate smaller than prevOrder
+        newOrder = generateKeyBetween(null, prevOrder);
+      } else {
+        // This will never happen but just to keep ts happy
+        newOrder = generateKeyBetween(null, null);
+      }
+
+      // 6. Update the moved deck
+      await DeckModel.findOneAndUpdate(
+        { deckId, email: userId },
+        { $set: { order: newOrder } }
+      );
+
+      let reindexed = false;
+
+      // 7. Reindex if the generated key is too long
+      if (newOrder.length > 25) {
+        const decks = await DeckModel.find({
+          email: userId,
+          deletedAt: { $exists: false },
+        }).sort({ order: -1 });
+
+        if (decks.length > 0) {
+          let prevKey: string | null = null;
+          const updates = decks.map((deck) => {
+            const key = generateKeyBetween(prevKey, null);
+            prevKey = key;
+            return {
+              updateOne: {
+                filter: { _id: deck._id },
+                update: { $set: { order: key } },
+              },
+            };
+          });
+
+          await DeckModel.bulkWrite(updates);
+        }
+
+        reindexed = true;
+      }
+
+      return res.status(200).json({ success: true, reindexed });
+    } catch (error) {
+      console.error("Error reordering decks:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to reorder deck",
+        error: error instanceof Error ? error.message : error,
+      });
     }
 
-    const movedDeck = decks[currentIndex];
 
-    // Moving Up (newIndex < currentIndex)
-    if (newIndex < currentIndex) {
-      const targetDeck = decks[newIndex];
-      const prevDeck = newIndex > 0 ? decks[newIndex - 1] : null; // Get deck before target
-      const newDate = prevDeck
-        ? new Date((targetDeck.date.getTime() + prevDeck.date.getTime()) / 2) // Midpoint
-        : new Date(targetDeck.date.getTime() + 1); // If no previous deck, just slightly newer
-      await DeckModel.updateOne({ _id: movedDeck._id }, { $set: { date: newDate } });
-    }
-
-    // Moving Down (newIndex > currentIndex)
-    else if (newIndex > currentIndex) {
-      const targetDeck = decks[newIndex];
-      const nextDeck = newIndex < decks.length - 1 ? decks[newIndex + 1] : null; // Get deck after target
-      const newDate = nextDeck
-        ? new Date((targetDeck.date.getTime() + nextDeck.date.getTime()) / 2) // Midpoint
-        : new Date(targetDeck.date.getTime() - 1); // If no next deck, just slightly older
-      await DeckModel.updateOne({ _id: movedDeck._id }, { $set: { date: newDate } });
-    }
-
-    res.status(200).json({ message: 'Deck moved and saved successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error moving deck', error });
   }
+);
 
-})
+
 
 app.get("/search", fetchUserDetails, async (req: Request, res: Response) => {
 
@@ -378,25 +479,51 @@ app.get("/search", fetchUserDetails, async (req: Request, res: Response) => {
 
 
 app.post('/deck', fetchUserDetails, async (req: Request, res: Response) => {
-  const user = req?.user
+  const user = req?.user;
 
   try {
+    // Find the last unpinned deck (highest order)
+    const lastUnpinned = await DeckModel.findOne({
+      email: user?._id,
+      pinned: false,
+      deletedAt: { $exists: false }
+    }).sort({ order: -1 });
+
+    let newOrder: string;
+    if (lastUnpinned) {
+      // Place before the current first unpinned deck
+      newOrder = generateKeyBetween(lastUnpinned.order, null);
+    } else {
+      // No unpinned decks > just start with a base key
+      newOrder = generateKeyBetween(null, null);
+    }
+
     const newDeck = new DeckModel({
       email: user?._id,
       title: req.body?.title,
       deckId: req.body?.deckId,
-      date: new Date()
-    })
-    const createdDeck = await newDeck.save()
-    res.status(201).json({ _id: createdDeck._id, title: createdDeck.title, pinned: createdDeck.pinned })
+      order: newOrder,
+      pinned: false,
+      createdAt: new Date()
+    });
 
+    const createdDeck = await newDeck.save();
+
+    res.status(201).json({
+      deckId: createdDeck.deckId,
+      title: createdDeck.title,
+      pinned: createdDeck.pinned,
+      order: createdDeck.order,
+    });
+
+  } catch (error) {
+    console.error("Error creating deck:", error);
+    res.status(500).json({
+      message: "An unexpected error occurred while creating the deck. Please try again later.",
+    });
   }
-  catch (error) {
-    res.status(500).json({ message: "An unexpected error occurred while creating the deck. Please try again later." })
+});
 
-  }
-
-})
 
 
 
@@ -405,7 +532,7 @@ app.patch('/deck/togglepin/:deckId', fetchUserDetails, async (req: Request, res:
     //I have updated date here using date:new Date(). so that I can sort it and show the recently pinned decks first.
     const updatedDeck = await DeckModel.findOneAndUpdate(
       { deckId: req.params.deckId }, // Find by deckId instead of _id
-      { pinned: req.body.pinned, date: new Date() },
+      { pinned: req.body.pinned, order: req.body.newOrder, date: new Date() },
     );
 
     res.status(200).json(updatedDeck)
@@ -510,12 +637,39 @@ app.get('/chapters/:deckId', fetchUserDetails, async (req: Request, res: Respons
 
   try {
     // Fetch only chapters belonging to this user and deck
-    const chapters = await ChapterModel.find(
-      { deckId, email: userId, deletedAt: { $exists: false } },
-      { _id: 0, email: 0, updatedAt: 0, __v: 0 }
-    ).sort({ order: -1 });
+    const result = await ChapterModel.aggregate([
+      {
+        $match: {
+          deckId,
+          email: userId
+        }
+      },
+      {
+        $facet: {
+          chapters: [
+            { $match: { deletedAt: { $exists: false } } }, // only active (non-deleted)
+            {
+              $project: {
+                _id: 0,
+                chapterId: 1,
+                chapterName: 1,
+                createdAt: 1,
+                cardsCount: 1,
+                order: 1,
+                deckId: 1
+              }
+            },
+            { $sort: { order: -1 } }
+          ],
+          maxOrder: [
+            { $group: { _id: null, maxOrder: { $max: "$order" } } } // includes deleted
+          ]
+        }
+      }
+    ]);
 
-    const maxOrder = chapters.length > 0 ? chapters[0].order : 0;
+    const chapters = result[0].chapters;
+    const maxOrder = result[0].maxOrder.length > 0 ? result[0].maxOrder[0].maxOrder : 0;
 
     return res.status(200).json({ chapters, maxOrder });
   } catch (error) {
@@ -599,11 +753,18 @@ app.delete("/chapter/:deckId/:chapterId", fetchUserDetails, async (req: Request,
   try {
     const now = new Date();
     const undoExpiry = new Date(Date.now() + gracePeriod);
+    const batchId = uuidv4(); //  unique batch ID for this chapter deletion
 
     // 1. Soft delete the chapter
     const chapter = await ChapterModel.findOneAndUpdate(
       { deckId, chapterId, email: userId, deletedAt: { $exists: false } },
-      { $set: { deletedAt: now, undoExpiresAt: undoExpiry } },
+      {
+        $set: {
+          deletedAt: now,
+          undoExpiresAt: undoExpiry,
+          deletedBatchId: batchId
+        }
+      },
       { new: true, session }
     );
 
@@ -614,7 +775,13 @@ app.delete("/chapter/:deckId/:chapterId", fetchUserDetails, async (req: Request,
     // 2. Soft delete related cards
     const cards = await CardModel.updateMany(
       { deckId, chapterId, deletedAt: { $exists: false } },
-      { $set: { deletedAt: now, undoExpiresAt: undoExpiry } },
+      {
+        $set: {
+          deletedAt: now,
+          undoExpiresAt: undoExpiry,
+          deletedBatchId: batchId //  link cards to same batch
+        }
+      },
       { session }
     );
 
@@ -632,8 +799,8 @@ app.delete("/chapter/:deckId/:chapterId", fetchUserDetails, async (req: Request,
 
     return res.status(200).json({
       message: "Chapter and its cards soft-deleted. Undo possible within grace period.",
-      chapter,
       softDeletedCards: cards.modifiedCount,
+      deletedBatchId: batchId //  Return batchId to frontend
     });
   } catch (error: any) {
     await session.abortTransaction();
@@ -644,67 +811,70 @@ app.delete("/chapter/:deckId/:chapterId", fetchUserDetails, async (req: Request,
 });
 
 
-app.put(
-  '/chapter/undo',
-  fetchUserDetails,
-  async (req: Request, res: Response) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+app.put('/chapter/undo', fetchUserDetails, async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    try {
-      const { chapterId, deckId } = req.body;
-      const userId = req.user?._id;
-      // 1. Restore chapter
-      const restoredChapter = await ChapterModel.findOneAndUpdate(
-        { chapterId, deckId, email: userId, deletedAt: { $exists: true } },
-        { $unset: { deletedAt: "", undoExpiresAt: "" } },
-        { new: true, session }
-      );
+  try {
+    const { deletedBatchId, chapterId, deckId } = req.body;
+    const userId = req.user?._id;
+    if (!deletedBatchId || !chapterId) {
+      throw new Error("Both batchId and chapterId are required to undo a chapter deletion.");
+    }
 
-      if (!restoredChapter) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({
-          success: false,
-          message: "Chapter not found!",
-        });
-      }
+    // Restore the chapter by batchId AND chapterId 
+    const restoredChapter = await ChapterModel.findOneAndUpdate(
+      { deletedBatchId, chapterId, deckId, email: userId },
+      { $unset: { deletedAt: "", undoExpiresAt: "", deletedBatchId: "" } },
+      { new: true, session }
+    );
 
-      // 2. Restore all cards under this chapter
-      const restoredCards = await CardModel.updateMany(
-        { chapterId, deckId, deletedAt: { $exists: true } },
-        { $unset: { deletedAt: "", undoExpiresAt: "" } },
-        { session }
-      );
+    if (!restoredChapter) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "Chapter not found or already active",
+      });
+    }
 
-      // 3. Increment deck’s cardsCount
-      const restoredCount = restoredCards.modifiedCount || 0;
+    // Restore all cards under this batchId AND chapterId
+    const restoredCards = await CardModel.updateMany(
+      { deletedBatchId, chapterId, deckId },
+      { $unset: { deletedAt: "", undoExpiresAt: "", deletedBatchId: "" } },
+      { session }
+    );
 
+    // Increment deck’s cardsCount
+    const restoredCount = restoredCards.modifiedCount || 0;
+    if (restoredCount > 0) {
       await DeckModel.updateOne(
         { deckId, email: userId },
         { $inc: { cardsCount: restoredCount } },
         { session }
       );
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.status(200).json({
-        success: true,
-        message: "Chapter and its cards restored successfully",
-        chapter: restoredChapter,
-        restoredCards: restoredCount,
-      });
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      res.status(500).json({
-        success: false,
-        message: "An unexpected error occurred while undoing the chapter.",
-      });
     }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      success: true,
+      message: "Chapter and its cards restored successfully",
+      chapterId: restoredChapter.chapterId,
+      restoredCards: restoredCount,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Undo chapter error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred while undoing the chapter.",
+    });
   }
-);
+});
+
 
 app.put(
   '/chapter/changeposition/:deckId/:chapterId/:newOrder',
@@ -765,36 +935,38 @@ app.put(
 // Card routes
 
 app.get('/cards/:deckId/:chapterId?', fetchUserDetails, async (req: Request, res: Response) => {
-
   try {
-
     const { deckId, chapterId } = req.params;
-    // Build query condition dynamically
-    // If deletedAt is present means the card was soft deleted
-    const query: any = { deckId, chapterId: chapterId ? chapterId : null, deletedAt: { $exists: false } };
 
-    const data = await CardModel.find(
-      query,
-      { cardId: 1, note: 1, createdAt: 1, order: 1, chapterId: 1, _id: 0 }
-    )
-      .sort({ order: -1 })
-      .exec();
+    const result = await CardModel.aggregate([
+      { $match: { deckId, chapterId: chapterId ? chapterId : null } },
+      {
+        $facet: {
+          cards: [
+            { $match: { deletedAt: { $exists: false } } }, // only non-deleted cards for client
+            { $project: { cardId: 1, note: 1, createdAt: 1, order: 1, chapterId: 1, _id: 0 } },
+            { $sort: { order: -1 } }
+          ],
+          maxOrder: [
+            { $group: { _id: null, maxOrder: { $max: "$order" } } } // includes deleted cards
+          ]
+        }
+      }
+    ]);
 
-    const maxOrder = data.length > 0 ? data[0].order : 0;
+    const cards = result[0].cards;
+    const maxOrder = result[0].maxOrder.length > 0 ? result[0].maxOrder[0].maxOrder : 0;
 
-    res.status(200).json({ cards: data, maxOrder });
-
-
+    res.status(200).json({ cards, maxOrder });
   } catch (error) {
-
     if ((error as Error).name === "CastError") {
       res.status(400).json({ message: "Invalid deck ID" });
     } else {
-
       res.status(500).json({ message: "Internal server error" });
     }
   }
 });
+
 
 
 app.post('/card/:deckId', fetchUserDetails, async (req: Request, res: Response) => {
@@ -966,65 +1138,51 @@ app.delete(
   '/card/:deckId/:cardId/:chapterId?',
   fetchUserDetails,
   async (req: Request, res: Response) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const { deckId, cardId, chapterId } = req.params;
+    const userId = req.user?._id;
 
     try {
-      const { deckId, cardId, chapterId } = req.params;
-      const userId = req.user?._id;
+      await runWithRetry(async (session) => {
+        // 1. Build dynamic filter for card
+        const cardFilter: any = { cardId, deckId };
+        if (chapterId) cardFilter.chapterId = chapterId;
 
-      // 1. Build dynamic filter for card
-      const cardFilter: any = { cardId, deckId };
-      if (chapterId) {
-        cardFilter.chapterId = chapterId;
-      }
-
-      // 2. Soft delete the card (instead of hard delete)
-      const deletedCard = await CardModel.findOneAndUpdate(
-        cardFilter,
-        {
-          $set: {
-            deletedAt: new Date(),
-            undoExpiresAt: new Date(Date.now() + gracePeriod),
+        // 2. Soft delete the card (instead of hard delete)
+        const deletedCard = await CardModel.findOneAndUpdate(
+          cardFilter,
+          {
+            $set: {
+              deletedAt: new Date(),
+              undoExpiresAt: new Date(Date.now() + gracePeriod), // gracePeriod
+            },
           },
-        },
-        { new: true, session }
-      );
+          { new: true, session }
+        );
 
-      if (!deletedCard) {
-        await session.abortTransaction();
-        session.endSession();
-        return res
-          .status(404)
-          .json({ success: false, message: "Card not found" });
-      }
+        if (!deletedCard) throw new Error("Card not found");
 
-      // 3. Decrement deck card count
-      await DeckModel.updateOne(
-        { deckId, user: userId },
-        { $inc: { cardsCount: -1 } },
-        { session }
-      );
-
-      // 4. If card belongs to a chapter, decrement that too
-      if (chapterId) {
-        await ChapterModel.updateOne(
-          { chapterId, deckId, user: userId },
+        // 3. Decrement deck card count
+        await DeckModel.updateOne(
+          { deckId, user: userId },
           { $inc: { cardsCount: -1 } },
           { session }
         );
-      }
 
-      await session.commitTransaction();
-      session.endSession();
+        // 4. If card belongs to a chapter, decrement that too
+        if (chapterId) {
+          await ChapterModel.updateOne(
+            { chapterId, deckId, user: userId },
+            { $inc: { cardsCount: -1 } },
+            { session }
+          );
+        }
+      });
 
       res.status(200).json({
         success: true,
         message: "Card soft-deleted successfully",
       });
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
       console.error("Delete card error:", error);
       res.status(500).json({
         success: false,

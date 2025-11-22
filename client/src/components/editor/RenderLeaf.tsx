@@ -45,6 +45,13 @@ export const RenderLeaf = memo((props: RenderLeafProps) => {
       </span>
     );
   }
+  if (leaf.inlineCode) {
+    styledText = (
+      <code className="font-mono text-sm bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-gray-100 px-1 py-0.5 rounded-sm">
+        {styledText}
+      </code>
+    );
+  }
 
   if (leaf.isSlashCommand) {
     const suggestion = "Type a command...";

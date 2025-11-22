@@ -19,9 +19,11 @@ import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { useLocation } from "react-router-dom";
 import { useClickOutside } from "../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
+import { ThemeContext } from "../../context/ThemeContext";
 
 const BulbControls = () => {
   const { showBulb, setShowBulb } = useContext(BulbContext);
+  const { theme } = useContext(ThemeContext);
   const [showBulbControls, setShowBulbControls] = useState(false);
   const { showToast } = useContext(ShowToastContext);
   const location = useLocation();
@@ -62,8 +64,16 @@ const BulbControls = () => {
     [setBulbBrightness]
   );
   const handleSwitchOnBulb = useCallback(() => {
-    setShowBulbControls((prev) => !prev);
-  }, []);
+    if (theme === "dark") {
+      setShowBulbControls((prev) => !prev);
+    } else {
+      showToast({
+        message: "The bulb feature is only available in dark mode.",
+        severity: "info",
+        position: "top-center",
+      });
+    }
+  }, [theme, showToast]);
 
   return (
     <>

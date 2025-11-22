@@ -7,14 +7,13 @@ import { RxFontItalic, RxText } from "react-icons/rx";
 import { Editor, BaseRange, Range } from "slate";
 import { useEditorActions } from "./useEditorActions";
 import { RiDoubleQuotesL } from "react-icons/ri";
-import type {
-  CommandItemType,
-  HighlightStyle,
-} from "../../types/textEditorTypes";
+import { type CommandItemType } from "../../types/textEditorTypes";
 import { useListToolbarButtons } from "./useListToolbarButtons";
 import { useColorToolbarButtons } from "./useColorToolbarButtons";
 import { useHighlightColorButtons } from "./useHighlightColorButtons";
 import { removeSlashCommandText } from "../../utils/editor/commandUtils";
+import { CommandPaletteHighLightConfigType } from "../../types/types";
+import { IoCodeSlashOutline } from "react-icons/io5";
 
 export const useCommandPalette = (
   editor: Editor,
@@ -34,6 +33,7 @@ export const useCommandPalette = (
     handleItalic,
     handleQuote,
     handleColorBar,
+    handleInlineCode,
   } = useEditorActions();
 
   const [commandSearch, setCommandSearch] = useState("");
@@ -56,18 +56,22 @@ export const useCommandPalette = (
     onClick: handleColorBar,
   });
 
-  const [selectedHighlightStyle, setSelectedHighlightStyle] =
-    useState<HighlightStyle>("plain");
+  const [highLightConfig, setHighlightConfig] =
+    useState<CommandPaletteHighLightConfigType>({
+      selectedHighlightStyle: "plain",
+      toggledHighlightColor: null,
+    });
 
   const hightLightButtons = useHighlightColorButtons({
     onSelect: handleHighlight,
-    selectedHighlightStyle,
+    selectedHighlightStyle: highLightConfig.selectedHighlightStyle,
     usage: "commandpalette",
+    toggledHighlightColor: highLightConfig.toggledHighlightColor,
   });
 
-  const hasSubmenu = (command: CommandItemType) => {
+  const hasSubmenu = useCallback((command: CommandItemType) => {
     return command.hasSubmenu === true;
-  };
+  }, []);
 
   const commands: CommandItemType[] = useMemo(
     () => [
@@ -120,11 +124,18 @@ export const useCommandPalette = (
         category: "Text style",
         onClickHandler: handleItalic,
       },
+
       {
         label: "Underline",
         icon: <BsTypeUnderline className="text-xl" />,
         category: "Text style",
         onClickHandler: handleUnderline,
+      },
+      {
+        label: "Inline code",
+        icon: <IoCodeSlashOutline className="text-xl" />,
+        category: "Text style",
+        onClickHandler: handleInlineCode,
       },
 
       ...ListButtons,
@@ -215,7 +226,7 @@ export const useCommandPalette = (
       setSelectedIndex(0);
       lastCommandRef.current = "";
     }
-  }, [editor.selection]);
+  }, []);
 
   const closeCommandPalette = useCallback(() => {
     setCommandPalettePosition(null);
@@ -285,8 +296,8 @@ export const useCommandPalette = (
     setIsUsingMouse,
     setIsUsingArrowKeys,
     isUsingArrowKeys,
-    selectedHighlightStyle,
-    setSelectedHighlightStyle,
+    highLightConfig,
+    setHighlightConfig,
     activeSubmenuId,
     hasSubmenu,
     toggleSubmenu,

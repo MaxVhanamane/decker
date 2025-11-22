@@ -5,6 +5,7 @@ import { CustomError } from "../../utils/customError";
 import { useContext } from "react";
 import { DeckContext } from "../../context/DeckContext";
 import { BulbContext } from "../../context/BulbContext";
+import { v4 as uuidv4 } from "uuid";
 
 const createDeck = async ({
   title,
@@ -38,25 +39,26 @@ const useCreateDeck = () => {
 
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      const previousQueryData: DeckType[] = queryClient.getQueryData([
-        "decks",
-      ])!;
+      const previousQueryData: DeckType = queryClient.getQueryData(["decks"])!;
 
-      queryClient.setQueryData(
+      queryClient.setQueryData<DeckType>(
         ["decks"],
-        (oldQueryData: DeckType[] | undefined) => {
+        (oldQueryData: DeckType | undefined) => {
           if (oldQueryData) {
-            return [
-              {
-                title,
-                deckId,
-                pinned: false,
-                isProcessing: true,
-                createdAt: new Date().toDateString(),
-                cardsCount: 0,
-              },
-              ...oldQueryData,
-            ];
+            return {
+              decks: [
+                {
+                  title,
+                  deckId,
+                  pinned: false,
+                  isProcessing: true,
+                  createdAt: new Date().toDateString(),
+                  order: uuidv4(),
+                  cardsCount: 0,
+                },
+                ...oldQueryData.decks,
+              ],
+            };
           }
         }
       );
@@ -67,19 +69,20 @@ const useCreateDeck = () => {
     },
 
     onSuccess: () => {
-      const allDecks: DeckType[] | undefined = queryClient.getQueryData([
+      const allDecks: DeckType | undefined = queryClient.getQueryData([
         "decks",
       ]);
       if (allDecks) {
-        queryClient.setQueryData(
+        queryClient.setQueryData<DeckType>(
           ["decks"],
-          (oldQueryData: DeckType[] | undefined) => {
+          (oldQueryData: DeckType | undefined) => {
             if (oldQueryData) {
-              return oldQueryData.map((deck) =>
-                deck.deckId === allDecks[0].deckId
+              const updatedDecks = oldQueryData.decks?.map((deck) =>
+                deck.deckId === allDecks.decks[0].deckId
                   ? { ...deck, isProcessing: false }
                   : deck
               );
+              return { decks: updatedDecks };
             }
           }
         );

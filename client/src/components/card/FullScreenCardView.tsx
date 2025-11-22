@@ -190,7 +190,7 @@ const FullScreenCardView = ({
       <article
         ref={fullScreenContainer}
         onAnimationEnd={handleOnAnimationEnd}
-        className={`fixed inset-0 ${
+        className={`fixed inset-0 will-change-transform ${
           toggleGradient
             ? "dark:bg-BgDarkModeSmall  dark:lg:bg-BgForDarkMode lg:bg-lightBg  bg-lightBgSmall"
             : "dark:bg-slate-900 bg-white"

@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense } from "react";
+import { lazy, memo, Suspense, useEffect } from "react";
 import ErrorBoundary from "./ErrorBoundary";
 import { Route, Routes } from "react-router-dom";
 import CheckAuth from "./CheckAuth";
@@ -7,6 +7,7 @@ import AuthSuccess from "../pages/AuthSuccess";
 import Deck from "../pages/Deck";
 import PrivateRoutes from "./PrivateRoutes";
 import LoadingCentered from "./Loading/LoadingCentered";
+import lazyWithPreload from "./LazyWithPreload";
 
 // Lazy load the components
 const AuthFailure = lazy(() => import("../pages/AuthFailure"));
@@ -16,7 +17,7 @@ const SessionExpired = lazy(() => import("../pages/SessionExpired"));
 const DeleteMyAccount = lazy(() => import("../pages/DeleteMyAccount"));
 const SignUp = lazy(() => import("../pages/Signup"));
 const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
-const Cards = lazy(() => import("../pages/Cards"));
+const Cards = lazyWithPreload(() => import("../pages/Cards"));
 
 const AccountDeletionSuccess = lazy(
   () => import("../pages/AccountDeletionSuccess")
@@ -24,6 +25,11 @@ const AccountDeletionSuccess = lazy(
 const PageNotFound = lazy(() => import("../pages/PageNotFound"));
 
 const MemoizedRoutes = memo(() => {
+  useEffect(() => {
+    setTimeout(() => {
+      Cards.preload();
+    }, 10000);
+  }, []);
   return (
     <ErrorBoundary>
       <Routes>

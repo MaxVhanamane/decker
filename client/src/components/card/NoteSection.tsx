@@ -1,6 +1,6 @@
 import { Dispatch, memo } from "react";
 
-import ContentRenderer from "../RichTextRenderer";
+import ContentRenderer from "../rich-text-renderer/RichTextRenderer";
 import { Descendant } from "slate";
 
 type PropType = {

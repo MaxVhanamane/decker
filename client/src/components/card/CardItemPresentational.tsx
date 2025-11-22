@@ -89,7 +89,7 @@ const CardItemPresentational = ({
           <span>{formatDate(card.createdAt)}</span>
         </div>
         <div className="flex items-center justify-center gap-3 ">
-          <div className=" dark:bg-slate-800  bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
+          <div className=" dark:bg-slate-800  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
             <button
               className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem] text-center "
               aria-label="Delete Card"
@@ -97,7 +97,7 @@ const CardItemPresentational = ({
               <MdOutlineDeleteOutline />
             </button>
           </div>
-          <div className=" dark:bg-slate-800  bg-gray-200 hover:bg-gray-300 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
+          <div className=" dark:bg-slate-800  bg-gray-100 hover:bg-gray-300 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
             <button
               className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem]  text-base text-center "
               aria-label="Edit Card"
@@ -108,7 +108,7 @@ const CardItemPresentational = ({
         </div>
       </div>
 
-      <p className="text-base text-gray-700 dark:text-white mb-1 p-1 line-clamp-1 break-words break-all ">
+      <p className="text-base text-gray-900 dark:text-white mb-1 p-1 line-clamp-1 break-words break-all ">
         {cardTitle ? (
           cardTitle
         ) : (
@@ -118,7 +118,7 @@ const CardItemPresentational = ({
         )}
       </p>
 
-      <div className="text-sm  text-gray-800 dark:text-gray-100 p-1  break-words break-all font-light ">
+      <div className="text-sm  text-gray-900 dark:text-gray-100 p-1  break-words break-all font-light ">
         <p className="line-clamp-3">
           {note.trim().length > 0 ? (
             note

@@ -34,10 +34,17 @@ export const FloatingDropdown = ({
 }: FloatingDropdownProps) => {
   const { isSidebarOpen } = useContext(SidebarContex);
   const belowTabDimension = useIsDeviceType("tablet");
-  const [position, setPosition] = useState({ top: 0, left: 0, arrowOffset: 0 });
+  const [position, setPosition] = useState({
+    top: 0,
+    left: 0,
+    arrowOffset: 0,
+    placeAbove: false,
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sidebarDimensions = !belowTabDimension ? (isSidebarOpen ? 256 : 52) : 0;
+  // Only adjust for sidebar dimension when opening the dropdown while creating a card, not while editing, because the editing component’s position is not affected by the sidebar’s existence
+  const sidebarDimensions =
+    !belowTabDimension && mode === "create" ? (isSidebarOpen ? 256 : 52) : 0;
 
   useClickOutside(dropdownRef, true, onClickOutside, {
     excludeRefs: [buttonRef],
@@ -55,47 +62,90 @@ export const FloatingDropdown = ({
     const dropdownWidth = dropdownEl.offsetWidth;
     const dropdownHeight = dropdownEl.offsetHeight;
     const buttonRect = buttonEl.getBoundingClientRect();
-    let parent;
-    if (mode === "create") {
-      parent = document.querySelector("[data-editor-parent-create]");
-    } else {
-      parent = document.querySelector("[data-editor-parent-edit]");
-    }
 
-    if (!parent) return;
+    const container = document.getElementById("cardsMainContainer");
+    if (!container) return;
 
-    const parentRect = parent.getBoundingClientRect();
-    const padding = 3;
+    const scrollTop = container.scrollTop;
+    const scrollLeft = container.scrollLeft;
 
-    // Ideal centered position for dropdown
+    const padding = 5; // distance to keep from screen edges
+
+    // Calculate horizontal position and clamp it within viewport width
     let left =
       buttonRect.left +
       buttonRect.width / 2 -
       dropdownWidth / 2 -
-      sidebarDimensions;
+      sidebarDimensions +
+      scrollLeft;
 
-    // Clamp within parent with padding
-    const minLeft = parentRect.left + padding;
-    const maxLeft = parentRect.right - dropdownWidth - padding;
+    const minLeft = padding;
+    const maxLeft = window.innerWidth - dropdownWidth - padding;
+    left = Math.min(Math.max(left, minLeft), maxLeft);
 
-    // Ensure dropdown is within parent bounds
-    if (left < minLeft) left = minLeft;
-    if (left > maxLeft) left = maxLeft;
-
-    // Set the arrow offset (always aligned with the center of the button)
+    // Offset for arrow so it stays aligned with the button
     const arrowOffset =
       buttonRect.left + buttonRect.width / 2 - left - sidebarDimensions;
 
-    // For edit mode, position above the button with same gap as create mode
-    const top =
-      mode === "edit" && toolbarPosition === "bottom"
-        ? buttonRect.top - dropdownHeight
-        : buttonRect.bottom;
+    // Available space above and below the button
+    const spaceBelow = window.innerHeight - buttonRect.bottom - padding;
+    const spaceAbove = buttonRect.top - padding;
+
+    // Adjustments based on mode
+    const scrollAdjust = mode === "edit" ? 0 : scrollTop;
+    const svgArrowHeight = 30;
+    const margin = 18;
+
+    // Possible top positions for dropdown
+    const topBelow =
+      mode === "edit"
+        ? buttonRect.bottom + margin
+        : buttonRect.bottom + scrollAdjust;
+
+    const topAbove =
+      mode === "edit"
+        ? buttonRect.top - dropdownHeight - margin
+        : buttonRect.top + scrollTop - dropdownHeight - svgArrowHeight;
+
+    const minTop = padding;
+    const maxTop = window.innerHeight - dropdownHeight - padding;
+
+    let top;
+    let placeAbove = false;
+
+    // 1. Prefer placing dropdown below if it fits fully within viewport height
+    if (topBelow + dropdownHeight <= window.innerHeight - padding) {
+      top = topBelow;
+      placeAbove = false;
+
+      // 2. Otherwise, place it above if it fits fully
+    } else if (topAbove >= padding) {
+      top = topAbove;
+      placeAbove = true;
+
+      // 3. If neither side fits fully, choose the side with more space
+    } else {
+      if (spaceBelow >= spaceAbove) {
+        // Place below, but clamp to avoid overflow
+        top = Math.min(topBelow, maxTop);
+        placeAbove = false;
+      } else {
+        // Place above, but clamp to avoid overflow
+        top = Math.max(topAbove, minTop);
+        placeAbove = true;
+      }
+    }
+
+    // Edge case: dropdown taller than viewport
+    if (maxTop < minTop) {
+      top = minTop; // anchor at the very top
+    }
 
     setPosition({
-      top,
+      top: top,
       left,
       arrowOffset,
+      placeAbove, // used for flipping arrow
     });
   };
 
@@ -118,12 +168,10 @@ export const FloatingDropdown = ({
   }, []);
 
   const getTopValue = () => {
-    if (mode === "edit" && toolbarPosition === "bottom") {
-      return -20;
-    } else if (mode === "edit" && toolbarPosition === "top") {
-      return 18;
-    } else {
+    if (mode === "create") {
       return -64;
+    } else {
+      return 0;
     }
   };
 
@@ -135,7 +183,7 @@ export const FloatingDropdown = ({
         left: `${position.left}px`,
       }}
       className={twMerge(
-        "absolute dark:text-gray-50 rounded-md p-5 pt-4 shadow-lg dark:shadow-md border border-gray-300 dark:border-slate-600 dark:bg-slate-800 bg-gray-100 dark:shadow-slate-800 outline-none",
+        "absolute dark:text-gray-50 rounded-md p-5 pt-4 shadow-lg dark:shadow-md border border-gray-300 dark:border-slate-600 dark:bg-slate-800 bg-gray-50 dark:shadow-slate-800 outline-none",
         className
       )}
       role="menu"
@@ -146,15 +194,17 @@ export const FloatingDropdown = ({
           {title}
         </p>
       )}
-      <div className="absolute top-0 left-0 w-full h-full bg-gray-100 dark:bg-slate-800 rounded-md z-10" />
+      <div className="absolute top-0 left-0 w-full h-full bg-gray-50 dark:bg-slate-800 rounded-md z-10" />
 
       {/* Arrow positioning based on mode */}
       <div
-        className={`absolute z-0 transform -translate-x-1/2 ${
-          mode === "edit" && toolbarPosition === "bottom"
+        className={twMerge(
+          "absolute z-0 transform -translate-x-1/2",
+          (mode === "edit" && toolbarPosition === "bottom") ||
+            position.placeAbove
             ? "-bottom-[16px] rotate-180"
             : "-top-[16px]"
-        }`}
+        )}
         style={{
           left: `${position.arrowOffset}px`,
         }}
@@ -162,7 +212,7 @@ export const FloatingDropdown = ({
         <svg width="32" height="20" viewBox="0 0 16 10" fill="none">
           <path
             d="M8 0L16 10H0L8 0Z"
-            className="fill-gray-100 dark:fill-slate-800"
+            className="fill-gray-50 dark:fill-slate-800"
           />
           <path
             d="M8 0.1L16 10H0L8 0.1"

@@ -19,7 +19,7 @@ const ActionButtons = ({
           <CardToolbarButton
             className={twMerge(
               button.className,
-              button.name === "Toggle toolbar Position" && "md:hidden",
+              button.name === "Toggle toolbar Position" && "lg:hidden",
               button.name === "Toggle toolbar Position" &&
                 toolbarPosition === "top" &&
                 "rotate-180"
