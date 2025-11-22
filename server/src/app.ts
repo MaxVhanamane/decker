@@ -114,38 +114,39 @@ app.use(passport.initialize())
 // allow passport to use "express-session".
 app.use(passport.session())
 
-const isDev = process.env.NODE_ENV === 'development';
-const isVercel = !!process.env.VERCEL; // Vercel sets this automatically
 
-// Connect to DB once at startup (Render + local dev)
-if (!isVercel) {
-
-  connectToMongoDB()
-    .then(() => {
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-      });
-    })
-    .catch((err) => {
-      console.error('Failed to connect to MongoDB:', err);
-      process.exit(1); // Exit process if DB connection fails
+connectToMongoDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
-}
-
-// For Vercel Serverless: export the handler (no app.listen!)
-if (isVercel) {
-  // Optional: warm connection on module load (helps cold starts)
-  let dbPromise: Promise<any> | null = null;
-  app.use(async (req: Request, res: Response, next: NextFunction) => {
-    if (mongoose.connection.readyState !== 1) {
-      dbPromise = dbPromise || connectToMongoDB();
-      await dbPromise;
-    }
-    next();
+  })
+  .catch((err) => {
+    console.error('Failed to connect to MongoDB:', err);
+    process.exit(1); // Exit process if DB connection fails
   });
 
-  module.exports = app; // Vercel expects this
-}
+// const isVercel = !!process.env.VERCEL; // Vercel sets this automatically
+
+// // Connect to DB once at startup (Render + local dev)
+// if (!isVercel) {
+
+
+// }
+
+// For Vercel Serverless: export the handler (no app.listen!)
+// if (isVercel) {
+//   // Optional: warm connection on module load (helps cold starts)
+//   let dbPromise: Promise<any> | null = null;
+//   app.use(async (req: Request, res: Response, next: NextFunction) => {
+//     if (mongoose.connection.readyState !== 1) {
+//       dbPromise = dbPromise || connectToMongoDB();
+//       await dbPromise;
+//     }
+//     next();
+//   });
+
+// }
 
 
 
