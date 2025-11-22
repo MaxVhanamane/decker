@@ -115,44 +115,36 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 const isDev = process.env.NODE_ENV === 'development';
+const isVercel = !!process.env.VERCEL; // Vercel sets this automatically
 
-// Database connection middleware for production/serverless
-async function dbMiddleware(req: Request, res: Response, next: NextFunction) {
-  //  Skip if already connected
-  if (mongoose.connection.readyState === 1) {
-    console.log("Already connected to the database")
-    return next();
-  }
+// Connect to DB once at startup (Render + local dev)
+if (!isVercel) {
 
-  // Otherwise, connect
-  try {
-    await connectToMongoDB();
-    console.log("Connecting to the database")
-    next();
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    res.status(503).json({ error: 'Service temporarily unavailable' });
-  }
-}
-
-
-// Only use middleware in production (Vercel)
-if (!isDev) {
-  app.use(dbMiddleware);
-}
-
-// Development: Connect once at startup
-if (isDev) {
   connectToMongoDB()
     .then(() => {
       app.listen(PORT, () => {
-        console.log(`Development server running on port ${PORT}`);
+        console.log(`Server running on port ${PORT}`);
       });
     })
     .catch((err) => {
-      console.error('Failed to connect to MongoDB in development:', err);
-      process.exit(1);
+      console.error('Failed to connect to MongoDB:', err);
+      process.exit(1); // Exit process if DB connection fails
     });
+}
+
+// For Vercel Serverless: export the handler (no app.listen!)
+if (isVercel) {
+  // Optional: warm connection on module load (helps cold starts)
+  let dbPromise: Promise<any> | null = null;
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
+    if (mongoose.connection.readyState !== 1) {
+      dbPromise = dbPromise || connectToMongoDB();
+      await dbPromise;
+    }
+    next();
+  });
+
+  module.exports = app; // Vercel expects this
 }
 
 
