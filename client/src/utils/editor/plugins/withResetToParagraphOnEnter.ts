@@ -138,6 +138,10 @@ function clearMarksIfOnEmptyText(editor: Editor) {
     }
 
     const [node, path] = first.value;
+    if (!Text.isText(node)) {
+        editor.marks = null;
+        return;
+    }
 
     // Only remove marks IF marks actually exist
     // DO NOT call unsetNodes if the leaf is already clean
