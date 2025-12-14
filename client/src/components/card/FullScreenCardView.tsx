@@ -240,8 +240,8 @@ const FullScreenCardView = ({
                   opacity: 1,
                 }}
                 transition={{
-                  delay: 0.15,
-                  duration: 0.35,
+                  delay: 0.1,
+                  duration: 0.25,
                   ease: "easeOut",
                 }}
                 className={`flex-1`}

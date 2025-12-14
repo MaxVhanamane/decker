@@ -131,9 +131,9 @@ const SortableCardItem = ({
           delay: isDragging ? 0 : 0.25,
         },
         layout: {
-          type: "spring",
-          stiffness: 300,
-          damping: 28,
+          type: "tween",
+          ease: "easeOut",
+          duration: 0.3,
         },
       }}
       onLayoutAnimationStart={() => {
