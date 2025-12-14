@@ -52,8 +52,6 @@ const SortableDeckItem = memo(
     return (
       <>
         <div
-          {...attributes}
-          {...listeners}
           style={style}
           ref={setNodeRef}
           onKeyDown={handleKeyDown}
@@ -69,6 +67,8 @@ const SortableDeckItem = memo(
             handlePin={handlePin}
             key={deck.deckId}
             isDragging={isDragging}
+            listeners={listeners}
+            attributes={attributes}
           />
         </div>
       </>

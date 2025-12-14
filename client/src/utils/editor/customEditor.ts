@@ -1,6 +1,6 @@
 import { Node, NodeEntry, Path, Transforms } from "slate";
 import { Editor, Element as SlateElement, Range } from "slate";
-import type { CodeBlockElementType, CustomElementFormatType, CustomTextKeyType, DividerElement, DividerStyle, ColorBarColors, ListType, ParagraphElementType, HighlightConfig, IndentLevel, IndentableElementType, CustomElementType, ListElement, CodeLineElement } from "../../types/textEditorTypes";
+import type { CodeBlockElementType, CustomElementFormatType, CustomTextKeyType, DividerElement, DividerStyle, ColorBarColors, ListType, ParagraphElementType, HighlightConfig, IndentLevel, IndentableElementType, CustomElementType, ListElement, CodeLineElement, HeadingLevel } from "../../types/textEditorTypes";
 import { ReactEditor } from "slate-react";
 import { isListType, LIST_TYPES } from "./isListType";
 import { NodeQueries } from "./nodeQueries";
@@ -44,8 +44,7 @@ export function sanitizeElementForTransform(
 const CONVERTIBLE_TO_CODE_BLOCK = [
     "paragraph",
     "blockquote",
-    "h1",
-    "h2",
+    "heading",
     "list-item",
     "color-bar",
     "list-item-text",
@@ -65,8 +64,7 @@ export function cleanAndSetNodeProperties(
     const cleanupMap: Partial<Record<CustomElementType["type"], string[]>> = {
         paragraph: ["indentLevel"],
         blockquote: ["indentLevel"],
-        h1: ["indentLevel"],
-        h2: ["indentLevel"],
+        heading: ["indentLevel", "level"],
         "code-line": ["indentLevel"],
         "color-bar": ["color", "indentLevel"],
         "code-block": ["language"],
@@ -131,19 +129,22 @@ export const CustomEditor = {
         return marks[format] === true;
     }
     ,
-
-
     isBlockActive(
         editor: Editor,
         format: CustomElementFormatType,
     ) {
-        const { selection } = editor
-        if (!selection) return false
+        const { selection } = editor;
+        if (!selection) return false;
+
         const [match] = Editor.nodes(editor, {
-            match: (n) => SlateElement.isElement(n) && n.type === format,
+            match: (n) =>
+                SlateElement.isElement(n) &&
+                (
+                    (n.type === format)
+                ),
         });
 
-        return !!match
+        return !!match;
     },
 
 
@@ -579,6 +580,120 @@ export const CustomEditor = {
     }
     ,
 
+    toggleHeading(
+        editor: Editor,
+        level: 1 | 2 | 3,
+    ) {
+        if (!editor.selection) return;
+        const format = "heading"
+        const isInsideSingleCodeBlock = isSelectionInsideSingleBlock(editor, "code-block");
+        const isInsideSingleListBlock = isSelectionInsideSingleBlock(editor, "list-item");
+
+        // 1) Case: inside a single list item or code block
+        if (isInsideSingleCodeBlock || isInsideSingleListBlock) {
+            const blockEntry = Editor.above(editor, {
+                match: n =>
+                    SlateElement.isElement(n) &&
+                    (isListType(n.type) || n.type === "code-block"),
+            });
+
+            if (!blockEntry) return;
+
+            const [node] = blockEntry;
+
+            if (SlateElement.isElement(node)) {
+                Editor.withoutNormalizing(editor, () => {
+                    // 1A — List case: unwrap using heading format + level
+                    if (isListType(node.type)) {
+                        unwrapListWithFormat(editor, format, undefined, level);
+                        return;
+                    }
+
+                    // 1B — Code block case: unwrap the code block
+                    if (node.type === "code-block") {
+                        Transforms.unwrapNodes(editor, {
+                            match: n =>
+                                SlateElement.isElement(n) &&
+                                n.type === "code-block",
+                            split: true,
+                        });
+                    }
+
+                    // 1C — Toggle inside the unwrapped block
+                    const isActive = CustomEditor.isBlockActive(editor, "heading");
+
+                    if (isActive) {
+                        cleanAndSetNodeProperties(editor, { type: "paragraph" });
+                    } else {
+                        cleanAndSetNodeProperties(editor, {
+                            type: "heading",
+                            level,
+                        });
+                    }
+                });
+            }
+
+            return;
+        }
+
+        // 2) General multi-block case (same pattern as color-bar)
+        if (!editor.selection) return;
+
+        Editor.withoutNormalizing(editor, () => {
+            // 2A — If there are lists in the selection, unwrap them using format+level
+            const hasList = Editor.nodes(editor, {
+                match: n => SlateElement.isElement(n) && isListType(n.type),
+            }).next().done === false;
+
+            if (hasList) {
+                unwrapListWithFormat(editor, format, undefined, level);
+            }
+
+            // 2B — Unwrap code-blocks in selection
+            Transforms.unwrapNodes(editor, {
+                match: n =>
+                    SlateElement.isElement(n) &&
+                    n.type === "code-block",
+                split: true,
+            });
+
+            // 2C — Collect all block nodes in the selection
+            const selectedBlocks = Array.from(
+                Editor.nodes(editor, {
+                    match: n =>
+                        SlateElement.isElement(n) &&
+                        Editor.isBlock(editor, n),
+                })
+            );
+
+            if (selectedBlocks.length === 0) return;
+
+            // 2D — Per-node toggle logic
+            for (const [node, path] of selectedBlocks) {
+                const nodeType = (node as any).type;
+                const nodeLevel = (node as any).level;
+
+                // same heading + level → toggle off to paragraph
+                if (nodeType === "heading" && nodeLevel === level) {
+                    Transforms.setNodes(
+                        editor,
+                        { type: "paragraph", level: undefined } as Partial<SlateElement>,
+                        { at: path }
+                    );
+                } else {
+                    // apply heading with level
+                    Transforms.setNodes(
+                        editor,
+                        { type: format, level } as Partial<SlateElement>,
+                        { at: path }
+                    );
+                }
+            }
+        });
+    }
+
+    ,
+
     toggleColorBar(editor: Editor, color: ColorBarColors, format: "color-bar") {
         if (!editor.selection) return;
 
@@ -903,6 +1018,7 @@ export const CustomEditor = {
             }
         }
 
+
         // Handle other indentable elements
         for (const [block, path] of otherIndentables) {
             const currentIndent = (block.indentLevel || 0) as IndentLevel;
@@ -1147,26 +1263,17 @@ const unwrapLink = (editor: Editor) => {
 
 
 
-export const createCustomCreateNode = (format: CustomElementFormatType, options?: { color?: ColorBarColors }) => {
+export const createCustomCreateNode = (
+    format: CustomElementFormatType,
+    options?: { color?: ColorBarColors; headingLevel?: 1 | 2 | 3 }
+) => {
     return (props: Partial<CustomElementType> = {}): CustomElementType => {
+
+        // Code block special handling
         if (format === "code-block") {
-            // Special handling for code blocks
             return {
                 type: "code-block",
-                language: "javascript", // or "plaintext", "typescript", etc.
-                children: [
-                    {
-                        type: "code-line",
-                        children: [{ text: "" }],
-                    },
-                ],
-                ...props,
-            } as CustomElementType;
-        }
-        if (format === "color-bar") {
-            return {
-                type: "color-bar",
-                color: options?.color ?? "neutral",
+                language: "javascript",
                 children: [
                     {
                         type: "code-line",
@@ -1177,7 +1284,27 @@ export const createCustomCreateNode = (format: CustomElementFormatType, options?
             } as CustomElementType;
         }
 
-        // Default block handling (paragraph, h1, h2, blockquote, etc.)
+        // Color bar special handling
+        if (format === "color-bar") {
+            return {
+                type: "color-bar",
+                color: options?.color ?? "neutral",
+                children: [{ text: "" }],
+                ...props,
+            } as CustomElementType;
+        }
+
+        // Heading special handling
+        if (format === "heading") {
+            return {
+                type: "heading",
+                level: options?.headingLevel ?? 1,
+                children: [{ text: "" }],
+                ...props,
+            } as CustomElementType;
+        }
+
+        // Default: paragraph, blockquote, etc.
         return {
             type: format,
             children: [{ text: "" }],
@@ -1187,12 +1314,14 @@ export const createCustomCreateNode = (format: CustomElementFormatType, options?
 };
 
 
+
 const unwrapListWithFormat = (
     editor: Editor,
-    format: CustomElementFormatType = "color-bar",
-    color?: ColorBarColors
+    format: CustomElementFormatType,
+    color?: ColorBarColors,
+    headingLevel?: HeadingLevel
 ) => {
-    const customCreateNode = createCustomCreateNode(format, { color });
+    const customCreateNode = createCustomCreateNode(format, { color, headingLevel });
 
     const original = listsSchema.createDefaultTextNode;
     listsSchema.createDefaultTextNode = customCreateNode as typeof listsSchema.createDefaultTextNode;

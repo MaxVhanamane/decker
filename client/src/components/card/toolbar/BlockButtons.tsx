@@ -41,7 +41,7 @@ export const BlockButtons = memo(
     }, [isAnyDropdownOpen, mode]);
 
     return (
-      <div className="flex items-center justify-end gap-0.5 xl:gap-1 w-full h-1/2 ">
+      <div className="flex items-center justify-end gap-1 xl:gap-1 w-full h-1/2 ">
         {blockButtons.map((button) => {
           const isActive = CustomEditor.isBlockActive(
             editor,

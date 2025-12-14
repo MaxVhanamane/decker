@@ -60,6 +60,7 @@ const useDragHandlers = () => {
             // active.data.current?.name will give you "deck" or "card"
             // This if condition will handle deck related draggin and dropping
             activeItemRef.current = active.data?.current
+
             if (active.data?.current?.name === "deck") {
                 // If a user creates a deck, the bulb color will turn cyan for a few seconds. If the user starts dragging during that time, we will remove the cyan color first and then add the color accordingly.
                 if (bulbRef.current?.colorName === "cyan") {

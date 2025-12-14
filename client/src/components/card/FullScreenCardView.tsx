@@ -1,7 +1,6 @@
 import React, {
   Dispatch,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -14,10 +13,11 @@ import { MdOutlineDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
 import { LuToggleLeft, LuToggleRight } from "react-icons/lu";
 import { HiOutlineArrowSmDown, HiOutlineArrowSmUp } from "react-icons/hi";
-import ThemeToggler from "../ThemeToggler";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { Descendant } from "slate";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
+import { motion } from "motion/react";
+import FullScreenHeaderButtons from "./FullScreenHeaderButtons";
 
 type ContentType = {
   note: Descendant[];
@@ -35,12 +35,11 @@ type ContentTypeForEdit = ContentType;
 type propType = {
   fullScreenCardData: ContentForFullScreen | null;
   setShowFullScreen: Dispatch<React.SetStateAction<boolean>>;
-  setCloseFullScreenWithAnimation: Dispatch<React.SetStateAction<boolean>>;
   setShowScrollButtons: Dispatch<React.SetStateAction<boolean>>;
   showScrollButtons: boolean;
-  closeFullScreenWithAnimation: boolean;
   handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
   handleDelete: () => void;
+  source: "deck" | "search";
 };
 
 const FullScreenCardView = ({
@@ -48,13 +47,13 @@ const FullScreenCardView = ({
   setShowFullScreen,
   handleDelete,
   handleEditCardButtonClick,
-  closeFullScreenWithAnimation,
-  setCloseFullScreenWithAnimation,
   showScrollButtons,
   setShowScrollButtons,
+  source,
 }: propType) => {
-  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
-
+  const { handlePlayAudio } = useAudio();
+  const [isLayoutAnimationComplete, setIsLayoutAnimationComplete] =
+    useState(false);
   const [toggleGradient, setToggleGradient] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("toggleColor") ?? "false")
   );
@@ -65,9 +64,12 @@ const FullScreenCardView = ({
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
     useState(false);
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
-  const [skipTyping, setSkipTyping] = useState(() =>
-    showTypewriterEffect ? false : true
-  );
+  // skipTyping is used to stop the typing effect when the user opens the edit
+  // or delete modal, since there's no reason for the typing animation to keep
+  // running in the background.
+
+  const [skipTyping, setSkipTyping] = useState(false);
+
   const divRef = useRef<HTMLDivElement>(null);
   const bottomElementRef = useRef<HTMLDivElement>(null);
   const fullScreenContainer = useRef<HTMLElement>(null);
@@ -75,8 +77,7 @@ const FullScreenCardView = ({
   const prevScrollPosition = useRef(0);
 
   const handleBackButtonClick = useCallback(() => {
-    setCloseFullScreenWithAnimation(true);
-    setShowScrollButtons(false);
+    setShowFullScreen(false);
   }, []);
 
   useFocusTrap(fullScreenContainer, "tab", {
@@ -153,26 +154,19 @@ const FullScreenCardView = ({
   }, [fullScreenCardData, handleEditCardButtonClick]);
 
   const handleToggleBgColor = useCallback(() => {
-    localStorage.setItem("toggleColor", JSON.stringify(!toggleGradient));
     setToggleGradient((pre) => !pre);
     if (toggleGradient) {
-      if (isPlayingAudioAllowed) {
-        handlePlayAudio("switchOnAudioSound");
-      }
+      handlePlayAudio("switchOnAudioSound");
     } else {
-      if (isPlayingAudioAllowed) {
-        handlePlayAudio("switchOffAudioSound");
-      }
+      handlePlayAudio("switchOffAudioSound");
     }
-  }, [toggleGradient, isPlayingAudioAllowed, handlePlayAudio]);
+  }, [toggleGradient, handlePlayAudio]);
 
-  const handleOnAnimationEnd = () => {
+  const handleOnAnimationEnd = useCallback(() => {
     if (!showScrollButtons) {
       setShowScrollButtons(true);
     }
-    if (closeFullScreenWithAnimation) {
-      setShowFullScreen(false), setCloseFullScreenWithAnimation(false);
-    }
+
     const isScrollable =
       divRef.current!.scrollHeight > divRef.current!.clientHeight + 100;
 
@@ -183,129 +177,85 @@ const FullScreenCardView = ({
       setShowScrollToBottomButton(true);
       setShowScrollToTopButton(false);
     }
-  };
-
+  }, [showScrollButtons]);
   return (
     <>
-      <article
+      <motion.article
+        layoutId={`${source}-card-${fullScreenCardData?.cardId}`}
         ref={fullScreenContainer}
-        onAnimationEnd={handleOnAnimationEnd}
-        className={`fixed inset-0 will-change-transform ${
+        transition={{
+          layout: {
+            type: "spring",
+            stiffness: 300,
+            damping: 35,
+          },
+        }}
+        onLayoutAnimationComplete={() => {
+          handleOnAnimationEnd();
+          setIsLayoutAnimationComplete(true);
+        }}
+        className={`fixed inset-0  ${
           toggleGradient
-            ? "dark:bg-BgDarkModeSmall  dark:lg:bg-BgForDarkMode lg:bg-lightBg  bg-lightBgSmall"
+            ? "dark:bg-BgDarkModeSmall dark:lg:bg-BgForDarkMode lg:bg-lightBg  bg-lightBgSmall"
             : "dark:bg-slate-900 bg-white"
-        }     z-[80] flex flex-col items-center  ${
-          !closeFullScreenWithAnimation
-            ? "animate-translateFromLeftToRight  lg:animate-[opacity_0.2s_linear_1]  "
-            : "animate-translateFromRightToLeft lg:animate-opacityFadeOut"
-        } `}
+        }     z-[80] flex flex-col items-center outline-none `}
       >
         <div className={` w-full flex flex-col items-center h-full  relative `}>
           {/* Buttons */}
-          <div
-            className={` w-full flex items-center
-               justify-center md:w-[42rem] `}
-          >
-            <div className="flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 px-1 md:px-0">
-              <div>
-                <Button
-                  variant="plain"
-                  size="md"
-                  aria-label="Go back"
-                  type="button"
-                  onClick={handleBackButtonClick}
-                  className=" text-lg md:-ml-3 rounded-md"
-                >
-                  {buttons.Back.label}
-                </Button>
-              </div>
-              <div className="flex items-center justify-center gap-1 mr-[0.35rem] md:-mr-[0.35rem] ">
-                <Button
-                  variant="plain"
-                  size="md"
-                  aria-label="Toggle typing effect"
-                  toolTipText="Toggle typing effect"
-                  withTooltip
-                  type="button"
-                  className="text-gray-600 dark:text-gray-200  dark:hover:!text-gray-100 hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  "
-                  onClick={() => {
-                    if (showTypewriterEffect) {
-                      localStorage.setItem("showTypewriterEffect", "false");
-                    } else {
-                      localStorage.setItem("showTypewriterEffect", "true");
-                    }
-                    setShowTypewriterEffect((prev) => !prev);
-                  }}
-                >
-                  {showTypewriterEffect
-                    ? buttons.TypingEffect.label.on
-                    : buttons.TypingEffect.label.off}
-                </Button>
-
-                <Button
-                  variant="plain"
-                  size="lg"
-                  type="button"
-                  aria-label="Delete Card"
-                  toolTipText="Delete Card"
-                  withTooltip
-                  className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100  hover:text-gray-700   dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] text-xl"
-                  onClick={handleDeleteCard}
-                >
-                  {buttons.Delete.label}
-                </Button>
-
-                <Button
-                  variant="plain"
-                  size="lg"
-                  type="button"
-                  aria-label="Edit Card"
-                  toolTipText="Edit Card"
-                  withTooltip
-                  className="text-gray-600 dark:text-gray-200  dark:hover:!text-gray-100  hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100  rounded-full p-[0.4rem] text-xl"
-                  onClick={handleEditCard}
-                >
-                  {buttons.Edit.label}
-                </Button>
-
-                <Button
-                  variant="plain"
-                  size="lg"
-                  type="button"
-                  aria-label="Toggle Background Color"
-                  toolTipText="Toggle Background Color"
-                  withTooltip
-                  className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100  hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  text-2xl "
-                  onClick={handleToggleBgColor}
-                >
-                  {toggleGradient
-                    ? buttons.ToggleBgColor.label.on
-                    : buttons.ToggleBgColor.label.off}
-                </Button>
-                <div>
-                  <ThemeToggler />
-                </div>
-              </div>
-            </div>
-          </div>
+          <FullScreenHeaderButtons
+            handleBackButtonClick={handleBackButtonClick}
+            handleDeleteCard={handleDeleteCard}
+            handleEditCard={handleEditCard}
+            handleToggleBgColor={handleToggleBgColor}
+            setShowTypewriterEffect={setShowTypewriterEffect}
+            showTypewriterEffect={showTypewriterEffect}
+            toggleGradient={toggleGradient}
+          />
           {/*content */}
           <div
             ref={divRef}
             tabIndex={0}
             className=" w-full  flex  justify-center overflow-y-auto overflow-x-hidden dark:dark-scrollbar light-scrollbar scrollbar-gutter h-full outline-none focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 ring-inset"
           >
-            <div className="w-full  md:w-[42rem] md:-mr-[10px] px-4 md:px-0">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: 1,
+                transition: {
+                  duration: 0.25,
+                  ease: "easeOut",
+                  delay: 0.1,
+                },
+              }}
+              className="w-full  md:w-[42rem] md:-mr-[10px] px-4 md:px-0"
+            >
               <div ref={topElementRef} />
-              <div className={`flex-1`}>
+              <motion.div
+                initial={{
+                  filter: "blur(8px)",
+                  opacity: 0.5,
+                }}
+                animate={{
+                  filter: "blur(0px)",
+                  opacity: 1,
+                }}
+                transition={{
+                  delay: 0.15,
+                  duration: 0.35,
+                  ease: "easeOut",
+                }}
+                className={`flex-1`}
+              >
                 <NoteSection
                   note={fullScreenCardData?.note ?? []}
                   showTypewriterEffect={showTypewriterEffect}
                   skipTyping={skipTyping}
                   setSkipTyping={setSkipTyping}
+                  isLayoutAnimationComplete={isLayoutAnimationComplete}
                 />
                 <div ref={bottomElementRef} />
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
           {showScrollButtons &&
             (showScrollToBottomButton || showScrollToTopButton) && (
@@ -344,7 +294,7 @@ const FullScreenCardView = ({
               </div>
             )}
         </div>
-      </article>
+      </motion.article>
     </>
   );
 };

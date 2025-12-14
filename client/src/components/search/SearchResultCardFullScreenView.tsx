@@ -1,11 +1,11 @@
 import {
   useState,
   useContext,
-  useEffect,
   useCallback,
   memo,
   Dispatch,
   SetStateAction,
+  useEffect,
 } from "react";
 import useEditCard from "../../hooks/react-query/useEditCard";
 import { Helmet } from "react-helmet";
@@ -19,6 +19,7 @@ import { Descendant } from "slate";
 import FullScreenCardView from "../card/FullScreenCardView";
 import type { ContentTypeForEdit } from "../../types/types";
 import useDeleteCard from "../../hooks/react-query/useDeleteCard";
+import { AnimatePresence } from "motion/react";
 
 type PropType = {
   initialData: ContentForFullScreen;
@@ -50,11 +51,8 @@ const SearchResultCardFullScreenView = ({
   const { isOnline } = useContext(OfflineContext);
   const [showEditModalForCard, setShowEditModalForCard] = useState(false);
   const [showFullScreen, setShowFullScreen] = useState(true);
-  const [closeFullScreenWithAnimation, setCloseFullScreenWithAnimation] =
-    useState(false);
+  const [isClosingEditModal, setIsClosingEditModal] = useState(false);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
-  const [closeEditModalWithAnimation, setCloseEditModalWithAnimation] =
-    useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
     useState<Omit<ContentForFullScreen, "deckId">>(initialData);
   const [previousCardInfoForError, setPreviousCardInfoForError] =
@@ -80,10 +78,13 @@ const SearchResultCardFullScreenView = ({
     },
   });
 
+  const handleCloseEditTextEditor = useCallback(() => {
+    setIsClosingEditModal(true);
+  }, []);
   useModalBackNavigationHandler({
     isOpen: showFullScreen,
     modalKey: "showFullScreenSearch",
-    closeModal: () => setCloseFullScreenWithAnimation(true),
+    closeModal: () => setShowFullScreen(false),
   });
   useModalBackNavigationHandler({
     isOpen: modalState.confirmDeleteCardModal.show,
@@ -97,15 +98,18 @@ const SearchResultCardFullScreenView = ({
       }),
   });
 
+  useEffect(() => {
+    if (isClosingEditModal) {
+      setShowEditModalForCard(false);
+      setIsClosingEditModal(false);
+    }
+  }, [isClosingEditModal]);
+
   useModalBackNavigationHandler({
     isOpen: showEditModalForCard,
     modalKey: "editDeckInSearchResults",
-    closeModal: () => setCloseEditModalWithAnimation(true),
+    closeModal: () => handleCloseEditTextEditor(),
   });
-
-  useEffect(() => {
-    if (!showFullScreen) setOpenCardInFullScreen(false);
-  }, [showFullScreen]);
 
   useToastOnError({
     isError: isEditCardError,
@@ -197,9 +201,7 @@ const SearchResultCardFullScreenView = ({
         },
         {
           onError: () => {
-            setEditContent(contentWithCardIndex),
-              setShowEditModalForCard(true),
-              setCloseEditModalWithAnimation(false);
+            setEditContent(contentWithCardIndex), setShowEditModalForCard(true);
             // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
             if (showFullScreen) {
               setFullScreenCardData({
@@ -209,7 +211,7 @@ const SearchResultCardFullScreenView = ({
           },
         }
       );
-      setCloseEditModalWithAnimation(true);
+      handleCloseEditTextEditor();
       setPreviousCardInfoForError({
         ...fullScreenCardData,
       } as ContentForFullScreen);
@@ -231,6 +233,7 @@ const SearchResultCardFullScreenView = ({
     deckId,
     editContent,
     fullScreenCardData,
+    handleCloseEditTextEditor,
   ]);
 
   const handleOnConfirmDeleteCard = useCallback(() => {
@@ -273,19 +276,20 @@ const SearchResultCardFullScreenView = ({
           content="View and manage the detailed information on our interactive cards. Each card contains information related to the particular card that you have created, all organized within their respective decks."
         />
       </Helmet>
-
-      {showEditModalForCard ? (
-        <EditCard
-          setShowEditModalForCard={setShowEditModalForCard}
-          showEditModalForCard={showEditModalForCard}
-          editContent={editContent}
-          setEditContent={setEditContent}
-          handleSaveEdit={handleSaveEdit}
-          closeEditModalWithAnimation={closeEditModalWithAnimation}
-          setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
-        />
-      ) : null}
-
+      <AnimatePresence>
+        {showEditModalForCard ? (
+          <EditCard
+            key={editContent?.cardId}
+            handleCloseEditTextEditor={handleCloseEditTextEditor}
+            isClosingEditModal={isClosingEditModal}
+            editContent={editContent}
+            setEditContent={setEditContent}
+            handleSaveEdit={handleSaveEdit}
+            source="search"
+            isCardFullscreen={showFullScreen}
+          />
+        ) : null}
+      </AnimatePresence>
       {modalState.confirmDeleteCardModal.show && (
         <ConfirmationModal
           message="Are you sure you want to delete this card?"
@@ -298,18 +302,24 @@ const SearchResultCardFullScreenView = ({
         />
       )}
 
-      {showFullScreen && (
-        <FullScreenCardView
-          fullScreenCardData={fullScreenCardData!}
-          setShowFullScreen={setShowFullScreen}
-          handleEditCardButtonClick={handleEditCardButtonClick}
-          handleDelete={handleDelete}
-          closeFullScreenWithAnimation={closeFullScreenWithAnimation}
-          setCloseFullScreenWithAnimation={setCloseFullScreenWithAnimation}
-          setShowScrollButtons={setShowScrollButtons}
-          showScrollButtons={showScrollButtons}
-        />
-      )}
+      <AnimatePresence
+        onExitComplete={() => {
+          if (!showFullScreen) setOpenCardInFullScreen(false);
+        }}
+      >
+        {showFullScreen && (
+          <FullScreenCardView
+            key={fullScreenCardData?.cardId}
+            fullScreenCardData={fullScreenCardData!}
+            setShowFullScreen={setShowFullScreen}
+            handleEditCardButtonClick={handleEditCardButtonClick}
+            handleDelete={handleDelete}
+            setShowScrollButtons={setShowScrollButtons}
+            showScrollButtons={showScrollButtons}
+            source="search"
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };

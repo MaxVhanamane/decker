@@ -33,7 +33,6 @@ import { RenderLeaf } from "./RenderLeaf";
 import { RenderElement } from "./RenderElement";
 import { useCommandPalette } from "../../hooks/editor/useCommandPalette";
 import LinkTooltip from "./LinkTooltip";
-import { isInsideCodeBlock } from "../../utils/editor/isInsideCodeBlock";
 import { SetNodeToDecorations } from "./SetNodeToDecorations";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { useEditorActions } from "../../hooks/editor/useEditorActions";
@@ -109,6 +108,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
   const resetSlashPosition = useCallback(() => {
     lastSlashLocation.current = null;
   }, []);
+
   useEffect(() => {
     if (isEditorExpanded) {
       ReactEditor.focus(editor);
@@ -122,12 +122,16 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       setCommandSearch: setCommandSearch,
       closeCommandPalette: closeCommandPalette,
       resetSlashPosition: resetSlashPosition,
+      lastSlashLocation: lastSlashLocation,
+      openCommandPalette: openCommandPalette,
     }),
     [
       showCommandPalette,
       setCommandSearch,
       closeCommandPalette,
       resetSlashPosition,
+      lastSlashLocation,
+      openCommandPalette,
     ]
   );
 
@@ -214,22 +218,21 @@ const RichTextEditor = (props: RichTextEditorProps) => {
     const { selection } = editor;
     // Make sure the Control key is not pressed, since that toggles the chapters sidebar.
     // If we don't check this, pressing Ctrl + / will toggle the sidebar and also open the command palette.
+    // if (
+    //   event.key === "/" &&
+    //   !event.ctrlKey && // not holding Ctrl (Windows/Linux)
+    //   !event.metaKey && // not holding Cmd (Mac)
+    //   !isInsideCodeBlock(editor) &&
+    //   !showCommandPalette
+    // ) {
+    //   // Remember this slash position
+    //   if (editor.selection) {
+    //     lastSlashLocation.current = editor.selection;
+    //   }
+    //   openCommandPalette();
 
-    if (
-      event.key === "/" &&
-      !event.ctrlKey && // not holding Ctrl (Windows/Linux)
-      !event.metaKey && // not holding Cmd (Mac)
-      !isInsideCodeBlock(editor) &&
-      !showCommandPalette
-    ) {
-      // Remember this slash position
-      if (editor.selection) {
-        lastSlashLocation.current = editor.selection;
-      }
-      openCommandPalette();
-
-      return;
-    }
+    //   return;
+    // }
 
     if (event.key === "Enter" && isInsideListElement()) {
       onKeyDown(editor, event);
@@ -409,12 +412,17 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       // Headings (Ctrl/⌘ + 1 for H1, Ctrl/⌘ + 2 for H2)
       case "1": {
         event.preventDefault();
-        CustomEditor.toggleBlock(editor, "h1");
+        CustomEditor.toggleHeading(editor, 1);
         break;
       }
       case "2": {
         event.preventDefault();
-        CustomEditor.toggleBlock(editor, "h2");
+        CustomEditor.toggleHeading(editor, 2);
+        break;
+      }
+      case "3": {
+        event.preventDefault();
+        CustomEditor.toggleHeading(editor, 3);
         break;
       }
 
@@ -585,7 +593,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
           className="focus-visible:outline-none flex-1 [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1 break-words !whitespace-break"
           tabIndex={!isEditorExpanded && mode !== "edit" ? -1 : 0}
         />
-        <div className="h-32 flex-shrink-0 " />
+        <div className="h-28 flex-shrink-0 " />
         {/* Spacer for bottom padding */}
       </div>
 

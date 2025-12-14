@@ -21,6 +21,7 @@ type MessageType = {
   animationStyle?: "slide" | "scale-up";
   theme?: "auto" | "colored";
   progressBar: "show" | "hide";
+  animatedText?: boolean;
 };
 
 const ToastContainer = ({

@@ -374,6 +374,7 @@
   }
 
 
+
   /* img:-moz-loading {
     visibility: hidden;
   } */
@@ -419,6 +420,9 @@
     position: relative;
     overflow: hidden;
   }
+
+
+
 
   /* Dark mode shimmer (applies when a parent has .dark) */
   .dark .shimmer-skeleton {

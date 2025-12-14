@@ -28,29 +28,34 @@ import SelectionToolbar from "../editor/selection-toolbar/SelectionToolbar";
 import { createCardEditor } from "../../utils/editor/createEditor";
 import { CommandPaletteHandle } from "./CardInput";
 import { getTextAfterSlash } from "../../utils/editor/commandUtils";
-
+import { motion } from "motion/react";
+import { EditCardEditorSkeleton } from "./EditCardEditorSkeleton";
+import DummyEditorContent from "./DummyEditorContent";
 type EditCardProps = {
-  setShowEditModalForCard: Dispatch<React.SetStateAction<boolean>>;
-  showEditModalForCard: boolean;
   setEditContent: Dispatch<SetStateAction<ContentTypeForEdit | null>>;
   editContent: ContentTypeForEdit | null;
   handleSaveEdit: () => void;
-  closeEditModalWithAnimation: boolean;
-  setCloseEditModalWithAnimation: Dispatch<React.SetStateAction<boolean>>;
+  handleCloseEditTextEditor: () => void;
+  source: "deck" | "search";
+  isCardFullscreen: boolean;
+  isClosingEditModal: boolean;
 };
 
 const EditCard = ({
-  setShowEditModalForCard,
   editContent,
   setEditContent,
   handleSaveEdit,
-  showEditModalForCard,
-  closeEditModalWithAnimation,
-  setCloseEditModalWithAnimation,
+  source,
+  isCardFullscreen,
+  handleCloseEditTextEditor,
+  isClosingEditModal,
 }: EditCardProps) => {
+  const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
+  const [isLayoutAnimationComplete, setIsLayoutAnimationComplete] =
+    useState(false);
+
   const editorContainer = useRef<HTMLDivElement>(null);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
-  const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
   const comandPaletteConfig = useRef<CommandPaletteHandle | null>(null);
   const [toolbarPosition, setToolbarPosition] = useState<"top" | "bottom">(
     () => {
@@ -67,7 +72,7 @@ const EditCard = ({
   const editor = useMemo(() => createCardEditor(), []);
 
   useFocusTrap(editorContainer, "tab", {
-    onEscape: () => setCloseEditModalWithAnimation(true),
+    onEscape: handleCloseEditTextEditor,
   });
   const [showScrollToTopButton, setShowScrollToTopButton] = useState(false);
   const { showToast } = useContext(ShowToastContext);
@@ -119,6 +124,7 @@ const EditCard = ({
     },
     [editor]
   );
+
   const scrollToBottom = () => {
     const ref = scrollableContainerRef as MutableRefObject<HTMLDivElement>;
 
@@ -224,13 +230,6 @@ const EditCard = ({
     }
   }, []);
 
-  const handleOnAnimationEnd = () => {
-    if (showEditModalForCard && closeEditModalWithAnimation) {
-      setShowEditModalForCard(false);
-      setCloseEditModalWithAnimation(false);
-    }
-  };
-
   const handleChange = (value: Descendant[]) => {
     setEditContent((prev) => ({ ...prev!, note: value }));
     if (
@@ -258,19 +257,36 @@ const EditCard = ({
       comandPaletteConfig.current.setCommandSearch(text || "");
     }
   };
-
   return (
-    <div
+    <motion.div
+      initial={isCardFullscreen ? { scale: 0.95 } : undefined}
+      animate={isCardFullscreen ? { scale: 1 } : undefined}
+      transition={
+        isCardFullscreen
+          ? {
+              type: "spring",
+              stiffness: 1000,
+              damping: 20,
+            }
+          : undefined
+      }
+      exit={{
+        opacity: 0,
+        scale: isCardFullscreen ? 0.8 : undefined,
+        transition: {
+          type: "tween",
+          duration: isCardFullscreen ? 0.6 : 0.3,
+          ease: isCardFullscreen ? "backOut" : [0.25, 0.1, 0.25, 1],
+        },
+      }}
       ref={editorContainer}
-      onAnimationEnd={handleOnAnimationEnd}
+      onAnimationComplete={() => {
+        setIsLayoutAnimationComplete(true);
+      }}
       className={` z-[90] dark:md:bg-slate-900/70 md:bg-white/40  md:supports-[backdrop-filter]:bg-transparent
     md:supports-[backdrop-filter]:backdrop-blur-lg
     dark:md:supports-[backdrop-filter]:bg-transparent
-    dark:md:supports-[backdrop-filter]:backdrop-blur-md fixed  inset-0 flex justify-center items-center  transition-opacity duration-500 ${
-      closeEditModalWithAnimation
-        ? "opacity-0 animate-[opacityFadeOut_0.2s_linear_1] "
-        : "animate-[opacity_0.2s_linear_1] "
-    } `}
+    dark:md:supports-[backdrop-filter]:backdrop-blur-md fixed  inset-0 flex justify-center items-center outline-none`}
     >
       <div className="absolute z-50 top-0 left-0">
         <div
@@ -278,12 +294,28 @@ const EditCard = ({
           className="pointer-events-auto"
         />
       </div>
-      <div className="md:w-[45rem] lg:w-[50rem] w-full flex flex-col h-full md:h-[90%] lg:h-[92%] md:max-h-[50rem] md:p-2 dark:md:bg-slate-500 relative md:bg-slate-300 md:rounded-[12px]">
+
+      <motion.div
+        onLayoutAnimationComplete={() => {
+          setIsLayoutAnimationComplete(true);
+        }}
+        layoutId={
+          isCardFullscreen ? undefined : `${source}-card-${editContent?.cardId}`
+        }
+        transition={{
+          layout: {
+            type: "spring",
+            stiffness: 200,
+            damping: 24,
+          },
+        }}
+        className="md:w-[45rem] lg:w-[50rem] w-full flex flex-col h-full md:h-[90%] lg:h-[92%] md:max-h-[50rem] md:p-2 dark:md:bg-slate-500 relative md:bg-slate-300 md:rounded-[12px]"
+      >
         <div className="w-full h-16 bg-white dark:bg-slate-900 border-b border-gray-400/40 dark:border-gray-300/10 px-4  flex items-center justify-between md:hidden flex-shrink-0">
           <div>
             <Button
               variant="unstyled"
-              onClick={() => setCloseEditModalWithAnimation(true)}
+              onClick={handleCloseEditTextEditor}
               className=" text-lg md:-ml-3 rounded-md dark:text-gray-200 text-gray-500  "
               aria-label="Back"
               title="Back"
@@ -298,80 +330,89 @@ const EditCard = ({
           </div>
         </div>
 
-        <Slate
-          editor={editor}
-          initialValue={editContent?.note ?? []}
-          onChange={handleChange}
-        >
-          {toolbarPosition === "top" && (
-            <EditCardToolbar
-              handleSaveEdit={handleSaveEdit}
-              setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
-              setShowHyperlinkModal={setShowHyperlinkModal}
-              setToolbarPosition={setToolbarPosition}
-              toolbarPosition={toolbarPosition}
-            />
-          )}
-          <div
-            ref={scrollableContainerRef}
-            className={`px-4 pb-32 w-full outline-none text-gray-800  bg-white font-light text-base text-left dark:md:bg-slate-800 dark:bg-slate-900 dark:text-white resize-none h-full overflow-y-auto  dark:dark-scrollbar light-scrollbar scrollbar-small scrollbar-gutter relative ${
-              toolbarPosition === "bottom" && "md:rounded-t-md"
-            }`}
-            onClick={handleEditorContentClick}
-            data-editor-parent-edit
+        {isLayoutAnimationComplete ? (
+          <Slate
+            editor={editor}
+            initialValue={editContent?.note ?? []}
+            onChange={handleChange}
           >
-            <RichTextEditor
-              setShowHyperlinkModal={setShowHyperlinkModal}
-              mode="edit"
-              comandPaletteConfig={comandPaletteConfig}
-            />
-            <SelectionToolbar
-              mode="edit"
-              setShowHyperlinkModal={setShowHyperlinkModal}
-            />
-          </div>
-
-          {showScrollToBottomButton && (
-            <Button
-              variant="unstyled"
-              className={twMerge(
-                " absolute  bottom-20 right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
-                toolbarPosition === "top" ? "bottom-6" : "bottom-24"
-              )}
-              onClick={scrollToBottom}
+            {toolbarPosition === "top" && (
+              <EditCardToolbar
+                handleSaveEdit={handleSaveEdit}
+                setShowHyperlinkModal={setShowHyperlinkModal}
+                setToolbarPosition={setToolbarPosition}
+                toolbarPosition={toolbarPosition}
+                handleCloseEditTextEditor={handleCloseEditTextEditor}
+              />
+            )}
+            <div
+              ref={scrollableContainerRef}
+              className={`px-4 pb-32 w-full outline-none text-gray-800  bg-white font-light text-base text-left dark:md:bg-slate-800 dark:bg-slate-900 dark:text-white resize-none h-full overflow-y-auto  dark:dark-scrollbar light-scrollbar scrollbar-small scrollbar-gutter relative ${
+                toolbarPosition === "bottom" && "md:rounded-t-md"
+              }`}
+              onClick={handleEditorContentClick}
+              data-editor-parent-edit
             >
-              <HiOutlineArrowSmDown />
-            </Button>
-          )}
-          {showScrollToTopButton && (
-            <Button
-              variant="unstyled"
-              className={twMerge(
-                "absolute right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
-                toolbarPosition === "top" ? "bottom-6" : "bottom-24"
+              {!isClosingEditModal ? (
+                <RichTextEditor
+                  setShowHyperlinkModal={setShowHyperlinkModal}
+                  mode="edit"
+                  comandPaletteConfig={comandPaletteConfig}
+                />
+              ) : (
+                <DummyEditorContent />
               )}
-              onClick={scrollToTop}
-            >
-              <HiOutlineArrowSmUp />
-            </Button>
-          )}
 
-          {toolbarPosition === "bottom" && (
-            <EditCardToolbar
-              handleSaveEdit={handleSaveEdit}
-              setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
-              setShowHyperlinkModal={setShowHyperlinkModal}
-              setToolbarPosition={setToolbarPosition}
-              toolbarPosition={toolbarPosition}
-            />
-          )}
+              <SelectionToolbar
+                mode="edit"
+                setShowHyperlinkModal={setShowHyperlinkModal}
+              />
+            </div>
 
-          {showHyperlinkModal && (
-            <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
-          )}
-        </Slate>
-      </div>
-    </div>
+            {showScrollToBottomButton && (
+              <Button
+                variant="unstyled"
+                className={twMerge(
+                  " absolute  bottom-20 right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
+                  toolbarPosition === "top" ? "bottom-6" : "bottom-24"
+                )}
+                onClick={scrollToBottom}
+              >
+                <HiOutlineArrowSmDown />
+              </Button>
+            )}
+            {showScrollToTopButton && (
+              <Button
+                variant="unstyled"
+                className={twMerge(
+                  "absolute right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
+                  toolbarPosition === "top" ? "bottom-6" : "bottom-24"
+                )}
+                onClick={scrollToTop}
+              >
+                <HiOutlineArrowSmUp />
+              </Button>
+            )}
+
+            {toolbarPosition === "bottom" && (
+              <EditCardToolbar
+                handleSaveEdit={handleSaveEdit}
+                setShowHyperlinkModal={setShowHyperlinkModal}
+                setToolbarPosition={setToolbarPosition}
+                toolbarPosition={toolbarPosition}
+                handleCloseEditTextEditor={handleCloseEditTextEditor}
+              />
+            )}
+
+            {showHyperlinkModal && (
+              <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
+            )}
+          </Slate>
+        ) : (
+          <EditCardEditorSkeleton toolbarPosition={toolbarPosition} />
+        )}
+      </motion.div>
+    </motion.div>
   );
 };
 

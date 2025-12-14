@@ -22,6 +22,13 @@ export const renderLeaf = (leaf: CustomTextType) => {
       </u>
     );
   }
+  if (leaf.strikethrough) {
+    content = (
+      <del className="line-through decoration-gray-700 dark:decoration-gray-100">
+        {content}
+      </del>
+    );
+  }
 
   if (leaf.highlightConfig) {
     content = (

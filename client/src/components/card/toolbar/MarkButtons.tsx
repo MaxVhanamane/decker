@@ -39,7 +39,7 @@ export const MarkButtons = memo(
     return (
       <div
         className={twMerge(
-          "flex items-center justify-end  w-full md:w-fit h-full ",
+          "flex items-center justify-end  w-full md:w-fit h-full gap-1",
           mode === "edit"
             ? "border-gray-400/40 dark:border-gray-300/10 border-r md:border-none"
             : ""

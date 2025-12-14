@@ -3,6 +3,8 @@ import { useClickOutside } from "../../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../../hooks/utility/useFocusTrap";
 import Button from "../../Button";
 import { twMerge } from "tailwind-merge";
+import { AnimatePresence, motion } from "motion/react";
+import { buttonStaggerAnimation, dropdownVariants } from "./FloatingDropdown";
 
 type CodeLanguageDropdownProps = {
   value?: string;
@@ -60,8 +62,8 @@ export const CodeLanguageDropdown = memo((props: CodeLanguageDropdownProps) => {
   };
 
   return (
-    <div
-      className="absolute top-2 right-16 z-[1] select-none"
+    <motion.div
+      className="absolute top-2 right-16  select-none"
       ref={containerRef}
       contentEditable={false}
     >
@@ -89,52 +91,73 @@ export const CodeLanguageDropdown = memo((props: CodeLanguageDropdownProps) => {
           />
         </svg>
       </Button>
-
-      {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden"
-        >
-          <div className="p-2 border-b border-gray-200 dark:border-slate-600">
-            <input
-              autoComplete="off"
-              name="language-search"
-              type="text"
-              placeholder="Search languages..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-2 py-1 text-xs bg-white dark:bg-slate-800 border  border-gray-300 dark:border-slate-700 rounded focus:outline-none focus:ring-1  focus:border-slate-400 dark:focus:border-slate-500
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            variants={dropdownVariants}
+            initial="hidden"
+            animate="visible"
+            exit={{
+              opacity: 0,
+              y: -8,
+              transition: {
+                y: { duration: 0.12, ease: "easeIn" },
+                opacity: { duration: 0.15 },
+                staggerDirection: -1, // reverses stagger order on exit
+              },
+            }}
+            ref={dropdownRef}
+            className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden z-10"
+          >
+            <div className="p-2 border-b border-gray-200 dark:border-slate-600">
+              <input
+                autoComplete="off"
+                name="language-search"
+                type="text"
+                placeholder="Search languages..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full px-2 py-1 text-xs bg-white dark:bg-slate-800 border  border-gray-300 dark:border-slate-700 rounded focus:outline-none focus:ring-1  focus:border-slate-400 dark:focus:border-slate-500
  focus:ring-slate-400 dark:ring-slate-500 text-gray-700 dark:text-gray-200"
-              autoFocus
-            />
-          </div>
-          <div className="max-h-48 overflow-y-auto dark:dark-scrollbar light-scrollbar scrollbar-gutter flex items-center py-3  flex-col px-2 gap-1">
-            {filteredLanguages.length > 0 ? (
-              filteredLanguages.map((lang) => (
-                <Button
-                  variant="unstyled"
-                  type="button"
-                  key={lang.value}
-                  onClick={() => handleCodeLanguageDropdown(lang.value)}
-                  className={twMerge(
-                    "w-full flex items-center justify-start gap-2 px-1 py-2 text-xs text-left  transition-colors text-gray-700 dark:text-gray-200 rounded-md dark:focus:bg-slate-700 focus:bg-blue-50 dark:focus-visible:ring-0 focus-visible:ring-0",
-                    !isUsingKeyboard
-                      ? "hover:bg-blue-50 dark:hover:bg-slate-700"
-                      : ""
-                  )}
-                >
-                  <span>{lang.icon}</span>
-                  <span>{lang.label}</span>
-                </Button>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                No languages found
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+                autoFocus
+              />
+            </div>
+            <div className="max-h-48 overflow-y-auto dark:dark-scrollbar light-scrollbar scrollbar-gutter flex items-center py-3  flex-col px-2 gap-1">
+              {filteredLanguages.length > 0 ? (
+                filteredLanguages.map((lang, i) => {
+                  const isVisible = i < 6; // animate only the first 6 visible items
+                  return (
+                    <motion.div
+                      key={lang.value}
+                      variants={isVisible ? buttonStaggerAnimation : undefined}
+                      className="w-full"
+                    >
+                      <Button
+                        variant="unstyled"
+                        type="button"
+                        onClick={() => handleCodeLanguageDropdown(lang.value)}
+                        className={twMerge(
+                          "w-full flex items-center justify-start gap-2 px-1 py-2 text-xs text-left  transition-colors text-gray-700 dark:text-gray-200 rounded-md dark:focus:bg-slate-700 focus:bg-blue-50 dark:focus-visible:ring-0 focus-visible:ring-0",
+                          !isUsingKeyboard
+                            ? "hover:bg-blue-50 dark:hover:bg-slate-700"
+                            : ""
+                        )}
+                      >
+                        <span>{lang.icon}</span>
+                        <span>{lang.label}</span>
+                      </Button>
+                    </motion.div>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                  No languages found
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 });

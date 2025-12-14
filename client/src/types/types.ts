@@ -52,7 +52,7 @@ export type bulbColors = "red" | "yellow" | "lime" | "fuchsia" | "violet" | "cya
 //cards
 
 export type CardContentType = {
-  note: Descendant[]; cardId: string, createdAt: string, order: number, chapterId?: string
+  note: Descendant[]; cardId: string, createdAt: string, order: number, chapterId?: string, isNew?: boolean
 }
 
 export type ContentTypeForEdit = CardContentType
@@ -139,30 +139,36 @@ export type AutoHideDurationValues = | 1000
   | 9000
   | 10000
 
-export type ToastHandlerType = {
-  message: string | null,
-  severity: "info" | "success" | "warning" | "error" | null,
-  autoHideDuration?: AutoHideDurationValues,
-  position?: PositionValues,
-  buttonText?: string,
-  buttonHandler?: (() => void) | null;
-  animationStyle?: "slide" | "scale-up",
-  theme?: "auto" | "colored"
-  progressBar?: "show" | "hide",
-};
-
-export type ToastMessageType = {
-  message: string;
-  severity: "info" | "success" | "warning" | "error";
-  autoHideDuration: AutoHideDurationValues;
-  position: PositionValues;
+export type ToastSeverity = "info" | "success" | "warning" | "error";
+export type ToastAnimation = "slide" | "scale-up";
+export type ToastTheme = "auto" | "colored";
+export type ToastProgressBar = "show" | "hide";
+export interface ToastBase {
+  message: string | null;
+  severity: ToastSeverity | null;
+  autoHideDuration?: AutoHideDurationValues;
+  position?: PositionValues;
   buttonText?: string;
   buttonHandler?: (() => void) | null;
+  animationStyle?: ToastAnimation;
+  theme?: ToastTheme;
+  progressBar?: ToastProgressBar;
+  animatedText?: boolean;
+}
+
+
+export interface ToastHandlerType extends Partial<ToastBase> { }
+
+
+export interface ToastMessageType extends ToastBase {
   id: string;
-  animationStyle?: "slide" | "scale-up";
-  theme?: "auto" | "colored";
-  progressBar: "show" | "hide";
-};
+  message: string;
+  severity: ToastSeverity;
+  autoHideDuration: AutoHideDurationValues;
+  position: PositionValues;
+  progressBar: ToastProgressBar;
+}
+
 
 export type CurrentDraggingCardType = {
   isDragging: boolean;

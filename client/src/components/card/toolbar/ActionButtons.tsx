@@ -14,17 +14,22 @@ const ActionButtons = ({
 }: ActionButtonProps) => {
   return (
     <div className="flex items-center justify-center gap-2">
-      {actionButtons.map((button) => {
+      {actionButtons.map(({ icon, ...button }) => {
         return (
           <CardToolbarButton
+            {...button}
             className={twMerge(
               button.className,
               button.name === "Toggle toolbar Position" && "lg:hidden",
               button.name === "Toggle toolbar Position" &&
-                toolbarPosition === "top" &&
-                "rotate-180"
+                toolbarPosition === "bottom" &&
+                "rotate-180",
+              mode === "edit" &&
+                toolbarPosition === "bottom" &&
+                button.name === "More Options" &&
+                "rotate-0"
             )}
-            Icon={button.icon}
+            Icon={icon}
             name={button.name}
             onClickHandler={button.onClickHandler}
             toolTipText={button.toolTipText}

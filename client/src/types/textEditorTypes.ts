@@ -20,6 +20,7 @@ export type ActiveFormattingOptions = {
     underline?: boolean;
     highlightConfig?: HighlightConfig;
     inlineCode?: boolean
+    strikethrough?: boolean
 };
 
 export type InternalDecorators = {
@@ -77,6 +78,7 @@ export type ColorBarElement = {
     indentLevel?: IndentLevel
 };
 
+
 export type CodeBlockElementType = {
     type: 'code-block'
     language: string
@@ -104,31 +106,33 @@ export type DividerElement = {
     dividerStyle: DividerStyle;
     children: [{ text: '' }]; // Usually divider is a void element, but Slate needs at least one text node
 };
+export type HeadingLevel = 1 | 2 | 3
+export type HeadingElement = {
+    type: "heading"; children: Descendant[], indentLevel?: IndentLevel,
+    level: HeadingLevel
+}
 
 export type IndentLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type ParagraphElementType = { type: "paragraph"; children: Descendant[], indentLevel?: IndentLevel };
 export type BlockquoteElementType = { type: "blockquote"; children: Descendant[], indentLevel?: IndentLevel };
-export type LargeHeadingElementType = { type: "h1"; children: Descendant[], indentLevel?: IndentLevel };
-export type MediumHeadingElementType = { type: "h2"; children: Descendant[], indentLevel?: IndentLevel };
 
 export type IndentableElementType =
     | ParagraphElementType
-    | LargeHeadingElementType
-    | MediumHeadingElementType
+    | HeadingElement
     | BlockquoteElementType
     | ColorBarElement | CodeLineElement | ListElement
 
 export type IndentableElementTypeStrings = IndentableElementType['type'];
 
-export type CustomElementFormatType = "code-block" | "paragraph" | "link" | "h1" | "h2" | ListType | "list-item" | "blockquote" | "divider" | "color-bar"
+export type CustomElementFormatType = "code-block" | "paragraph" | "link" | ListType | "list-item" | "blockquote" | "divider" | "color-bar" | "heading"
 
 export type CustomTextType = {
     text: string;
 } & FormattingOptions;
 
 
-export type CustomElementType = ParagraphElementType | ListItemTextElementType | CodeBlockElementType | LinkElementType | LargeHeadingElementType | MediumHeadingElementType | TitleElementType | ListItemElement | ListElement | BlockquoteElementType | DividerElement | CodeLineElement | ColorBarElement;
+export type CustomElementType = ParagraphElementType | ListItemTextElementType | CodeBlockElementType | LinkElementType | HeadingElement | TitleElementType | ListItemElement | ListElement | BlockquoteElementType | DividerElement | CodeLineElement | ColorBarElement;
 
 declare module "slate" {
     interface CustomTypes {
@@ -152,7 +156,7 @@ export type MarkButtonConfig = {
     icon: IconType;
     className: string;
     tabIndex: number;
-    format: "underline" | "bold" | "italic" | "highlightConfig" | "inlineCode";
+    format: "underline" | "bold" | "italic" | "highlightConfig" | "inlineCode" | "strikethrough";
     ref?: React.RefObject<HTMLButtonElement>;
     hasDropdown?: boolean;
 };
@@ -166,6 +170,7 @@ export type ActionButtonsConfig = {
     icon: IconType;
     className: string;
     tabIndex: number;
+    [key: `data-${string}`]: string | number | boolean | undefined;
 };
 export type StructureButtonsConfig = {
     name: string;
@@ -176,6 +181,7 @@ export type StructureButtonsConfig = {
     tabIndex: number;
     withTooltip: boolean;
 };
+
 export type HistoryButtonsConfig = {
     name: string;
     onClickHandler: () => void;

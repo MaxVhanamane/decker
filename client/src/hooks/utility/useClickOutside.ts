@@ -7,12 +7,14 @@ function useClickOutside(
     callback: () => void,
     options?: {
         excludeRefs?: RefObject<HTMLElement>[];
+        excludeSelectors?: string[],
         eventType?: 'mousedown' | 'click';
     }
 ): void {
     const callbackRef = useRef(callback);
     const {
         excludeRefs = [],
+        excludeSelectors = [],
         eventType = 'mousedown'
     } = options || {};
 
@@ -36,6 +38,14 @@ function useClickOutside(
                     return;
                 }
             }
+            if (excludeSelectors.length > 0) {
+                const el = target as Element;
+                const selectorString = excludeSelectors.join(', ');
+
+                if (el.matches(selectorString) || el.parentElement?.matches(selectorString)) {
+                    return; // ignore click
+                }
+            }
 
 
             // If we get here, it's a valid outside click
@@ -53,7 +63,7 @@ function useClickOutside(
         // However, each individual ref in the array has a stable reference and doesn't change on re-renders.
         // So spreading the refs ensures that useEffect only re-runs when an actual ref changes.
 
-    }, [ref, enabled, ...excludeRefs, eventType]);
+    }, [ref, enabled, eventType, ...excludeRefs, ...excludeSelectors]);
 }
 
 export { useClickOutside };

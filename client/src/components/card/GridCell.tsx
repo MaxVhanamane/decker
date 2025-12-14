@@ -44,7 +44,6 @@ const GridCell = ({ columnIndex, rowIndex, style, data }: GridCellProps) => {
         index={cardIndex}
         handleEditCardButtonClick={handleEditCardButtonClick}
         handleShowFullScreen={handleShowFullScreen}
-        key={card?.cardId}
         handleDeleteCard={handleDeleteCard}
       />
     </div>

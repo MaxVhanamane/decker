@@ -63,7 +63,8 @@ export const ToastNotificationContextProvider = ({
         a.buttonHandler === b.buttonHandler &&
         a.animationStyle === b.animationStyle &&
         a.theme === b.theme &&
-        a.progressBar === b.progressBar
+        a.progressBar === b.progressBar &&
+        a.animatedText === b.animatedText
       );
     },
     []
@@ -86,8 +87,8 @@ export const ToastNotificationContextProvider = ({
           animationStyle: newToast?.animationStyle ?? "scale-up",
           theme: newToast?.theme ?? "auto",
           progressBar: newToast?.progressBar ?? "show",
+          animatedText: newToast?.animatedText ?? true,
         };
-
         setAllToasts((prevToasts) => {
           const alreadyExists = prevToasts.some((toastInfo) =>
             isMessageEqual(toastInfo, normalizedNewToast)

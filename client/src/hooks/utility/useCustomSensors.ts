@@ -1,17 +1,17 @@
-import { KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useRef } from "react";
 
 const useCustomSensors = () => {
     const sensors = useRef([
-        useSensor(MouseSensor, {
+        useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 3
+                distance: 1
             }
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 500,
-                tolerance: { x: 3, y: 3 }
+                delay: 0,
+                tolerance: { x: 1, y: 1 }
             }
         })
         ,

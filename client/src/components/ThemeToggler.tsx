@@ -1,7 +1,6 @@
 import { useContext, FC, memo } from "react";
 import { RiSunFill } from "react-icons/ri";
-
-import { AudioContext } from "../context/AudioContext";
+import { useAudio } from "../context/AudioContext";
 import { ThemeContext } from "../context/ThemeContext";
 import Button from "./Button";
 import { BulbContext } from "../context/BulbContext";
@@ -12,16 +11,14 @@ type PropType = {
 
 const ThemeToggler: FC<PropType> = memo(({ ParentComponentName }) => {
   const { theme, setTheme } = useContext(ThemeContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const { showBulb, setShowBulb } = useContext(BulbContext);
 
   const handleClick = () => {
-    if (isPlayingAudioAllowed) {
-      if (theme === "dark") {
-        handlePlayAudio("switchOnAudioSound");
-      } else {
-        handlePlayAudio("switchOffAudioSound");
-      }
+    if (theme === "dark") {
+      handlePlayAudio("switchOnAudioSound");
+    } else {
+      handlePlayAudio("switchOffAudioSound");
     }
 
     localStorage.setItem("theme", theme === "dark" ? "light" : "dark");

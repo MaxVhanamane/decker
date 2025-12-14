@@ -3,6 +3,7 @@ import {
   SetStateAction,
   createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -59,6 +60,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handlePlayAudio = useCallback(
     (audioName: AudioNamesType, path?: string) => {
+      if (!isPlayingAudioAllowed) return;
       //If the user is on the "/cards" page and performs an action that triggers a sound, such as deleting a card, and then immediately navigates to the home page ("/"), we will not play the sound. This decision is based on the understanding that there is no need to play the sound when the user has already left the page.
       if (
         (path && !path.startsWith("/cards") && path !== location?.pathname) ||
@@ -86,7 +88,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
         audio.play();
       }
     },
-    [isPlaying.current, audio]
+    [isPlaying.current, audio, isPlayingAudioAllowed]
   );
 
   useEffect(() => {
@@ -119,4 +121,12 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <AudioContext.Provider value={value}>{children}</AudioContext.Provider>
   );
+};
+
+export const useAudio = () => {
+  const ctx = useContext(AudioContext);
+  if (!ctx) {
+    throw new Error("useAudio must be used inside an <AudioProvider />");
+  }
+  return ctx;
 };

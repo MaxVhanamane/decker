@@ -544,7 +544,7 @@ app.put('/deck/undodeck', fetchUserDetails, async (req, res) => {
   try {
     const { deckId } = req.body;
     const userId = req.user?._id;
-
+    const data = await DeckModel.find({ order: { $exists: false } })
     const result = await DeckModel.findOneAndUpdate(
       {
         deckId,

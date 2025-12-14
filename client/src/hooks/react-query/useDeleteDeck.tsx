@@ -14,7 +14,7 @@ import { useContext } from "react";
 import useUndoDeck from "./useUndoDeck";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { OfflineContext } from "../../context/OfflineContext";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 
 const deleteDeck = async ({
   deckId,
@@ -38,7 +38,7 @@ const useDeleteDeck = () => {
   const { mutate: undoDeckItem } = useUndoDeck();
   const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const queryClient = useQueryClient();
   let deletedDeckItem: UndoDeckType | null = null;
   return useMutation({
@@ -165,11 +165,10 @@ const useDeleteDeck = () => {
           buttonText: "Undo",
           buttonHandler: () => undoDeckItem(nonNullDeckItem),
         });
-        if (isPlayingAudioAllowed) {
-          setTimeout(() => {
-            handlePlayAudio("deletedSuccessfully", "/");
-          }, 100);
-        }
+
+        setTimeout(() => {
+          handlePlayAudio("deletedSuccessfully", "/");
+        }, 100);
       }
     },
 

@@ -16,7 +16,7 @@ import { Helmet } from "react-helmet";
 import { OfflineContext } from "../context/OfflineContext";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { CustomError } from "../utils/customError";
-import { AudioContext } from "../context/AudioContext";
+import { useAudio } from "../context/AudioContext";
 import Bulb from "../components/Bulb";
 import DeckItemsContainer from "../components/deck/DeckItemsContainer";
 import DeckCreationForm from "../components/deck/DeckCreationForm";
@@ -33,6 +33,7 @@ import DeckSkeleton from "../components/deck/skeleton/DeckSkeleton";
 import { getDeckSkeletonCounts } from "../utils/deckUtils";
 import LoadingCentered from "../components/Loading/LoadingCentered";
 import { generateKeyBetween } from "fractional-indexing-jittered";
+import { AnimatePresence } from "motion/react";
 
 function Deck() {
   const { showToast } = useContext(ShowToastContext);
@@ -40,7 +41,7 @@ function Deck() {
   const { setAllDecksState } = useContext(DndSettersContext);
   const { deckContainerRef } = useContext(DeckContext);
   const { isOnline } = useContext(OfflineContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const { data: allDecks, error, isError, isLoading } = useGetDecks();
   const {
     mutate: createDeck,
@@ -54,8 +55,7 @@ function Deck() {
   const [isDecksStateReady, setIsDecksStateReady] = useState(false);
   const [openEditDeckModal, setOpenEditDeckModal] = useState<boolean>(false);
   const [editData, setEditData] = useState({ deckId: "", title: "" });
-  const [animateCloseEditDeckModal, setAnimateCloseEditDeckModal] =
-    useState(false);
+
   const inputRefElement = useRef<HTMLInputElement>(null);
   const pinnedDecksRef = useRef<DeckItemType[]>([]);
   const otherDecksRef = useRef<DeckItemType[]>([]);
@@ -67,7 +67,7 @@ function Deck() {
   useModalBackNavigationHandler({
     isOpen: openEditDeckModal,
     modalKey: "editDeck",
-    closeModal: () => setAnimateCloseEditDeckModal(true),
+    closeModal: () => setOpenEditDeckModal(false),
   });
 
   useToastOnError({
@@ -151,11 +151,9 @@ function Deck() {
           },
           {
             onSuccess: () => {
-              if (isPlayingAudioAllowed) {
-                setTimeout(() => {
-                  handlePlayAudio("createdSuccessfully", "/");
-                }, 100);
-              }
+              setTimeout(() => {
+                handlePlayAudio("createdSuccessfully", "/");
+              }, 100);
             },
           }
         );
@@ -167,20 +165,16 @@ function Deck() {
         showToast({
           message: "The deck title should be at least one character long.",
           severity: "warning",
-          autoHideDuration: 5000,
+          autoHideDuration: 4000,
           position: "top-center",
           animationStyle: "scale-up",
           theme: "auto",
+          animatedText: true,
+          progressBar: "hide",
         });
       }
     },
-    [
-      isOnline,
-      inputRefElement,
-      createDeck,
-      isPlayingAudioAllowed,
-      handlePlayAudio,
-    ]
+    [isOnline, inputRefElement, createDeck, handlePlayAudio]
   );
 
   const handlePin = useCallback(
@@ -309,18 +303,15 @@ function Deck() {
             heading={pinnedDecks.length > 0 ? "Others" : "Decks"}
           />
         ) : null}
-
-        {openEditDeckModal ? (
-          <EditModalForDeck
-            openEditDeckModal={openEditDeckModal}
-            setOpenEditDeckModal={setOpenEditDeckModal}
-            editData={editData}
-            setEditData={setEditData}
-            animateCloseEditDeckModal={animateCloseEditDeckModal}
-            setAnimateCloseEditDeckModal={setAnimateCloseEditDeckModal}
-          />
-        ) : null}
-
+        <AnimatePresence>
+          {openEditDeckModal ? (
+            <EditModalForDeck
+              setOpenEditDeckModal={setOpenEditDeckModal}
+              editData={editData}
+              setEditData={setEditData}
+            />
+          ) : null}
+        </AnimatePresence>
         {allDecks?.decks.length === 0 && (
           <NoContent
             heading="Looks like you haven't added any decks yet."

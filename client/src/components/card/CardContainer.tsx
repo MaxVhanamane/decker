@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { CardContentType, ContentTypeForEdit } from "../../types/types";
 import { CardContext } from "../../context/CardContext";
-import { Descendant } from "slate";
+import { AnimatePresence, motion } from "motion/react";
 import { FixedSizeGrid } from "react-window";
 import GridCell from "./GridCell";
 import { twMerge } from "tailwind-merge";
@@ -18,15 +18,12 @@ import { BulbContext } from "../../context/BulbContext";
 import { useStableParams } from "../../context/stableParamsContext";
 import { SidebarContex } from "../../context/SidebarContext";
 import useWindowDimension from "../../hooks/utility/useWindowDimension";
+import { DndCurrentDraggingCardContext } from "../../context/DndItemContext";
 type ContentForFullScreen = CardContentType & {
   cardIndex: number | null;
 };
 type PropType = {
-  cards: {
-    note: Descendant[];
-    cardId: string;
-    createdAt: string;
-  }[];
+  cards: CardContentType[];
 
   handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
   handleShowFullScreen: (card: ContentForFullScreen) => void;
@@ -46,6 +43,7 @@ const CardContainer = ({
   const { chapterId } = useStableParams();
   const { undoCardCardId, setUndoCardId } = useContext(CardContext);
   const { mutate: deleteCard } = useDeleteCard();
+  const outerGridRef = useRef<HTMLDivElement>(null);
   const { bulbRef } = useContext(BulbContext);
   const { isSidebarOpen } = useContext(SidebarContex);
   const windowDimensions = useWindowDimension();
@@ -119,7 +117,6 @@ const CardContainer = ({
       if (cardIndex !== -1) {
         const rowIndex = Math.floor(cardIndex / columnsPerRow);
 
-        // Use React Window's scrollToItem method for precise scrolling
         if (gridRef.current) {
           gridRef.current.scrollToItem({
             rowIndex,
@@ -142,11 +139,12 @@ const CardContainer = ({
     }
   }, [undoCardCardId, cards, columnsPerRow, bulbRef, setUndoCardId]);
 
-  const handleDeleteCard = ({ deckId, cardInfo }: CardDeletionParams) => {
-    deleteCard({ deckId, cardInfo, chapterId });
-  };
-
-  const outerGridRef = useRef<HTMLDivElement>(null);
+  const handleDeleteCard = useCallback(
+    ({ deckId, cardInfo }: CardDeletionParams) => {
+      deleteCard({ deckId, cardInfo, chapterId });
+    },
+    [deleteCard, chapterId]
+  );
 
   const gridData = useMemo(
     () => ({
@@ -164,28 +162,62 @@ const CardContainer = ({
       handleDeleteCard,
     ]
   );
-
+  const { currentDraggingCard } = useContext(DndCurrentDraggingCardContext);
   return (
     <div className="flex items-center justify-center w-full mb-8 animate-opacity_page_transition ">
       <SortableContext items={items} strategy={rectSortingStrategy}>
-        <FixedSizeGrid
-          columnCount={columnsPerRow}
-          rowCount={totalRows}
-          itemData={gridData}
-          height={gridContainerHeight}
-          width={gridContainerWidth}
-          overscanRowCount={2}
-          columnWidth={eachColumnWidth}
-          rowHeight={eachRowHeight}
-          className={twMerge(
-            "!overflow-x-hidden overflow-y-auto scrollbar-gutter pb-20  ",
-            cards.length > 50 && "dark:dark-scrollbar light-scrollbar"
-          )}
-          outerRef={outerGridRef}
-          ref={gridRef}
-        >
-          {GridCell}
-        </FixedSizeGrid>
+        <div className="relative ">
+          <AnimatePresence>
+            {currentDraggingCard && (
+              <motion.svg
+                key="border"
+                className="absolute inset-0 pointer-events-none z-[90]"
+                width="100%"
+                height="100%"
+              >
+                <motion.rect
+                  strokeLinecap="butt"
+                  strokeLinejoin="miter"
+                  x="0"
+                  y="0"
+                  width="100%"
+                  height="100%"
+                  rx="8"
+                  ry="8"
+                  className="stroke-slate-500"
+                  strokeWidth={2}
+                  fill="transparent"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  exit={{ pathLength: 0 }} //  reverse animation
+                  transition={{
+                    duration: 0.8,
+                    ease: "easeInOut",
+                  }}
+                />
+              </motion.svg>
+            )}
+          </AnimatePresence>
+
+          <FixedSizeGrid
+            columnCount={columnsPerRow}
+            rowCount={totalRows}
+            itemData={gridData}
+            height={gridContainerHeight}
+            width={gridContainerWidth}
+            overscanRowCount={2}
+            columnWidth={eachColumnWidth}
+            rowHeight={eachRowHeight}
+            className={twMerge(
+              "!overflow-x-hidden overflow-y-auto scrollbar-gutter pb-20  ",
+              cards.length > 50 && "dark:dark-scrollbar light-scrollbar"
+            )}
+            outerRef={outerGridRef}
+            ref={gridRef}
+          >
+            {GridCell}
+          </FixedSizeGrid>
+        </div>
       </SortableContext>
     </div>
   );

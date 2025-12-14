@@ -6,7 +6,7 @@ import SearchBar from "../search/SearchBar";
 import { HiOutlineSearch } from "react-icons/hi";
 import { searchContext } from "../../context/SearchContext";
 import { HiMiniSpeakerWave } from "react-icons/hi2";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { ThemeContext } from "../../context/ThemeContext";
 import UserMenu from "./UserMenu";
 import { useModalBackNavigationHandler } from "../../hooks/utility/useModalBackNavigationHandler";
@@ -19,7 +19,6 @@ import { CustomError } from "../../utils/customError";
 import Button from "../Button";
 import { useStableNavigate } from "../../context/StableNavigateContext";
 import BulbControls from "./BulbControls";
-import { RxHamburgerMenu } from "react-icons/rx";
 import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
 import { SidebarContex } from "../../context/SidebarContext";
 
@@ -28,8 +27,8 @@ const Navbar = () => {
   const { showSearchBar, setShowSearchBar } = useContext(searchContext);
   const { toggleSidebar } = useContext(SidebarContex);
 
-  const { isPlayingAudioAllowed, setIsPlayingAudioAllowed, handlePlayAudio } =
-    useContext(AudioContext);
+  const { handlePlayAudio, isPlayingAudioAllowed, setIsPlayingAudioAllowed } =
+    useAudio();
   const { theme } = useContext(ThemeContext);
   const isMobileOrTablet = useIsDeviceType("tablet");
 
@@ -170,7 +169,17 @@ const Navbar = () => {
         {location.pathname.startsWith("/cards") && isMobileOrTablet && (
           <div className="flex items-center justify-center rounded p-2 px-2.5 gap-2">
             <Button variant="unstyled" onClick={() => toggleSidebar(true)}>
-              <RxHamburgerMenu className="text-2xl dark:text-gray-200 text-gray-700 cursor-pointer" />
+              <svg
+                width="25"
+                height="25"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+                data-rtl-flip=""
+                className="text-2xl dark:text-gray-200 text-gray-700 cursor-pointer"
+              >
+                <path d="M11.6663 12.6686L11.801 12.6823C12.1038 12.7445 12.3313 13.0125 12.3313 13.3337C12.3311 13.6547 12.1038 13.9229 11.801 13.985L11.6663 13.9987H3.33325C2.96609 13.9987 2.66839 13.7008 2.66821 13.3337C2.66821 12.9664 2.96598 12.6686 3.33325 12.6686H11.6663ZM16.6663 6.00163L16.801 6.0153C17.1038 6.07747 17.3313 6.34546 17.3313 6.66667C17.3313 6.98788 17.1038 7.25586 16.801 7.31803L16.6663 7.33171H3.33325C2.96598 7.33171 2.66821 7.03394 2.66821 6.66667C2.66821 6.2994 2.96598 6.00163 3.33325 6.00163H16.6663Z"></path>
+              </svg>
             </Button>
           </div>
         )}
@@ -209,11 +218,9 @@ const Navbar = () => {
                 onClick={() => {
                   setShowSearchBar(true);
 
-                  if (isPlayingAudioAllowed) {
-                    setTimeout(() => {
-                      handlePlayAudio("open");
-                    }, 100);
-                  }
+                  setTimeout(() => {
+                    handlePlayAudio("open");
+                  }, 100);
                 }}
                 className={`rounded-full p-[0.4rem] w-10 h-10  dark:hover:bg-gray-700 hover:bg-gray-100 ${
                   !showSearchBar

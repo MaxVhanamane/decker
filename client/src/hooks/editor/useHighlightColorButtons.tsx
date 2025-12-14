@@ -10,6 +10,8 @@ import { Dispatch, SetStateAction, useMemo } from "react";
 import { highlightColorOptions } from "../../utils/editor/styles/highlightStyles";
 import { useSlateStatic } from "slate-react";
 import { Range } from "slate";
+import { buttonStaggerAnimation } from "../../components/editor/dropdowns/FloatingDropdown";
+import { motion } from "motion/react";
 
 type useHighlightColorButtonsProps = {
   activeHighlightConfig?: {
@@ -80,16 +82,19 @@ export const useHighlightColorButtons = <
                 onSelect({ color: color, style: selectedHighlightStyle });
               }}
             >
-              <div
+              <motion.div
+                variants={buttonStaggerAnimation}
                 className={twMerge(
-                  "flex flex-col justify-center items-center w-full rounded ",
+                  "flex flex-col justify-center items-center w-full",
                   selectedHighlightStyle === "plain"
                     ? backgroundColor
-                    : backgroundColorWavy
+                    : backgroundColorWavy,
+                  selectedHighlightStyle === "wavy" &&
+                    "wavy-highlight px-1 -mx-1"
                 )}
               >
                 {color[0].toUpperCase() + color.slice(1)}
-              </div>
+              </motion.div>
             </Button>
           );
         } else {

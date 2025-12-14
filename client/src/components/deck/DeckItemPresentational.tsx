@@ -1,8 +1,9 @@
 import { twMerge } from "tailwind-merge";
 import Button from "../Button";
-import { BsFillPinFill, BsThreeDotsVertical, BsPin } from "react-icons/bs";
+import { BsThreeDotsVertical } from "react-icons/bs";
 import type { DeckItemType } from "../../types/types";
 import { formatDate } from "../../functions/formatDate";
+import { RiDraggable } from "react-icons/ri";
 
 type DeckItemPresentationalPropType = {
   deck: DeckItemType & {
@@ -58,19 +59,15 @@ const DeckItemPresentational = ({
       ></div>
 
       <Button
-        variant="plain"
-        size="md"
-        className="absolute  dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
+        variant="unstyled"
+        aria-label="Press and hold to drag"
+        className={twMerge(
+          "absolute top-2 left-2 text-gray-600 dark:text-slate-300 z-50 hover:text-gray-700 dark:hover:text-slate-400 rounded-full p-[0.2rem] w-6 h-6  transition-colors duration-300 hover:bg-gray-300 dark:hover:bg-slate-700 dark:bg-slate-800 bg-gray-200   ",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
       >
-        <p className=" rounded-tr text-sm px-1  text-center text-gray-600 dark:text-slate-500  group-hover/Btn:scale-95">
-          {deck.pinned ? (
-            <BsFillPinFill className="text-[0.9rem]" />
-          ) : (
-            <BsPin />
-          )}
-        </p>
+        <RiDraggable />
       </Button>
-
       <div>
         <Button
           variant="plain"

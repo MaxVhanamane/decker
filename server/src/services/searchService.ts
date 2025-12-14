@@ -3,7 +3,7 @@ import DeckModel from '../models/deck';
 import CardModel from '../models/card';
 import ChapterModel from '../models/chapter';
 
-// ---- Result types ----
+// - Result types -
 export type DeckSearchResult = {
     type: 'deck';
     deckId: string;

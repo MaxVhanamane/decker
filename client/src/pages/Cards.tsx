@@ -14,6 +14,7 @@ import { useStableNavigate } from "../context/StableNavigateContext";
 import { useStableParams } from "../context/stableParamsContext";
 import useDeleteCard from "../hooks/react-query/useDeleteCard";
 import useToastOnError from "../hooks/utility/useToastOnError";
+import { AnimatePresence } from "motion/react";
 import { Helmet } from "react-helmet";
 import type { CardContentType, ContentTypeForEdit } from "../types/types";
 import { OfflineContext } from "../context/OfflineContext";
@@ -23,7 +24,7 @@ import EditCard from "../components/card/EditCard";
 import { searchContext } from "../context/SearchContext";
 import CardToolbar from "../components/card/toolbar/CardToolbar";
 import { CustomError } from "../utils/customError";
-import { AudioContext } from "../context/AudioContext";
+import { useAudio } from "../context/AudioContext";
 import CardInput from "../components/card/CardInput";
 import TrashCanDropZone from "../components/TrashCanDropZone";
 import { CardContext } from "../context/CardContext";
@@ -36,7 +37,6 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import NoContent from "../components/NoContent";
 import { Descendant } from "slate";
 import FullScreenCardView from "../components/card/FullScreenCardView";
-import { twMerge } from "tailwind-merge";
 import debounce from "lodash/debounce";
 import { hasValidNoteContent } from "../utils/editor/hasValidNoteContent";
 import { usePrismTheme } from "../hooks/utility/usePrismTheme";
@@ -47,6 +47,7 @@ import { createPortal } from "react-dom";
 import CardsSkeleton from "../components/card/skeleton.tsx/CardsSkeleton";
 import ChaptersSidebar from "../components/chapters/ChaptersSidebar";
 import { getDeckInfo } from "../functions/deckDataManager";
+import { twMerge } from "tailwind-merge";
 
 // const Tips = lazy(() => import("../components/card/Tips"));
 
@@ -71,7 +72,7 @@ const Cards = ({ mode }: CardsProps) => {
   const { animateSearchBar } = useContext(searchContext);
   const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
-  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const { allCardsState } = useContext(DndStateContext);
   const { setAllCardsState } = useContext(DndSettersContext);
   const { theme } = useContext(ThemeContext);
@@ -102,6 +103,7 @@ const Cards = ({ mode }: CardsProps) => {
     error: editCardError,
   } = useEditCard();
   const [isCardsStateReady, setIsCardsStateReady] = useState(false);
+  const [isClosingEditModal, setIsClosingEditModal] = useState(false);
   // const [note, setNote] = useState<Descendant[]>(initialValue);
   const [showTips, setShowTips] = useState(false);
   const [showEditModalForCard, setShowEditModalForCard] = useState(false);
@@ -109,9 +111,8 @@ const Cards = ({ mode }: CardsProps) => {
   const [height, setHeight] = useState(() =>
     window.innerWidth < 640 ? 200 : 250
   );
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [expandEditor, setExpandEditor] = useState(false);
-  const [closeFullScreenWithAnimation, setCloseFullScreenWithAnimation] =
-    useState(false);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const isSmallScreen = useIsDeviceType("phone");
   const isLargePhone = useIsDeviceType("tablet");
@@ -136,8 +137,6 @@ const Cards = ({ mode }: CardsProps) => {
     state?.isNewChapter ?? false
   );
 
-  const [closeEditModalWithAnimation, setCloseEditModalWithAnimation] =
-    useState(false);
   const [fullScreenCardData, setFullScreenCardData] =
     useState<ContentForFullScreen | null>(null);
   const [editContent, setEditContent] = useState<ContentTypeForEdit | null>(
@@ -212,7 +211,7 @@ const Cards = ({ mode }: CardsProps) => {
   useModalBackNavigationHandler({
     isOpen: showEditModalForCard,
     modalKey: "editModalForCard",
-    closeModal: () => setCloseEditModalWithAnimation(true),
+    closeModal: () => handleCloseEditTextEditor(),
   });
 
   useModalBackNavigationHandler({
@@ -230,7 +229,7 @@ const Cards = ({ mode }: CardsProps) => {
   useModalBackNavigationHandler({
     isOpen: showFullScreen,
     modalKey: "showFullScreen",
-    closeModal: () => setCloseFullScreenWithAnimation(true),
+    closeModal: () => setShowFullScreen(false),
   });
 
   useModalBackNavigationHandler({
@@ -278,6 +277,20 @@ const Cards = ({ mode }: CardsProps) => {
       debouncedResize.cancel?.(); // Cancel pending debounced calls
     };
   }, [isSmallScreen]);
+
+  useEffect(() => {
+    if (isClosingEditModal) {
+      setShowEditModalForCard(false);
+      setIsClosingEditModal(false);
+    }
+  }, [isClosingEditModal]);
+
+  const handleCloseEditTextEditor = useCallback(() => {
+    setIsClosingEditModal(true);
+  }, []);
+  const handleOpenMoreFormatingMenu = useCallback(() => {
+    setIsMoreMenuOpen((prev) => !prev);
+  }, []);
 
   const discardNoteAndCloseTextEditor = useCallback(() => {
     setModalState((prev) => ({
@@ -370,6 +383,7 @@ const Cards = ({ mode }: CardsProps) => {
     },
     [data, isSmallScreen]
   );
+
   // onClick handlers
   const handleCreateCard = useCallback(
     (
@@ -388,7 +402,6 @@ const Cards = ({ mode }: CardsProps) => {
         });
         return;
       }
-
       if (isCreatingCard) {
         showToast({
           message:
@@ -427,11 +440,9 @@ const Cards = ({ mode }: CardsProps) => {
         resetEditor();
 
         setHeight(250);
-        if (isPlayingAudioAllowed) {
-          setTimeout(() => {
-            handlePlayAudio("createdSuccessfully", "/cards");
-          }, 100);
-        }
+        setTimeout(() => {
+          handlePlayAudio("createdSuccessfully", "/cards");
+        }, 100);
       } else {
         showToast({
           message: "Title or note should contain one or more characters!",
@@ -449,7 +460,6 @@ const Cards = ({ mode }: CardsProps) => {
       chapterId,
       isCreatingCard,
       isFetchingCards,
-      isPlayingAudioAllowed,
       isOnline,
       maxOrder,
     ]
@@ -535,16 +545,14 @@ const Cards = ({ mode }: CardsProps) => {
 
         editCard(data, {
           onError: () => {
-            setEditContent(contentWithCardIndex),
-              setShowEditModalForCard(true),
-              setCloseEditModalWithAnimation(false);
+            setEditContent(contentWithCardIndex), setShowEditModalForCard(true);
             // If some error occures while saving the edited data we will also reset the fullscreen card data to the old data.
             if (showFullScreen && fullScreenCardDataCache) {
               setFullScreenCardData({ ...fullScreenCardDataCache });
             }
           },
         });
-        setCloseEditModalWithAnimation(true);
+        handleCloseEditTextEditor();
 
         // If the user opens the full screen card view and then clicks on the edit card button, we will display the updated data on full screen once the user saves the edited card.
 
@@ -571,6 +579,7 @@ const Cards = ({ mode }: CardsProps) => {
     editContent,
     isOnline,
     fullScreenCardData,
+    handleCloseEditTextEditor,
   ]);
 
   const handleTransitionEnd = useCallback(() => {
@@ -578,20 +587,6 @@ const Cards = ({ mode }: CardsProps) => {
       setIsTransitioning(false);
     }
   }, [data]);
-
-  const computedTransform = useMemo(() => {
-    if (expandEditor) {
-      return isLargePhone
-        ? height === 200
-          ? "translateY(100px)"
-          : `translateY(${height - 90}px)`
-        : height === 250
-        ? "translateY(120px)"
-        : `translateY(${height - 120}px)`;
-    } else {
-      return `translateY(${isLargePhone ? "-66px" : "-80px"})`;
-    }
-  }, [expandEditor, height, isLargePhone]);
 
   const cardToolbar = useMemo(
     () => (
@@ -605,6 +600,7 @@ const Cards = ({ mode }: CardsProps) => {
         tabbable={expandEditor}
         setShowHyperlinkModal={setShowHyperlinkModal}
         mode="create"
+        handleOpenMoreFormatingMenu={handleOpenMoreFormatingMenu}
       />
     ),
     [
@@ -676,20 +672,21 @@ const Cards = ({ mode }: CardsProps) => {
           showHyperlinkModal={showHyperlinkModal}
           setHeight={setHeight}
           handleTransitionEnd={handleTransitionEnd}
+          isMoreMenuOpen={isMoreMenuOpen}
+          handleOpenMoreFormatingMenu={handleOpenMoreFormatingMenu}
         >
           {cardToolbar}
         </CardInput>
 
         <div
           className={twMerge(
-            "flex items-center flex-col justify-center transition-transform duration-1000 lg:delay-[0s] will-change-transform",
-            expandEditor ? "delay-0" : "delay-1000"
+            "flex flex-col items-center justify-center duration-1000 transition-transform ",
+            !expandEditor && isLargePhone
+              ? "-translate-y-14 delay-1000"
+              : "-translate-y-0 delay-0"
           )}
-          style={{
-            transform: computedTransform,
-          }}
         >
-          <h1 className="text-gray-500 mb-10 dark:text-gray-400 text-sm">
+          <h1 className="text-gray-500 my-8 dark:text-gray-400 text-sm">
             {deckInfo.deckTitle?.length > 30
               ? deckInfo.deckTitle.slice(0, 30) + "…"
               : deckInfo.deckTitle}
@@ -728,11 +725,10 @@ const Cards = ({ mode }: CardsProps) => {
               buttonLabel="Craft an Elegant Note"
               onButtonClick={() => {
                 setExpandEditor(true);
-                if (isPlayingAudioAllowed) {
-                  setTimeout(() => {
-                    handlePlayAudio("open", "/cards");
-                  }, 100);
-                }
+
+                setTimeout(() => {
+                  handlePlayAudio("open", "/cards");
+                }, 100);
               }}
               imageAltText="No cards found!"
             />
@@ -744,15 +740,15 @@ const Cards = ({ mode }: CardsProps) => {
             buttonLabel="Craft an Elegant Note"
             onButtonClick={() => {
               setExpandEditor(true);
-              if (isPlayingAudioAllowed) {
-                setTimeout(() => {
-                  handlePlayAudio("open", "/cards");
-                }, 100);
-              }
+
+              setTimeout(() => {
+                handlePlayAudio("open", "/cards");
+              }, 100);
             }}
             imageAltText="No cards found!"
           />
         )}
+        <div className="h-10 w-full  flex-shrink-0"></div>
         {/* Here, I am placing the Bulb component after the CardContainer because transform or will-change creates a new stacking context, causing the Bulb to get hidden behind it. This makes it unclickable. However, placing the Bulb component after the CardContainer solves the problem. */}
         <Bulb shouldDimBulb={isSmallScreen && expandEditor} />
         <TrashCanDropZone
@@ -783,32 +779,61 @@ const Cards = ({ mode }: CardsProps) => {
           }
         />
       )}
-
-      {showFullScreen && (
-        <FullScreenCardView
-          fullScreenCardData={fullScreenCardData}
-          setShowFullScreen={setShowFullScreen}
-          handleEditCardButtonClick={handleEditCardButtonClick}
-          handleDelete={handleDelete}
-          closeFullScreenWithAnimation={closeFullScreenWithAnimation}
-          setCloseFullScreenWithAnimation={setCloseFullScreenWithAnimation}
-          setShowScrollButtons={setShowScrollButtons}
-          showScrollButtons={showScrollButtons}
-        />
-      )}
-      {showEditModalForCard ? (
-        <EditCard
-          setShowEditModalForCard={setShowEditModalForCard}
-          editContent={editContent}
-          setEditContent={setEditContent}
-          handleSaveEdit={handleSaveEdit}
-          showEditModalForCard={showEditModalForCard}
-          setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
-          closeEditModalWithAnimation={closeEditModalWithAnimation}
-        />
-      ) : null}
+      <AnimatePresence>
+        {showFullScreen && (
+          <FullScreenCardView
+            key={fullScreenCardData?.cardId}
+            fullScreenCardData={fullScreenCardData}
+            setShowFullScreen={setShowFullScreen}
+            handleEditCardButtonClick={handleEditCardButtonClick}
+            handleDelete={handleDelete}
+            setShowScrollButtons={setShowScrollButtons}
+            showScrollButtons={showScrollButtons}
+            source="deck"
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showEditModalForCard ? (
+          <EditCard
+            key={editContent?.cardId}
+            editContent={editContent}
+            setEditContent={setEditContent}
+            handleSaveEdit={handleSaveEdit}
+            source="deck"
+            isCardFullscreen={showFullScreen}
+            handleCloseEditTextEditor={handleCloseEditTextEditor}
+            isClosingEditModal={isClosingEditModal}
+          />
+        ) : null}
+      </AnimatePresence>
     </>
   );
 };
 
 export default memo(Cards);
+
+// const computedTransform = useMemo(() => {
+//   if (expandEditor) {
+//     return isLargePhone
+//       ? height === 200
+//         ? "translateY(100px)"
+//         : `translateY(${height - 90}px)`
+//       : height === 250
+//       ? "translateY(120px)"
+//       : `translateY(${height - 120}px)`;
+//   } else {
+//     return `translateY(${isLargePhone ? "-66px" : "-80px"})`;
+//   }
+// }, [expandEditor, height, isLargePhone]);
+// const targetY = expandEditor
+//   ? isLargePhone
+//     ? height === 200
+//       ? 100
+//       : height - 90
+//     : height === 250
+//     ? 120
+//     : height - 120
+//   : isLargePhone
+//   ? -66
+//   : -80;

@@ -1,7 +1,7 @@
 import { NodeEntry } from "slate";
 import { Editor, Element as SlateElement } from "slate";
 import { isListType } from "./isListType";
-import type { ColorBarElement, DividerElement, HighlightConfig, ListType } from "../../types/textEditorTypes";
+import type { ColorBarElement, DividerElement, HeadingLevel, HighlightConfig, ListType } from "../../types/textEditorTypes";
 import { Path } from "slate";
 
 
@@ -82,6 +82,30 @@ export const NodeQueries = {
 
         return restrictedTypes.has(node.type as string) && node.type !== format;
     },
+    getActiveHeadingType(editor: Editor): HeadingLevel | null {
+        const { selection } = editor;
+        if (!selection) return null;
+
+        const [match] = Editor.nodes(editor, {
+            at: selection,
+            match: (n): n is SlateElement =>
+                SlateElement.isElement(n) && n.type === "heading",
+            mode: "lowest",
+        });
+
+        if (!match) return null;
+
+        const [node] = match;
+        const level = (node as any).level;
+
+        if (level === 1 || level === 2 || level === 3) {
+            return level;
+        }
+
+        return null;
+    }
+    ,
+
     isInsideDivider(editor: Editor): boolean {
         if (!editor.selection) return false;
 

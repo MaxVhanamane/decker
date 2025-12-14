@@ -8,7 +8,7 @@ import type {
 import { CustomError } from "../../utils/customError";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { useContext, useRef } from "react";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { OfflineContext } from "../../context/OfflineContext";
 import { useNavigate } from "react-router-dom";
 import useUndoChapter from "./useUndoChapter";
@@ -47,7 +47,7 @@ const deleteChapter = async (
 const useDeleteChapter = () => {
   const queryClient = useQueryClient();
   const { showToast } = useContext(ShowToastContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const undoChapterDataRef = useRef<
     null | (ChapterDetails & { deletedBatchId: string })
   >(null);
@@ -131,9 +131,7 @@ const useDeleteChapter = () => {
         buttonText: "Undo",
         buttonHandler: handleUndoChapterButtonClick,
       });
-      if (isPlayingAudioAllowed) {
-        handlePlayAudio("deletedSuccessfully", "/cards");
-      }
+      handlePlayAudio("deletedSuccessfully", "/cards");
     },
     onError: (error) => {
       showToast({

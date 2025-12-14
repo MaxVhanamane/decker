@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState, memo, JSX } from "react";
 import type { DeckItemType } from "../../types/types";
 import Button from "../Button";
-import { BsFillPinFill, BsPin, BsThreeDotsVertical } from "react-icons/bs";
+import { BsThreeDotsVertical } from "react-icons/bs";
 import { formatDate } from "../../functions/formatDate";
 import { Link } from "react-router-dom";
 import { BulbContext } from "../../context/BulbContext";
@@ -11,6 +11,10 @@ import { useClickOutside } from "../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 import DeckMoreOptions from "./DeckMoreOptions";
 import { storeDeckInfo } from "../../functions/deckDataManager";
+import { RiDraggable } from "react-icons/ri";
+import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { DraggableAttributes } from "@dnd-kit/core";
+import { AnimatePresence } from "motion/react";
 
 type PropTypes = {
   handleEditDeck: (deckId: string, title: string) => void;
@@ -23,6 +27,8 @@ type PropTypes = {
     query: string;
     page: number;
   };
+  listeners?: SyntheticListenerMap;
+  attributes?: DraggableAttributes;
 };
 
 const DeckItem = ({
@@ -33,6 +39,8 @@ const DeckItem = ({
   closeSearchBar,
   isDragging,
   searchParams,
+  attributes,
+  listeners,
 }: PropTypes) => {
   const { deckContainerRef, newlyAddedDeckId, setNewlyAddedDeckId } =
     useContext(DeckContext);
@@ -51,6 +59,11 @@ const DeckItem = ({
     onEscape: () => setShowMoreOptions(false),
     enabled: showMoreOptions,
   });
+
+  const handleEditDeckButtonClick = (deckId: string, title: string) => {
+    handleEditDeck(deckId, title);
+    setShowMoreOptions(false);
+  };
   useEffect(() => {
     if (newlyAddedDeckId === deck.deckId) {
       // Find the element you want to scroll to
@@ -103,7 +116,7 @@ const DeckItem = ({
     <div
       ref={deckItemRef}
       className={twMerge(
-        "relative border dark:border-slate-700 border-slate-400/40 text-gray-800 dark:text-gray-50 rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[7rem]  flex  justify-center items-center  text-justify transition-[border-color,box-shadow,background-color] duration-200   before:absolute before:opacity-0 before:transition-all before:duration-200 shadow-4-sides hover:shadow-sky-500  dark:hover:bg-gray-900 hover:border-sky-500 dark:hover:border-sky-500 hover:bg-gray-100 group",
+        "relative border dark:border-slate-700 border-slate-400/40 text-gray-800 dark:text-gray-50 rounded-md w-[10.5rem] xs:w-[10.9rem] ms:w-[12rem] sm:w-[10.9rem] px-2  min-h-[7rem]  flex  justify-center items-center text-justify transition-[border-color,box-shadow,background-color] duration-200 before:absolute before:opacity-0 before:transition-all before:duration-200 shadow-4-sides dark:hover:shadow-sky-800 hover:shadow-sky-600 dark:hover:bg-gray-900 hover:border-sky-500 dark:hover:border-sky-500 hover:bg-gray-100 group",
         showMoreOptions ? "z-50" : "z-30 ",
         deck.isProcessing ? "cursor-not-allowed" : " ",
         newlyAddedDeckId === deck.deckId
@@ -116,24 +129,19 @@ const DeckItem = ({
       ></div>
 
       <Button
-        variant="plain"
-        size="md"
-        aria-label={deck.pinned ? "Unpin Deck" : "Pin Deck"}
-        toolTipText={deck.pinned ? "Unpin Deck" : "Pin Deck"}
+        {...attributes}
+        {...listeners}
+        variant="unstyled"
+        toolTipPosition="top"
+        toolTipText="Press and hold to drag"
         withTooltip
-        type="button"
-        onClick={() => {
-          handlePin(deck.deckId, deck.pinned);
-        }}
-        className="absolute transition-colors duration-300 hover:bg-gray-300 dark:hover:bg-slate-700 dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 top-2 left-2 flex items-center justify-center group/Btn"
+        aria-label="Press and hold to drag"
+        className={twMerge(
+          "absolute top-2 left-2 text-gray-600 dark:text-slate-300 z-50 hover:text-gray-700 dark:hover:text-slate-400 rounded-full p-[0.2rem] w-6 h-6  transition-colors duration-300 hover:bg-gray-300 dark:hover:bg-slate-700 dark:bg-slate-800 bg-gray-200   ",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
       >
-        <p className="rounded-tr  transition-colors duration-300 text-sm px-1  text-center  text-gray-600 dark:text-slate-500 dark:group-hover/Btn:text-slate-400 ">
-          {deck.pinned ? (
-            <BsFillPinFill className="text-[0.9rem]" />
-          ) : (
-            <BsPin />
-          )}
-        </p>
+        <RiDraggable />
       </Button>
 
       <div ref={dropdownRef}>
@@ -145,23 +153,25 @@ const DeckItem = ({
           toolTipText="More options"
           withTooltip
           hideTooltip={showMoreOptions}
-          toolTipPosition="bottom"
+          toolTipPosition="top"
           type="button"
           onClick={() => setShowMoreOptions((prevValue) => !prevValue)}
           className="absolute z-50 right-2 top-2 rounded-full p-[0.1rem]"
         >
           <BsThreeDotsVertical className="dark:text-slate-400 text-gray-600" />
         </Button>
-
-        {showMoreOptions && (
-          <DeckMoreOptions
-            deck={deck}
-            handleEditDeck={handleEditDeck}
-            moreOptionsRef={moreOptionsRef}
-            searchParams={searchParams}
-            triggerRef={triggerRef}
-          />
-        )}
+        <AnimatePresence>
+          {showMoreOptions && (
+            <DeckMoreOptions
+              deck={deck}
+              handleEditDeck={handleEditDeckButtonClick}
+              handlePin={handlePin}
+              moreOptionsRef={moreOptionsRef}
+              searchParams={searchParams}
+              triggerRef={triggerRef}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="z-40 w-full flex items-center justify-center ">

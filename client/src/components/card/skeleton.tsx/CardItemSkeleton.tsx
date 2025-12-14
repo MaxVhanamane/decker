@@ -44,6 +44,9 @@ const CardItemSkeleton = ({ className }: { className?: string }) => {
           <div className="shimmer-skeleton w-[60px] h-3 rounded"></div>
         </div>
         <div className="flex items-center justify-center gap-2">
+          <div className="dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 flex items-center justify-center group/drag">
+            <div className="shimmer-skeleton w-4 h-4 rounded-full"></div>
+          </div>
           <div className="dark:bg-slate-800 bg-gray-200 rounded-full w-6 h-6 z-50 flex items-center justify-center group/deleteCardBtn">
             <div className="shimmer-skeleton w-4 h-4 rounded-full"></div>
           </div>

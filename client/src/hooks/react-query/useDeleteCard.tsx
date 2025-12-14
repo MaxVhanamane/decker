@@ -10,7 +10,7 @@ import type {
 import { CustomError } from "../../utils/customError";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
 import { useContext, useRef } from "react";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { Descendant } from "slate";
 import useUndoCard from "./useUndoCard";
 import { OfflineContext } from "../../context/OfflineContext";
@@ -56,7 +56,7 @@ const deleteCard = async (
 const useDeleteCard = () => {
   const queryClient = useQueryClient();
   const { showToast } = useContext(ShowToastContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const undoCardDataRef = useRef<null | UndoCardPayloadData>(null);
   const { mutate: undoCardItem } = useUndoCard();
   const { isOnline } = useContext(OfflineContext);
@@ -232,9 +232,7 @@ const useDeleteCard = () => {
         buttonText: "Undo",
         buttonHandler: handleUndoCardButtonClick,
       });
-      if (isPlayingAudioAllowed) {
-        handlePlayAudio("deletedSuccessfully", "/cards");
-      }
+      handlePlayAudio("deletedSuccessfully", "/cards");
     },
     onError: (error) => {
       showToast({

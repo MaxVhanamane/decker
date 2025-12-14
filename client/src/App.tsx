@@ -8,10 +8,9 @@ import { useLocation } from "react-router-dom";
 import useDragHandlers from "./features/drag-and-drop/hooks/useDragHandlers";
 import useUser from "./hooks/utility/useUser";
 import { useCustomCollisionDetection } from "./features/drag-and-drop/hooks/useCustomCollisionDetection";
-
 const autoScroll = {
-  threshold: { x: 0, y: 0.2 },
-  acceleration: 2,
+  threshold: { x: 0, y: 0.1 },
+  acceleration: 3,
   enabled: true,
   layoutShiftCompensation: false,
   canScroll: (element: Element) => {
@@ -114,7 +113,6 @@ export default memo(App);
 //   showToast, // track showToast context value
 //   isOnline, // track isOnline context value
 //   handlePlayAudio, // track handlePlayAudio context value
-//   isPlayingAudioAllowed, // track isPlayingAudioAllowed context value
 //   bulbRef, // track bulbRef context value
 //   undoDeckDetailsRef: undoDeckDetailsRef.current, // track ref value for undoDeckDetails
 //   undoDeckItem, // track undoDeckItem mutation

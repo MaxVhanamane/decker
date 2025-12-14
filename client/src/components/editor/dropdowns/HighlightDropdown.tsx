@@ -143,7 +143,7 @@ export const HighlightDropdown = ({
 
 export default HighlightDropdown;
 
-const highlightStyle: {
+export const highlightStyle: {
   style: "plain" | "wavy";
   className: string;
 }[] = [

@@ -12,7 +12,7 @@ import {
   BulbAnimationContext,
   BulbContext,
 } from "../../context/BulbContext";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { BsLightbulb, BsLightbulbOff } from "react-icons/bs";
 import { twMerge } from "tailwind-merge";
 import { ShowToastContext } from "../../context/ToastNotificationContext";
@@ -29,7 +29,7 @@ const BulbControls = () => {
   const location = useLocation();
   const { setAnimationPlayed, animationPlayed } =
     useContext(BulbAnimationContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const { bulbBrightness, setBulbBrightness } = useContext(BrightnessContext);
   const bulbOptionsContainer = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -133,15 +133,11 @@ const BulbControls = () => {
                       setShowBulb(option);
                       setAnimationPlayed(false);
                       localStorage.setItem("showBulb", "true");
-                      if (isPlayingAudioAllowed) {
-                        handlePlayAudio("switchOnAudioSound");
-                      }
+                      handlePlayAudio("switchOnAudioSound");
                     } else {
                       setShowBulb(option);
                       localStorage.setItem("showBulb", "false");
-                      if (isPlayingAudioAllowed) {
-                        handlePlayAudio("switchOffAudioSound");
-                      }
+                      handlePlayAudio("switchOffAudioSound");
                     }
                   }}
                   className={twMerge(

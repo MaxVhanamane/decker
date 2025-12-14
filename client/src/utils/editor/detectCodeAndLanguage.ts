@@ -422,8 +422,8 @@
 //         markdown: {
 //             keywords: [
 //                 '# ', '## ', '### ', '#### ', '- ', '* ', '1. ', '> ', '```',
-//                 '**', '__', '[', '](', '![', '|---', '<details>', '<summary>',
-//                 '---', '```js', '```python', '```bash', '```typescript'
+//                 '**', '__', '[', '](', '![', '|', '<details>', '<summary>',
+//                 '', '```js', '```python', '```bash', '```typescript'
 //             ],
 //             regexPatterns: [
 //                 /^#+\s+.+$/m, // Headers
@@ -434,7 +434,7 @@
 //             ],
 //             fileExtensions: ['.md', '.markdown'],
 //             syntaxPatterns: [
-//                 /^---\s*\n[\s\S]*?\n---/, // YAML frontmatter
+//                 /^\s*\n[\s\S]*?\n/, // YAML frontmatter
 //                 /^```[\w]*\n[\s\S]*?\n```$/m, // Code blocks
 //                 /\*\*[\s\S]*?\*\*/, // Bold text
 //                 /`[^`]+`/, // Inline code
@@ -443,13 +443,13 @@
 //         },
 //         yaml: {
 //             keywords: [
-//                 '---', 'name:', 'version:', 'description:', 'dependencies:', 'dev-dependencies:',
+//                 '', 'name:', 'version:', 'description:', 'dependencies:', 'dev-dependencies:',
 //                 'env:', 'services:', 'build:', 'image:', 'volumes:', 'ports:',
 //                 'environment:', 'config:', 'apiVersion:', 'kind:', 'metadata:',
 //                 'spec:', 'replicas:', 'containers:', '- name:', '- path:'
 //             ],
 //             regexPatterns: [
-//                 /^---$/m, // YAML document start
+//                 /^$/m, // YAML document start
 //                 /^\w+:\s*[\w\s."'-]+$/m, // Simple key-value pairs
 //                 /^\w+:\s*$/m, // Keys with nested values
 //                 /^\s+- \w+:/, // List items with keys

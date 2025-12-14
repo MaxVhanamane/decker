@@ -1,23 +1,11 @@
 import { memo, useCallback, useContext, useState } from "react";
-import type {
-  DeckCardSearchResult,
-  DeckSearchResult,
-  DeckType,
-} from "../../types/types";
-import { OfflineContext } from "../../context/OfflineContext";
-import usePinDeck from "../../hooks/react-query/usePinDeck";
+import type { DeckCardSearchResult, DeckSearchResult } from "../../types/types";
 import { ThemeContext } from "../../context/ThemeContext";
-import { ShowToastContext } from "../../context/ToastNotificationContext";
-import DeckItem from "../deck/DeckItem";
-import EditModalForDeck from "../deck/EditModalForDeck";
 import SearchResultCardFullScreenView from "./SearchResultCardFullScreenView";
-import { useModalBackNavigationHandler } from "../../hooks/utility/useModalBackNavigationHandler";
 import { Descendant, Element, Text } from "slate";
 import { extractTextFromSlateNodes } from "../../utils/editor/extractTextFromSlateNodes";
-import { useQueryClient } from "@tanstack/react-query";
-import useGetDecks from "../../hooks/react-query/useGetDecks";
-import { generateKeyBetween } from "fractional-indexing-jittered";
-
+import { motion } from "motion/react";
+import DeckItems from "./DeckItems";
 type ContentType = {
   note: Descendant[];
   cardId: string;
@@ -47,28 +35,11 @@ const DeckAndCardResult = ({
   closeSearchBar,
   searchParams,
 }: DeckAndCardResultProps) => {
-  const { isOnline } = useContext(OfflineContext);
-  const { showToast } = useContext(ShowToastContext);
   const { theme } = useContext(ThemeContext);
-  const { refetch } = useGetDecks({ enabled: false });
-  const [editData, setEditData] = useState({ deckId: "", title: "" });
-  const [
-    animateCloseEditDeckModalInSearchResult,
-    setAnimateCloseEditDeckModalInSearchResult,
-  ] = useState(false);
 
-  const { mutate: pinDeck } = usePinDeck();
-  const queryClient = useQueryClient();
   const [initialFullScreenCardData, setInitialFullScreenCardData] =
     useState<ContentForFullScreen>();
   const [openCardInFullScreen, setOpenCardInFullScreen] = useState(false);
-  const [openEditDeckModal, setOpenEditDeckModal] = useState(false);
-
-  useModalBackNavigationHandler({
-    isOpen: openEditDeckModal,
-    modalKey: "editDeckInSearchResults",
-    closeModal: () => setAnimateCloseEditDeckModalInSearchResult(true),
-  });
 
   const handleCardItemClick = useCallback((cardData: ContentForFullScreen) => {
     setInitialFullScreenCardData(cardData);
@@ -121,110 +92,14 @@ const DeckAndCardResult = ({
     [theme]
   );
 
-  const handlePin = useCallback(
-    async (deckId: string, pinned: boolean) => {
-      const queryKey = ["decks"];
-      let decksData = queryClient.getQueryData<DeckType>(queryKey);
-
-      // Fetch if cache is empty or GC'd
-      if (!decksData) {
-        const freshDecks = (await refetch()).data;
-        decksData = freshDecks;
-      }
-
-      const relevantDecks =
-        decksData?.decks.filter((deck) => deck.pinned === !pinned) ?? [];
-
-      // Compute new order
-      const firstDeckOrder =
-        relevantDecks.length > 0 ? relevantDecks[0].order : null;
-      const newOrder = generateKeyBetween(firstDeckOrder, null);
-
-      pinDeck({ deckId, pinned: !pinned, searchParams, newOrder });
-    },
-    [pinDeck, searchParams, refetch, queryClient]
-  );
-
-  const handleEditDeck = useCallback(
-    (deckId: string, title: string) => {
-      if (!isOnline) {
-        showToast({
-          message: "No internet connection",
-          severity: "error",
-          autoHideDuration: 5000,
-          position: "top-center",
-          animationStyle: "scale-up",
-          theme: "auto",
-        });
-        return;
-      }
-      setEditData({ ...editData, deckId, title });
-      setOpenEditDeckModal(true);
-    },
-    [isOnline, showToast]
-  );
-
   return (
     <div>
-      {foundDecks?.filter((deck) => deck.pinned === true).length > 0 && (
-        <div className="lg:mt-4 lg:mb-10 animate-quickOpacity lg:mx-24">
-          <p className="text-left text-sm text-gray-700 dark:text-gray-200 m-4">
-            Pinned Decks
-          </p>
-          <div className="w-full flex items-center justify-center ">
-            <div className="flex flex-row flex-wrap gap-2  justify-center items-center py-2 lg:w-[60rem] transition-all duration-1000">
-              {foundDecks
-                ?.filter((deck) => deck.pinned === true)
-                .map((deck) => {
-                  return (
-                    <DeckItem
-                      key={deck.deckId}
-                      deck={deck}
-                      handleEditDeck={handleEditDeck}
-                      handlePin={handlePin}
-                      highlightedTitle={highlightText(deck.title, searchQuery)}
-                      closeSearchBar={closeSearchBar}
-                      searchParams={searchParams}
-                    />
-                  );
-                })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {foundDecks?.filter((deck) => deck.pinned === false).length > 0 && (
-        <div
-          className={`${
-            foundDecks?.filter((deck) => deck.pinned === true).length > 0
-              ? "mt-10"
-              : "lg:mt-16 "
-          }  lg:mb-10 animate-quickOpacity lg:mx-24`}
-        >
-          <p className="text-left text-sm text-gray-700 dark:text-gray-200 m-4">
-            Other Decks
-          </p>
-          <div className="w-full flex items-center justify-center">
-            <div className="flex flex-row flex-wrap gap-2  justify-center items-center py-2 lg:w-[60rem] transition-all duration-1000">
-              {foundDecks
-                ?.filter((deck) => deck.pinned === false)
-                .map((deck) => {
-                  return (
-                    <DeckItem
-                      key={deck.deckId}
-                      deck={deck}
-                      handleEditDeck={handleEditDeck}
-                      handlePin={handlePin}
-                      highlightedTitle={highlightText(deck.title, searchQuery)}
-                      closeSearchBar={closeSearchBar}
-                      searchParams={searchParams}
-                    />
-                  );
-                })}
-            </div>
-          </div>
-        </div>
-      )}
+      <DeckItems
+        closeSearchBar={closeSearchBar}
+        foundDecks={foundDecks}
+        searchParams={searchParams}
+        searchQuery={searchQuery}
+      />
 
       {/* CARD  */}
 
@@ -238,69 +113,81 @@ const DeckAndCardResult = ({
             Cards
           </p>
           <div className="flex items-center justify-center">
-            <div className="grid grid-cols-1 py-2  md:grid-cols-2 gap-4 items-center mx-2 justify-center w-full lg:w-[60rem] mb-10 ">
+            <div className="grid  grid-cols-1 py-2  md:grid-cols-2 gap-4 items-center mx-2 justify-center w-full lg:w-[60rem] mb-10 ">
               {foundCards?.map((card) => (
-                <div
-                  onClick={() =>
-                    handleCardItemClick({
-                      deckId: card.deckId,
-                      cardId: card.cardId,
-                      order: card.order,
-                      note: card.note,
-                      createdAt: card.createdAt,
-                    })
-                  }
+                <motion.div
                   key={card.cardId}
-                  className="border relative dark:border-slate-600 border-slate-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8.8rem]  text-justify  transition-[background-color,border-color] duration-300  dark:hover:bg-slate-900 dark:hover:border-blue-500 hover:border-sky-500 hover:bg-gray-100  group cursor-pointer"
+                  layoutId={`search-card-${card.cardId}`}
+                  transition={{
+                    layout: {
+                      type: "tween",
+                      ease: [0.25, 0.1, 0.25, 1],
+                      duration: 0.3,
+                    },
+                  }}
                 >
-                  <p className="text-base text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all">
-                    {Element.isElement(card?.note?.[0]) &&
-                    Text.isText(card.note[0].children?.[0]) &&
-                    card.note[0].children[0].text.trim() !== "" ? (
-                      highlightText(
-                        card.note[0].children[0].text?.slice(0, 60),
-                        searchQuery
-                      )
-                    ) : (
-                      <span className="text-sm lg:text-base font-normal dark:text-gray-500 text-gray-400">
-                        You have not added title to this card.
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm  text-gray-700 dark:text-gray-100 font-light px-1 line-clamp-3 break-words break-all ">
-                    {card.note ? (
-                      highlightText(
-                        extractTextFromSlateNodes(card.note),
-                        searchQuery
-                      )
-                    ) : (
-                      <span className=" dark:text-gray-500 text-gray-400">
-                        You have not added a note to this card.
-                      </span>
-                    )}
-                  </p>
-                  <p className="absolute text-gray-50 bg-sky-700 group-hover:bg-sky-800   dark:bg-sky-800  dark:group-hover:bg-sky-700 transition duration-300 right-0 bottom-0 px-2 rounded-br-[0.340rem] rounded-tl-md line-clamp-1 break-all text-center  max-w-[10rem]">
-                    {card.deckTitle}
-                  </p>
-                </div>
+                  <div
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleCardItemClick({
+                          deckId: card.deckId,
+                          cardId: card.cardId,
+                          order: card.order,
+                          note: card.note,
+                          createdAt: card.createdAt,
+                        });
+                      }
+                    }}
+                    onClick={() =>
+                      handleCardItemClick({
+                        deckId: card.deckId,
+                        cardId: card.cardId,
+                        order: card.order,
+                        note: card.note,
+                        createdAt: card.createdAt,
+                      })
+                    }
+                    className="border relative dark:border-slate-600 border-slate-400 flex flex-col text-gray-800 rounded-md px-2 py-2 h-[8.8rem]  text-justify dark:hover:bg-slate-900 dark:hover:border-blue-500 hover:border-sky-500 hover:bg-gray-100  group cursor-pointer outline-none focus-visible:ring-2 dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500"
+                  >
+                    <p className="text-base text-gray-800 dark:text-gray-50 mb-1 p-1 line-clamp-1 break-words break-all">
+                      {Element.isElement(card?.note?.[0]) &&
+                      Text.isText(card.note[0].children?.[0]) &&
+                      card.note[0].children[0].text.trim() !== "" ? (
+                        highlightText(
+                          card.note[0].children[0].text?.slice(0, 60),
+                          searchQuery
+                        )
+                      ) : (
+                        <span className="text-sm lg:text-base font-normal dark:text-gray-500 text-gray-400">
+                          You have not added title to this card.
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm  text-gray-700 dark:text-gray-100 font-light px-1 line-clamp-3 break-words break-all ">
+                      {card.note ? (
+                        highlightText(
+                          extractTextFromSlateNodes(card.note),
+                          searchQuery
+                        )
+                      ) : (
+                        <span className=" dark:text-gray-500 text-gray-400">
+                          You have not added a note to this card.
+                        </span>
+                      )}
+                    </p>
+                    <p className="absolute text-gray-50 bg-sky-700 group-hover:bg-sky-800   dark:bg-sky-800  dark:group-hover:bg-sky-700 transition duration-300 right-0 bottom-0 px-2 rounded-br-[0.340rem] rounded-tl-md line-clamp-1 break-all text-center  max-w-[10rem]">
+                      {card.deckTitle}
+                    </p>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </div>
       )}
-      {openEditDeckModal ? (
-        <EditModalForDeck
-          openEditDeckModal={openEditDeckModal}
-          setOpenEditDeckModal={setOpenEditDeckModal}
-          editData={editData}
-          setEditData={setEditData}
-          setAnimateCloseEditDeckModal={
-            setAnimateCloseEditDeckModalInSearchResult
-          }
-          animateCloseEditDeckModal={animateCloseEditDeckModalInSearchResult}
-          searchParams={searchParams}
-        />
-      ) : null}
+
       {openCardInFullScreen && (
         <SearchResultCardFullScreenView
           initialData={initialFullScreenCardData!}

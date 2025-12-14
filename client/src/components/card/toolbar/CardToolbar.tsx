@@ -8,12 +8,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { AudioContext } from "../../../context/AudioContext";
+import { useAudio } from "../../../context/AudioContext";
 import { useSlate } from "slate-react";
 import type {
   ColorBarColors,
   ListType,
   HighlightConfig,
+  HeadingLevel,
 } from "../../../types/textEditorTypes";
 import { useEditorActions } from "../../../hooks/editor/useEditorActions";
 import { ShowToastContext } from "../../../context/ToastNotificationContext";
@@ -36,6 +37,7 @@ import {
 import { useIsDeviceType } from "../../../hooks/utility/useIsDeviceType";
 import { Descendant } from "slate";
 import useResetEditor from "../../../hooks/editor/useResetEditor";
+import { HeadingDropdown } from "../../editor/dropdowns/HeadingDropdown";
 
 // Common props shared between both modes
 interface CommonProps {
@@ -48,6 +50,7 @@ interface CreateModeProps extends CommonProps {
   mode: "create";
   setShowTips: Dispatch<SetStateAction<boolean>>;
   expandEditorToMaxHeight: () => void;
+  handleOpenMoreFormatingMenu: () => void;
   handleCloseTextEditor: (note: Descendant[]) => void;
   isCreatingCard: boolean;
   isFetchingCards: boolean;
@@ -61,10 +64,11 @@ interface CreateModeProps extends CommonProps {
 // Edit mode specific props
 interface EditModeProps extends CommonProps {
   mode: "edit";
-  setCloseEditModalWithAnimation: Dispatch<SetStateAction<boolean>>;
   handleSaveEdit: () => void;
   toolbarPosition: "top" | "bottom";
   toggleToolbarPosition: () => void;
+  handleCloseEditTextEditor: () => void;
+  handleOpenMoreEditFormattingMenu: () => void;
 }
 
 type CardToolbarProps = CreateModeProps | EditModeProps;
@@ -72,7 +76,7 @@ type CardToolbarProps = CreateModeProps | EditModeProps;
 const CardToolbar = (props: CardToolbarProps) => {
   const { setShowHyperlinkModal, mode, tabbable } = props;
 
-  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const editor = useSlate();
   const { showToast } = useContext(ShowToastContext);
 
@@ -80,8 +84,6 @@ const CardToolbar = (props: CardToolbarProps) => {
     handleBold,
     handleUnderline,
     handleCode,
-    handleH1,
-    handleH2,
     handleLink,
     handleText,
     handleHighlight,
@@ -92,9 +94,9 @@ const CardToolbar = (props: CardToolbarProps) => {
     handleList,
     handleIndentBlock,
     handleOutdentBlock,
-    handleInlineCode,
     handleUndo,
     handleRedo,
+    handleHeading,
   } = useEditorActions();
   const { resetEditor } = useResetEditor(editor);
 
@@ -102,12 +104,14 @@ const CardToolbar = (props: CardToolbarProps) => {
 
   // Dropdown state
   const [showDividerOptions, setShowDividerOptions] = useState(false);
+  const [showHeadingOptions, setShowHeadingOptions] = useState(false);
   const [showColorBarOptions, setShowColorBarOptions] = useState(false);
   const [showListStyleOptions, setShowListStyleOptions] = useState(false);
   const [showHighlightOptions, setShowHighlightOptions] = useState(false);
 
   // Refs for dropdown positioning
   const dividerButtonRef = useRef<HTMLButtonElement>(null);
+  const headingButtonRef = useRef<HTMLButtonElement>(null);
   const colorBarButtonRef = useRef<HTMLButtonElement>(null);
   const listStyleButtonRef = useRef<HTMLButtonElement>(null);
   const highlightButtonRef = useRef<HTMLButtonElement>(null);
@@ -118,13 +122,17 @@ const CardToolbar = (props: CardToolbarProps) => {
     mode === "create" ? props.expandEditorToMaxHeight : undefined;
   const handleCreateCard =
     mode === "create" ? props.handleCreateCard : undefined;
+  const handleOpenMoreFormatingMenu =
+    mode === "create" ? props.handleOpenMoreFormatingMenu : undefined;
   const handleCloseTextEditor =
     mode === "create" ? props.handleCloseTextEditor : undefined;
   const isCreatingCard = mode === "create" ? props.isCreatingCard : undefined;
   const isFetchingCards = mode === "create" ? props.isFetchingCards : undefined;
-  const setCloseEditModalWithAnimation =
-    mode === "edit" ? props.setCloseEditModalWithAnimation : undefined;
   const handleSaveEdit = mode === "edit" ? props.handleSaveEdit : undefined;
+  const handleCloseEditTextEditor =
+    mode === "edit" ? props.handleCloseEditTextEditor : undefined;
+  const handleOpenMoreEditFormattingMenu =
+    mode === "edit" ? props.handleOpenMoreEditFormattingMenu : undefined;
   const toolbarPosition = mode === "edit" ? props.toolbarPosition : undefined;
   const toggleToolbarPosition =
     mode === "edit" ? props.toggleToolbarPosition : undefined;
@@ -166,7 +174,6 @@ const CardToolbar = (props: CardToolbarProps) => {
         setShowHighlightOptions,
         tabbable,
         highlightButtonRef,
-        handleInlineCode,
       }),
     [
       handleUnderline,
@@ -175,7 +182,6 @@ const CardToolbar = (props: CardToolbarProps) => {
       setShowHighlightOptions,
       tabbable,
       highlightButtonRef,
-      handleInlineCode,
     ]
   );
   const structureButtons = useMemo(
@@ -204,14 +210,13 @@ const CardToolbar = (props: CardToolbarProps) => {
         editor,
         handleLink,
         handleCode,
-        handleH1,
-        handleH2,
         handleText,
         handleQuote,
         setShowDividerOptions,
         setShowColorBarOptions,
         setShowListStyleOptions,
         setShowHyperlinkModal,
+        setShowHeadingOptions,
         showToast,
         tabbable,
         showColorBarOptions,
@@ -219,14 +224,13 @@ const CardToolbar = (props: CardToolbarProps) => {
         showDividerOptions,
         colorBarButtonRef,
         dividerButtonRef,
+        headingButtonRef,
         listStyleButtonRef,
       }),
     [
       editor,
       handleLink,
       handleCode,
-      handleH1,
-      handleH2,
       handleText,
       handleQuote,
       setShowHyperlinkModal,
@@ -236,6 +240,7 @@ const CardToolbar = (props: CardToolbarProps) => {
       showListStyleOptions,
       showDividerOptions,
       colorBarButtonRef,
+      dividerButtonRef,
       dividerButtonRef,
       listStyleButtonRef,
     ]
@@ -253,8 +258,8 @@ const CardToolbar = (props: CardToolbarProps) => {
         handleCreateCardHandler: handleCreateCardHandler!,
         expandEditorToMaxHeight: expandEditorToMaxHeight!,
         handleCloseTextEditor: handleCloseTextEditorHandler!,
+        handleOpenMoreFormatingMenu: handleOpenMoreFormatingMenu!,
         handlePlayAudio,
-        isPlayingAudioAllowed,
         isFetchingCards: isFetchingCards!,
         isCreatingCard: isCreatingCard!,
         tabbable,
@@ -264,7 +269,8 @@ const CardToolbar = (props: CardToolbarProps) => {
     if (mode === "edit") {
       return getEditActionButtons({
         handleSaveEdit: handleSaveEdit!,
-        setCloseEditModalWithAnimation: setCloseEditModalWithAnimation!,
+        handleCloseEditTextEditor: handleCloseEditTextEditor!,
+        handleOpenMoreEditFormattingMenu: handleOpenMoreEditFormattingMenu!,
         tabbable,
         toggleToolbarPosition: toggleToolbarPosition!,
       });
@@ -276,11 +282,10 @@ const CardToolbar = (props: CardToolbarProps) => {
     expandEditorToMaxHeight,
     handleCloseTextEditor,
     handlePlayAudio,
-    isPlayingAudioAllowed,
     isFetchingCards,
     isCreatingCard,
     handleSaveEdit,
-    setCloseEditModalWithAnimation,
+    handleCloseEditTextEditor,
     tabbable,
   ]);
 
@@ -289,6 +294,13 @@ const CardToolbar = (props: CardToolbarProps) => {
     (style: "plain" | "dashed" | "3-dots") => {
       handleDivider(style);
       setShowDividerOptions(false);
+    },
+    [handleDivider]
+  );
+  const handleInsertHeading = useCallback(
+    (style: HeadingLevel) => {
+      handleHeading(style);
+      setShowHeadingOptions(false);
     },
     [handleDivider]
   );
@@ -322,8 +334,14 @@ const CardToolbar = (props: CardToolbarProps) => {
     (format: string): boolean =>
       (format === "color-bar" && showColorBarOptions) ||
       (format === "divider" && showDividerOptions) ||
+      (format === "heading" && showHeadingOptions) ||
       (format === "list-item" && showListStyleOptions),
-    [showColorBarOptions, showDividerOptions, showListStyleOptions]
+    [
+      showColorBarOptions,
+      showDividerOptions,
+      showListStyleOptions,
+      showHeadingOptions,
+    ]
   );
 
   const isFormatDropdownOpen = useCallback(
@@ -335,6 +353,7 @@ const CardToolbar = (props: CardToolbarProps) => {
   const isAnyDropdownOpen = useCallback(
     (): boolean =>
       showColorBarOptions ||
+      showHeadingOptions ||
       showDividerOptions ||
       showListStyleOptions ||
       showHighlightOptions,
@@ -343,6 +362,7 @@ const CardToolbar = (props: CardToolbarProps) => {
       showDividerOptions,
       showListStyleOptions,
       showHighlightOptions,
+      showHeadingOptions,
     ]
   );
 
@@ -403,6 +423,20 @@ const CardToolbar = (props: CardToolbarProps) => {
             setShowDividerOptions={setShowDividerOptions}
             dividerButtonRef={dividerButtonRef}
             activeDivider={NodeQueries.getActiveDividerOnSelectedNode(editor)}
+            mode={mode}
+            toolbarPosition={
+              mode === "edit" && toolbarPosition ? toolbarPosition : "top"
+            }
+          />,
+          getPortalContainer()
+        )}
+      {showHeadingOptions &&
+        createPortal(
+          <HeadingDropdown
+            onSelect={handleInsertHeading}
+            setShowHeadingOptions={setShowHeadingOptions}
+            headingButtonRef={headingButtonRef}
+            activeStyle={NodeQueries.getActiveHeadingType(editor)}
             mode={mode}
             toolbarPosition={
               mode === "edit" && toolbarPosition ? toolbarPosition : "top"

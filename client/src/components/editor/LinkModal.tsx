@@ -29,6 +29,7 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
       setShowHyperlinkModal(false);
       setUrl("");
     },
+    initialFocusIndex: 0,
   });
   const handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -37,11 +38,11 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
     }
   };
   return (
-    <div
-      ref={linkModalRef}
-      className=" backdrop-blur-sm backdrop-blur-fallback  flex-col  w-full h-full absolute top-0 left-0 z-30  flex items-center gap-4 justify-center rounded-md border-2 border-gray-500 animate-[opacity_0.2s_ease]"
-    >
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 w-[90%] max-w-md space-y-4 border border-gray-500 animate-fadeIn transition-all">
+    <div className=" backdrop-blur-sm backdrop-blur-fallback  flex-col  w-full h-full absolute top-0 left-0 z-30  flex items-center gap-4 justify-center rounded-md border-2 border-gray-500 animate-[opacity_0.2s_ease]">
+      <div
+        ref={linkModalRef}
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 w-[90%] max-w-md space-y-4 border border-gray-500 animate-fadeIn transition-all"
+      >
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white text-center">
           Add a Link
         </h2>
@@ -52,7 +53,7 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
           type="text"
           onChange={handleHyperlink}
           placeholder="https://example.com"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-white outline-none focus:ring-2 dark:focus:ring-gray-500 focus:ring-gray-200 transition duration-200"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-white outline-none focus:ring-1 dark:focus:ring-gray-500 focus:ring-gray-200 transition duration-200"
           autoFocus
         />
 
@@ -64,7 +65,7 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
               setShowHyperlinkModal(false);
               if (url) CustomEditor.toggleLink(editor, "link", url);
             }}
-            className="rounded-md px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white transition"
+            className="rounded-md text-sm px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white transition focus-visible:dark:ring-gray-50"
           >
             Add Link
           </Button>
@@ -75,7 +76,7 @@ const LinkModal = ({ setShowHyperlinkModal }: LinkModalProps) => {
               setShowHyperlinkModal(false);
               setUrl("");
             }}
-            className="rounded-md px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-white transition duration-200"
+            className="rounded-md px-4 py-2 text-sm bg-gray-300 hover:bg-gray-400 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-white transition duration-200 focus-visible:dark:ring-gray-50"
           >
             Cancel
           </Button>

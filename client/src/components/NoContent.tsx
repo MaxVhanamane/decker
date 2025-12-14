@@ -1,5 +1,5 @@
 import { memo } from "react";
-
+import { motion } from "motion/react";
 type PropType = {
   imageSource: string;
   imageAltText: string;
@@ -23,8 +23,18 @@ const NoContent = ({
     <div
       className={`absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2  dark:text-gray-200 text-gray-700 px-1 flex items-center justify-center flex-col w-full mt-6 md:mt-0 animate-quickOpacity`}
     >
-      <img src={imageSource} alt={imageAltText} className={imageClassNames} />
-      <p className="p-1 mt-1 text-base">{heading}</p>
+      <motion.div
+        className="flex flex-col items-center justify-center"
+        animate={{ x: [-4, 4, -4], y: [-4, 4, -4] }}
+        transition={{
+          duration: 6,
+          ease: "easeInOut",
+          repeat: Infinity,
+        }}
+      >
+        <img src={imageSource} alt={imageAltText} className={imageClassNames} />
+      </motion.div>
+      <p className="p-1  text-base">{heading}</p>
       {subheading && <p className="p-1 mt-1 text-base">{subheading}</p>}
       {onButtonClick && buttonLabel && (
         <button

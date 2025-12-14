@@ -34,7 +34,6 @@ const useUndoDeck = () => {
       // onMutate runs before sending the request to the server. Here we assume that everything is going to be fine.
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       const previousQueryData: DeckType = queryClient.getQueryData(["decks"])!;
-
       queryClient.setQueryData<DeckType>(["decks"], () => {
         const newArray = [
           ...previousQueryData.decks,
@@ -52,6 +51,7 @@ const useUndoDeck = () => {
           if (a.order < b.order) return 1;
           return 0;
         });
+
         return { decks: newArray };
       });
 

@@ -1,9 +1,9 @@
 import { Dispatch, RefObject, SetStateAction, JSX } from "react";
 import Button from "../../Button";
-import { FloatingDropdown } from "./FloatingDropdown";
+import { buttonStaggerAnimation, FloatingDropdown } from "./FloatingDropdown";
 import type { DividerStyle } from "../../../types/textEditorTypes";
 import { twMerge } from "tailwind-merge";
-
+import { motion } from "motion/react";
 type DividerOption = {
   dividerStyle: DividerStyle;
   tooltip: string;
@@ -57,7 +57,12 @@ export const DividerDropdown = ({
             )}
             onClick={() => onSelect(dividerStyle)}
           >
-            {icon()}
+            <motion.div
+              variants={buttonStaggerAnimation}
+              className="w-full h-full"
+            >
+              {icon()}
+            </motion.div>
           </Button>
         ))}
       </div>

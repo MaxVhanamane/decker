@@ -53,6 +53,7 @@ const useCreateCard = () => {
                 ...data.content,
                 createdAt: new Date().toDateString(),
                 order: data.maxOrder + 10,
+                isNew: true,
               });
               return { ...oldCardData, cards: newArray };
             }

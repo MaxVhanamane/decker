@@ -10,7 +10,7 @@ import { useClickOutside } from "../../../hooks/utility/useClickOutside";
 import { useFocusTrap } from "../../../hooks/utility/useFocusTrap";
 import { useIsDeviceType } from "../../../hooks/utility/useIsDeviceType";
 import { SidebarContex } from "../../../context/SidebarContext";
-
+import { motion } from "motion/react";
 type FloatingDropdownProps = {
   buttonRef: RefObject<HTMLElement>;
   onClickOutside: () => void;
@@ -20,6 +20,38 @@ type FloatingDropdownProps = {
   title?: string;
   mode: "create" | "edit";
   toolbarPosition: "top" | "bottom";
+};
+export const buttonStaggerAnimation = {
+  hidden: { opacity: 0, y: 6 },
+  visible: { opacity: 1, y: 0 },
+};
+
+type customValueType = { name: "List Style" };
+const staggerMap: Record<string, number> = {
+  "List Style": 0.04,
+  "Highlight Style": 0.06,
+};
+
+export const dropdownVariants = {
+  hidden: {
+    opacity: 0,
+    y: -6,
+  },
+  visible: (custom: customValueType | undefined = undefined) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      y: {
+        type: "spring",
+        stiffness: 1000,
+        damping: 20,
+        mass: 1,
+      },
+      opacity: { duration: 0.2, ease: "easeOut" },
+      staggerChildren: staggerMap[custom?.name ?? ""] ?? 0.08,
+      delayChildren: 0.1,
+    },
+  }),
 };
 
 export const FloatingDropdown = ({
@@ -176,7 +208,11 @@ export const FloatingDropdown = ({
   };
 
   return (
-    <div
+    <motion.div
+      variants={dropdownVariants}
+      initial="hidden"
+      animate="visible"
+      custom={{ name: title }}
       ref={dropdownRef}
       style={{
         top: `${position.top + getTopValue()}px`,
@@ -223,6 +259,6 @@ export const FloatingDropdown = ({
       </div>
 
       <div className="z-20 relative">{children}</div>
-    </div>
+    </motion.div>
   );
 };

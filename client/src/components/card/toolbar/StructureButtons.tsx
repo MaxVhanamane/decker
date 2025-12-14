@@ -14,7 +14,6 @@ type StructureButtonsProps = {
 export const StructureButtons = memo(
   ({ structureButtons, mode, toolbarPosition }: StructureButtonsProps) => {
     const editor = useSlate();
-
     return (
       <div className="flex items-center justify-center ">
         {structureButtons.map((button) => {

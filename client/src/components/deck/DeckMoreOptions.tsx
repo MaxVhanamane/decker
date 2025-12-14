@@ -1,19 +1,34 @@
 import React, { memo, useLayoutEffect, useState } from "react";
 import Button from "../Button";
 import { BiEdit } from "react-icons/bi";
-import { BsTrash } from "react-icons/bs";
+import { BsFillPinFill, BsPin, BsTrash } from "react-icons/bs";
 import { DeckItemType } from "../../types/types";
 import useDeleteDeck from "../../hooks/react-query/useDeleteDeck";
+import { easeOut, motion } from "motion/react";
+import {
+  buttonStaggerAnimation,
+  dropdownVariants,
+} from "../editor/dropdowns/FloatingDropdown";
 
 type DeckMoreOptionsProps = {
   moreOptionsRef: React.MutableRefObject<HTMLDivElement | null>;
   deck: DeckItemType;
   triggerRef: React.RefObject<HTMLElement | null>;
   handleEditDeck: (deckId: string, title: string) => void;
+  handlePin: (deckId: string, pinned: boolean) => void;
   searchParams?: {
     query: string;
     page: number;
   };
+};
+
+const exit = {
+  y: -6,
+  opacity: 0,
+  transition: {
+    duration: 0.3,
+    ease: easeOut,
+  },
 };
 
 const EDGE_PADDING = 4;
@@ -22,6 +37,7 @@ const DeckMoreOptions = ({
   moreOptionsRef,
   deck,
   handleEditDeck,
+  handlePin,
   searchParams,
   triggerRef,
 }: DeckMoreOptionsProps) => {
@@ -76,9 +92,13 @@ const DeckMoreOptions = ({
   }, []);
 
   return (
-    <div
+    <motion.div
+      variants={dropdownVariants}
+      initial="hidden"
+      animate="visible"
+      exit={exit}
       ref={moreOptionsRef}
-      className="absolute z-[100] -right-[19.5px] top-9 flex items-start justify-center flex-col gap-2 dark:bg-slate-800 bg-gray-200 rounded-md py-2 px-3 w-32 border border-slate-400 select-none outline-none"
+      className="absolute z-[100] -right-[19.5px] top-9 flex items-start justify-center flex-col gap-2 dark:bg-slate-800 bg-gray-200 rounded-md py-2 px-3 w-32 border border-slate-400 dark:border-slate-500 select-none outline-none"
     >
       <div
         className="absolute z-20 -top-[0.8px] md:hidden h-[1px] dark:bg-slate-800 bg-gray-200 w-[13.1px]"
@@ -103,7 +123,7 @@ const DeckMoreOptions = ({
           x2="0"
           y2="10"
           strokeWidth="1"
-          className="stroke-slate-400"
+          className="stroke-slate-400 dark:stroke-slate-500"
         />
         <line
           x1="8"
@@ -111,41 +131,72 @@ const DeckMoreOptions = ({
           x2="16"
           y2="10"
           strokeWidth="1"
-          className="stroke-slate-400"
+          className="stroke-slate-400 dark:stroke-slate-500"
         />
       </svg>
-
-      <Button
-        variant="plain"
-        size="md"
-        aria-label="Edit Deck"
-        type="button"
-        onClick={() => handleEditDeck(deck.deckId, deck.title)}
-        className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
+      <motion.div variants={buttonStaggerAnimation} className="w-full">
+        <Button
+          variant="plain"
+          size="md"
+          aria-label={deck.pinned ? "Unpin Deck" : "Pin Deck"}
+          withTooltip
+          type="button"
+          onClick={() => {
+            handlePin(deck.deckId, deck.pinned);
+          }}
+          className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
+        >
+          <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
+            {deck.pinned ? (
+              <>
+                <BsFillPinFill className="text-[0.9rem]" /> Unpin
+              </>
+            ) : (
+              <>
+                <BsPin /> Pin
+              </>
+            )}
+          </p>
+        </Button>
+      </motion.div>
+      <motion.div
+        layoutId="editDeck"
+        variants={buttonStaggerAnimation}
+        className="w-full"
       >
-        <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
-          <BiEdit /> Edit
-        </p>
-      </Button>
-
-      <Button
-        variant="plain"
-        size="md"
-        aria-label="Delete Deck"
-        type="button"
-        onClick={() =>
-          deleteDeck({
-            deckId: deck.deckId,
-            searchParams,
-          })
-        }
-        className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
-      >
-        <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
-          <BsTrash /> Delete
-        </p>
-      </Button>
-    </div>
+        <Button
+          variant="plain"
+          size="md"
+          aria-label="Edit Deck"
+          type="button"
+          onClick={() => handleEditDeck(deck.deckId, deck.title)}
+          className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
+        >
+          <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
+            <BiEdit /> Edit
+          </p>
+        </Button>
+      </motion.div>
+      <motion.div variants={buttonStaggerAnimation} className="w-full">
+        <Button
+          variant="plain"
+          size="md"
+          aria-label="Delete Deck"
+          type="button"
+          onClick={() =>
+            deleteDeck({
+              deckId: deck.deckId,
+              searchParams,
+            })
+          }
+          className="flex items-center !justify-start w-full hover:dark:bg-slate-700 hover:bg-gray-300 rounded-md py-1 px-2 transition-colors duration-200"
+        >
+          <p className="text-sm text-gray-600 dark:text-gray-50 flex gap-2 items-center">
+            <BsTrash /> Delete
+          </p>
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 };
 

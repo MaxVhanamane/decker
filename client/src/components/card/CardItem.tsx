@@ -16,11 +16,15 @@ import { CardContext } from "../../context/CardContext";
 import { useParams } from "react-router-dom";
 import Button from "../Button";
 import { twMerge } from "tailwind-merge";
-import { Descendant, Element as SlateElement } from "slate";
+import { Element as SlateElement } from "slate";
 import {
   extractTextFromSlateNodes,
   getPlainText,
 } from "../../utils/editor/extractTextFromSlateNodes";
+import { RiDraggable } from "react-icons/ri";
+import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { DraggableAttributes } from "@dnd-kit/core";
+import { motion } from "motion/react";
 
 type CardDeletionParams = {
   deckId: string;
@@ -31,14 +35,11 @@ type CardDeletionParams = {
 type PropType = {
   handleDeleteCard: (payload: CardDeletionParams) => void;
   handleEditCardButtonClick: (cardItem: ContentTypeForEdit) => void;
-  card: {
-    note: Descendant[];
-    cardId: string;
-    createdAt: string;
-    order: number;
-  };
+  card: CardContentType;
   index: number;
   isDragging: boolean;
+  listeners: SyntheticListenerMap | undefined;
+  attributes: DraggableAttributes;
 };
 
 const formatDate = (dateString: string): string => {
@@ -58,6 +59,8 @@ const CardItem = memo(
     card,
     isDragging,
     index,
+    attributes,
+    listeners,
   }: PropType) => {
     const { deckId } = useParams();
     const { showToast } = useContext(ShowToastContext);
@@ -183,12 +186,36 @@ const CardItem = memo(
         ? getPlainText(card.note[0].children, 55).trim()
         : "";
     const note = extractTextFromSlateNodes(card.note);
-
+    const classesToAddOrRemove = ["!shadow-none"];
+    const classesToAddOrRemove2 = ["!border-none"];
     return (
-      <div
+      <motion.div
+        initial={card.isNew ? { opacity: 0, scale: 0.5 } : undefined}
+        animate={
+          card.isNew
+            ? { opacity: 1, scale: 1, transition: { delay: 0.1 } }
+            : undefined
+        }
+        whileTap={{ scale: 0.97 }}
+        onTapStart={() => {
+          elementRef.current?.classList.add(...classesToAddOrRemove);
+        }}
+        onTapCancel={() => {
+          setTimeout(() => {
+            elementRef.current?.classList.remove(...classesToAddOrRemove);
+          }, 500);
+        }}
+        onTap={() => {
+          elementRef.current?.classList.add(...classesToAddOrRemove2);
+          setTimeout(() => {
+            elementRef.current?.classList.remove(...classesToAddOrRemove);
+            elementRef.current?.classList.remove(...classesToAddOrRemove2);
+          }, 500);
+        }}
         ref={elementRef}
+        style={{ borderWidth: 1 }}
         className={twMerge(
-          "relative border overflow-hidden group/card dark:border-slate-600 border-slate-400/40 shadow-4-sides rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-blue-500  dark:hover:shadow-blue-500  hover:border-sky-600 hover:shadow-sky-600 group",
+          "relative  overflow-hidden group/card dark:border-slate-600 border-slate-400/40  rounded-md px-2 lg:pt-2 pt-[0.4rem] h-[9rem] lg:h-[9.5rem]  text-justify  transition-[background-color,border-color,box-shadow] duration-300  dark:hover:border-blue-500  hover:border-sky-600 isolate group dark:hover:shadow-sky-800 hover:shadow-sky-600  shadow-4-sides",
           undoCardCardId === card.cardId &&
             "!border-yellow-400  !shadow-yellow-400 dark:text-yellow-400 text-yellow-400 animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_3] "
         )}
@@ -266,10 +293,27 @@ const CardItem = memo(
           <div className="text-xs text-gray-400 select-none">
             <span>{formatDate(card.createdAt)}</span>
           </div>
-          <div className="flex items-center justify-center gap-3 ">
+          <div className="flex items-center justify-center gap-3 cursor-default">
+            <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 hover:bg-gray-200  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
+              <Button
+                {...attributes}
+                {...listeners}
+                variant="unstyled"
+                toolTipText="Press and hold to drag"
+                withTooltip
+                aria-label="Press and hold to drag"
+                className={twMerge(
+                  "text-gray-600 dark:text-slate-300  hover:text-gray-700 dark:hover:text-slate-400 rounded-full p-[0.2rem]  text-center  transition-all duration-500  ",
+                  isDragging ? "cursor-grabbing" : "cursor-grab"
+                )}
+              >
+                <RiDraggable />
+              </Button>
+            </div>
             <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 hover:bg-gray-200  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center group/deleteCardBtn">
               <Button
                 variant="unstyled"
+                onPointerDownCapture={(e) => e.stopPropagation()}
                 onClick={handleDeleteCardButtonClick}
                 toolTipText="Delete card"
                 withTooltip
@@ -281,6 +325,7 @@ const CardItem = memo(
             </div>
             <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 bg-gray-100 hover:bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/editBtn ">
               <Button
+                onPointerDownCapture={(e) => e.stopPropagation()}
                 variant="unstyled"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -301,7 +346,7 @@ const CardItem = memo(
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 );

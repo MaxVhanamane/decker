@@ -39,57 +39,90 @@ const CreateChapterModal = ({
           handleCloseChapterModal();
         }
       }}
-      className={`backdrop-blur-xl fixed inset-0 flex items-center justify-center z-[999] ${
-        startClosingModalAnimation
-          ? "animate-[opacityFadeOut_0.15s_linear_1] opacity-0"
-          : "animate-[opacity_0.15s_linear_1]"
-      }`}
+      className={`fixed inset-0 z-[999] flex items-center justify-center 
+     backdrop-blur-2xl transition-opacity
+    ${
+      startClosingModalAnimation
+        ? "animate-[opacityFadeOut_0.15s_linear_1] opacity-0"
+        : "animate-[opacity_0.15s_linear_1]"
+    }`}
     >
-      <div className="bg-white dark:bg-slate-800 flex flex-col items-center justify-center rounded-xl shadow-xl mx-4 w-[90%] md:w-1/2 lg:w-1/3 transition-colors duration-300">
-        {/* modal head */}
-        <div className="w-full border-b border-gray-200 dark:border-gray-600">
-          <h2 className="py-3 px-5 text-left dark:text-gray-50 text-gray-900 font-semibold text-lg">
+      <div
+        className="
+      relative mx-4 w-[90%] md:w-1/2 lg:w-1/3
+      rounded-xl
+      bg-gradient-to-b from-white to-gray-50
+      dark:from-slate-700 dark:to-slate-800
+      shadow-[0_20px_60px_rgba(0,0,0,0.25)]
+      border border-gray-200/60 dark:border-slate-600/50
+      transition-all duration-300
+    "
+      >
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200/70 dark:border-slate-600/50">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             Create Chapter
           </h2>
         </div>
-        {/* modal content */}
+
+        {/* Content */}
         <form
-          className="w-full"
           onSubmit={(e) => {
             e.preventDefault();
             handleCreateChapter();
           }}
         >
-          <div className="px-5 py-5 w-full border-b border-gray-200 dark:border-gray-600">
+          <div className="px-6 py-5">
+            <label className="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Chapter name
+            </label>
             <input
               value={chapterName}
               onChange={(e) => setChapterName(e.target.value)}
-              name="Chapter name"
-              placeholder="Chapter name"
+              placeholder="e.g. Introduction"
               autoComplete="off"
-              className="px-4 py-2 w-full outline-none rounded-lg font-medium text-gray-900 dark:bg-slate-700 dark:text-gray-50 border border-gray-300 dark:border-gray-600 focus:border-slate-400 dark:focus:border-slate-500
-  focus:ring-1 focus:ring-slate-400 transition"
+              className="
+            w-full rounded-lg px-4 py-2.5
+            bg-white dark:bg-slate-900
+            text-gray-900 dark:text-gray-50
+            border border-gray-300/70 dark:border-slate-600
+            focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none
+            transition-all duration-200
+          "
             />
           </div>
 
-          {/* modal footer */}
-          <div className="flex items-center justify-end space-x-3 mt-4 mb-4 mr-5">
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-6 pb-5">
+            <Button
+              variant="unstyled"
+              type="button"
+              onClick={handleAnimateCloseChapterModal}
+              className="
+            rounded-lg px-5 py-2 text-sm font-medium
+            text-gray-600 dark:text-gray-300
+            hover:text-gray-900 dark:hover:text-white
+            hover:bg-gray-100 dark:hover:bg-slate-700
+            transition-all
+            focus:ring-2 focus:ring-gray-400/40
+          "
+            >
+              Cancel
+            </Button>
+
             <Button
               variant="unstyled"
               type="submit"
-              aria-label="Save"
-              className="text-white bg-blue-700  hover:bg-sky-600 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2 outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+              className="
+            rounded-lg px-5 py-2 text-sm font-semibold text-white
+            bg-gradient-to-r from-blue-600 to-sky-500
+            hover:from-blue-500 hover:to-sky-400
+            shadow-md hover:shadow-lg
+            transition-all duration-200
+            focus:ring-2 focus:ring-blue-500/50
+          "
             >
               Save
-            </Button>
-            <Button
-              variant="unstyled"
-              onClick={handleAnimateCloseChapterModal}
-              type="button"
-              aria-label="Cancel"
-              className="text-gray-500 bg-white hover:bg-gray-100 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
-            >
-              Cancel
             </Button>
           </div>
         </form>

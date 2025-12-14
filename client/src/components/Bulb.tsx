@@ -321,17 +321,15 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
 
   return (
     <div
-      onAnimationEnd={() => {
-        setSwingBulb(false);
-      }}
-      className={`fixed h-fit top-[3.9rem] lg:right-8  w-12  right-5 transition-opacity duration-500 pointer-events-none dark:mix-blend-lighten mix-blend-multiply will-change-transform ${
-        swingBulb ? "animate-swingBulb" : ""
-      }  origin-top ${showBulb ? "opacity-100" : "opacity-0 "}`}
+      onAnimationEnd={() => setSwingBulb(false)}
+      className={`fixed h-fit top-[3.9rem] lg:right-8 w-12 right-5 transition-opacity duration-500 pointer-events-none dark:mix-blend-lighten mix-blend-multiply origin-top ${
+        showBulb ? "opacity-100" : "opacity-0"
+      } ${swingBulb && "animate-swingBulb"}`}
     >
       <div
         ref={wireRef}
         className={twMerge(
-          "relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-opacity duration-300",
+          "relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-opacity duration-200",
           shouldDimBulb && "opacity-50"
         )}
       >
@@ -365,7 +363,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
           setAnimationPlayed(true);
         }}
         style={initialBulbStyles}
-        className={`mt-0.5 relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-600 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer transition-[opacity,background-color,box-shadow] duration-300 before:transition-[opacity,background-color,box-shadow] before:duration-300 pointer-events-auto  ${
+        className={`mt-0.5 relative w-12 h-12  rounded-full z-20 before:absolute before:content-[''] before:-top-[30px] before:left-[13.5px] before:w-[21px] before:h-12  before:border-top-[18px] dark:before:border-[#080e23] before:border-gray-600 before:border-solid before:border-t-[18px] before:rounded-[8px] cursor-pointer transition-[opacity,background-color,box-shadow] duration-200 before:transition-[opacity,background-color,box-shadow] before:duration-200 pointer-events-auto  ${
           showBulb && !animationPlayed
             ? "dark:animate-flickerDark animate-flickerLight dark:before:animate-flickerDark dark:before:!shadow-none before:!shadow-none before:animate-flickerLight"
             : "bg-[#38bdf8] before:bg-[#38bdf8]"
@@ -377,7 +375,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
       >
         <span
           ref={spanOneRef}
-          className={`absolute -top-[9.6px] -left-[1.8px] block w-[18px] h-[18px] bg-transparent rotate-[345deg] border-transparent rounded-br-[24px] transition-[transform,box-shadow,background-color] duration-300  ${
+          className={`absolute -top-[9.6px] -left-[1.8px] block w-[18px] h-[18px] bg-transparent rotate-[345deg] border-transparent rounded-br-[24px] transition-[transform,box-shadow,background-color] duration-200  ${
             showBulb && !animationPlayed
               ? "dark:animate-flickerShadowLeftExtraSmallDark animate-flickerShadowLeftExtraSmallLight shadow-[12px_12px_0_4.5px_#1e293b]"
               : "shadow-[12px_12px_0px_4.5px_#38bdf8]"
@@ -389,7 +387,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
         ></span>
         <span
           ref={spanTwoRef}
-          className={`absolute -top-[9.6px] -right-[1.8px] block w-[18px] h-[18px] bg-transparent rotate-[14deg] border-transparent rounded-bl-[24px] transition-[transform,box-shadow,background-color] duration-300  ${
+          className={`absolute -top-[9.6px] -right-[1.8px] block w-[18px] h-[18px] bg-transparent rotate-[14deg] border-transparent rounded-bl-[24px] transition-[transform,box-shadow,background-color] duration-200  ${
             showBulb && !animationPlayed
               ? "dark:animate-flickerShadowRightExtraSmallDark animate-flickerShadowRightExtraSmallLight shadow-[-12px_12px_0_4.5px_#1e293b]"
               : "shadow-[-12px_12px_0px_4.5px_#38bdf8]"
@@ -409,7 +407,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
                 opacity="0.8"
                 transform="scale(1,0.85)"
                 ref={tungstenWireRef}
-                className={`transition-opacity duration-300 ${
+                className={`transition-opacity duration-200 ${
                   showBulb &&
                   !animationPlayed &&
                   "animate-flickerStrokeTungsten"

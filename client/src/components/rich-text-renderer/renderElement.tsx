@@ -11,12 +11,11 @@ import TitleElementView from "../editor/elements/readonly/TitleElementView";
 import { GiFeather } from "react-icons/gi";
 import ParagraphElementView from "../editor/elements/readonly/ParagraphElementView";
 import ListView from "../editor/elements/readonly/ListView";
-import HeadingOneElementView from "../editor/elements/readonly/HeadingOneElementView";
-import HeadingTwoElementView from "../editor/elements/readonly/HeadingTwoElementView";
 import QuoteElementView from "../editor/elements/readonly/QuoteElementView";
 import { CodeBlockElementView } from "../editor/elements/readonly/CodeBlockElementView";
 import ColorBarView from "../editor/elements/readonly/ColorBarView";
 import DividerView from "../editor/elements/readonly/DividerView";
+import HeadingElementView from "../editor/elements/readonly/HeadingElementView";
 
 export const renderElement = (
   element: CustomElementType,
@@ -48,24 +47,16 @@ export const renderElement = (
         </ParagraphElementView>
       );
 
-    case "h1":
+    case "heading":
       return (
-        <HeadingOneElementView key={key} element={element}>
-          {children}{" "}
+        <HeadingElementView key={key} element={element}>
+          {children}
           {showCursor && (
-            <GiFeather className="inline-block ml-2 text-2xl -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 cursor-icon" />
+            <GiFeather className="inline-block ml-2 text-2xl -translate-y-2 rotate-12 dark:text-gray-200 text-gray-700 cursor-icon" />
           )}
-        </HeadingOneElementView>
+        </HeadingElementView>
       );
-    case "h2":
-      return (
-        <HeadingTwoElementView key={key} element={element}>
-          {children}{" "}
-          {showCursor && (
-            <GiFeather className="inline-block ml-2 text-2xl -translate-y-2  rotate-12 dark:text-gray-200 text-gray-700 cursor-icon" />
-          )}
-        </HeadingTwoElementView>
-      );
+
     case "blockquote":
       return (
         <QuoteElementView key={key} element={element}>

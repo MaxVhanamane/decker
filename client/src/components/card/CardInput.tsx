@@ -4,17 +4,23 @@ import {
   RefObject,
   SetStateAction,
   memo,
-  useContext,
   useRef,
   useMemo,
   useCallback,
   useEffect,
 } from "react";
 import { BsChevronExpand } from "react-icons/bs";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { twMerge } from "tailwind-merge";
 import { ReactEditor, Slate } from "slate-react";
-import { Editor, Node, Transforms, Descendant, Element } from "slate";
+import {
+  Editor,
+  Node,
+  Transforms,
+  Descendant,
+  Element,
+  BaseSelection,
+} from "slate";
 import RichTextEditor from "../editor/RichTextEditor";
 import type { CustomElementType } from "../../types/textEditorTypes";
 import LinkModal from "../editor/LinkModal";
@@ -24,7 +30,11 @@ import SelectionToolbar from "../editor/selection-toolbar/SelectionToolbar";
 import { createCardEditor } from "../../utils/editor/createEditor";
 import { getTextAfterSlash } from "../../utils/editor/commandUtils";
 import { useGlobalEditorShortcuts } from "../../hooks/editor/useGlobalEditorShortcuts";
-
+import { ExtendedToolbar } from "./toolbar/ExtendedToolbar";
+import { Operation } from "slate";
+import { useClickOutside } from "../../hooks/utility/useClickOutside";
+import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
+import { motion } from "motion/react";
 export const initialValue: Descendant[] = [
   {
     type: "title",
@@ -47,6 +57,8 @@ type PropType = {
   setShowHyperlinkModal: Dispatch<SetStateAction<boolean>>;
   showHyperlinkModal: boolean;
   handleTransitionEnd: () => void;
+  isMoreMenuOpen: boolean;
+  handleOpenMoreFormatingMenu: () => void;
 };
 
 export type CommandPaletteHandle = {
@@ -54,6 +66,8 @@ export type CommandPaletteHandle = {
   setCommandSearch: (newSearch: string) => void;
   closeCommandPalette: () => void;
   resetSlashPosition: () => void;
+  openCommandPalette: () => void;
+  lastSlashLocation: React.MutableRefObject<BaseSelection | null>;
 };
 
 const CardInput = ({
@@ -67,16 +81,30 @@ const CardInput = ({
   showHyperlinkModal,
   setShowHyperlinkModal,
   handleTransitionEnd,
+  isMoreMenuOpen,
+  handleOpenMoreFormatingMenu,
 }: PropType) => {
   const isSmallScreen = useIsDeviceType("phone");
   const editorRef = useRef<HTMLDivElement>(null);
-  const { isPlayingAudioAllowed, handlePlayAudio } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const hasEditorOpened = useRef(false);
-  const isHeightTransitioning = useRef(true);
+  const extendedToolbarRef = useRef<HTMLDivElement>(null);
+  const isHeightTransitioning = useRef(false);
+  const isInitialExpand = useRef(true);
+
   const comandPaletteConfig = useRef<CommandPaletteHandle | null>(null);
   // Memoize editor creation to prevent recreation on every render
   const editor = useMemo(() => createCardEditor(), []);
   const { resetEditor } = useResetEditor(editor);
+
+  useClickOutside(
+    extendedToolbarRef,
+    isMoreMenuOpen,
+    handleOpenMoreFormatingMenu,
+    { excludeSelectors: ["[data-click-outside-ignore-more-options]"] }
+  );
+
+  useFocusTrap(extendedToolbarRef, "both", { enabled: isMoreMenuOpen });
 
   useGlobalEditorShortcuts(editor, {
     onEditorFocus: () => {
@@ -85,6 +113,14 @@ const CardInput = ({
       }
     },
   });
+
+  useEffect(() => {
+    if (!expandEditor) return;
+
+    isInitialExpand.current = true;
+    isHeightTransitioning.current = true;
+  }, [expandEditor]);
+
   useEffect(() => {
     if (!expandEditor) {
       resetEditor();
@@ -108,121 +144,117 @@ const CardInput = ({
   const maxExpandableHeight = isSmallScreen ? maxHeightSmallScreen : maxHeight;
   const isMaxHeightReached = height === maxExpandableHeight;
 
-  const adjustEditorHeight = useCallback(() => {
-    if (
-      !editorRef.current ||
-      !expandEditor ||
-      (!richTextWrapperRef?.current && !isHeightTransitioning.current)
-    ) {
-      return;
-    }
+  useEffect(() => {
+    if (!expandEditor || !editorRef.current) return;
 
-    const { scrollHeight, clientHeight } = editorRef.current;
+    const el = editorRef.current;
 
-    if (
-      scrollHeight > clientHeight &&
-      maxExpandableHeight > scrollHeight &&
-      !isHeightTransitioning.current
-    ) {
-      isHeightTransitioning.current = true;
-      setHeight((previousHeight) => {
-        const remainingSpace = maxExpandableHeight - previousHeight;
-        if (remainingSpace <= 0) return previousHeight;
+    const measure = () => {
+      //  Block during initial expand OR any height animation
+      if (isInitialExpand.current || isHeightTransitioning.current) return;
 
-        const increment = remainingSpace >= 250 ? 250 : remainingSpace;
-        const newHeight = previousHeight + increment;
+      const needsMoreSpace = el.scrollHeight > el.clientHeight + 8;
+      if (!needsMoreSpace) return;
 
-        return Math.min(newHeight, maxExpandableHeight);
+      setHeight((prev) => {
+        if (prev >= maxExpandableHeight) return prev;
+
+        isHeightTransitioning.current = true;
+        return prev + Math.min(120, maxExpandableHeight - prev);
       });
+    };
+
+    const observer = new MutationObserver(() => {
+      // wait until DOM + layout settles
+      requestAnimationFrame(measure);
+    });
+
+    observer.observe(el, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => observer.disconnect();
+  }, [expandEditor, maxExpandableHeight, setHeight]);
+
+  // Just in case if onTransition end doesnt run
+  useEffect(() => {
+    if (!isHeightTransitioning.current) return;
+
+    const id = setTimeout(() => {
+      isHeightTransitioning.current = false;
+      isInitialExpand.current = false;
+    }, 1100);
+
+    return () => clearTimeout(id);
+  }, [height]);
+
+  // const saveToLocalStorage = useCallback((value: Descendant[]) => {
+  //   try {
+  //     const content = JSON.stringify(value);
+  //     localStorage.setItem("content", content);
+  //   } catch (error) {
+  //     console.warn("Failed to save to localStorage:", error);
+  //   }
+  // }, []);
+
+  const handleChange = useCallback(() => {
+    const { selection, operations } = editor;
+    const textOp = operations
+      .filter((op) => Operation.isTextOperation(op))
+      .at(-1);
+    const isLastOperationInsertion = textOp?.type === "insert_text";
+
+    const isLastOperationSlash =
+      isLastOperationInsertion && textOp?.text === "/";
+
+    if (
+      isLastOperationSlash &&
+      comandPaletteConfig.current &&
+      comandPaletteConfig.current.lastSlashLocation
+    ) {
+      comandPaletteConfig.current.lastSlashLocation.current = selection;
+      comandPaletteConfig.current.openCommandPalette();
     }
-    if (scrollHeight > maxExpandableHeight && height !== maxExpandableHeight) {
-      setHeight(maxExpandableHeight);
-    }
-  }, [
-    expandEditor,
-    isSmallScreen,
-    maxHeight,
-    maxHeightSmallScreen,
-    richTextWrapperRef,
-    setHeight,
-    height,
-  ]);
+    if (
+      comandPaletteConfig.current &&
+      comandPaletteConfig.current.showCommandPalette
+    ) {
+      const text = getTextAfterSlash(editor);
+      //  Close only if:
+      // 1. text is empty (slash was deleted)
+      // 2. text contains two or more **consecutive** spaces
+      if (text === null) {
+        comandPaletteConfig.current.closeCommandPalette();
+        comandPaletteConfig.current.resetSlashPosition();
 
-  const saveToLocalStorage = useCallback((value: Descendant[]) => {
-    try {
-      const content = JSON.stringify(value);
-      localStorage.setItem("content", content);
-    } catch (error) {
-      console.warn("Failed to save to localStorage:", error);
-    }
-  }, []);
+        return;
+      }
+      if (text && /\s{2,}$/.test(text)) {
+        comandPaletteConfig.current.closeCommandPalette();
+        comandPaletteConfig.current.resetSlashPosition();
 
-  const handleChange = useCallback(
-    (value: Descendant[]) => {
-      // if (
-      //   editor.selection &&
-      //   ReactEditor.isFocused(editor) &&
-      //   !Range.isCollapsed(editor.selection)
-      // ) {
-      //   setShowHoveringToolbar(true);
-      // }
-
-      // // Check if there are content changes (not just selection changes)
-      // const isAstChange = editor.operations.some(
-      //   (op) => "set_selection" !== op.type
-      // );
-
-      // if (isAstChange) {
-      //   saveToLocalStorage(value);
-      // }
-
-      // Ensure at least one valid node exists
-
-      if (
-        comandPaletteConfig.current &&
-        comandPaletteConfig.current.showCommandPalette
-      ) {
-        const text = getTextAfterSlash(editor);
-
-        //  Close only if:
-        // 1. text is empty (slash was deleted)
-        // 2. text contains two or more **consecutive** spaces
-        if (text === null) {
-          comandPaletteConfig.current.closeCommandPalette();
-          comandPaletteConfig.current.resetSlashPosition();
-
-          return;
-        }
-        if (text && /\s{2,}$/.test(text)) {
-          comandPaletteConfig.current.closeCommandPalette();
-          comandPaletteConfig.current.resetSlashPosition();
-
-          return;
-        }
-
-        comandPaletteConfig.current.setCommandSearch(text || "");
+        return;
       }
 
-      // setNote(value);
-      saveToLocalStorage(value);
-      // Handle editor height adjustment
-      if (value.length > 1 && !isMaxHeightReached) {
-        adjustEditorHeight();
-      }
-    },
-    [editor, adjustEditorHeight, isMaxHeightReached]
-  );
+      comandPaletteConfig.current.setCommandSearch(text || "");
+    }
+
+    // saveToLocalStorage(value);
+    // Handle editor height adjustment
+  }, [editor, isMaxHeightReached]);
 
   const handleEditorClick = useCallback(() => {
     setExpandEditor(true);
     hasEditorOpened.current = true;
 
-    if (isPlayingAudioAllowed && !expandEditor) {
+    if (!expandEditor) {
       setTimeout(() => {
         handlePlayAudio("open", "/cards");
       }, 100);
     }
-  }, [setExpandEditor, isPlayingAudioAllowed, expandEditor, handlePlayAudio]);
+  }, [setExpandEditor, expandEditor, handlePlayAudio]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -233,6 +265,7 @@ const CardInput = ({
     },
     [expandEditor, handleEditorClick]
   );
+
   const handleEditorContentClick = useCallback(
     (e: React.MouseEvent) => {
       const domRange = window.getSelection()?.getRangeAt(0);
@@ -299,103 +332,131 @@ const CardInput = ({
   }, [isSmallScreen, height, maxHeightSmallScreen, maxHeight]);
 
   return (
-    <Slate editor={editor} initialValue={initialValue} onChange={handleChange}>
-      <div className="mt-4 w-full px-4 mx-auto min-h-[12rem] relative">
+    <Slate
+      editor={editor}
+      initialValue={initialValue}
+      onChange={handleChange}
+      key="cardInput"
+    >
+      <div className="mt-4 w-full px-4 mx-auto relative">
         <div className="absolute z-50 top-0 left-0">
           <div id="dropdownPortalContainer" className="pointer-events-auto" />
         </div>
 
         <div className="flex flex-col gap-4 justify-center items-center relative">
-          <div
-            className={twMerge(
-              "flex flex-col relative transition-[transform] duration-1000 will-change-[transform]",
-              expandEditor
-                ? "-translate-y-0"
-                : "-translate-y-14 xl:-translate-y-0 delay-1000"
-            )}
+          <motion.div
+            layout="position"
+            transition={{
+              layout: {
+                type: "spring",
+              },
+            }}
           >
             <div
               className={twMerge(
-                "transition-[transform,opacity] duration-1000 flex xl:h-10 h-20 items-center justify-end border-r border-l dark:border-slate-500 border-gray-400 rounded-t-md  md:w-[75vw] md:max-w-[44rem] xl:w-[85vw] xl:max-w-[50rem] w-[95vw] sm-mid:w-[85vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
+                "flex flex-col relative transition-[transform] duration-1000 will-change-[transform]",
                 expandEditor
-                  ? "border-t md:delay-1000 delay-1000"
-                  : "p-0 translate-y-full border-t pointer-events-none lg:delay-1000 delay-[0s]"
+                  ? "-translate-y-0"
+                  : "-translate-y-14 xl:-translate-y-0 delay-1000"
               )}
-            >
-              {children}
-            </div>
-
-            <div
-              onTransitionEnd={(e) => {
-                if (e.propertyName === "height") {
-                  isHeightTransitioning.current = false;
-                }
-
-                if (e.propertyName === "height" && !expandEditor) {
-                  handleTransitionEnd();
-                }
-              }}
-              onClick={handleEditorClick}
-              onKeyDown={handleKeyDown}
-              ref={richTextWrapperRef}
-              tabIndex={!expandEditor ? 0 : -1}
-              className={twMerge(
-                "md:w-[75vw] md:max-w-[44rem] xl:w-[85vw] xl:max-w-[50rem] bg-white w-full max-w-[95vw] sm-mid:w-[85vw] border dark:border-slate-500 border-gray-400 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500 focus-visible:ring-2 dark:ring-blue-500 ring-gray-600",
-                expandEditor
-                  ? "before:opacity-0 before:delay-0 delay-[0s]"
-                  : "before:delay-[1.6s] h-[85px] xl:h-[45px] delay-1000 lg:delay-[0s]",
-                hasEditorOpened.current &&
-                  (expandEditor
-                    ? "animate-rounded-top-out"
-                    : "lg:animate-rounded-top-in animate-rounded-top-in-mobile")
-              )}
-              style={{
-                height: expandEditor ? `${height}px` : undefined,
-              }}
-              onPaste={expandEditorToMaxHeight}
             >
               <div
-                onClick={handleEditorContentClick}
                 className={twMerge(
-                  "transition-all duration-500 relative h-full px-4 rounded-md",
+                  "transition-[transform,opacity] duration-1000 flex xl:h-10 h-20 items-center justify-end border-r border-l dark:border-slate-500 border-gray-400 rounded-t-md  md:w-[75vw] md:max-w-[44rem] xl:w-[85vw] xl:max-w-[50rem] w-[95vw] sm-mid:w-[85vw] bg-white dark:bg-slate-900 relative will-change-[transform,opacity]",
                   expandEditor
-                    ? "opacity-100"
-                    : "opacity-0 pointer-events-none",
-                  shouldShowScrollbar
-                    ? "animate-scrollbar-delayed dark:dark-scrollbar light-scrollbar scrollbar-gutter"
-                    : "overflow-y-hidden"
+                    ? "border-t delay-1000"
+                    : "p-0 translate-y-full border-t pointer-events-none xl:delay-1000 delay-[0s]"
                 )}
-                data-editor-parent-create
-                ref={editorRef}
               >
-                <RichTextEditor
-                  setShowHyperlinkModal={setShowHyperlinkModal}
-                  expandEditorToMaxHeight={expandEditorToMaxHeight}
-                  mode="create"
-                  parentIndex={expandEditor ? -1 : 0}
-                  comandPaletteConfig={comandPaletteConfig}
-                />
-
-                <SelectionToolbar
-                  mode="create"
-                  setShowHyperlinkModal={setShowHyperlinkModal}
-                />
+                {children}
               </div>
 
               <div
-                className={twMerge(
-                  "absolute top-1/2 -translate-y-1/2 right-8 cursor-pointer z-20 opacity-100 transition-all duration-500",
-                  expandEditor ? "opacity-0 delay-0" : "delay-[1.6s]"
-                )}
-              >
-                <BsChevronExpand className="dark:text-gray-100 text-gray-500" />
-              </div>
-            </div>
+                onTransitionEnd={(e) => {
+                  if (e.propertyName !== "height") return;
 
-            {showHyperlinkModal && (
-              <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
-            )}
-          </div>
+                  isHeightTransitioning.current = false;
+
+                  // Initial expand just finished
+                  if (isInitialExpand.current) {
+                    isInitialExpand.current = false;
+                  }
+
+                  if (!expandEditor) {
+                    handleTransitionEnd();
+                  }
+                }}
+                onClick={handleEditorClick}
+                onKeyDown={handleKeyDown}
+                ref={richTextWrapperRef}
+                tabIndex={!expandEditor ? 0 : -1}
+                className={twMerge(
+                  "md:w-[75vw] md:max-w-[44rem] xl:w-[85vw] xl:max-w-[50rem] bg-white w-full max-w-[95vw] sm-mid:w-[85vw] border dark:border-slate-500 border-gray-400 rounded-md outline-none text-gray-800 text-base dark:bg-slate-900 dark:text-gray-50 resize-none transition-[height,padding,border,border-radius] duration-1000 border-b font-light will-change-[height,padding] text-left relative before:content-['Craft_An_Elegant_Note'] before:top-1/2 before:-translate-y-1/2 before:left-1/2 before:-translate-x-1/2 before:opacity-100 before:absolute before:transition-all before:duration-500 focus-visible:ring-2 dark:ring-blue-500 ring-gray-600 overflow-x-hidden",
+                  expandEditor
+                    ? "before:opacity-0 before:delay-0 delay-[0s]"
+                    : "before:delay-[1.6s] h-[85px] xl:h-[45px] delay-1000 xl:delay-[0s]",
+                  hasEditorOpened.current &&
+                    (expandEditor
+                      ? "animate-rounded-top-out"
+                      : "lg:animate-rounded-top-in animate-rounded-top-in-mobile")
+                )}
+                style={{
+                  height: expandEditor ? `${height}px` : undefined,
+                }}
+                onPaste={expandEditorToMaxHeight}
+              >
+                <div
+                  ref={extendedToolbarRef}
+                  className={twMerge(
+                    "dark:border-slate-500 flex items-center justify-center border-gray-400 dark:bg-slate-900 bg-white p-2 rounded-bl-md border h-10 w-20 -top-0.5 right-0 absolute  transition-transform duration-200 ease-out transform-gpu z-10",
+                    isMoreMenuOpen ? "-translate-y-0" : "-translate-y-full"
+                  )}
+                >
+                  <ExtendedToolbar mode="create" toolbarPosition="top" />
+                </div>
+                <div
+                  onClick={handleEditorContentClick}
+                  className={twMerge(
+                    "transition-all duration-500 relative h-full px-4 rounded-md",
+                    expandEditor
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none",
+                    shouldShowScrollbar
+                      ? "animate-scrollbar-delayed dark:dark-scrollbar light-scrollbar scrollbar-gutter"
+                      : "overflow-y-hidden"
+                  )}
+                  data-editor-parent-create
+                  ref={editorRef}
+                >
+                  <RichTextEditor
+                    setShowHyperlinkModal={setShowHyperlinkModal}
+                    expandEditorToMaxHeight={expandEditorToMaxHeight}
+                    mode="create"
+                    parentIndex={expandEditor ? -1 : 0}
+                    comandPaletteConfig={comandPaletteConfig}
+                  />
+
+                  <SelectionToolbar
+                    mode="create"
+                    setShowHyperlinkModal={setShowHyperlinkModal}
+                  />
+                </div>
+
+                <div
+                  className={twMerge(
+                    "absolute top-1/2 -translate-y-1/2 right-8 cursor-pointer z-20 opacity-100 transition-all duration-500",
+                    expandEditor ? "opacity-0 delay-0" : "delay-[1.6s]"
+                  )}
+                >
+                  <BsChevronExpand className="dark:text-gray-100 text-gray-500" />
+                </div>
+              </div>
+
+              {showHyperlinkModal && (
+                <LinkModal setShowHyperlinkModal={setShowHyperlinkModal} />
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </Slate>

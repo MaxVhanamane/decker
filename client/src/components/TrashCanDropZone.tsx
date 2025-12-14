@@ -3,7 +3,7 @@ import { ShowToastContext } from "../context/ToastNotificationContext";
 import { useDroppable } from "@dnd-kit/core";
 import { CardContext } from "../context/CardContext";
 import Button from "./Button";
-
+import { motion } from "motion/react";
 type PropType = {
   droppableId: string;
   altText: string;
@@ -46,32 +46,43 @@ const TrashCanDropZone = memo(({ droppableId, altText }: PropType) => {
           : "ring-1 ring-slate-400/60 "
       }`}
     >
-      <Button
-        variant="plain"
-        withTooltip
-        tooltipAutoHideDuration={2000}
-        toolTipText={
-          droppableId === "DeckDeleteArea" ? "Delete Deck" : "Delete Card"
-        }
-        aria-label={`Drag and drop the ${
-          droppableId === "DeckDeleteArea" ? "deck" : "card"
-        } onto the trash icon to delete it.`}
-        size="md"
-        onClick={handleClick}
-        className={`  !transition-transform !duration-200 rounded-full p-1 active:scale-95  ${
-          isOver || shouldTrashCanRotate ? "-rotate-12 " : "transform-none"
-        } `}
+      <motion.div
+        whileTap={{
+          scale: 0.85,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 150,
+          damping: 10,
+        }}
       >
-        <img
-          src={
-            isOver || shouldTrashCanRotate
-              ? "/trashcan-open.svg"
-              : "/trashcan-close.svg"
+        <Button
+          variant="plain"
+          withTooltip
+          tooltipAutoHideDuration={2000}
+          toolTipText={
+            droppableId === "DeckDeleteArea" ? "Delete Deck" : "Delete Card"
           }
-          alt={altText}
-          className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
-        />
-      </Button>
+          aria-label={`Drag and drop the ${
+            droppableId === "DeckDeleteArea" ? "deck" : "card"
+          } onto the trash icon to delete it.`}
+          size="md"
+          onClick={handleClick}
+          className={`  !transition-transform !duration-200 rounded-full p-1  ${
+            isOver || shouldTrashCanRotate ? "-rotate-12 " : "transform-none"
+          } `}
+        >
+          <img
+            src={
+              isOver || shouldTrashCanRotate
+                ? "/trashcan-open.svg"
+                : "/trashcan-close.svg"
+            }
+            alt={altText}
+            className="w-[30px] h-[30px] lg:w-[35px] lg:h-[35px]"
+          />
+        </Button>
+      </motion.div>
     </div>
   );
 });

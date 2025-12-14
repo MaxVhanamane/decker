@@ -38,7 +38,7 @@ export const ContentRenderer = ({
   );
 
   return (
-    <div className="content-container [&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1">
+    <div className="[&>*]:py-[3px] py-4 [&>*:nth-child(2)]:mt-1">
       {renderContent(
         content,
         totalChars,

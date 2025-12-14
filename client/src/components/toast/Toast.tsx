@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { IoWarning } from "react-icons/io5";
 import { MdInfo, MdCheckCircle } from "react-icons/md";
 import type { AutoHideDurationValues, PositionValues } from "../../types/types";
 import { BiSolidErrorAlt } from "react-icons/bi";
 import Button from "../Button";
-
+import { motion, Variants } from "motion/react";
+import { AnimatedSeverityText } from "./AnimatedSeverityText";
 type PropType = {
   buttonText?: string;
   buttonHandler?: (() => void) | null;
@@ -17,6 +24,7 @@ type PropType = {
   animationStyle?: "slide" | "scale-up";
   theme?: "auto" | "colored";
   progressBar: "show" | "hide";
+  animatedText?: boolean;
 };
 
 const IconsBySeverity = {
@@ -79,6 +87,7 @@ const Toast = ({
   animationStyle,
   theme,
   progressBar,
+  animatedText = true,
 }: PropType) => {
   const [visible, setVisible] = useState(true);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -87,21 +96,18 @@ const Toast = ({
   const toastRef = useRef<HTMLDivElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const hasMounted = useRef(false);
-
   useEffect(() => {
     if (buttonText && buttonHandler && toastRef.current) {
       toastRef.current.focus();
     }
   }, []);
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     const paragraph = paragraphRef.current;
     if (paragraph) {
       const lineHeight = parseInt(
         window.getComputedStyle(paragraph).lineHeight
       );
       const elementHeight = paragraph?.clientHeight;
-
       // If element height is greater than line height, text is on multiple lines
       setIsMultipleLines(elementHeight > lineHeight);
     }
@@ -192,7 +198,7 @@ const Toast = ({
         ${isMultipleLines ? "p-2" : "p-3"}
         ${
           theme === "auto"
-            ? "bg-gray-200 dark:text-gray-50 dark:bg-slate-700 text-gray-800"
+            ? "bg-gray-100 dark:text-gray-50 dark:bg-slate-700 text-gray-800"
             : `${toastBgColors[severity]} text-gray-50`
         }
         shadow-md overflow-hidden font-semibold rounded-lg z-[90] max-w-md flex items-center justify-center
@@ -222,23 +228,42 @@ const Toast = ({
           style={{ width: "100%" }}
         />
       )}
-      <Icon
-        className={`w-fit flex-shrink-0 ${
-          isMultipleLines ? "text-3xl " : "text-2xl"
-        } ${theme === "auto" ? textColors[severity] : "text-gray-50"} ${
-          visible && animationStyle === "slide"
-            ? position === "top-center" || position === "bottom-center"
-              ? "animate-[scaleUp_0.2s_ease-in]"
-              : " animate-[scaleUp_0.6s_ease-in]"
-            : "animate-[scaleUp_0.2s_ease-in]"
-        }`}
-      />
-      <p
-        ref={paragraphRef}
-        className="text-base font-sans font-normal text-left "
+      <motion.div
+        variants={iconVariants}
+        initial="initial"
+        animate={
+          visible
+            ? animationStyle === "slide"
+              ? position === "top-center" || position === "bottom-center"
+                ? "enterCenter"
+                : "enterSlide"
+              : "enterCenter"
+            : "exit"
+        }
+        className={`
+    w-fit flex-shrink-0
+    ${isMultipleLines ? "text-3xl" : "text-2xl"}
+    ${theme === "auto" ? textColors[severity] : "text-gray-50"}
+  `}
       >
-        {message}
-      </p>
+        <Icon />
+      </motion.div>
+
+      {animatedText ? (
+        <AnimatedSeverityText
+          message={message}
+          severity={severity}
+          autoHideDuration={autoHideDuration}
+        />
+      ) : (
+        <p
+          ref={paragraphRef}
+          className="text-base font-sans font-normal text-left "
+        >
+          {message}
+        </p>
+      )}
+
       {buttonText && buttonHandler && (
         <Button
           variant="unstyled"
@@ -261,3 +286,41 @@ const Toast = ({
 };
 
 export default Toast;
+
+const iconVariants: Variants = {
+  initial: {
+    scale: 0.6,
+    opacity: 0,
+  },
+
+  enterCenter: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 1000,
+      damping: 15,
+    },
+  },
+
+  enterSlide: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 1000,
+      damping: 15,
+      delay: 0.4,
+    },
+  },
+
+  exit: {
+    scale: 0.8,
+    opacity: 0,
+    transition: {
+      type: "spring",
+      stiffness: 220,
+      damping: 18,
+    },
+  },
+};

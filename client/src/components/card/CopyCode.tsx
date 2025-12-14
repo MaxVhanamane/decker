@@ -5,7 +5,7 @@ import Button from "../Button";
 import { BsCheckLg } from "react-icons/bs";
 import { MdContentCopy } from "react-icons/md";
 import { twMerge } from "tailwind-merge";
-
+import { AnimatePresence, motion } from "motion/react";
 type Props = {
   code: CodeLineElement[];
   variant: "editor" | "preview";
@@ -21,6 +21,11 @@ const getCodeString = (code: CodeLineElement[]): string => {
         .join("")
     )
     .join("\n");
+};
+const copyVariants = {
+  hidden: { opacity: 0, scale: 0.8, y: 2 },
+  visible: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.8, y: -2 },
 };
 
 const CopyCode = ({ code, variant }: Props) => {
@@ -51,40 +56,64 @@ const CopyCode = ({ code, variant }: Props) => {
           aria-label="Copy code"
           size="md"
           className={twMerge(
-            "flex items-center justify-center gap-1 select-none rounded-md",
+            " select-none rounded-md",
             variant === "preview" ? " mr-2 " : " mr-0 py-1.5"
           )}
           disabled={isCopied}
         >
-          {isCopied ? (
-            <>
-              <BsCheckLg
-                className={twMerge(
-                  "text-gray-700 dark:text-gray-200",
-                  variant === "preview" ? "  " : " text-sm"
-                )}
-              />
-              <span
-                className={twMerge("text-xs", variant === "editor" && "hidden")}
+          <AnimatePresence mode="wait">
+            {isCopied ? (
+              <motion.div
+                key="copied"
+                variants={copyVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.18 }}
+                className="flex items-center justify-center gap-1"
               >
-                Copied!
-              </span>
-            </>
-          ) : (
-            <>
-              <MdContentCopy
-                className={twMerge(
-                  "text-gray-700 dark:text-gray-200",
-                  variant === "preview" ? "  " : " text-sm"
-                )}
-              />
-              <span
-                className={twMerge("text-xs", variant === "editor" && "hidden")}
+                <BsCheckLg
+                  className={twMerge(
+                    "text-gray-700 dark:text-gray-200",
+                    variant === "preview" ? "  " : " text-sm"
+                  )}
+                />
+                <span
+                  className={twMerge(
+                    "text-xs",
+                    variant === "editor" && "hidden"
+                  )}
+                >
+                  Copied!
+                </span>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="copy"
+                variants={copyVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.18 }}
+                className="flex items-center justify-center gap-1"
               >
-                {variant === "preview" ? "Copy code" : "Copy"}
-              </span>
-            </>
-          )}
+                <MdContentCopy
+                  className={twMerge(
+                    "text-gray-700 dark:text-gray-200",
+                    variant === "preview" ? "  " : " text-sm"
+                  )}
+                />
+                <span
+                  className={twMerge(
+                    "text-xs",
+                    variant === "editor" && "hidden"
+                  )}
+                >
+                  {variant === "preview" ? "Copy code" : "Copy"}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Button>
       </CopyToClipboard>
     </div>

@@ -2,8 +2,7 @@ import { Dispatch, memo, SetStateAction } from "react";
 import { RenderElementProps } from "slate-react";
 import TitleElement from "./elements/editable/TitleElement";
 import CodeBlockElement from "./elements/editable/CodeBlockElement";
-import HeadingOneElement from "./elements/editable/HeadingOneElement";
-import HeadingTwoElement from "./elements/editable/HeadingTwoElement";
+import Heading from "./elements/editable/HeadingElement";
 import QuoteElement from "./elements/editable/QuoteElement";
 import LinkElement from "./elements/editable/LinkElement";
 import ParagraphElement from "./elements/editable/ParagraphElement";
@@ -47,11 +46,9 @@ export const RenderElement = memo(
             {children}
           </div>
         );
-      case "h1":
-        return <HeadingOneElement {...props} />;
+      case "heading":
+        return <Heading {...props} />;
 
-      case "h2":
-        return <HeadingTwoElement {...props} />;
       case "blockquote":
         return <QuoteElement {...props} />;
       case "link":

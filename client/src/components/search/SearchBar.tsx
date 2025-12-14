@@ -13,7 +13,7 @@ import {
 import { AiOutlineSearch } from "react-icons/ai";
 import { RiCloseFill } from "react-icons/ri";
 import { searchContext } from "../../context/SearchContext";
-import { AudioContext } from "../../context/AudioContext";
+import { useAudio } from "../../context/AudioContext";
 import { useModalBackNavigationHandler } from "../../hooks/utility/useModalBackNavigationHandler";
 import { useNavigate } from "react-router-dom";
 import Button from "../Button";
@@ -33,7 +33,7 @@ const SearchBar = () => {
   } = useContext(searchContext);
   const { showToast } = useContext(ShowToastContext);
   const { isOnline } = useContext(OfflineContext);
-  const { handlePlayAudio, isPlayingAudioAllowed } = useContext(AudioContext);
+  const { handlePlayAudio } = useAudio();
   const [inputValue, setInputValue] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCount, setSearchCount] = useState(0);
@@ -202,11 +202,9 @@ const SearchBar = () => {
                 onClick={() => {
                   setAnimateSearchBar(false);
                   setInputValue("");
-                  if (isPlayingAudioAllowed) {
-                    setTimeout(() => {
-                      handlePlayAudio("close");
-                    }, 100);
-                  }
+                  setTimeout(() => {
+                    handlePlayAudio("close");
+                  }, 100);
                 }}
                 className={`text-gray-500 dark:text-gray-200  dark:hover:text-gray-400 hover:text-gray-400 cursor-pointer transition-[opacity,color] duration-500 text-xl`}
               />

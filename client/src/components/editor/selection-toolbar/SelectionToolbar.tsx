@@ -13,6 +13,7 @@ import { Editor, Path, Range, Element as SlateElement } from "slate";
 import { useEditorActions } from "../../../hooks/editor/useEditorActions";
 import {
   commonButtonClassNames,
+  getExtendedToolbarMarkButtons,
   getMarkButtons,
 } from "../../../utils/editor/editorButtonConfigs";
 import HighlightDropdown from "../dropdowns/HighlightDropdown";
@@ -44,10 +45,15 @@ const SelectionToolbar = ({
   const hoveringToolbarRef = useRef<HTMLDivElement | null>(null);
   const highlightButtonRef = useRef<HTMLButtonElement>(null);
 
-  const selection = useSlateSelection();
-  const hasActiveSelection = selection && !Range.isCollapsed(selection);
-
   const editor = useSlate();
+  const selection = useSlateSelection();
+  const hasActiveSelection = useMemo(() => {
+    if (!selection || Range.isCollapsed(selection)) return false;
+
+    const selectedText = Editor.string(editor, selection).trim();
+    return selectedText.length > 0;
+  }, [selection, editor]);
+
   const { showToast } = useContext(ShowToastContext);
   const isTabOrMobile = useIsDeviceType("tablet");
 
@@ -59,26 +65,33 @@ const SelectionToolbar = ({
     handleItalic,
     handleLink,
     handleInlineCode,
+    handleStrikethrough,
   } = useEditorActions();
 
   const markButtons = useMemo(
-    () =>
-      getMarkButtons({
+    () => [
+      ...getMarkButtons({
         handleUnderline,
         handleBold,
         handleItalic,
-        handleInlineCode,
         setShowHighlightOptions,
         tabbable: true,
         highlightButtonRef,
       }),
+      ...getExtendedToolbarMarkButtons({
+        handleInlineCode,
+        handleStrikethrough,
+        tabbable: true,
+      }),
+    ],
     [
       handleUnderline,
       handleBold,
       handleItalic,
-      handleInlineCode,
       setShowHighlightOptions,
       highlightButtonRef,
+      handleInlineCode,
+      handleStrikethrough,
     ]
   );
 

@@ -7,6 +7,7 @@ import {
   extractTextFromSlateNodes,
   getPlainText,
 } from "../../utils/editor/extractTextFromSlateNodes";
+import { RiDraggable } from "react-icons/ri";
 type PropType = NonNullable<CurrentDraggingCardType>;
 
 const CardItemPresentational = ({
@@ -89,6 +90,14 @@ const CardItemPresentational = ({
           <span>{formatDate(card.createdAt)}</span>
         </div>
         <div className="flex items-center justify-center gap-3 ">
+          <div className=" dark:bg-slate-800  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
+            <button
+              className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem] text-center cursor-grabbing "
+              aria-label="Drag Card"
+            >
+              <RiDraggable />
+            </button>
+          </div>
           <div className=" dark:bg-slate-800  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
             <button
               className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem] text-center "

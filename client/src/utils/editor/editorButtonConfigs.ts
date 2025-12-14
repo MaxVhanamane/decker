@@ -1,13 +1,14 @@
-import { BsCheckLg, BsTextIndentLeft, BsTextIndentRight, BsTypeUnderline } from "react-icons/bs";
+import { BsArrowDownShort, BsCheckLg, BsTextIndentLeft, BsTextIndentRight, BsTypeUnderline } from "react-icons/bs";
 import { AiOutlineBold, AiOutlineLink } from "react-icons/ai";
 import { RxFontItalic, RxText } from "react-icons/rx";
-import { LuHeading1, LuHeading2, LuHighlighter, LuRedo2, LuUndo2 } from "react-icons/lu";
+import { LuHeading, LuHighlighter } from "react-icons/lu";
+import { CiUndo, CiRedo } from "react-icons/ci";
 import { BiCodeCurly } from "react-icons/bi";
 import { RiArrowUpSLine, RiDoubleQuotesL, RiSeparator } from "react-icons/ri";
 import { CgBorderLeft } from "react-icons/cg";
 import { HiMiniListBullet } from "react-icons/hi2";
 import { FaExpand } from "react-icons/fa";
-import { MdOutlineClose } from "react-icons/md";
+import { MdOutlineClose, MdStrikethroughS } from "react-icons/md";
 import { IoCodeSlash } from "react-icons/io5";
 // import { TbBulbFilled } from "react-icons/tb";
 import { CustomEditor } from "./customEditor";
@@ -15,7 +16,6 @@ import { Editor, Range } from "slate";
 import { AudioNamesType } from "../../context/AudioContext";
 import type { ToastHandlerType } from "../../types/types";
 import { twMerge } from "tailwind-merge";
-import { Dispatch, SetStateAction } from "react";
 import type { ActionButtonsConfig, BlockButtonConfig, HistoryButtonsConfig, MarkButtonConfig, StructureButtonsConfig } from "../../types/textEditorTypes";
 
 export const commonButtonClassNames =
@@ -25,10 +25,9 @@ type GetBlockButtonsParams = {
     editor: Editor;
     handleLink: () => void;
     handleCode: () => void;
-    handleH1: () => void;
-    handleH2: () => void;
     handleText: () => void;
     handleQuote: () => void;
+    setShowHeadingOptions: React.Dispatch<React.SetStateAction<boolean>>;
     setShowDividerOptions: React.Dispatch<React.SetStateAction<boolean>>;
     setShowColorBarOptions: React.Dispatch<React.SetStateAction<boolean>>;
     setShowListStyleOptions: React.Dispatch<React.SetStateAction<boolean>>;
@@ -40,6 +39,7 @@ type GetBlockButtonsParams = {
     showDividerOptions: boolean;
     colorBarButtonRef: React.RefObject<HTMLButtonElement>;
     dividerButtonRef: React.RefObject<HTMLButtonElement>;
+    headingButtonRef: React.RefObject<HTMLButtonElement>;
     listStyleButtonRef: React.RefObject<HTMLButtonElement>;
 
 };
@@ -47,7 +47,6 @@ type GetBlockButtonsParams = {
 type GetMarkButtonsParams = {
     handleUnderline: () => void;
     handleBold: () => void;
-    handleInlineCode: () => void;
     handleItalic: () => void;
     setShowHighlightOptions: (val: boolean) => void;
     tabbable: boolean;
@@ -55,13 +54,18 @@ type GetMarkButtonsParams = {
 
 };
 
+type getExtendedToolbarMarkButtonParams = {
+    handleStrikethrough: () => void;
+    handleInlineCode: () => void;
+    tabbable: boolean;
+}
 
 type GetActionButtonsParams = {
     // tipsHandlerMemo: () => void;
     expandEditorToMaxHeight: () => void;
+    handleOpenMoreFormatingMenu: () => void;
     handleCloseTextEditor: () => void;
     handlePlayAudio: (audioName: AudioNamesType, path?: string) => void;
-    isPlayingAudioAllowed: boolean;
     isFetchingCards: boolean;
     isCreatingCard: boolean;
     tabbable: boolean;
@@ -70,7 +74,8 @@ type GetActionButtonsParams = {
 
 type getEditActionButtonsParams = {
     handleSaveEdit: () => void,
-    setCloseEditModalWithAnimation: Dispatch<SetStateAction<boolean>>,
+    handleCloseEditTextEditor: () => void
+    handleOpenMoreEditFormattingMenu: () => void
     tabbable: boolean;
     toggleToolbarPosition: () => void
 }
@@ -82,7 +87,6 @@ export const getMarkButtons = ({
     handleUnderline,
     handleBold,
     handleItalic,
-    handleInlineCode,
     setShowHighlightOptions,
     tabbable,
     highlightButtonRef,
@@ -135,18 +139,7 @@ export const getMarkButtons = ({
             withTooltip: true
 
         },
-        {
-            name: "addInlineCode",
-            onClickHandler: handleInlineCode,
-            toolTipText: "Inline Code",
-            subTooltipText: "ctrl + E",
-            icon: IoCodeSlash,
-            className: commonButtonClassNames,
-            tabIndex: tabbable ? 0 : -1,
-            format: "inlineCode",
-            withTooltip: true
 
-        },
 
     ];
 
@@ -155,8 +148,6 @@ export const getBlockButtons = ({
     editor,
     handleLink,
     handleCode,
-    handleH1,
-    handleH2,
     handleText,
     handleQuote,
     setShowDividerOptions,
@@ -170,7 +161,9 @@ export const getBlockButtons = ({
     showDividerOptions,
     colorBarButtonRef,
     dividerButtonRef,
+    headingButtonRef,
     listStyleButtonRef,
+    setShowHeadingOptions
 }: GetBlockButtonsParams): BlockButtonConfig[] => [
         {
             name: "addLinkToAddCard",
@@ -215,29 +208,20 @@ export const getBlockButtons = ({
 
         },
         {
-            name: "addLargeSizeHeading",
-            onClickHandler: handleH1,
-            toolTipText: "Large size Heading",
-            subTooltipText: "ctrl + 1",
-            icon: LuHeading1,
+            name: "heading",
+            onClickHandler: () => setShowHeadingOptions((prev) => !prev),
+            toolTipText: "Heading",
+            icon: LuHeading,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
-            format: "h1",
-            withTooltip: true
+            format: "heading",
+            withTooltip: true,
+            ref: headingButtonRef,
+            id: "heading-dropdown-button",
+            hasDropdown: true,
 
         },
-        {
-            name: "addMediumSizeHeading",
-            onClickHandler: handleH2,
-            toolTipText: "Medium size Heading",
-            subTooltipText: "ctrl + 2",
-            icon: LuHeading2,
-            className: commonButtonClassNames,
-            tabIndex: tabbable ? 0 : -1,
-            format: "h2",
-            withTooltip: true
 
-        },
         {
             name: "addQuote",
             onClickHandler: handleQuote,
@@ -314,14 +298,14 @@ export const getBlockButtons = ({
 
 export const getEditActionButtons = ({
     handleSaveEdit,
-    setCloseEditModalWithAnimation,
+    handleCloseEditTextEditor,
     tabbable,
-    toggleToolbarPosition
+    toggleToolbarPosition, handleOpenMoreEditFormattingMenu
 }: getEditActionButtonsParams): ActionButtonsConfig[] => [
         {
             name: "Toggle toolbar Position",
             toolTipText: "Toggle toolbar Position",
-            icon: RiArrowUpSLine,
+            icon: BsArrowDownShort,
             className: "text-2xl dark:text-gray-50 dark:hover:text-gray-200 text-gray-700 hover:text-gray-800",
             tabIndex: tabbable ? 0 : -1,
             withTooltip: true,
@@ -334,9 +318,7 @@ export const getEditActionButtons = ({
             className: " text-red-500 hover:text-red-600  text-[1.2rem] rounded-sm ",
             tabIndex: tabbable ? 0 : -1,
             withTooltip: true,
-            onClickHandler: () => {
-                setCloseEditModalWithAnimation(true)
-            },
+            onClickHandler: handleCloseEditTextEditor,
         },
         {
             name: "Save Card",
@@ -349,7 +331,20 @@ export const getEditActionButtons = ({
                 handleSaveEdit()
             }
 
-        },]
+        },
+        {
+            name: "More Options",
+            toolTipText: "More Options",
+            icon: RiArrowUpSLine,
+            className: ` ${commonButtonClassNames} rotate-180 text-2xl `,
+            tabIndex: tabbable ? 0 : -1,
+            withTooltip: true,
+            onClickHandler: handleOpenMoreEditFormattingMenu,
+            "data-click-outside-ignore-more-options-edit": ""
+
+        },
+
+    ]
 
 
 export const getStructureButtons = ({ handleIndentBlock, handleOutdentBlock, tabbable }: getStructureButtonParams): StructureButtonsConfig[] => {
@@ -379,10 +374,10 @@ export const getActionButtons = ({
     expandEditorToMaxHeight,
     handleCloseTextEditor,
     handlePlayAudio,
-    isPlayingAudioAllowed,
     isFetchingCards,
     isCreatingCard,
     tabbable,
+    handleOpenMoreFormatingMenu
 }: GetActionButtonsParams): ActionButtonsConfig[] => [
         // {
         //     name: "tips",
@@ -408,9 +403,9 @@ export const getActionButtons = ({
             name: "Close",
             onClickHandler: () => {
                 handleCloseTextEditor();
-                if (isPlayingAudioAllowed) {
-                    setTimeout(() => handlePlayAudio("close"), 100);
-                }
+
+                setTimeout(() => handlePlayAudio("close"), 100);
+
             },
             toolTipText: "Close",
             icon: MdOutlineClose,
@@ -430,6 +425,17 @@ export const getActionButtons = ({
             onClickHandler: handleCreateCardHandler
 
         },
+        {
+            name: "More Options",
+            toolTipText: "More Options",
+            icon: RiArrowUpSLine,
+            className: ` ${commonButtonClassNames} rotate-180 text-2xl `,
+            tabIndex: tabbable ? 0 : -1,
+            withTooltip: true,
+            onClickHandler: handleOpenMoreFormatingMenu,
+            "data-click-outside-ignore-more-options": ""
+
+        },
     ];
 
 
@@ -439,7 +445,7 @@ export const getHistoryButtons = ({ handleRedo, handleUndo, tabbable }: getHisto
             name: "Undo",
             onClickHandler: handleUndo,
             toolTipText: "Undo",
-            icon: LuUndo2,
+            icon: CiUndo,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
             withTooltip: true,
@@ -448,7 +454,7 @@ export const getHistoryButtons = ({ handleRedo, handleUndo, tabbable }: getHisto
             name: "Redo",
             onClickHandler: handleRedo,
             toolTipText: "Redo",
-            icon: LuRedo2,
+            icon: CiRedo,
             className: commonButtonClassNames,
             tabIndex: tabbable ? 0 : -1,
             withTooltip: true,
@@ -456,3 +462,33 @@ export const getHistoryButtons = ({ handleRedo, handleUndo, tabbable }: getHisto
     ]
 
 }
+
+export const getExtendedToolbarMarkButtons = ({ handleStrikethrough, tabbable, handleInlineCode }: getExtendedToolbarMarkButtonParams): MarkButtonConfig[] => {
+    return [
+        {
+            name: "StrikeThrough",
+            onClickHandler: handleStrikethrough,
+            toolTipText: "StrikeThrough",
+            icon: MdStrikethroughS,
+            className: commonButtonClassNames,
+            tabIndex: tabbable ? 0 : -1,
+            withTooltip: true, format: "strikethrough",
+        },
+        {
+            name: "addInlineCode",
+            onClickHandler: handleInlineCode,
+            toolTipText: "Inline Code",
+            subTooltipText: "ctrl + E",
+            icon: IoCodeSlash,
+            className: commonButtonClassNames,
+            tabIndex: tabbable ? 0 : -1,
+            format: "inlineCode",
+            withTooltip: true
+
+        },
+
+    ]
+
+}
+
+

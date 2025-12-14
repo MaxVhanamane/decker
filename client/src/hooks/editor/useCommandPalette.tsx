@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuHeading1, LuHeading2 } from "react-icons/lu";
+import { LuHeading1, LuHeading2, LuHeading3 } from "react-icons/lu";
 import { BiCodeCurly } from "react-icons/bi";
 import { AiOutlineLink, AiOutlineBold } from "react-icons/ai";
 import { BsTypeUnderline } from "react-icons/bs";
@@ -23,8 +23,6 @@ export const useCommandPalette = (
     handleBold,
     handleUnderline,
     handleCode,
-    handleH1,
-    handleH2,
     handleLink,
     handleList,
     handleHighlight,
@@ -34,6 +32,7 @@ export const useCommandPalette = (
     handleQuote,
     handleColorBar,
     handleInlineCode,
+    handleHeading,
   } = useEditorActions();
 
   const [commandSearch, setCommandSearch] = useState("");
@@ -79,13 +78,19 @@ export const useCommandPalette = (
         label: "Heading 1",
         icon: <LuHeading1 className="text-xl" />,
         category: "Turn into",
-        onClickHandler: handleH1,
+        onClickHandler: () => handleHeading(1),
       },
       {
         label: "Heading 2",
         icon: <LuHeading2 className="text-xl" />,
         category: "Turn into",
-        onClickHandler: handleH2,
+        onClickHandler: () => handleHeading(2),
+      },
+      {
+        label: "Heading 3",
+        icon: <LuHeading3 className="text-xl" />,
+        category: "Turn into",
+        onClickHandler: () => handleHeading(3),
       },
       {
         label: "Quote",
@@ -182,8 +187,7 @@ export const useCommandPalette = (
       handleBold,
       handleUnderline,
       handleCode,
-      handleH1,
-      handleH2,
+      handleHeading,
       handleLink,
       handleList,
       handleHighlight,

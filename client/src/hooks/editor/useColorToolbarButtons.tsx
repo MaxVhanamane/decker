@@ -2,6 +2,8 @@ import { useMemo, JSX } from "react";
 import type { ColorBarColors } from "../../types/textEditorTypes";
 import Button from "../../components/Button";
 import { twMerge } from "tailwind-merge";
+import { motion } from "motion/react";
+import { buttonStaggerAnimation } from "../../components/editor/dropdowns/FloatingDropdown";
 
 type useColorToolbarButtonsProps = {
   activeColor?: ColorBarColors | null;
@@ -61,7 +63,8 @@ export const useColorToolbarButtons = <T extends "toolbar" | "commandpalette">({
                 "ring-1 dark:ring-slate-500 dark:bg-slate-600/80 dark:hover:bg-slate-600 ring-sky-200  bg-sky-200 hover:bg-blue-300/60"
             )}
           >
-            <div
+            <motion.div
+              variants={buttonStaggerAnimation}
               className={twMerge(
                 "flex flex-col justify-center items-start h-4 w-full border-l-[3px] pl-3",
                 {
@@ -75,7 +78,7 @@ export const useColorToolbarButtons = <T extends "toolbar" | "commandpalette">({
               )}
             >
               {color[0].toUpperCase() + color.slice(1)}
-            </div>
+            </motion.div>
           </Button>
         );
       } else {

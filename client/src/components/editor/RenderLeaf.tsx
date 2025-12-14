@@ -34,7 +34,16 @@ export const RenderLeaf = memo((props: RenderLeafProps) => {
       </u>
     );
   }
-
+  if (leaf.strikethrough) {
+    styledText = (
+      <del
+        {...attributes}
+        className="line-through decoration-gray-700 dark:decoration-gray-100"
+      >
+        {styledText}
+      </del>
+    );
+  }
   if (leaf.token) {
     const { attributes, children, leaf } = props;
     const { text: _, ...rest } = leaf;

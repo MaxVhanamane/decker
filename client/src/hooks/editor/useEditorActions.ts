@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { ReactEditor, useSlateStatic } from "slate-react";
 import { CustomEditor } from "../../utils/editor/customEditor";
-import type { CustomTextKeyType, DividerStyle, ColorBarColors, ListType, HighlightConfig } from "../../types/textEditorTypes";
+import type { CustomTextKeyType, DividerStyle, ColorBarColors, ListType, HighlightConfig, HeadingLevel } from "../../types/textEditorTypes";
 import { HistoryEditor } from "slate-history";
 
 
@@ -49,6 +49,9 @@ export const useEditorActions = () => {
     const handleUnderline = useCallback(() => {
         preserveEditorFocus(() => toggleMarkWithValidation("underline"));
     }, [editor, preserveEditorFocus]);
+    const handleStrikethrough = useCallback(() => {
+        preserveEditorFocus(() => toggleMarkWithValidation("strikethrough"));
+    }, [editor, preserveEditorFocus]);
     const handleInlineCode = useCallback(() => {
         preserveEditorFocus(() => toggleMarkWithValidation("inlineCode"));
     }, [editor, preserveEditorFocus]);
@@ -76,19 +79,14 @@ export const useEditorActions = () => {
 
     }, [editor]);
 
-
-    const handleH1 = useCallback(() => {
-        preserveEditorFocus(() => CustomEditor.toggleBlock(editor, "h1"));
+    const handleHeading = useCallback((level: HeadingLevel) => {
+        preserveEditorFocus(() => CustomEditor.toggleHeading(editor, level));
     }, [editor, preserveEditorFocus]);
     const handleIndentBlock = useCallback(() => {
         preserveEditorFocus(() => CustomEditor.indentBlock(editor));
     }, [editor, preserveEditorFocus]);
     const handleOutdentBlock = useCallback(() => {
         preserveEditorFocus(() => CustomEditor.outdentBlock(editor));
-    }, [editor, preserveEditorFocus]);
-
-    const handleH2 = useCallback(() => {
-        preserveEditorFocus(() => CustomEditor.toggleBlock(editor, "h2"));
     }, [editor, preserveEditorFocus]);
 
     const handleDivider = useCallback((dividerStyle: DividerStyle) => {
@@ -110,8 +108,6 @@ export const useEditorActions = () => {
         handleUnderline,
         handleInlineCode,
         handleCode,
-        handleH1,
-        handleH2,
         handleLink,
         handleText,
         handleHighlight,
@@ -122,6 +118,8 @@ export const useEditorActions = () => {
         handleOutdentBlock,
         handleIndentBlock,
         handleUndo,
-        handleRedo
+        handleRedo,
+        handleStrikethrough,
+        handleHeading
     };
 };

@@ -1,23 +1,52 @@
-import { Dispatch, memo, SetStateAction, useCallback } from "react";
+import {
+  Dispatch,
+  memo,
+  SetStateAction,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 import CardToolbar from "./toolbar/CardToolbar";
-import { RiArrowUpSLine } from "react-icons/ri";
 import Button from "../Button";
+import { ExtendedToolbar } from "./toolbar/ExtendedToolbar";
+import { twMerge } from "tailwind-merge";
+import { BsArrowDownShort } from "react-icons/bs";
+import { useClickOutside } from "../../hooks/utility/useClickOutside";
+import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 
 type EditCardToolbarPropType = {
   setShowHyperlinkModal: Dispatch<SetStateAction<boolean>>;
-  setCloseEditModalWithAnimation: Dispatch<SetStateAction<boolean>>;
   handleSaveEdit: () => void;
+  handleCloseEditTextEditor: () => void;
   setToolbarPosition: Dispatch<SetStateAction<"top" | "bottom">>;
   toolbarPosition: "top" | "bottom";
 };
 
 const EditCardToolbar = ({
   handleSaveEdit,
-  setCloseEditModalWithAnimation,
   setShowHyperlinkModal,
   setToolbarPosition,
   toolbarPosition,
+  handleCloseEditTextEditor,
 }: EditCardToolbarPropType) => {
+  const extendedToolbarRefEdit = useRef<HTMLDivElement>(null);
+  const [isEditCardMoreMenuOpen, setIsEditCardMoreMenuOpen] = useState(false);
+
+  const handleOpenMoreEditFormattingMenu = useCallback(() => {
+    setIsEditCardMoreMenuOpen((prev) => !prev);
+  }, []);
+
+  useClickOutside(
+    extendedToolbarRefEdit,
+    isEditCardMoreMenuOpen,
+    handleOpenMoreEditFormattingMenu,
+    { excludeSelectors: ["[data-click-outside-ignore-more-options-edit]"] }
+  );
+
+  useFocusTrap(extendedToolbarRefEdit, "both", {
+    enabled: isEditCardMoreMenuOpen,
+  });
+
   const toggleToolbarPosition = useCallback(() => {
     setToolbarPosition((prev) => {
       if (prev === "bottom") {
@@ -40,7 +69,7 @@ const EditCardToolbar = ({
           : "md:rounded-b-md border-t"
       }`}
     >
-      <div className="flex items-center justify-between xl:justify-center w-full xl:px-2 h-full">
+      <div className="flex items-center justify-between xl:justify-center w-full xl:px-2 h-full relative">
         <Button
           variant="unstyled"
           withTooltip
@@ -52,21 +81,50 @@ const EditCardToolbar = ({
           type="button"
           onClick={toggleToolbarPosition}
         >
-          <RiArrowUpSLine
+          <BsArrowDownShort
             className={`text-2xl ${
-              toolbarPosition === "top" ? "rotate-180" : ""
+              toolbarPosition === "top" ? "" : "rotate-180"
             }`}
           />
         </Button>
-        <CardToolbar
-          mode="edit"
-          tabbable
-          setShowHyperlinkModal={setShowHyperlinkModal}
-          handleSaveEdit={handleSaveEdit}
-          setCloseEditModalWithAnimation={setCloseEditModalWithAnimation}
-          toolbarPosition={toolbarPosition}
-          toggleToolbarPosition={toggleToolbarPosition}
-        />
+        <div className="w-full h-full dark:md:bg-slate-700 dark:bg-slate-900  bg-white relative ">
+          <CardToolbar
+            mode="edit"
+            tabbable
+            setShowHyperlinkModal={setShowHyperlinkModal}
+            handleSaveEdit={handleSaveEdit}
+            toolbarPosition={toolbarPosition}
+            toggleToolbarPosition={toggleToolbarPosition}
+            handleCloseEditTextEditor={handleCloseEditTextEditor}
+            handleOpenMoreEditFormattingMenu={handleOpenMoreEditFormattingMenu}
+          />
+          <div
+            ref={extendedToolbarRefEdit}
+            className={twMerge(
+              "border-gray-400/40 dark:border-gray-300/10 flex items-center justify-center dark:bg-slate-900  dark:md:bg-slate-700 bg-white md:bg-gray-100 p-2 border h-10 w-20 absolute  transition-transform  duration-200 ease-out transform-gpu -z-10",
+              isEditCardMoreMenuOpen &&
+                toolbarPosition === "top" &&
+                "-translate-y-0",
+
+              !isEditCardMoreMenuOpen &&
+                toolbarPosition === "top" &&
+                "-translate-y-full",
+              isEditCardMoreMenuOpen &&
+                toolbarPosition === "bottom" &&
+                "translate-y-0",
+
+              !isEditCardMoreMenuOpen &&
+                toolbarPosition === "bottom" &&
+                "translate-y-full",
+
+              toolbarPosition === "bottom"
+                ? " bottom-full md:right-4 right-0 rounded-tl-md md:rounded-tr-md "
+                : " top-full md:right-4 right-0 rounded-bl-md md:rounded-br-md "
+            )}
+          >
+            <ExtendedToolbar mode="create" toolbarPosition="top" />
+          </div>
+        </div>
       </div>
     </div>
   );

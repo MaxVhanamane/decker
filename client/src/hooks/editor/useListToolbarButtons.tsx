@@ -2,7 +2,8 @@ import { useMemo, JSX } from "react";
 import Button from "../../components/Button";
 import type { ListType } from "../../types/textEditorTypes";
 import { twMerge } from "tailwind-merge";
-
+import { motion } from "motion/react";
+import { buttonStaggerAnimation } from "../../components/editor/dropdowns/FloatingDropdown";
 type ListToolbarItem = {
   label: ListType;
   icon: JSX.Element;
@@ -26,7 +27,7 @@ export const useListToolbarButtons = <T extends "toolbar" | "commandpalette">(
     type: ListType;
     toolTipPosition: "top" | "right" | "bottom" | "left";
   }[] = [
-    // --- Unordered lists ---
+    //  Unordered lists
     { type: "bulleted-list", toolTipPosition: "left" },
     { type: "circle-list", toolTipPosition: "top" },
     { type: "square-list", toolTipPosition: "right" },
@@ -35,7 +36,7 @@ export const useListToolbarButtons = <T extends "toolbar" | "commandpalette">(
     { type: "star-list", toolTipPosition: "right" }, // ✦
     { type: "arrow-list", toolTipPosition: "left" }, // →
 
-    // --- Numbered lists ---
+    //  Numbered lists
     { type: "numbered-list", toolTipPosition: "top" },
     { type: "alpha-upper-list", toolTipPosition: "right" },
     { type: "alpha-lower-list", toolTipPosition: "left" },
@@ -131,12 +132,18 @@ const ListTypeIcon = ({ type }: { type: ListType }) => {
   };
 
   return (
-    <div className="flex flex-col text-xs font-medium text-gray-700 dark:text-gray-200 leading-tight ">
+    <motion.div
+      variants={buttonStaggerAnimation}
+      transition={{
+        duration: 0.1,
+      }}
+      className="flex flex-col text-xs font-medium text-gray-700 dark:text-gray-200 leading-tight "
+    >
       {getMarkers().map((line, i) => (
         <span key={i} className={twMerge("tracking-tight")}>
           {line}
         </span>
       ))}
-    </div>
+    </motion.div>
   );
 };
