@@ -132,7 +132,7 @@ const SortableCardItem = ({
         },
         layout: {
           type: "tween",
-          ease: "easeOut",
+          ease: "easeInOut",
           duration: 0.3,
         },
       }}
@@ -140,7 +140,7 @@ const SortableCardItem = ({
         setForceRender(false);
       }}
       layoutId={`deck-card-${card.cardId}`}
-      onClick={() => {
+      onPointerUp={() => {
         handleShowFullScreen({
           ...card,
           cardIndex: index,

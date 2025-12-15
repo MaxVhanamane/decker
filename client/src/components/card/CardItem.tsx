@@ -196,7 +196,7 @@ const CardItem = memo(
             ? { opacity: 1, scale: 1, transition: { delay: 0.1 } }
             : undefined
         }
-        whileTap={{ scale: 0.97 }}
+        whileTap={{ scale: 0.98 }}
         onTapStart={() => {
           elementRef.current?.classList.add(...classesToAddOrRemove);
         }}
@@ -293,9 +293,12 @@ const CardItem = memo(
           <div className="text-xs text-gray-400 select-none">
             <span>{formatDate(card.createdAt)}</span>
           </div>
-          <div className="flex items-center justify-center gap-3 cursor-default">
+          <div className="flex items-center justify-center gap-4 xl:gap-3 cursor-default">
             <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 hover:bg-gray-200  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
               <Button
+                onPointerUp={(e) => {
+                  e.stopPropagation();
+                }}
                 {...attributes}
                 {...listeners}
                 variant="unstyled"
@@ -313,6 +316,9 @@ const CardItem = memo(
             <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 hover:bg-gray-200  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center group/deleteCardBtn">
               <Button
                 variant="unstyled"
+                onPointerUp={(e) => {
+                  e.stopPropagation();
+                }}
                 onPointerDownCapture={(e) => e.stopPropagation()}
                 onClick={handleDeleteCardButtonClick}
                 toolTipText="Delete card"
@@ -325,6 +331,9 @@ const CardItem = memo(
             </div>
             <div className=" dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 bg-gray-100 hover:bg-gray-200 rounded-full w-6 h-6 z-50  flex items-center justify-center group/editBtn ">
               <Button
+                onPointerUp={(e) => {
+                  e.stopPropagation();
+                }}
                 onPointerDownCapture={(e) => e.stopPropagation()}
                 variant="unstyled"
                 onClick={(event) => {

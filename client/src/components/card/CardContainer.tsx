@@ -171,7 +171,7 @@ const CardContainer = ({
             {currentDraggingCard && (
               <motion.svg
                 key="border"
-                className="absolute inset-0 pointer-events-none z-[90]"
+                className="absolute inset-0 pointer-events-none z-[90] hidden md:block"
                 width="100%"
                 height="100%"
               >

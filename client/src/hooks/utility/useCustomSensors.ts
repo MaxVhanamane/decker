@@ -5,13 +5,13 @@ const useCustomSensors = () => {
     const sensors = useRef([
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 1
+                distance: 4
             }
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
                 delay: 0,
-                tolerance: { x: 1, y: 1 }
+                tolerance: { x: 4, y: 4 }
             }
         })
         ,

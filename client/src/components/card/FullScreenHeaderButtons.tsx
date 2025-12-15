@@ -42,6 +42,12 @@ function FullScreenHeaderButtons({
             ease: "easeOut",
             delay: 0.2, // slightly earlier than stagger
           }}
+          exit={{
+            opacity: 0,
+            transition: {
+              duration: 0,
+            },
+          }}
         >
           <Button
             variant="plain"
@@ -60,7 +66,7 @@ function FullScreenHeaderButtons({
           animate="animate"
           className="flex items-center justify-center gap-1 mr-[0.35rem] md:-mr-[0.35rem] "
         >
-          <motion.div variants={iconVariants}>
+          <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
               size="md"
@@ -83,7 +89,7 @@ function FullScreenHeaderButtons({
                 : buttons.TypingEffect.label.off}
             </Button>
           </motion.div>
-          <motion.div variants={iconVariants}>
+          <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
               size="lg"
@@ -97,7 +103,7 @@ function FullScreenHeaderButtons({
               {buttons.Delete.label}
             </Button>
           </motion.div>
-          <motion.div variants={iconVariants}>
+          <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
               size="lg"
@@ -111,7 +117,7 @@ function FullScreenHeaderButtons({
               {buttons.Edit.label}
             </Button>
           </motion.div>
-          <motion.div variants={iconVariants}>
+          <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
               size="lg"
@@ -127,7 +133,7 @@ function FullScreenHeaderButtons({
                 : buttons.ToggleBgColor.label.off}
             </Button>
           </motion.div>
-          <motion.div variants={iconVariants}>
+          <motion.div variants={iconVariants} exit="exit">
             <ThemeToggler />
           </motion.div>
         </motion.div>
@@ -155,6 +161,12 @@ const iconVariants = {
     transition: {
       duration: 0.28,
       ease: easeInOut,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0,
     },
   },
 };

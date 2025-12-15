@@ -3,6 +3,7 @@ import { Dispatch, memo } from "react";
 import ContentRenderer from "../rich-text-renderer/RichTextRenderer";
 import { Descendant } from "slate";
 
+import DummyContentRenderer from "./DummyContentRenderer";
 type PropType = {
   showTypewriterEffect: boolean;
   isLayoutAnimationComplete: boolean;
@@ -22,12 +23,16 @@ const NoteSection = ({
     <div
       className={`text-left text-base pb-20 lg:pb-16 break-words font-light whitespace-pre-wrap text-gray-800 dark:text-gray-200 `}
     >
-      <ContentRenderer
-        content={!isLayoutAnimationComplete ? note.slice(0, 15) : note}
-        enableTyping={showTypewriterEffect}
-        skipTyping={skipTyping}
-        setSkipTyping={setSkipTyping}
-      />
+      {isLayoutAnimationComplete ? (
+        <ContentRenderer
+          content={note}
+          enableTyping={showTypewriterEffect}
+          skipTyping={skipTyping}
+          setSkipTyping={setSkipTyping}
+        />
+      ) : (
+        <DummyContentRenderer />
+      )}
     </div>
   );
 };

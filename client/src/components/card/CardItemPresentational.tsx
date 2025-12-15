@@ -89,7 +89,7 @@ const CardItemPresentational = ({
         <div className="text-xs text-gray-400 select-none">
           <span>{formatDate(card.createdAt)}</span>
         </div>
-        <div className="flex items-center justify-center gap-3 ">
+        <div className="flex items-center justify-center gap-4 xl:gap-3 ">
           <div className=" dark:bg-slate-800  bg-gray-100 rounded-full w-6 h-6 z-50  flex items-center justify-center ">
             <button
               className="text-gray-600 dark:text-slate-300  rounded-full p-[0.2rem] text-center cursor-grabbing "

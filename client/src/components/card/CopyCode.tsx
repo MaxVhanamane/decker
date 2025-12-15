@@ -61,7 +61,7 @@ const CopyCode = ({ code, variant }: Props) => {
           )}
           disabled={isCopied}
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             {isCopied ? (
               <motion.div
                 key="copied"

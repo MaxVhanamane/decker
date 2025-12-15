@@ -232,11 +232,9 @@ const FullScreenCardView = ({
               <div ref={topElementRef} />
               <motion.div
                 initial={{
-                  filter: "blur(8px)",
-                  opacity: 0.5,
+                  opacity: 0,
                 }}
                 animate={{
-                  filter: "blur(0px)",
                   opacity: 1,
                 }}
                 transition={{
