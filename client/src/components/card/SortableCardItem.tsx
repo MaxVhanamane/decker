@@ -6,6 +6,7 @@ import { twMerge } from "tailwind-merge";
 import { useStableParams } from "../../context/stableParamsContext";
 import { motion } from "motion/react";
 import { OfflineContext } from "../../context/OfflineContext";
+import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
 
 type ContentForFullScreen = CardContentType & {
   cardIndex: number | null;
@@ -35,6 +36,9 @@ const SortableCardItem = ({
   const { deckId } = useStableParams();
   const [forceRender, setForceRender] = useState(false);
   const { isOnline } = useContext(OfflineContext);
+  const isPhone = useIsDeviceType("phone");
+  const isLargePhone = useIsDeviceType("largePhone");
+  const isMobile = isPhone || isLargePhone;
 
   const handleEditClick = useCallback(
     (cardItem: ContentTypeForEdit) => {
@@ -47,7 +51,7 @@ const SortableCardItem = ({
       }
       handleEditCardButtonClick(cardItem);
     },
-    [setForceRender, handleEditCardButtonClick]
+    [setForceRender, handleEditCardButtonClick],
   );
 
   const cardData = card?.chapterId
@@ -111,7 +115,7 @@ const SortableCardItem = ({
       }
       listeners?.onKeyDown?.(e);
     },
-    [handleShowFullScreen, card, index]
+    [handleShowFullScreen, card, index],
   );
 
   return (
@@ -122,7 +126,9 @@ const SortableCardItem = ({
       animate={{
         ...motionTransform,
         opacity: isDragging ? 0 : 1,
-        filter: forceRender && !isDragging ? "blur(6px)" : "blur(0px)",
+        // 1. Add `&& !isMobile` to completely prevent blur on mobile
+        filter:
+          forceRender && !isDragging && !isMobile ? "blur(6px)" : "blur(0px)",
       }} // dnd-kit transform handled by Framer Motion
       transition={{
         filter: { duration: 0.2 },
@@ -139,17 +145,20 @@ const SortableCardItem = ({
       onLayoutAnimationStart={() => {
         setForceRender(false);
       }}
-      layoutId={`deck-card-${card.cardId}`}
+      layoutId={isMobile ? undefined : `deck-card-${card.cardId}`}
       onPointerUp={() => {
         handleShowFullScreen({
           ...card,
           cardIndex: index,
         });
-        setForceRender(true);
+        // 2. Only set forceRender to true on desktop
+        if (!isMobile) {
+          setForceRender(true);
+        }
       }}
       onKeyDown={onKeyDown}
       className={twMerge(
-        "outline-none focus-visible:ring-2  dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 rounded-md h-full cursor-pointer"
+        "outline-none focus-visible:ring-2  dark:focus-visible:ring-blue-500 focus-visible:ring-gray-500 rounded-md h-full cursor-pointer",
       )}
     >
       <CardItem

@@ -18,6 +18,7 @@ import { Descendant } from "slate";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 import { motion } from "motion/react";
 import FullScreenHeaderButtons from "./FullScreenHeaderButtons";
+import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
 
 type ContentType = {
   note: Descendant[];
@@ -51,11 +52,14 @@ const FullScreenCardView = ({
   setShowScrollButtons,
   source,
 }: propType) => {
+  const isPhone = useIsDeviceType("phone");
+  const isLargePhone = useIsDeviceType("largePhone");
+  const isMobile = isPhone || isLargePhone;
   const { handlePlayAudio } = useAudio();
   const [isLayoutAnimationComplete, setIsLayoutAnimationComplete] =
     useState(false);
   const [toggleGradient, setToggleGradient] = useState<boolean>(() =>
-    JSON.parse(localStorage.getItem("toggleColor") ?? "false")
+    JSON.parse(localStorage.getItem("toggleColor") ?? "false"),
   );
   const [showTypewriterEffect, setShowTypewriterEffect] = useState(() => {
     const storedValue = localStorage.getItem("showTypewriterEffect");
@@ -181,7 +185,12 @@ const FullScreenCardView = ({
   return (
     <>
       <motion.article
-        layoutId={`${source}-card-${fullScreenCardData?.cardId}`}
+        layoutId={
+          isMobile ? undefined : `${source}-card-${fullScreenCardData?.cardId}`
+        } // <-- Update this line
+        initial={isMobile ? { opacity: 0, scale: 0.95 } : undefined} // Add mobile fade-in start
+        animate={isMobile ? { opacity: 1, scale: 1 } : undefined} // Add mobile animate target
+        exit={isMobile ? { opacity: 0, scale: 0.95 } : undefined} // Add mobile fade-out end
         ref={fullScreenContainer}
         transition={{
           layout: {
@@ -189,10 +198,22 @@ const FullScreenCardView = ({
             stiffness: 300,
             damping: 35,
           },
+          opacity: { duration: 0.2 },
+          scale: { duration: 0.2, ease: "easeOut" },
         }}
+        // 1. Check for !isMobile on layout complete (Desktop)
         onLayoutAnimationComplete={() => {
-          handleOnAnimationEnd();
-          setIsLayoutAnimationComplete(true);
+          if (!isMobile) {
+            handleOnAnimationEnd();
+            setIsLayoutAnimationComplete(true);
+          }
+        }}
+        // 2. Add standard animation complete (Mobile)
+        onAnimationComplete={() => {
+          if (isMobile) {
+            handleOnAnimationEnd();
+            setIsLayoutAnimationComplete(true);
+          }
         }}
         className={`fixed inset-0  ${
           toggleGradient
@@ -249,7 +270,11 @@ const FullScreenCardView = ({
                   showTypewriterEffect={showTypewriterEffect}
                   skipTyping={skipTyping}
                   setSkipTyping={setSkipTyping}
-                  isLayoutAnimationComplete={isLayoutAnimationComplete}
+                  // If it's mobile, tell NoteSection the animation is "complete"
+                  // immediately so it skips the dummy skeleton.
+                  isLayoutAnimationComplete={
+                    isMobile ? true : isLayoutAnimationComplete
+                  }
                 />
                 <div ref={bottomElementRef} />
               </motion.div>

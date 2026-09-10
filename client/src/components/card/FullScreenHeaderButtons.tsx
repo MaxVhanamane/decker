@@ -29,43 +29,31 @@ function FullScreenHeaderButtons({
   toggleGradient,
 }: FullScreenHeaderButtonsProps) {
   return (
-    <div
-      className={` w-full flex items-center
-               justify-center md:w-[42rem] `}
-    >
-      <div className="flex items-center justify-between  w-full md:w-[42rem] h-16  border-b dark:border-gray-300/10 border-gray-800/10 px-1 md:px-0">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{
-            duration: 0.25,
-            ease: "easeOut",
-            delay: 0.2, // slightly earlier than stagger
-          }}
-          exit={{
-            opacity: 0,
-            transition: {
-              duration: 0,
-            },
-          }}
-        >
+    <div className={`w-full flex items-center justify-center md:w-[42rem]`}>
+      {/* 1. Move the stagger orchestration to the parent container */}
+      <motion.div
+        variants={iconWrapperVariants}
+        initial="initial"
+        animate="animate"
+        className="flex items-center justify-between w-full md:w-[42rem] h-16 border-b dark:border-gray-300/10 border-gray-800/10 px-1 md:px-0"
+      >
+        {/* 2. Apply the shared iconVariants to the Back button */}
+        <motion.div variants={iconVariants} exit="exit">
           <Button
             variant="plain"
             size="md"
             aria-label="Go back"
             type="button"
             onClick={handleBackButtonClick}
-            className=" text-lg md:-ml-3 rounded-md"
+            className="text-lg md:-ml-3 rounded-md"
           >
             {buttons.Back.label}
           </Button>
         </motion.div>
-        <motion.div
-          variants={iconWrapperVariants}
-          initial="initial"
-          animate="animate"
-          className="flex items-center justify-center gap-1 mr-[0.35rem] md:-mr-[0.35rem] "
-        >
+
+        {/* 3. Change this wrapper to a standard div. Framer Motion will automatically 
+               pass the stagger effect through it to the children below! */}
+        <div className="flex items-center justify-center gap-1 mr-[0.35rem] md:-mr-[0.35rem]">
           <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
@@ -74,7 +62,7 @@ function FullScreenHeaderButtons({
               toolTipText="Toggle typing effect"
               withTooltip
               type="button"
-              className="text-gray-600 dark:text-gray-200  dark:hover:!text-gray-100 hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  "
+              className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]"
               onClick={() => {
                 if (showTypewriterEffect) {
                   localStorage.setItem("showTypewriterEffect", "false");
@@ -89,6 +77,7 @@ function FullScreenHeaderButtons({
                 : buttons.TypingEffect.label.off}
             </Button>
           </motion.div>
+
           <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
@@ -97,12 +86,13 @@ function FullScreenHeaderButtons({
               aria-label="Delete Card"
               toolTipText="Delete Card"
               withTooltip
-              className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100  hover:text-gray-700   dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] text-xl"
+              className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] text-xl"
               onClick={handleDeleteCard}
             >
               {buttons.Delete.label}
             </Button>
           </motion.div>
+
           <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
@@ -111,12 +101,13 @@ function FullScreenHeaderButtons({
               aria-label="Edit Card"
               toolTipText="Edit Card"
               withTooltip
-              className="text-gray-600 dark:text-gray-200  dark:hover:!text-gray-100  hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100  rounded-full p-[0.4rem] text-xl"
+              className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] text-xl"
               onClick={handleEditCard}
             >
               {buttons.Edit.label}
             </Button>
           </motion.div>
+
           <motion.div variants={iconVariants} exit="exit">
             <Button
               variant="plain"
@@ -125,7 +116,7 @@ function FullScreenHeaderButtons({
               aria-label="Toggle Background Color"
               toolTipText="Toggle Background Color"
               withTooltip
-              className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100  hover:text-gray-700  dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem]  text-2xl "
+              className="text-gray-600 dark:text-gray-200 dark:hover:!text-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-full p-[0.4rem] text-2xl"
               onClick={handleToggleBgColor}
             >
               {toggleGradient
@@ -133,21 +124,23 @@ function FullScreenHeaderButtons({
                 : buttons.ToggleBgColor.label.off}
             </Button>
           </motion.div>
+
           <motion.div variants={iconVariants} exit="exit">
             <ThemeToggler />
           </motion.div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
 
 export default memo(FullScreenHeaderButtons);
+
 const iconWrapperVariants = {
   animate: {
     transition: {
       staggerChildren: 0.1, // time between each icon animation
-      delayChildren: 0.3, //  delay before the first icon
+      delayChildren: 0.3, // delay before the first icon
     },
   },
 };
@@ -170,6 +163,7 @@ const iconVariants = {
     },
   },
 };
+
 const buttons = {
   Back: {
     label: (
