@@ -22,6 +22,7 @@ export type ChangeBulbColor = {
   setBulbColor: (color: bulbColors) => void;
   removeBulbColor: (color: bulbColors) => void;
   readonly colorName: bulbColors | "";
+  resetBulb: () => void;
 };
 
 type BulbProps = {
@@ -173,10 +174,10 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
     if (animationPlayed && activeColorRef.current) {
       addColor(activeColorRef.current);
       spanOneRef.current?.classList.remove(
-        "shadow-[12px_12px_0_4.5px_#38bdf8]"
+        "shadow-[12px_12px_0_4.5px_#38bdf8]",
       );
       spanTwoRef.current?.classList.remove(
-        "shadow-[-12px_12px_0_4.5px_#38bdf8]"
+        "shadow-[-12px_12px_0_4.5px_#38bdf8]",
       );
     }
   }, [animationPlayed, activeColorRef.current]);
@@ -188,7 +189,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
     bulbContainerRef.current?.classList.remove(
       `${config.tailwindBg}`,
       `${config.beforeTailwindBg}`,
-      `${config.tailwindShadow}`
+      `${config.tailwindShadow}`,
     );
     spanOneRef.current?.classList.remove(config.spanShadowLeft);
     spanTwoRef.current?.classList.remove(config.spanShadowRight);
@@ -206,7 +207,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
     bulbContainerRef.current?.classList.add(
       `${config.tailwindBg}`,
       `${config.beforeTailwindBg}`,
-      `${config.tailwindShadow}`
+      `${config.tailwindShadow}`,
     );
     spanOneRef.current?.classList.add(config.spanShadowLeft);
     spanTwoRef.current?.classList.add(config.spanShadowRight);
@@ -221,19 +222,19 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
       // Set CSS custom properties that the animation can use
       bulbContainerRef.current.style.setProperty(
         "--flicker-shadow-blur",
-        `${blur}px`
+        `${blur}px`,
       );
       bulbContainerRef.current.style.setProperty(
         "--flicker-shadow-spread",
-        `${spread}px`
+        `${spread}px`,
       );
       bulbContainerRef.current.style.setProperty(
         "--flicker-opacity",
-        multiplier.toString()
+        multiplier.toString(),
       );
       bulbContainerRef.current.style.setProperty(
         "--flicker-shadow-color",
-        `rgba(2, 132, 199, ${multiplier})`
+        `rgba(2, 132, 199, ${multiplier})`,
       );
     }
   }, [bulbBrightness, getShadowBlur, getIntensityMultiplier]);
@@ -247,7 +248,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
       // Apply opacity to the entire bulb
       bulbContainerRef.current.style.opacity = Math.max(
         0.2,
-        multiplier
+        multiplier,
       ).toString();
       if (theme === "light") {
         wireRef.current.style.opacity = Math.max(0.2, multiplier).toString();
@@ -291,10 +292,26 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
 
         addColor(color);
         spanOneRef.current?.classList.remove(
-          "shadow-[12px_12px_0_4.5px_#38bdf8]"
+          "shadow-[12px_12px_0_4.5px_#38bdf8]",
         );
         spanTwoRef.current?.classList.remove(
-          "shadow-[-12px_12px_0_4.5px_#38bdf8]"
+          "shadow-[-12px_12px_0_4.5px_#38bdf8]",
+        );
+
+        applyIntensityEffect();
+      },
+      resetBulb: function () {
+        activeColorRef.current = "";
+
+        // Forcefully strip ALL custom color classes from the DOM
+        Object.keys(bulbColorConfig).forEach((c) => {
+          removeColor(c as bulbColors);
+        });
+
+        // Restore the default blue/cyan shadows
+        spanOneRef.current?.classList.add("shadow-[12px_12px_0_4.5px_#38bdf8]");
+        spanTwoRef.current?.classList.add(
+          "shadow-[-12px_12px_0_4.5px_#38bdf8]",
         );
 
         applyIntensityEffect();
@@ -306,7 +323,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
 
         spanOneRef.current?.classList.add("shadow-[12px_12px_0_4.5px_#38bdf8]");
         spanTwoRef.current?.classList.add(
-          "shadow-[-12px_12px_0_4.5px_#38bdf8]"
+          "shadow-[-12px_12px_0_4.5px_#38bdf8]",
         );
 
         applyIntensityEffect();
@@ -316,7 +333,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
         return activeColorRef.current || "";
       },
     }),
-    [animationPlayed, applyIntensityEffect, addColor, removeColor]
+    [animationPlayed, applyIntensityEffect, addColor, removeColor],
   );
 
   return (
@@ -330,7 +347,7 @@ const Bulb = memo(({ shouldDimBulb }: BulbProps) => {
         ref={wireRef}
         className={twMerge(
           "relative left-1/2 -translate-x-1/2 w-10 md:h-28 h-[7.5rem] z-30 transition-opacity duration-200",
-          shouldDimBulb && "opacity-50"
+          shouldDimBulb && "opacity-50",
         )}
       >
         <svg viewBox="0 0 100 800" className="w-full h-full">

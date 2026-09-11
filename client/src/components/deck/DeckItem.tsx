@@ -121,7 +121,7 @@ const DeckItem = ({
         deck.isProcessing ? "cursor-not-allowed" : " ",
         newlyAddedDeckId === deck.deckId
           ? "shadow-2xl shadow-[#00DDDD] !border-[#00DDDD] dark:!border-[#00DDDD] !text-[#00DDDD] animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_3]"
-          : null
+          : null,
       )}
     >
       <div
@@ -137,8 +137,8 @@ const DeckItem = ({
         withTooltip
         aria-label="Press and hold to drag"
         className={twMerge(
-          "absolute top-2 left-2 text-gray-600 dark:text-slate-300 z-50 hover:text-gray-700 dark:hover:text-slate-400 rounded-full p-[0.2rem] w-6 h-6  transition-colors duration-300 hover:bg-gray-300 dark:hover:bg-slate-700 dark:bg-slate-800 bg-gray-200   ",
-          isDragging ? "cursor-grabbing" : "cursor-grab"
+          "absolute top-2 left-2 text-gray-600 dark:text-slate-300 z-50 hover:text-gray-700 dark:hover:text-slate-400 rounded-full p-[0.2rem] w-6 h-6  transition-colors duration-300 touch-none hover:bg-gray-300 dark:hover:bg-slate-700 dark:bg-slate-800 bg-gray-200   ",
+          isDragging ? "cursor-grabbing" : "cursor-grab",
         )}
       >
         <RiDraggable />

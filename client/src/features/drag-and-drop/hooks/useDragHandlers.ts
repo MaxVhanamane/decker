@@ -277,15 +277,7 @@ const useDragHandlers = () => {
             const { active, over } = event;
             if (activeItemRef.current?.name === "deck") {
                 // Reset bulb color:
-                if (bulbRef?.current?.colorName === "fuchsia") {
-                    bulbRef?.current?.removeBulbColor("fuchsia");
-                } else if (bulbRef?.current?.colorName === "lime") {
-                    bulbRef?.current?.removeBulbColor("lime");
-                } else if (bulbRef.current?.colorName === "red") {
-                    bulbRef?.current?.removeBulbColor("fuchsia");
-                    bulbRef?.current?.removeBulbColor("lime");
-                    bulbRef?.current?.removeBulbColor("red");
-                }
+                bulbRef.current?.resetBulb();
 
                 setCurrentDraggingDeck(null);
                 if (!isOnline) {
@@ -404,13 +396,8 @@ const useDragHandlers = () => {
             }
 
             if (activeItemRef.current?.name === "card") {
+                bulbRef.current?.resetBulb();
                 setCurrentDraggingCard(null);
-                if (bulbRef?.current?.colorName === "violet") {
-                    bulbRef?.current?.removeBulbColor("violet");
-                } else if (bulbRef.current?.colorName === "red") {
-                    bulbRef?.current?.removeBulbColor("violet");
-                    bulbRef?.current?.removeBulbColor("red");
-                }
 
                 if (!over) return;
 
@@ -516,13 +503,8 @@ const useDragHandlers = () => {
                 }
             }
             if (activeItemRef.current?.name === "chapter") {
+                bulbRef.current?.resetBulb();
                 setCurrentDraggingChapter(null);
-                if (bulbRef?.current?.colorName === "green") {
-                    bulbRef?.current?.removeBulbColor("green");
-                } else if (bulbRef.current?.colorName === "red") {
-                    bulbRef?.current?.removeBulbColor("green");
-                    bulbRef?.current?.removeBulbColor("red");
-                }
 
                 if (!over) return;
 
@@ -619,10 +601,7 @@ const useDragHandlers = () => {
     );
 
     const handleDragCancel = useCallback(() => {
-        const colorName = bulbRef.current?.colorName;
-        if (colorName) {
-            bulbRef.current.removeBulbColor(colorName);
-        }
+        bulbRef.current?.resetBulb();
         setCurrentDraggingCard(null)
         setCurrentDraggingDeck(null)
         setCurrentDraggingChapter(null)

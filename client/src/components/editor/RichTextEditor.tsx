@@ -132,7 +132,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       resetSlashPosition,
       lastSlashLocation,
       openCommandPalette,
-    ]
+    ],
   );
 
   const isInsideListElement = () => {
@@ -211,7 +211,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
         domNode.setAttribute("data-is-empty-paragraph", "false");
       }
     },
-    [editor]
+    [editor],
   );
 
   const onKeyDownHandler = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -299,7 +299,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
         Transforms.insertNodes(
           editor,
           { type: "paragraph", children: [{ text: "" }] },
-          { at: nextPath, select: true }
+          { at: nextPath, select: true },
         );
       }
     }
@@ -434,6 +434,42 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       }
       case "k": {
         event.preventDefault();
+
+        // 1. DELETE BLOCK (Ctrl/Cmd + Shift + K)
+        if (event.shiftKey) {
+          if (isInsideTitleElement()) {
+            showToast({
+              message: "The main title block cannot be deleted.",
+              severity: "warning",
+              autoHideDuration: 3000,
+              position: "top-center",
+              animationStyle: "scale-up",
+              theme: "auto",
+            });
+            return;
+          }
+
+          Transforms.removeNodes(editor, {
+            match: (n) => {
+              // Ignore the editor itself and non-elements
+              if (Editor.isEditor(n) || !SlateElement.isElement(n))
+                return false;
+
+              // Explicitly SKIP these inner wrapper blocks.
+              // This forces Slate to look one level higher and delete the actual
+              // `code-block` or `list-item` container instead of just emptying them.
+              if (n.type === "code-line" || n.type === "list-item-text") {
+                return false;
+              }
+
+              // Match any other valid block (paragraph, blockquote, code-block, list-item, etc.)
+              return Editor.isBlock(editor, n);
+            },
+          });
+          return;
+        }
+
+        // 2. TOGGLE LINK (Ctrl/Cmd + K)
         if (CustomEditor.isBlockActive(editor, "link")) {
           handleLink();
         } else {
@@ -468,7 +504,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       }
       return <RenderElement {...props} />;
     },
-    [setSelectedLinkDetails]
+    [setSelectedLinkDetails],
   );
 
   const renderLeaf = useCallback((props: RenderLeafProps) => {
@@ -516,7 +552,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
 
         return ranges;
       },
-      [lastSlashLocation.current]
+      [lastSlashLocation.current],
     );
   };
 
@@ -575,7 +611,7 @@ const RichTextEditor = (props: RichTextEditorProps) => {
       // Capture and stop scroll events
       document.addEventListener("scroll", stopPropagation, true);
     },
-    []
+    [],
   );
 
   return (

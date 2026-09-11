@@ -31,6 +31,7 @@ import { getTextAfterSlash } from "../../utils/editor/commandUtils";
 import { motion } from "motion/react";
 import { EditCardEditorSkeleton } from "./EditCardEditorSkeleton";
 import DummyEditorContent from "./DummyEditorContent";
+import { useIsDeviceType } from "../../hooks/utility/useIsDeviceType";
 type EditCardProps = {
   setEditContent: Dispatch<SetStateAction<ContentTypeForEdit | null>>;
   editContent: ContentTypeForEdit | null;
@@ -50,6 +51,12 @@ const EditCard = ({
   handleCloseEditTextEditor,
   isClosingEditModal,
 }: EditCardProps) => {
+  const isPhone = useIsDeviceType("phone");
+  const isLargePhone = useIsDeviceType("largePhone");
+  const isMobile = isPhone || isLargePhone;
+
+  // Treat mobile exactly like a fullscreen scenario (no layout morphing)
+  const shouldSkipMorph = isCardFullscreen || isMobile;
   const [showHyperlinkModal, setShowHyperlinkModal] = useState(false);
   const [isLayoutAnimationComplete, setIsLayoutAnimationComplete] =
     useState(false);
@@ -65,7 +72,7 @@ const EditCard = ({
       } else {
         return "bottom";
       }
-    }
+    },
   );
   const [showScrollToBottomButton, setShowScrollToBottomButton] =
     useState(false);
@@ -122,7 +129,7 @@ const EditCard = ({
         }
       }
     },
-    [editor]
+    [editor],
   );
 
   const scrollToBottom = () => {
@@ -259,29 +266,20 @@ const EditCard = ({
   };
   return (
     <motion.div
-      initial={isCardFullscreen ? { scale: 0.95 } : undefined}
-      animate={isCardFullscreen ? { scale: 1 } : undefined}
-      transition={
-        isCardFullscreen
-          ? {
-              type: "spring",
-              stiffness: 1000,
-              damping: 20,
-            }
-          : undefined
-      }
+      // 1. Add opacity and use shouldSkipMorph
+      // ONLY animate opacity on the backdrop so it stays full-screen
+      initial={shouldSkipMorph ? { opacity: 0 } : undefined}
+      animate={shouldSkipMorph ? { opacity: 1 } : undefined}
       exit={{
         opacity: 0,
-        scale: isCardFullscreen ? 0.8 : undefined,
-        transition: {
-          type: "tween",
-          duration: isCardFullscreen ? 0.6 : 0.3,
-          ease: isCardFullscreen ? "backOut" : [0.25, 0.1, 0.25, 1],
-        },
+        transition: { duration: 0.2, ease: "easeOut" }, // Quick, clean fade
       }}
       ref={editorContainer}
+      // 2. Trigger completion for mobile/fullscreen here
       onAnimationComplete={() => {
-        setIsLayoutAnimationComplete(true);
+        if (shouldSkipMorph) {
+          setIsLayoutAnimationComplete(true);
+        }
       }}
       className={` z-[90] dark:md:bg-slate-900/70 md:bg-white/40  md:supports-[backdrop-filter]:bg-transparent
     md:supports-[backdrop-filter]:backdrop-blur-lg
@@ -296,18 +294,29 @@ const EditCard = ({
       </div>
 
       <motion.div
+        // 1. Trigger layout completion ONLY on desktop
         onLayoutAnimationComplete={() => {
-          setIsLayoutAnimationComplete(true);
+          if (!shouldSkipMorph) {
+            setIsLayoutAnimationComplete(true);
+          }
         }}
+        // 2. Disable layoutId if on mobile or fullscreen
         layoutId={
-          isCardFullscreen ? undefined : `${source}-card-${editContent?.cardId}`
+          shouldSkipMorph ? undefined : `${source}-card-${editContent?.cardId}`
         }
+        // ADD THE SCALE AND OPACITY ANIMATIONS HERE
+        initial={shouldSkipMorph ? { scale: 0.95, opacity: 0 } : undefined}
+        animate={shouldSkipMorph ? { scale: 1, opacity: 1 } : undefined}
+        exit={shouldSkipMorph ? { scale: 0.95, opacity: 0 } : undefined}
         transition={{
           layout: {
             type: "spring",
             stiffness: 200,
             damping: 24,
           },
+          // Add transition timings for the mobile scale/fade
+          scale: { duration: 0.2, ease: "easeOut" },
+          opacity: { duration: 0.2 },
         }}
         className="md:w-[45rem] lg:w-[50rem] w-full flex flex-col h-full md:h-[90%] lg:h-[92%] md:max-h-[50rem] md:p-2 dark:md:bg-slate-500 relative md:bg-slate-300 md:rounded-[12px]"
       >
@@ -330,7 +339,7 @@ const EditCard = ({
           </div>
         </div>
 
-        {isLayoutAnimationComplete ? (
+        {isLayoutAnimationComplete || isMobile ? (
           <Slate
             editor={editor}
             initialValue={editContent?.note ?? []}
@@ -353,7 +362,7 @@ const EditCard = ({
               onClick={handleEditorContentClick}
               data-editor-parent-edit
             >
-              {!isClosingEditModal ? (
+              {!isClosingEditModal || isMobile ? (
                 <RichTextEditor
                   setShowHyperlinkModal={setShowHyperlinkModal}
                   mode="edit"
@@ -374,7 +383,7 @@ const EditCard = ({
                 variant="unstyled"
                 className={twMerge(
                   " absolute  bottom-20 right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
-                  toolbarPosition === "top" ? "bottom-6" : "bottom-24"
+                  toolbarPosition === "top" ? "bottom-6" : "bottom-24",
                 )}
                 onClick={scrollToBottom}
               >
@@ -386,7 +395,7 @@ const EditCard = ({
                 variant="unstyled"
                 className={twMerge(
                   "absolute right-5 border-2 dark:border-gray-500 border-gray-400 rounded-full p-1 text-gray-700 dark:text-gray-300",
-                  toolbarPosition === "top" ? "bottom-6" : "bottom-24"
+                  toolbarPosition === "top" ? "bottom-6" : "bottom-24",
                 )}
                 onClick={scrollToTop}
               >
