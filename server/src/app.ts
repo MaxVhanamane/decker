@@ -1479,6 +1479,8 @@ app.post("/verifyotp", async (req: Request, res: Response) => {
 
     if (user.otp === parseInt(req.body.otp)) {
       if (difference > 0) {
+        // INVALIDATE THE OTP 
+        await ForgotPasswordOTP.findOneAndDelete({ email: req.body.email });
         res.status(200).json({ success: true, message: "OTP verification successful!" })
       }
       else {
@@ -1736,14 +1738,10 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
       await verifyEmail.findOneAndDelete({ email: req.body.email })
       // once users data is delete we will logout the user and clear his session
       req.logout(function (err) {
-        if (err) {
-          throw err; // Throw the error to be caught by the catch block below
-        }
-        // Explicitly destroy the session
+        if (err) return res.status(500).json({ success: false, message: "Logout failed" });
+
         req.session.destroy(function (err) {
-          if (err) {
-            throw err; // Throw the error to be caught by the catch block below
-          }
+          if (err) return res.status(500).json({ success: false, message: "Session destruction failed" });
           res.status(200).json({ success: true });
         });
       });
@@ -1759,6 +1757,11 @@ app.post("/deleteaccount", fetchUserDetails, async (req: Request, res: Response,
   }
 
 })
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error("Global Error:", err.stack);
+  res.status(500).json({ success: false, message: "Internal Server Error" });
+});
 
 // Exporting the app instance is a requirement for Vercel’s serverless deployment model. It allows Vercel to properly invoke the request handler defined in your Express.js application, ensuring that your server routes and middleware function as expected when deployed. This setup leverages the serverless architecture by dynamically handling requests through the exported handler.
 export default app
