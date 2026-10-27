@@ -19,10 +19,10 @@ type SuccessResponseType = {
 };
 
 const editDeck = async (
-  payload: PayloadType
+  payload: PayloadType,
 ): Promise<SuccessResponseType | CustomError> => {
   try {
-    const data = await request.put(`/deck/editdeck/${payload.deckId}`, {
+    const data = await request.put(`/api/v1/decks/editdeck/${payload.deckId}`, {
       title: payload.newTitle,
     });
 
@@ -70,7 +70,7 @@ const useEditDeck = () => {
             });
             return { ...oldQueryData, decks: [...newDeck] };
           }
-        }
+        },
       );
 
       //update search result
@@ -101,7 +101,7 @@ const useEditDeck = () => {
                   data: { ...oldQueryData.data, results: newResults },
                 };
               }
-            }
+            },
           );
         }
       }
@@ -119,7 +119,7 @@ const useEditDeck = () => {
             payload.searchParams.query,
             payload.searchParams.page,
           ],
-          context?.previousSearchResult
+          context?.previousSearchResult,
         );
       }
       showToast({

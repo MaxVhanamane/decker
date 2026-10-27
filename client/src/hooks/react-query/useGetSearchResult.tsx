@@ -11,12 +11,12 @@ type Params = {
 
 export const getSearchResult = async (
   { limit, page, query }: Params,
-  signal: AbortSignal
+  signal: AbortSignal,
 ): Promise<SearchResponse | null> => {
   try {
     const data = await request.get(
-      `/search/?q=${query}&page=${page}&limit=${limit}`,
-      signal
+      `/api/v1/search/?q=${query}&page=${page}&limit=${limit}`,
+      signal,
     );
     return data?.data;
   } catch (error) {

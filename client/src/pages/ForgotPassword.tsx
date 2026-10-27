@@ -43,7 +43,9 @@ export default function ForgotPassword() {
 
     setShowWaitMessage(true);
     try {
-      const res = await request.post("/generateforgetpasswordotp", { email });
+      const res = await request.post("/api/v1/otp/forgot-password/generate", {
+        email,
+      });
       if (res.data.success) {
         showToast({
           message: res.data.message,
@@ -88,7 +90,7 @@ export default function ForgotPassword() {
     setIsVerifying(true);
 
     try {
-      const res = await request.post("/verifyforgotpasswordotp", {
+      const res = await request.post("/api/v1/otp/forgot-password/verify", {
         email,
         otp,
       });

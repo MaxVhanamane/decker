@@ -16,7 +16,10 @@ const createCard = async (payload: CreateCardPayloadType) => {
           content: payload.content,
           maxOrder: payload.maxOrder,
         };
-    const data = await request.post(`/card/${payload.deckId}`, serverData);
+    const data = await request.post(
+      `/api/v1/cards/${payload.deckId}`,
+      serverData,
+    );
 
     return data?.data;
   } catch (error) {
@@ -57,7 +60,7 @@ const useCreateCard = () => {
               });
               return { ...oldCardData, cards: newArray };
             }
-          }
+          },
         );
 
         return { previousCardData };
@@ -89,7 +92,7 @@ const useCreateCard = () => {
                 maxOrder: data.maxOrder + 10,
               };
             }
-          }
+          },
         );
 
         return { previousCardData };

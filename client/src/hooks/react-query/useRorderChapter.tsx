@@ -17,10 +17,10 @@ interface QueuedOperation {
   reject: (error: any) => void;
 }
 const moveChapter = async (
-  inputData: moveChapterPayloadType
+  inputData: moveChapterPayloadType,
 ): Promise<MoveChapterResponse | CustomError> => {
   try {
-    const url = `/chapter/changeposition/${inputData.deckId}/${inputData.chapterId}/${inputData.newOrder}`;
+    const url = `/api/v1/chapters/changeposition/${inputData.deckId}/${inputData.chapterId}/${inputData.newOrder}`;
     const data = await request.put(url, {
       reindexNeeded: inputData.reindexNeeded,
     });
@@ -82,7 +82,7 @@ const useReorderChapter = () => {
         processQueue();
       });
     },
-    [processQueue]
+    [processQueue],
   );
 
   const mutation = useMutation({
@@ -127,7 +127,7 @@ const useReorderChapter = () => {
               .sort((a, b) => b.order - a.order);
             return { ...oldChapterData, chapters: updatedArray };
           }
-        }
+        },
       );
 
       return {

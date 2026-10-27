@@ -60,7 +60,7 @@ export default function Login() {
 
     try {
       const data = { email, password };
-      const response = await request.post("/login", data);
+      const response = await request.post("/api/v1/auth/login", data);
       if (response.data.success == true) {
         setUserInfo(response.data.userInfo);
         UserStore.saveUser({

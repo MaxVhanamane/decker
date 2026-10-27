@@ -15,7 +15,7 @@ const createDeck = async ({
   deckId: string;
 }) => {
   try {
-    const data = await request.post(`/deck`, { title, deckId });
+    const data = await request.post(`/api/v1/decks`, { title, deckId });
 
     return data?.data;
   } catch (error) {
@@ -60,7 +60,7 @@ const useCreateDeck = () => {
               ],
             };
           }
-        }
+        },
       );
       setNewlyAddedDeckId(deckId);
 
@@ -80,11 +80,11 @@ const useCreateDeck = () => {
               const updatedDecks = oldQueryData.decks?.map((deck) =>
                 deck.deckId === allDecks.decks[0].deckId
                   ? { ...deck, isProcessing: false }
-                  : deck
+                  : deck,
               );
               return { decks: updatedDecks };
             }
-          }
+          },
         );
       }
     },

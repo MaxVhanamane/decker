@@ -20,14 +20,14 @@ type SuccessResponseType = {
 };
 
 const editChapter = async (
-  payload: PayloadType
+  payload: PayloadType,
 ): Promise<SuccessResponseType | CustomError> => {
   try {
     const data = await request.put(
-      `/chapter/editchapter/${payload.deckId}/${payload.chapterId}`,
+      `/api/v1/chapters/editchapter/${payload.deckId}/${payload.chapterId}`,
       {
         chapterName: payload.newChapterName,
-      }
+      },
     );
 
     return data?.data;
@@ -74,7 +74,7 @@ const useEditChapter = () => {
             });
             return { ...oldQueryData, chapters: newChapters };
           }
-        }
+        },
       );
       //update search result
 
@@ -84,7 +84,7 @@ const useEditChapter = () => {
     onError: (error, payload, context) => {
       queryClient.setQueryData(
         ["chapters", payload.deckId],
-        context?.previousQueryData
+        context?.previousQueryData,
       );
       //   if (payload?.searchParams) {
       //     queryClient.setQueryData(

@@ -20,7 +20,7 @@ const createChapter = async ({
   maxOrder,
 }: CreateChapterPayload) => {
   try {
-    const data = await request.post(`/chapter`, {
+    const data = await request.post(`/api/v1/chapters`, {
       deckId,
       chapterId,
       chapterName,
@@ -68,7 +68,7 @@ const useCreateChapter = () => {
               maxOrder: oldQueryData.maxOrder + 10,
             };
           }
-        }
+        },
       );
       navigate(`/cards/${payload.deckId}/${payload.chapterId}`, {
         state: { isNewChapter: true },

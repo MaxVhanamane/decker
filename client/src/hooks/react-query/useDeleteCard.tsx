@@ -35,12 +35,12 @@ type DeleteCardPayloadType = {
 };
 
 const deleteCard = async (
-  payload: DeleteCardPayloadType
+  payload: DeleteCardPayloadType,
 ): Promise<SuccessResponseType> => {
   try {
     const url = payload?.chapterId
-      ? `/card/${payload.deckId}/${payload.cardInfo?.cardId}/${payload?.chapterId}`
-      : `/card/${payload.deckId}/${payload.cardInfo?.cardId}`;
+      ? `/api/v1/cards/${payload.deckId}/${payload.cardInfo?.cardId}/${payload?.chapterId}`
+      : `/api/v1/cards/${payload.deckId}/${payload.cardInfo?.cardId}`;
     const data = await request.delete(url);
 
     return data?.data;
@@ -111,11 +111,11 @@ const useDeleteCard = () => {
           (oldQueryData) => {
             if (oldQueryData) {
               const updatedArray = oldQueryData.cards.filter(
-                (card) => card.cardId !== data.cardInfo.cardId
+                (card) => card.cardId !== data.cardInfo.cardId,
               );
               return { ...oldQueryData, cards: updatedArray };
             }
-          }
+          },
         );
 
         // update search result
@@ -133,7 +133,7 @@ const useDeleteCard = () => {
               if (oldQueryData) {
                 if (!oldQueryData) return;
                 const deepCopiedDecks: SearchResponse = JSON.parse(
-                  JSON.stringify(oldQueryData)
+                  JSON.stringify(oldQueryData),
                 );
                 let indexOfDeletedCard = -1;
                 let deletedCard: DeckCardSearchResult | undefined;
@@ -150,7 +150,7 @@ const useDeleteCard = () => {
                     }
 
                     return !isTargetCard;
-                  }
+                  },
                 );
 
                 if (
@@ -174,7 +174,7 @@ const useDeleteCard = () => {
                   data: { ...deepCopiedDecks.data, results: modifiedData },
                 };
               }
-            }
+            },
           );
         }
 
@@ -218,7 +218,7 @@ const useDeleteCard = () => {
               });
               return { ...oldQueryData, cards: updatedArray };
             }
-          }
+          },
         );
         return { previousCardQueryData };
       }
@@ -259,7 +259,7 @@ const useDeleteCard = () => {
               mutationData.searchParams?.query,
               mutationData?.searchParams?.page,
             ],
-            context?.previousSearchResult
+            context?.previousSearchResult,
           );
         }
       }

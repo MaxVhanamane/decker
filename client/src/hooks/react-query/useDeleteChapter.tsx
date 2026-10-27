@@ -28,10 +28,10 @@ type DeleteChapterPayloadType = {
 };
 
 const deleteChapter = async (
-  payload: DeleteChapterPayloadType
+  payload: DeleteChapterPayloadType,
 ): Promise<SuccessResponseType> => {
   try {
-    const url = `/chapter/${payload.chapterInfo?.deckId}/${payload?.chapterInfo?.chapterId}`;
+    const url = `/api/v1/chapters/${payload.chapterInfo?.deckId}/${payload?.chapterInfo?.chapterId}`;
     const data = await request.delete(url);
 
     return data?.data;
@@ -101,7 +101,7 @@ const useDeleteChapter = () => {
         (oldQueryData) => {
           if (oldQueryData) {
             const updatedArray = oldQueryData.chapters.filter(
-              (chapter) => chapter.chapterId !== data.chapterInfo.chapterId
+              (chapter) => chapter.chapterId !== data.chapterInfo.chapterId,
             );
             return {
               ...oldQueryData,
@@ -109,7 +109,7 @@ const useDeleteChapter = () => {
               maxOrder: updatedArray[0]?.order ?? 0,
             };
           }
-        }
+        },
       );
       setTimeout(() => {
         navigate(`/cards/${data.chapterInfo.deckId}`, { replace: true });

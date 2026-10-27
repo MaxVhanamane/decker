@@ -8,10 +8,10 @@ type SuccessResponseType = {
 };
 
 const undoDeck = async (
-  undoDeck: UndoDeckType
+  undoDeck: UndoDeckType,
 ): Promise<SuccessResponseType | CustomError> => {
   try {
-    const data = await request.put("/deck/undodeck", {
+    const data = await request.put("/api/v1/decks/undodeck", {
       deckId: undoDeck.deckId,
     });
 
@@ -112,7 +112,7 @@ const useUndoDeck = () => {
             payload?.searchParams.query,
             payload?.searchParams.page,
           ],
-          context?.previousSearchResult
+          context?.previousSearchResult,
         );
       }
     },

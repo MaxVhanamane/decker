@@ -7,12 +7,12 @@ import { usePreloadCache } from "../utility/usePreloadCache";
 const getCards = async (
   deckId: string,
   signal: AbortSignal,
-  chapterId?: string
+  chapterId?: string,
 ): Promise<GetCardsResponseType | null> => {
   try {
     const url = chapterId
-      ? `/cards/${deckId}/${chapterId}`
-      : `/cards/${deckId}`;
+      ? `/api/v1/cards/${deckId}/${chapterId}`
+      : `/api/v1/cards/${deckId}`;
     const data = await request.get(url, signal);
     return data?.data;
   } catch (error: any) {
@@ -37,15 +37,15 @@ const getCards = async (
 const useGetCards = (
   deckId: string,
   mode: "deck" | "chapter",
-  chapterId?: string
+  chapterId?: string,
 ) => {
   let queryKey: string[] = [];
   let url: string | undefined;
   if (mode == "deck") {
-    url = `${import.meta.env.VITE_API_URL}/cards/${deckId}`;
+    url = `${import.meta.env.VITE_API_URL}/api/v1/cards/${deckId}`;
     queryKey = ["cards", deckId];
   } else if (mode === "chapter" && chapterId) {
-    url = `${import.meta.env.VITE_API_URL}/cards/${deckId}/${chapterId}`;
+    url = `${import.meta.env.VITE_API_URL}/api/v1/cards/${deckId}/${chapterId}`;
     queryKey = ["chapter-cards", deckId, chapterId];
   }
   const cacheName = mode == "deck" ? "cards-cache" : "chapter-cards-cache";

@@ -20,7 +20,7 @@ const deleteDeck = async ({
   deckId,
 }: DeleteDeckPayload): Promise<DeleteDeckResponseType | CustomError> => {
   try {
-    const data = await request.delete(`/deck/${deckId}`);
+    const data = await request.delete(`/api/v1/decks/${deckId}`);
 
     return data?.data;
   } catch (error) {
@@ -72,7 +72,7 @@ const useDeleteDeck = () => {
             });
             return { ...oldQueryData, decks: newData };
           }
-        }
+        },
       );
 
       //update search result
@@ -120,7 +120,7 @@ const useDeleteDeck = () => {
                     return !(
                       deck.type === "deck" && deck.deckId === payload.deckId
                     );
-                  }
+                  },
                 );
 
                 return {
@@ -128,7 +128,7 @@ const useDeleteDeck = () => {
                   data: { ...oldQueryData.data, results: newResults },
                 };
               }
-            }
+            },
           );
         }
       }
@@ -186,7 +186,7 @@ const useDeleteDeck = () => {
             payload.searchParams.query,
             payload.searchParams.page,
           ],
-          context?.previousSearchResult
+          context?.previousSearchResult,
         );
       }
     },

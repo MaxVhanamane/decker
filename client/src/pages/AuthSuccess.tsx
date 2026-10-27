@@ -17,8 +17,8 @@ export default function AuthSuccess() {
 
   const getUser = async (): Promise<userInfo | null> => {
     try {
-      const userData = await request.get("/getuser");
-      const { email } = (await request.get("/user/email")).data;
+      const userData = await request.get("/api/v1/users");
+      const { email } = (await request.get("/api/v1/users/email")).data;
       return { ...userData.data, email };
     } catch (error) {
       showToast({

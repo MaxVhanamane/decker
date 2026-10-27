@@ -61,7 +61,7 @@ export default function SignUp() {
       if (password.length > 7 && confirmPass.length > 7) {
         try {
           const data = { username, email: emailAddress, otp: otp, password };
-          const res = await request.post("/signup", data);
+          const res = await request.post("/api/v1/auth/signup", data);
           if (res.data.success) {
             showToast({
               message: res.data.message,

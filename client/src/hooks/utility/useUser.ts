@@ -17,11 +17,11 @@ const useUser = () => {
     const getUser = useCallback(async () => {
         setIsFetching(true);
         try {
-            const userInfoResponse = await request.get("/getuser");
+            const userInfoResponse = await request.get("/api/v1/users");
             const userData = userInfoResponse?.data;
 
             try {
-                const emailResponse = await request.get("/user/email");
+                const emailResponse = await request.get("/api/v1/users/email");
                 const { email } = emailResponse.data;
                 setUserEmailAddress(email || null);
             } catch {

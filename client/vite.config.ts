@@ -6,7 +6,8 @@ import { analyzer } from 'vite-bundle-analyzer'
 export default defineConfig(({ command, mode }) => {
   // In vite.config.ts we can't access env variables using import.meta.env.VITE_API_URL we have to use following code to access it.
   const env = loadEnv(mode, process.cwd())
-  const API_URL = `${env.VITE_API_URL}`
+  const API_URL = env.VITE_API_URL.replace(/\/$/, "");
+  const escapedAPI_URL = API_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return {
     plugins: [analyzer({ openAnalyzer: true }), reactSWC(), VitePWA({
 
@@ -23,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
         runtimeCaching: [
           {
 
-            urlPattern: new RegExp(`${API_URL}/decks$`), //  your API endpoint
+            urlPattern: new RegExp(`${escapedAPI_URL}/api/v1/decks(?:\\?.*)?$`),
             handler: 'NetworkFirst', //  caching strategy 
             options: {
               cacheName: 'decks-cache',
@@ -41,7 +42,7 @@ export default defineConfig(({ command, mode }) => {
           },
           {
 
-            urlPattern: new RegExp(`${API_URL}/chapters/[^/]+(\\?.*)?$`), //  your API endpoint
+            urlPattern: new RegExp(`${escapedAPI_URL}/api/v1/chapters/[^/]+(?:\\?.*)?$`),
             handler: 'NetworkFirst', //  caching strategy 
             options: {
               cacheName: 'chapters-cache',
@@ -58,7 +59,7 @@ export default defineConfig(({ command, mode }) => {
 
           },
           {
-            urlPattern: new RegExp(`${API_URL}/cards/[^/]+(\\?.*)?$`),
+            urlPattern: new RegExp(`${escapedAPI_URL}/api/v1/cards/[^/]+(?:\\?.*)?$`), // Cards belonging to a deck
             handler: 'NetworkFirst', // Caching strategy for /cards/deckId
             options: {
               cacheName: 'cards-cache',
@@ -74,7 +75,7 @@ export default defineConfig(({ command, mode }) => {
           },
           {
             // Chapter cards
-            urlPattern: new RegExp(`${API_URL}/cards/[^/]+/[^/]+(\\?.*)?$`),
+            urlPattern: new RegExp(`${escapedAPI_URL}/api/v1/cards/[^/]+/[^/]+(?:\\?.*)?$`),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'chapter-cards-cache',
@@ -89,7 +90,7 @@ export default defineConfig(({ command, mode }) => {
           },
 
           {
-            urlPattern: new RegExp(`${API_URL}/getuser$`),
+            urlPattern: new RegExp(`${escapedAPI_URL}/api/v1/users(?:\\?.*)?$`),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'auth-cache',

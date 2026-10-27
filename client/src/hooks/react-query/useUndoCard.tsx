@@ -15,7 +15,7 @@ type SuccessResponseType = {
 };
 
 const undoCard = async (
-  undoCardInfo: UndoCardPayloadData
+  undoCardInfo: UndoCardPayloadData,
 ): Promise<SuccessResponseType | CustomError> => {
   const {
     content: { chapterId, ...rest },
@@ -28,7 +28,7 @@ const undoCard = async (
     ? { ...undoCardDetails, chapterId }
     : undoCardDetails;
   try {
-    const data = await request.put("/card/undocard", serverData);
+    const data = await request.put("/api/v1/cards/undocard", serverData);
 
     return data?.data;
   } catch (error) {
@@ -73,12 +73,12 @@ const useUndoCard = () => {
           (oldQueryData) => {
             if (oldQueryData) {
               const newArray = [...oldQueryData.cards, data.content].sort(
-                (a, b) => b.order - a.order
+                (a, b) => b.order - a.order,
               );
 
               return { ...oldQueryData, cards: newArray };
             }
-          }
+          },
         );
         setUndoCardId(data.content.cardId);
         // update search result
@@ -100,17 +100,17 @@ const useUndoCard = () => {
                 if (!result || !data?.searchParams) return;
 
                 const deepCopiedResult: SearchResponse = JSON.parse(
-                  JSON.stringify(result)
+                  JSON.stringify(result),
                 );
 
                 deepCopiedResult?.data?.results.splice(
                   data?.searchParams?.indexOfCardInSearchResult,
                   0,
-                  data?.searchParams?.undoCardDetails
+                  data?.searchParams?.undoCardDetails,
                 );
 
                 return deepCopiedResult;
-              }
+              },
             );
           }
         }
@@ -145,12 +145,12 @@ const useUndoCard = () => {
           (oldQueryData) => {
             if (oldQueryData) {
               const newArray = [...oldQueryData.cards, data.content].sort(
-                (a, b) => b.order - a.order
+                (a, b) => b.order - a.order,
               );
 
               return { ...oldQueryData, cards: newArray };
             }
-          }
+          },
         );
         setUndoCardId(data.content.cardId);
 
@@ -184,7 +184,7 @@ const useUndoCard = () => {
             dataThatWePassed.searchParams?.query,
             dataThatWePassed?.searchParams?.page,
           ],
-          context?.previousSearchResult
+          context?.previousSearchResult,
         );
       }
     },

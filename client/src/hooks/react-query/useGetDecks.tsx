@@ -9,7 +9,7 @@ import { usePreloadCache } from "../utility/usePreloadCache";
 const getDecks = async (
   showSearchBar: boolean,
   queryClient: QueryClient,
-  signal: AbortSignal
+  signal: AbortSignal,
 ): Promise<DeckType> => {
   // If the search bar is open and the user opens the search results (e.g., any card) and reads it, and then closes it, if the user has opened the search bar on the home page, and when the user closes it by hitting the back button, they will be navigated to "/", which will trigger the execution of the useGetDecks() function. To avoid unnecessary network requests, I will serve the cached data in this case.
   // We will also check the following condition (cachedDecks === undefined) to ensure that the data is available in the cache. If it is not available, we will then proceed to refetch the data.
@@ -17,7 +17,7 @@ const getDecks = async (
 
   if (!showSearchBar || cachedDecks === undefined) {
     try {
-      const data = await request.get(`/decks`, signal);
+      const data = await request.get(`/api/v1/decks`, signal);
       return data?.data;
     } catch (error: any) {
       if (
@@ -43,7 +43,7 @@ export default function useGetDecks({
 }: { enabled?: boolean } = {}) {
   const { showSearchBar } = useContext(searchContext);
   const queryClient = useQueryClient();
-  const url = `${import.meta.env.VITE_API_URL}/decks`;
+  const url = `${import.meta.env.VITE_API_URL}/api/v1/decks`;
 
   // Pre-populate query cache with browser cached data
   usePreloadCache({

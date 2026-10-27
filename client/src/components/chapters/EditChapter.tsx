@@ -35,8 +35,9 @@ export default function EditChapter({
   };
 
   const handleSave = () => {
+    // TODO: when you are not inside a chapter chapterId is undefined so this will fail
     closeModal(() =>
-      editChapter({ chapterId, deckId, newChapterName: chapterName })
+      editChapter({ chapterId, deckId, newChapterName: chapterName }),
     );
   };
 
@@ -74,7 +75,7 @@ export default function EditChapter({
     <div
       className={twMerge(
         "fixed inset-0 backdrop-blur-xl flex items-center justify-center p-4 z-[100] transition-opacity duration-200",
-        isVisible ? "opacity-100" : "opacity-0"
+        isVisible ? "opacity-100" : "opacity-0",
       )}
     >
       <div

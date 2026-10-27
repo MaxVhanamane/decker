@@ -6,10 +6,10 @@ import { usePreloadCache } from "../utility/usePreloadCache";
 
 const getChapters = async (
   deckId: string,
-  signal: AbortSignal
+  signal: AbortSignal,
 ): Promise<GetChaptersResponseType | null> => {
   try {
-    const data = await request.get(`/chapters/${deckId}`, signal);
+    const data = await request.get(`/api/v1/chapters/${deckId}`, signal);
     return data?.data;
   } catch (error: any) {
     if (
@@ -32,7 +32,7 @@ const getChapters = async (
 
 const useGetChapters = (deckId: string) => {
   const queryKey = ["chapters", deckId];
-  const url = `${import.meta.env.VITE_API_URL}/chapters/${deckId}`;
+  const url = `${import.meta.env.VITE_API_URL}/api/v1/chapters/${deckId}`;
 
   // Pre-populate query cache with browser cached data
   usePreloadCache({

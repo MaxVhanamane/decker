@@ -23,12 +23,12 @@ type SuccessResponseType = {
 };
 
 const editCard = async (
-  cardData: editCardPayloadType
+  cardData: editCardPayloadType,
 ): Promise<SuccessResponseType | CustomError> => {
   try {
     const url = cardData?.chapterId
-      ? `/card/${cardData.deckId}/${cardData?.chapterId}`
-      : `/card/${cardData.deckId}`;
+      ? `/api/v1/cards/${cardData.deckId}/${cardData?.chapterId}`
+      : `/api/v1/cards/${cardData.deckId}`;
     const data = await request.patch(url, {
       cardId: cardData.cardId,
       newContent: {
@@ -87,7 +87,7 @@ const useEditCard = () => {
 
               return { ...oldQueryData, cards: updatedCardData };
             }
-          }
+          },
         );
 
         let previousSearchResult: SearchResponse | undefined;
@@ -102,7 +102,7 @@ const useEditCard = () => {
             (oldQueryData) => {
               if (oldQueryData) {
                 const deepCopiedResult: SearchResponse = JSON.parse(
-                  JSON.stringify(oldQueryData)
+                  JSON.stringify(oldQueryData),
                 );
                 deepCopiedResult.data.results =
                   deepCopiedResult.data?.results?.map((obj) => {
@@ -121,7 +121,7 @@ const useEditCard = () => {
                   });
                 return deepCopiedResult;
               }
-            }
+            },
           );
         }
 
@@ -163,7 +163,7 @@ const useEditCard = () => {
 
               return { ...oldQueryData, cards: updatedCardData };
             }
-          }
+          },
         );
         return { previousCardQueryData };
       }
@@ -177,7 +177,7 @@ const useEditCard = () => {
       if (data?.searchParams) {
         queryClient.setQueryData(
           ["searchResult", data.searchParams.query, data?.searchParams.page],
-          context?.previousSearchResult
+          context?.previousSearchResult,
         );
       }
     },

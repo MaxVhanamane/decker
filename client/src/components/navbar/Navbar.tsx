@@ -68,7 +68,7 @@ const Navbar = () => {
 
   const handleOnConfirmLogout = async () => {
     try {
-      const res = await request.post("/auth/logout");
+      const res = await request.post("/api/v1/auth/logout");
       if (res?.data?.isLogoutSuccessful) {
         clearUserCache();
         queryClient.clear();

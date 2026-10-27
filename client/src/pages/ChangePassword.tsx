@@ -55,7 +55,7 @@ export default function ChangePassword() {
       if (password.length > 7 && confirmPass.length > 7) {
         const data = { email: emailAddress, otp: otp, newPassword: password };
         try {
-          const res = await request.post("/changepassword", data);
+          const res = await request.post("/api/v1/password/change", data);
           if (res.data.success) {
             showToast({
               message: res.data.message,

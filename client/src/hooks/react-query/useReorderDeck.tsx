@@ -30,7 +30,7 @@ export const reOrderDeck = async ({
   reindexNeeded = false,
 }: ReorderDeckPayload): Promise<SuccessResponseType | CustomError> => {
   try {
-    const data = await request.put(`/deck/changeposition/${deckId}`, {
+    const data = await request.put(`/api/v1/decks/changeposition/${deckId}`, {
       prevDeckId,
       nextDeckId,
       reindexNeeded,
@@ -65,7 +65,7 @@ const useReorderDeck = () => {
 
       if (isReindexRequested.current) {
         operation.reject(
-          new Error("A reindex operation was triggered. Please try again.")
+          new Error("A reindex operation was triggered. Please try again."),
         );
         continue;
       }
@@ -100,7 +100,7 @@ const useReorderDeck = () => {
         processQueue();
       });
     },
-    [processQueue]
+    [processQueue],
   );
 
   const mutation = useMutation({
@@ -127,12 +127,12 @@ const useReorderDeck = () => {
       let insertIndex = updatedDecks.length;
       if (prevDeckId) {
         const prevIndex = updatedDecks.findIndex(
-          (d) => d.deckId === prevDeckId
+          (d) => d.deckId === prevDeckId,
         );
         if (prevIndex !== -1) insertIndex = prevIndex + 1;
       } else if (nextDeckId) {
         const nextIndex = updatedDecks.findIndex(
-          (d) => d.deckId === nextDeckId
+          (d) => d.deckId === nextDeckId,
         );
         if (nextIndex !== -1) insertIndex = nextIndex;
       }

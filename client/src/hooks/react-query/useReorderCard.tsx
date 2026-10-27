@@ -17,12 +17,12 @@ interface QueuedOperation {
 }
 
 const moveCard = async (
-  inputData: moveCardPayloadType
+  inputData: moveCardPayloadType,
 ): Promise<MoveCardResponse | CustomError> => {
   try {
     const url = inputData?.chapterId
-      ? `/card/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}/${inputData.chapterId}`
-      : `/card/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}`;
+      ? `/api/v1/cards/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}/${inputData.chapterId}`
+      : `/api/v1/cards/changeposition/${inputData.deckId}/${inputData.cardId}/${inputData.newOrder}`;
     const data = await request.put(url, {
       reindexNeeded: inputData.reindexNeeded,
     });
@@ -84,7 +84,7 @@ const useReorderCard = () => {
         processQueue();
       });
     },
-    [processQueue]
+    [processQueue],
   );
 
   const mutation = useMutation({
@@ -125,7 +125,7 @@ const useReorderCard = () => {
             movedItem.order = payload.newOrder;
             return { ...oldCardData, cards: newArray };
           }
-        }
+        },
       );
 
       return {

@@ -8,7 +8,7 @@ import { ChapterDetails, GetChaptersResponseType } from "../../types/types";
 type UndoChapterPayload = ChapterDetails & { deletedBatchId: string };
 const undoChapter = async (payload: UndoChapterPayload) => {
   try {
-    const data = await request.put("/chapter/undo", {
+    const data = await request.put("/api/v1/chapters/undo", {
       deckId: payload.deckId,
       chapterId: payload.chapterId,
       deletedBatchId: payload.deletedBatchId,
@@ -51,7 +51,7 @@ const useUndoChapter = () => {
               maxOrder: newChaptersArray[0].order,
             };
           }
-        }
+        },
       );
       return { previousQueryData };
     },

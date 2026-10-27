@@ -21,13 +21,16 @@ type SuccessResponseType = {
 };
 
 export const pinDeck = async (
-  inputData: PayloadType
+  inputData: PayloadType,
 ): Promise<SuccessResponseType | CustomError> => {
   try {
-    const data = await request.patch(`/deck/togglepin/${inputData.deckId}`, {
-      pinned: inputData.pinned,
-      newOrder: inputData.newOrder,
-    });
+    const data = await request.patch(
+      `/api/v1/decks/togglepin/${inputData.deckId}`,
+      {
+        pinned: inputData.pinned,
+        newOrder: inputData.newOrder,
+      },
+    );
 
     return data?.data;
   } catch (error) {
@@ -60,7 +63,7 @@ const usePinDeck = () => {
       // Make a deep copy because if an error occurs, we are returning the previousQueryData. If I directly work on it, I won't be able to reverse the changes made in case of an error.
       if (previousQueryData) {
         const CopiedPreviousQueryData: DeckType = JSON.parse(
-          JSON.stringify(previousQueryData)
+          JSON.stringify(previousQueryData),
         );
 
         let finalUpdatedDecks: DeckType;
@@ -118,7 +121,7 @@ const usePinDeck = () => {
 
         if (previousSearchResult) {
           const copiedPreviousSearchResult: SearchResponse = JSON.parse(
-            JSON.stringify(previousSearchResult)
+            JSON.stringify(previousSearchResult),
           );
 
           const updatedData = copiedPreviousSearchResult.data.results.map(
@@ -130,7 +133,7 @@ const usePinDeck = () => {
               } else {
                 return obj;
               }
-            }
+            },
           );
 
           queryClient.setQueryData<SearchResponse | undefined>(
@@ -147,7 +150,7 @@ const usePinDeck = () => {
                   results: updatedData,
                 },
               };
-            }
+            },
           );
         }
       }
@@ -172,7 +175,7 @@ const usePinDeck = () => {
             payload.searchParams.query,
             payload?.searchParams.page,
           ],
-          context?.previousSearchResult
+          context?.previousSearchResult,
         );
       }
     },

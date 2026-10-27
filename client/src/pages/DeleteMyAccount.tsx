@@ -86,9 +86,12 @@ export default function DeleteMyAccount() {
     if (userEmailAddress === email) {
       try {
         setShowWaitMessage(true);
-        const res = await request.post("/generateaccountdeletionotp", {
-          email,
-        });
+        const res = await request.post(
+          "/api/v1/otp/account-deletion/generate",
+          {
+            email,
+          },
+        );
         if (res.data.success) {
           showToast({
             message: res.data.message,
@@ -171,12 +174,14 @@ export default function DeleteMyAccount() {
 
     if (otp.length === 6) {
       try {
-        const res = await request.post("/verifyaccountdeletionotp", {
+        const res = await request.post("/api/v1/otp/account-deletion/verify", {
           email,
           otp,
         });
         if (res.data.success) {
-          const res = await request.post("/deleteaccount", { email });
+          const res = await request.post("/api/v1/users/deleteaccount", {
+            email,
+          });
           if (res?.data?.success) {
             setUserInfo(null);
             setUserEmailAddress(null);

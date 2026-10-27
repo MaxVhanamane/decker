@@ -41,7 +41,7 @@ export default function VerifyEmail() {
     }
     setShowWaitMessage(true);
     try {
-      const res = await request.post("/generateotp", { email });
+      const res = await request.post("/api/v1/otp/generate", { email });
       if (res?.data?.success) {
         showToast({
           message: res.data.message,
@@ -99,7 +99,7 @@ export default function VerifyEmail() {
     setIsVerifyingOTP(true);
     if (otp.length === 6) {
       try {
-        const res = await request.post("/verifyotp", { email, otp });
+        const res = await request.post("/api/v1/otp/verify", { email, otp });
         if (res.data.success) {
           showToast({
             message: res.data.message,
