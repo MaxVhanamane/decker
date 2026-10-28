@@ -8,7 +8,10 @@ import {
 
 type ChapterContainerProps = {
   data: GetChaptersResponseType;
-  handleShowEditChapterModal: (currentChapterName: string) => void;
+  handleShowEditChapterModal: (
+    currentChapterName: string,
+    chapterId: string
+  ) => void;
   handleDeleteChapterButtonClick: (chapter: ChapterDetails) => void;
 };
 

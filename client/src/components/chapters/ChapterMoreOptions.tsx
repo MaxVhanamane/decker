@@ -4,12 +4,13 @@ import { BiEdit } from "react-icons/bi";
 import { BsTrash } from "react-icons/bs";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 
-type DeckMoreOptionsProps = {
+type ChapterMoreOptionsProps = {
   moreOptionsRef: React.MutableRefObject<HTMLDivElement | null>;
   setShowMoreOptions: Dispatch<SetStateAction<boolean>>;
   showMoreOptions: boolean;
-  handleShowEditChapterModal: (currentChapterName: string) => void;
+  handleShowEditChapterModal: (currentChapterName: string, chapterId: string) => void;
   chapterName: string;
+  chapterId: string;
   handleDeleteChapter: () => void;
 };
 
@@ -19,8 +20,9 @@ const ChapterMoreOptions = ({
   setShowMoreOptions,
   handleShowEditChapterModal,
   chapterName,
+  chapterId,
   handleDeleteChapter,
-}: DeckMoreOptionsProps) => {
+}: ChapterMoreOptionsProps) => {
   useFocusTrap(moreOptionsRef, "both", {
     onEscape: () => setShowMoreOptions(false),
     enabled: showMoreOptions,
@@ -68,7 +70,7 @@ const ChapterMoreOptions = ({
             e.preventDefault();
             e.stopPropagation();
             setShowMoreOptions(false);
-            handleShowEditChapterModal(chapterName);
+            handleShowEditChapterModal(chapterName, chapterId);
           }}
           variant="plain"
           size="md"

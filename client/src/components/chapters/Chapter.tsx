@@ -15,7 +15,10 @@ import { DraggableAttributes } from "@dnd-kit/core";
 type ChapterProps = {
   chapter: ChapterDetails;
   moreOptionsRef: React.MutableRefObject<HTMLDivElement | null>;
-  handleShowEditChapterModal: (currentChapterName: string) => void;
+  handleShowEditChapterModal: (
+    currentChapterName: string,
+    chapterId: string
+  ) => void;
   handleDeleteChapterButtonClick: (chapter: ChapterDetails) => void;
   listeners: SyntheticListenerMap | undefined;
   attributes: DraggableAttributes;
@@ -113,6 +116,7 @@ const Chapter = ({
           showMoreOptions={showMoreOptions}
           handleShowEditChapterModal={handleShowEditChapterModal}
           chapterName={chapter.chapterName}
+          chapterId={chapter.chapterId}
         />
       )}
     </div>

@@ -119,7 +119,7 @@ function Deck() {
         JSON.stringify({
           pinned: pinnedDecks.length,
           others: otherDecks.length,
-        })
+        }),
       );
     }
   }, [pinnedDecks, otherDecks]);
@@ -155,7 +155,7 @@ function Deck() {
                 handlePlayAudio("createdSuccessfully", "/");
               }, 100);
             },
-          }
+          },
         );
 
         inputRefElement.current!.value = "";
@@ -174,7 +174,7 @@ function Deck() {
         });
       }
     },
-    [isOnline, inputRefElement, createDeck, handlePlayAudio]
+    [isOnline, inputRefElement, createDeck, handlePlayAudio],
   );
 
   const handlePin = useCallback(
@@ -207,7 +207,7 @@ function Deck() {
 
       pinDeck({ deckId, pinned: !pinned, newOrder });
     },
-    [isOnline, pinDeck, pinnedDecks, otherDecks]
+    [isOnline, pinDeck, pinnedDecks, otherDecks],
   );
 
   const handleEditDeck = useCallback(
@@ -226,7 +226,7 @@ function Deck() {
       setEditData({ ...editData, deckId, title });
       setOpenEditDeckModal(true);
     },
-    [isOnline, editData]
+    [isOnline, editData],
   );
 
   if (isError && !isCancelledError) {
@@ -277,7 +277,7 @@ function Deck() {
           DeckSkeletonCounts &&
           DeckSkeletonCounts?.others > 0 && (
             <DeckSkeleton
-              skeletonCount={DeckSkeletonCounts.pinned}
+              skeletonCount={DeckSkeletonCounts.others}
               title="Others"
             />
           )}

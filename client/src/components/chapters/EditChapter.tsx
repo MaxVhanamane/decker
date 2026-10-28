@@ -4,27 +4,31 @@ import { useStableParams } from "../../context/stableParamsContext";
 import { useFocusTrap } from "../../hooks/utility/useFocusTrap";
 import Button from "../Button";
 import { twMerge } from "tailwind-merge";
+import { getDeckInfo, storeDeckInfo } from "../../functions/deckDataManager";
 
 type EditChapterProps = {
   showEditChapterModal: boolean;
   handleCloseEditChapterModal: () => void;
   currentChapterName: string;
+  chapterId: string;
   startClosingModalAnimation: boolean;
 };
 const TRANSITION_DURATION = 200;
 export default function EditChapter({
   handleCloseEditChapterModal,
   currentChapterName,
+  chapterId,
   startClosingModalAnimation,
   showEditChapterModal,
 }: EditChapterProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [chapterName, setChapterName] = useState(currentChapterName);
-  const { deckId, chapterId } = useStableParams();
+  const { deckId, chapterId: routeChapterId } = useStableParams();
   const { mutate: editChapter } = useEditChapter();
   const editChapterRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const closeModal = (callback?: () => void) => {
     setIsVisible(false);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -35,10 +39,25 @@ export default function EditChapter({
   };
 
   const handleSave = () => {
-    // TODO: when you are not inside a chapter chapterId is undefined so this will fail
-    closeModal(() =>
-      editChapter({ chapterId, deckId, newChapterName: chapterName }),
-    );
+    if (!chapterId || !chapterName.trim()) return;
+
+    if (chapterName.trim() === currentChapterName.trim()) {
+      closeModal();
+      return;
+    }
+
+    closeModal(() => {
+      editChapter({
+        chapterId,
+        deckId,
+        newChapterName: chapterName.trim(),
+      });
+      // If editing the chapter currently open in the view, keep stored deck info in sync
+      if (routeChapterId === chapterId) {
+        const deckInfo = getDeckInfo();
+        storeDeckInfo(deckInfo.deckTitle, chapterName.trim());
+      }
+    });
   };
 
   const handleCancel = () => {
@@ -132,11 +151,12 @@ export default function EditChapter({
           <Button
             variant="unstyled"
             onClick={handleSave}
-            className="
-              px-6 py-2 bg-blue-600 text-white rounded-lg font-medium 
-              hover:bg-blue-700 transition-colors 
-              
-            "
+            disabled={!chapterName.trim()}
+            className={twMerge(
+              "px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors",
+              !chapterName.trim() &&
+                "opacity-50 cursor-not-allowed hover:bg-blue-600",
+            )}
           >
             Save Changes
           </Button>

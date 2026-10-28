@@ -49,6 +49,7 @@ const ChaptersSidebar = () => {
     },
   });
   const [currentChapterName, setCurrentChapterName] = useState("");
+  const [currentChapterId, setCurrentChapterId] = useState("");
   const isMobileOrTablet = useIsDeviceType("tablet");
   const { theme } = useContext(ThemeContext);
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContex);
@@ -161,8 +162,9 @@ const ChaptersSidebar = () => {
   }, []);
 
   const handleShowEditChapterModal = useCallback(
-    (currentChapterName: string) => {
+    (currentChapterName: string, chapterId: string) => {
       setCurrentChapterName(currentChapterName);
+      setCurrentChapterId(chapterId);
       setModalState((prev) => ({
         ...prev,
         showEditChapterModal: {
@@ -362,6 +364,7 @@ const ChaptersSidebar = () => {
         <EditChapter
           handleCloseEditChapterModal={handleCloseEditChapterModal}
           currentChapterName={currentChapterName}
+          chapterId={currentChapterId}
           showEditChapterModal={modalState.showEditChapterModal.show}
           startClosingModalAnimation={
             modalState.showEditChapterModal.startClosingModalAnimation

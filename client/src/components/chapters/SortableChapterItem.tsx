@@ -7,7 +7,10 @@ import { DndCurrentDraggingChapterContext } from "../../context/DndItemContext";
 import { twMerge } from "tailwind-merge";
 
 type SortableChapterItemProps = {
-  handleShowEditChapterModal: (currentChapterName: string) => void;
+  handleShowEditChapterModal: (
+    currentChapterName: string,
+    chapterId: string
+  ) => void;
   handleDeleteChapterButtonClick: (chapter: ChapterDetails) => void;
   ChapterDetails: ChapterDetails;
   index: number;
