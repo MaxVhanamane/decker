@@ -25,6 +25,7 @@ Click the thumbnail below to watch the Decker demo on YouTube.
 ### Rich Text Editing
 
 ![Edit Note](./screenshots/edit-note.png)
+![Slash Commands](./screenshots/slash-command.png)
 
 ### Drag and Drop
 
