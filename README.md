@@ -2,11 +2,41 @@
 
 Decker is a note-taking application that helps you organize information into decks, cards, and chapters. It provides a structured way to create, manage, and organize notes with rich-text editing and drag-and-drop reordering. As an installable Progressive Web App (PWA), Decker also supports offline reading of previously available notes, while creating, editing, and deleting notes requires an internet connection.
 
-## **Demo**
+## Demo
 
 Click the thumbnail below to watch the Decker demo on YouTube.
 
 [![Watch the Decker Demo](./screenshots/video-thumbnail.webp)](https://www.youtube.com/watch?v=pb6DLF-G75A)
+
+## Screenshots
+
+### Authentication
+
+![Login Page](./screenshots/login-page.png)
+
+### Note Organization
+
+![Cards Page](./screenshots/cards-page.png)
+
+![Details Page](./screenshots/details-page.png)
+
+![Search Page](./screenshots/search-page.png)
+
+### Rich Text Editing
+
+![Edit Note](./screenshots/edit-note.png)
+
+### Drag and Drop
+
+![Deck Drag and Drop](./screenshots/deck-drag-page.png)
+
+![Chapter Reordering](./screenshots/chapter-reorder.png)
+
+![Delete Card](./screenshots/delete-card.png)
+
+### Home Page
+
+![Home Page](./screenshots/home-page.png)
 
 ## Features
 
@@ -42,4 +72,6 @@ Click the thumbnail below to watch the Decker demo on YouTube.
 - **Animations:** Motion
 - **Progressive Web App:** vite-plugin-pwa
 
-_Decker — a simple, structured way to organize your notes._
+---
+
+Decker — write freely, format beautifully, and organize effortlessly.
